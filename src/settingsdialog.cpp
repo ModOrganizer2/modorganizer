@@ -18,35 +18,38 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "settingsdialog.h"
-#include "ui_settingsdialog.h"
 #include "settingsdialogdiagnostics.h"
 #include "settingsdialoggeneral.h"
+#include "settingsdialogmodlist.h"
 #include "settingsdialognexus.h"
 #include "settingsdialogpaths.h"
 #include "settingsdialogplugins.h"
-#include "settingsdialogmodlist.h"
 #include "settingsdialogtheme.h"
 #include "settingsdialogworkarounds.h"
+#include "ui_settingsdialog.h"
 
 using namespace MOBase;
 
-SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings& settings, QWidget *parent)
-  : TutorableDialog("SettingsDialog", parent)
-  , ui(new Ui::SettingsDialog)
-  , m_settings(settings)
-  , m_exit(Exit::None)
-  , m_pluginContainer(pluginContainer)
+SettingsDialog::SettingsDialog(PluginContainer* pluginContainer, Settings& settings,
+                               QWidget* parent)
+    : TutorableDialog("SettingsDialog", parent), ui(new Ui::SettingsDialog),
+      m_settings(settings), m_exit(Exit::None), m_pluginContainer(pluginContainer)
 {
   ui->setupUi(this);
 
-  m_tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralSettingsTab(settings, *this)));
+  m_tabs.push_back(
+      std::unique_ptr<SettingsTab>(new GeneralSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new ThemeSettingsTab(settings, *this)));
-  m_tabs.push_back(std::unique_ptr<SettingsTab>(new ModListSettingsTab(settings, *this)));
+  m_tabs.push_back(
+      std::unique_ptr<SettingsTab>(new ModListSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new PathsSettingsTab(settings, *this)));
-  m_tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsSettingsTab(settings, *this)));
+  m_tabs.push_back(
+      std::unique_ptr<SettingsTab>(new DiagnosticsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(settings, *this)));
-  m_tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsSettingsTab(settings, m_pluginContainer, *this)));
-  m_tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(
+      new PluginsSettingsTab(settings, m_pluginContainer, *this)));
+  m_tabs.push_back(
+      std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(settings, *this)));
 }
 
 PluginContainer* SettingsDialog::pluginContainer()
@@ -89,7 +92,7 @@ int SettingsDialog::exec()
     }
 
     // update settings for each tab
-    for (std::unique_ptr<SettingsTab> const &tab: m_tabs) {
+    for (std::unique_ptr<SettingsTab> const& tab : m_tabs) {
       tab->update();
     }
   }
@@ -106,23 +109,22 @@ SettingsDialog::~SettingsDialog()
 QString SettingsDialog::getColoredButtonStyleSheet() const
 {
   return QString("QPushButton {"
-    "background-color: %1;"
-    "color: %2;"
-    "border: 1px solid;"
-    "padding: 3px;"
-    "}");
+                 "background-color: %1;"
+                 "color: %2;"
+                 "border: 1px solid;"
+                 "padding: 3px;"
+                 "}");
 }
 
 void SettingsDialog::accept()
 {
   QString newModPath = ui->modDirEdit->text();
-  newModPath = PathSettings::resolve(newModPath, ui->baseDirEdit->text());
+  newModPath         = PathSettings::resolve(newModPath, ui->baseDirEdit->text());
 
   if ((QDir::fromNativeSeparators(newModPath) !=
-       QDir::fromNativeSeparators(
-           Settings::instance().paths().mods(true))) &&
+       QDir::fromNativeSeparators(Settings::instance().paths().mods(true))) &&
       (QMessageBox::question(
-        parentWidgetForDialogs(), tr("Confirm"),
+           parentWidgetForDialogs(), tr("Confirm"),
            tr("Changing the mod directory affects all your profiles! "
               "Mods not present (or named differently) in the new location "
               "will be disabled in all profiles. "
@@ -135,11 +137,9 @@ void SettingsDialog::accept()
   TutorableDialog::accept();
 }
 
-
 SettingsTab::SettingsTab(Settings& s, SettingsDialog& d)
-  : ui(d.ui), m_settings(s), m_dialog(d)
-{
-}
+    : ui(d.ui), m_settings(s), m_dialog(d)
+{}
 
 SettingsTab::~SettingsTab() = default;
 

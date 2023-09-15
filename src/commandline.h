@@ -1,8 +1,8 @@
 #ifndef MODORGANIZER_COMMANDLINE_INCLUDED
 #define MODORGANIZER_COMMANDLINE_INCLUDED
 #include "moshortcut.h"
-#include <vector>
 #include <memory>
+#include <vector>
 
 class OrganizerCore;
 class MOApplication;
@@ -37,7 +37,6 @@ public:
   //
   std::string moreInfo() const;
 
-
   // returns all options for this command, including hidden ones; used to parse
   // the command line
   //
@@ -58,11 +57,8 @@ public:
 
   // remembers the given values
   //
-  void set(
-    const std::wstring& originalLine,
-    po::variables_map vm,
-    std::vector<std::wstring> untouched);
-
+  void set(const std::wstring& originalLine, po::variables_map vm,
+           std::vector<std::wstring> untouched);
 
   // called as soon as the command line has been parsed; return something to
   // exit immediately
@@ -105,16 +101,13 @@ protected:
   {
     std::string name, description, usage, more;
 
-    Meta(
-      std::string name, std::string description,
-      std::string usage, std::string more);
+    Meta(std::string name, std::string description, std::string usage,
+         std::string more);
   };
-
 
   // meta
   //
   virtual Meta meta() const = 0;
-
 
   // returns visible options specific to this command
   //
@@ -127,7 +120,6 @@ protected:
   // returns positional arguments specific to this command
   //
   virtual po::positional_options_description getPositional() const;
-
 
   // returns the original command line
   //
@@ -147,7 +139,6 @@ private:
   std::vector<std::wstring> m_untouched;
 };
 
-
 // generates a crash dump for another MO process
 //
 class CrashDumpCommand : public Command
@@ -157,7 +148,6 @@ protected:
   Meta meta() const override;
   std::optional<int> runEarly() override;
 };
-
 
 // this is the `launch` command used when starting a process from within the
 // virtualized directory, see processrunner.cpp
@@ -182,10 +172,9 @@ protected:
 
   int SpawnWaitProcess(LPCWSTR workingDirectory, LPCWSTR commandLine);
 
-  LPCWSTR UntouchedCommandLineArguments(
-    int parseArgCount, std::vector<std::wstring>& parsedArgs);
+  LPCWSTR UntouchedCommandLineArguments(int parseArgCount,
+                                        std::vector<std::wstring>& parsedArgs);
 };
-
 
 // runs a program or an executable
 //
@@ -201,7 +190,6 @@ protected:
   bool canForwardToPrimary() const override;
   std::optional<int> runPostOrganizer(OrganizerCore& core) override;
 };
-
 
 // reloads the given plugin
 //
@@ -242,8 +230,6 @@ protected:
   bool canForwardToPrimary() const override;
   std::optional<int> runPostOrganizer(OrganizerCore& core) override;
 };
-
-
 
 // parses the command line and runs any given command
 //
@@ -323,7 +309,6 @@ public:
   //
   bool forwardToPrimary(MOMultiProcess& multiProcess);
 
-
   // clears parsed options, used when MO is "restarted" so the options aren't
   // processed again
   //
@@ -331,7 +316,7 @@ public:
 
   // global usage string plus usage for the given command, if any
   //
-  std::string usage(const Command* c=nullptr) const;
+  std::string usage(const Command* c = nullptr) const;
 
   // whether --pick was given
   //
@@ -389,6 +374,6 @@ private:
   std::optional<int> runEarly();
 };
 
-} // namespace
+}  // namespace cl
 
 #endif  // MODORGANIZER_COMMANDLINE_INCLUDED

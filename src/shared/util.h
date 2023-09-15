@@ -20,23 +20,24 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <filesystem>
 #include <log.h>
 #include <string>
-#include <filesystem>
 #include <versioninfo.h>
 
 class Executable;
 
-namespace MOShared {
+namespace MOShared
+{
 
 /// Test if a file (or directory) by the specified name exists
-bool FileExists(const std::string &filename);
-bool FileExists(const std::wstring &filename);
+bool FileExists(const std::string& filename);
+bool FileExists(const std::wstring& filename);
 
-bool FileExists(const std::wstring &searchPath, const std::wstring &filename);
+bool FileExists(const std::wstring& searchPath, const std::wstring& filename);
 
-std::string ToString(const std::wstring &source, bool utf8);
-std::wstring ToWString(const std::string &source, bool utf8);
+std::string ToString(const std::wstring& source, bool utf8);
+std::wstring ToWString(const std::string& source, bool utf8);
 
 std::string& ToLowerInPlace(std::string& text);
 std::string ToLowerCopy(const std::string& text);
@@ -45,7 +46,7 @@ std::wstring& ToLowerInPlace(std::wstring& text);
 std::wstring ToLowerCopy(const std::wstring& text);
 std::wstring ToLowerCopy(std::wstring_view text);
 
-bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
+bool CaseInsensitiveEqual(const std::wstring& lhs, const std::wstring& rhs);
 
 MOBase::VersionInfo createVersionInfo();
 QString getUsvfsVersionString();
@@ -62,8 +63,7 @@ inline FILETIME ToFILETIME(std::filesystem::file_time_type t)
   return ft;
 }
 
-} // namespace MOShared
-
+}  // namespace MOShared
 
 enum class Exit
 {
@@ -73,17 +73,17 @@ enum class Exit
   Force   = 0x04
 };
 
-const int RestartExitCode = INT_MAX;
+const int RestartExitCode  = INT_MAX;
 const int ReselectExitCode = INT_MAX - 1;
 
 using ExitFlags = QFlags<Exit>;
 Q_DECLARE_OPERATORS_FOR_FLAGS(ExitFlags);
 
-bool ExitModOrganizer(ExitFlags e=Exit::Normal);
+bool ExitModOrganizer(ExitFlags e = Exit::Normal);
 bool ModOrganizerExiting();
 bool ModOrganizerCanCloseNow();
 void ResetExitFlag();
 
 bool isNxmLink(const QString& link);
 
-#endif // UTIL_H
+#endif  // UTIL_H

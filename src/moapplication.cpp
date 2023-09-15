@@ -18,63 +18,59 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "moapplication.h"
-#include "settings.h"
 #include "commandline.h"
 #include "instancemanager.h"
-#include "organizercore.h"
-#include "thread_utils.h"
 #include "loglist.h"
+#include "mainwindow.h"
+#include "messagedialog.h"
 #include "multiprocess.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
-#include "tutorialmanager.h"
+#include "organizercore.h"
 #include "sanitychecks.h"
-#include "mainwindow.h"
-#include "messagedialog.h"
+#include "settings.h"
+#include "shared/appconfig.h"
 #include "shared/util.h"
+#include "thread_utils.h"
+#include "tutorialmanager.h"
+#include <QDebug>
+#include <QFile>
+#include <QPainter>
+#include <QProxyStyle>
+#include <QSSLSocket>
+#include <QStringList>
+#include <QStyleFactory>
+#include <QStyleOption>
 #include <iplugingame.h>
+#include <log.h>
 #include <report.h>
 #include <utility.h>
-#include <log.h>
-#include "shared/appconfig.h"
-#include <QFile>
-#include <QStringList>
-#include <QProxyStyle>
-#include <QStyleFactory>
-#include <QPainter>
-#include <QStyleOption>
-#include <QDebug>
-#include <QSSLSocket>
 
 // see addDllsToPath() below
-#pragma comment(linker, "/manifestDependency:\"" \
-    "name='dlls' " \
-    "processorArchitecture='x86' " \
-    "version='1.0.0.0' " \
-    "type='win32' \"")
+#pragma comment(linker, "/manifestDependency:\""                                       \
+                        "name='dlls' "                                                 \
+                        "processorArchitecture='x86' "                                 \
+                        "version='1.0.0.0' "                                           \
+                        "type='win32' \"")
 
 using namespace MOBase;
 using namespace MOShared;
 
 // style proxy that changes the appearance of drop indicators
 //
-class ProxyStyle : public QProxyStyle {
+class ProxyStyle : public QProxyStyle
+{
 public:
-  ProxyStyle(QStyle* baseStyle = 0)
-    : QProxyStyle(baseStyle)
-  {
-  }
+  ProxyStyle(QStyle* baseStyle = 0) : QProxyStyle(baseStyle) {}
 
-  void drawPrimitive(
-    PrimitiveElement element, const QStyleOption* option,
-    QPainter* painter, const QWidget* widget) const override
+  void drawPrimitive(PrimitiveElement element, const QStyleOption* option,
+                     QPainter* painter, const QWidget* widget) const override
   {
     if (element == QStyle::PE_IndicatorItemViewItemDrop) {
 
       // 0. Fix a bug that made the drop indicator sometimes appear on top
       // of the mod list when selecting a mod.
-      if (option->rect.height() == 0
-        && option->rect.bottomRight() == QPoint(-1, -1)) {
+      if (option->rect.height() == 0 && option->rect.bottomRight() == QPoint(-1, -1)) {
         return;
       }
 
@@ -96,25 +92,18 @@ public:
       painter->setPen(pen);
       painter->setBrush(QBrush(col));
       if (rect.height() == 0) {
-        QPoint tri[3] = {
-          rect.topLeft(),
-          rect.topLeft() + QPoint(-5,  5),
-          rect.topLeft() + QPoint(-5, -5)
-        };
+        QPoint tri[3] = {rect.topLeft(), rect.topLeft() + QPoint(-5, 5),
+                         rect.topLeft() + QPoint(-5, -5)};
         painter->drawPolygon(tri, 3);
         painter->drawLine(rect.topLeft(), rect.topRight());
-      }
-      else {
+      } else {
         painter->drawRoundedRect(rect, 5, 5);
       }
-    }
-    else {
+    } else {
       QProxyStyle::drawPrimitive(element, option, painter, widget);
     }
   }
-
 };
-
 
 // This adds the `dlls` directory to the path so the dlls can be found. How
 // MO is able to find dlls in there is a bit convoluted:
@@ -145,24 +134,22 @@ public:
 //
 void addDllsToPath()
 {
-  const auto dllsPath = QDir::toNativeSeparators(
-    QCoreApplication::applicationDirPath() + "/dlls");
+  const auto dllsPath =
+      QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/dlls");
 
-  QCoreApplication::setLibraryPaths(
-    QStringList(dllsPath) + QCoreApplication::libraryPaths());
+  QCoreApplication::setLibraryPaths(QStringList(dllsPath) +
+                                    QCoreApplication::libraryPaths());
 
   env::prependToPath(dllsPath);
 }
 
-
-MOApplication::MOApplication(int& argc, char** argv)
-  : QApplication(argc, argv)
+MOApplication::MOApplication(int& argc, char** argv) : QApplication(argc, argv)
 {
   TimeThis tt("MOApplication()");
 
   qputenv("QML_DISABLE_DISK_CACHE", "true");
 
-  connect(&m_styleWatcher, &QFileSystemWatcher::fileChanged, [&](auto&& file){
+  connect(&m_styleWatcher, &QFileSystemWatcher::fileChanged, [&](auto&& file) {
     log::debug("style file '{}' changed, reloading", file);
     updateStyle(file);
   });
@@ -180,9 +167,11 @@ OrganizerCore& MOApplication::core()
 void MOApplication::firstTimeSetup(MOMultiProcess& multiProcess)
 {
   connect(
-    &multiProcess, &MOMultiProcess::messageSent, this,
-    [this](auto&& s){ externalMessage(s); },
-    Qt::QueuedConnection);
+      &multiProcess, &MOMultiProcess::messageSent, this,
+      [this](auto&& s) {
+        externalMessage(s);
+      },
+      Qt::QueuedConnection);
 }
 
 int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
@@ -212,10 +201,9 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
 
   log::debug("command line: '{}'", QString::fromWCharArray(GetCommandLineW()));
 
-  log::info(
-    "starting Mod Organizer version {} revision {} in {}, usvfs: {}",
-    createVersionInfo().displayString(3), GITID,
-    QCoreApplication::applicationDirPath(), MOShared::getUsvfsVersionString());
+  log::info("starting Mod Organizer version {} revision {} in {}, usvfs: {}",
+            createVersionInfo().displayString(3), GITID,
+            QCoreApplication::applicationDirPath(), MOShared::getUsvfsVersionString());
 
   if (multiProcess.secondary()) {
     log::debug("another instance of MO is running but --multiple was given");
@@ -223,7 +211,6 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
 
   log::info("data path: {}", m_instance->directory());
   log::info("working directory: {}", QDir::currentPath());
-
 
   tt.start("MOApplication::doOneRun() settings");
 
@@ -238,7 +225,6 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
   log::debug("using ini at '{}'", m_settings->filename());
 
   OrganizerCore::setGlobalCoreDumpType(m_settings->diagnostics().coreDumpType());
-
 
   tt.start("MOApplication::doOneRun() log and checks");
 
@@ -257,8 +243,9 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
   }));
 
   auto sslBuildVersion = QSslSocket::sslLibraryBuildVersionString();
-  auto sslVersion = QSslSocket::sslLibraryVersionString();
-  log::debug("SSL Build Version: {}, SSL Runtime Version {}", sslBuildVersion, sslVersion);
+  auto sslVersion      = QSslSocket::sslLibraryVersionString();
+  log::debug("SSL Build Version: {}, SSL Runtime Version {}", sslBuildVersion,
+             sslVersion);
 
   // nexus interface
   tt.start("MOApplication::doOneRun() NexusInterface");
@@ -284,7 +271,7 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
   m_plugins->loadPlugins();
 
   // instance
-  if (auto r=setupInstanceLoop(*m_instance, *m_plugins)) {
+  if (auto r = setupInstanceLoop(*m_instance, *m_plugins)) {
     return *r;
   }
 
@@ -300,14 +287,14 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
   m_core->setManagedGame(m_instance->gamePlugin());
   m_core->createDefaultProfile();
 
-  log::info(
-    "using game plugin '{}' ('{}', variant {}, steam id '{}') at {}",
-    m_instance->gamePlugin()->gameName(),
-    m_instance->gamePlugin()->gameShortName(),
-    (m_settings->game().edition().value_or("").isEmpty() ?
-      "(none)" : *m_settings->game().edition()),
-    m_instance->gamePlugin()->steamAPPId(),
-    m_instance->gamePlugin()->gameDirectory().absolutePath());
+  log::info("using game plugin '{}' ('{}', variant {}, steam id '{}') at {}",
+            m_instance->gamePlugin()->gameName(),
+            m_instance->gamePlugin()->gameShortName(),
+            (m_settings->game().edition().value_or("").isEmpty()
+                 ? "(none)"
+                 : *m_settings->game().edition()),
+            m_instance->gamePlugin()->steamAPPId(),
+            m_instance->gamePlugin()->gameDirectory().absolutePath());
 
   CategoryFactory::instance().loadCategories();
   m_core->updateExecutablesList();
@@ -337,17 +324,15 @@ int MOApplication::run(MOMultiProcess& multiProcess)
 
   // tutorials
   log::debug("initializing tutorials");
-  TutorialManager::init(
-      qApp->applicationDirPath() + "/"
-          + QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
-      m_core.get());
+  TutorialManager::init(qApp->applicationDirPath() + "/" +
+                            QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
+                        m_core.get());
 
   // styling
   if (!setStyleFile(m_settings->interface().styleName().value_or(""))) {
     // disable invalid stylesheet
     m_settings->interface().setStyleName("");
   }
-
 
   int res = 1;
 
@@ -360,10 +345,11 @@ int MOApplication::run(MOMultiProcess& multiProcess)
     m_nexus->getAccessManager()->setTopLevelWidget(&mainWindow);
 
     connect(
-      &mainWindow, &MainWindow::styleChanged, this,
-      [this](auto&& file){ setStyleFile(file); },
-      Qt::QueuedConnection);
-
+        &mainWindow, &MainWindow::styleChanged, this,
+        [this](auto&& file) {
+          setStyleFile(file);
+        },
+        Qt::QueuedConnection);
 
     log::debug("displaying main window");
     mainWindow.show();
@@ -392,13 +378,13 @@ void MOApplication::externalMessage(const QString& message)
   MOShortcut moshortcut(message);
 
   if (moshortcut.isValid()) {
-    if(moshortcut.hasExecutable()) {
+    if (moshortcut.hasExecutable()) {
       try {
         m_core->processRunner()
-          .setFromShortcut(moshortcut)
-          .setWaitForCompletion(ProcessRunner::TriggerRefresh)
-          .run();
-      } catch(std::exception&) {
+            .setFromShortcut(moshortcut)
+            .setWaitForCompletion(ProcessRunner::TriggerRefresh)
+            .run();
+      } catch (std::exception&) {
         // user was already warned
       }
     }
@@ -408,33 +394,34 @@ void MOApplication::externalMessage(const QString& message)
   } else {
     cl::CommandLine cl;
 
-    if (auto r=cl.process(message.toStdWString())) {
-      log::debug(
-        "while processing external message, command line wants to "
-        "exit; ignoring");
+    if (auto r = cl.process(message.toStdWString())) {
+      log::debug("while processing external message, command line wants to "
+                 "exit; ignoring");
 
       return;
     }
 
-    if (auto i=cl.instance()) {
+    if (auto i = cl.instance()) {
       const auto ci = InstanceManager::singleton().currentInstance();
 
       if (*i != ci->displayName()) {
-        reportError(tr(
-          "This shortcut or command line is for instance '%1', but the current "
-          "instance is '%2'.")
-            .arg(*i).arg(ci->displayName()));
+        reportError(
+            tr("This shortcut or command line is for instance '%1', but the current "
+               "instance is '%2'.")
+                .arg(*i)
+                .arg(ci->displayName()));
 
         return;
       }
     }
 
-    if (auto p=cl.profile()) {
+    if (auto p = cl.profile()) {
       if (*p != m_core->profileName()) {
-        reportError(tr(
-          "This shortcut or command line is for profile '%1', but the current "
-          "profile is '%2'.")
-            .arg(*p).arg(m_core->profileName()));
+        reportError(
+            tr("This shortcut or command line is for profile '%1', but the current "
+               "profile is '%2'.")
+                .arg(*p)
+                .arg(m_core->profileName()));
 
         return;
       }
@@ -446,17 +433,14 @@ void MOApplication::externalMessage(const QString& message)
 
 std::unique_ptr<Instance> MOApplication::getCurrentInstance(bool forceSelect)
 {
-  auto& m = InstanceManager::singleton();
+  auto& m              = InstanceManager::singleton();
   auto currentInstance = m.currentInstance();
 
-  if (forceSelect || !currentInstance)
-  {
+  if (forceSelect || !currentInstance) {
     // clear any overrides that might have been given on the command line
     m.clearOverrides();
     currentInstance = selectInstance();
-  }
-  else
-  {
+  } else {
     if (!QDir(currentInstance->directory()).exists()) {
       // the previously used instance doesn't exist anymore
 
@@ -464,13 +448,12 @@ std::unique_ptr<Instance> MOApplication::getCurrentInstance(bool forceSelect)
       m.clearOverrides();
 
       if (m.hasAnyInstances()) {
-        reportError(QObject::tr(
-          "Instance at '%1' not found. Select another instance.")
-          .arg(currentInstance->directory()));
+        reportError(QObject::tr("Instance at '%1' not found. Select another instance.")
+                        .arg(currentInstance->directory()));
       } else {
-        reportError(QObject::tr(
-          "Instance at '%1' not found. You must create a new instance")
-          .arg(currentInstance->directory()));
+        reportError(
+            QObject::tr("Instance at '%1' not found. You must create a new instance")
+                .arg(currentInstance->directory()));
       }
 
       currentInstance = selectInstance();
@@ -480,11 +463,10 @@ std::unique_ptr<Instance> MOApplication::getCurrentInstance(bool forceSelect)
   return currentInstance;
 }
 
-std::optional<int> MOApplication::setupInstanceLoop(
-  Instance& currentInstance, PluginContainer& pc)
+std::optional<int> MOApplication::setupInstanceLoop(Instance& currentInstance,
+                                                    PluginContainer& pc)
 {
-  for (;;)
-  {
+  for (;;) {
     const auto setupResult = setupInstance(currentInstance, pc);
 
     if (setupResult == SetupInstanceResults::Okay) {
@@ -510,9 +492,9 @@ void MOApplication::purgeOldFiles()
   }
 
   // cycle log file
-  removeOldFiles(
-    qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath()),
-    "usvfs*.log", 5, QDir::Name);
+  removeOldFiles(qApp->property("dataPath").toString() + "/" +
+                     QString::fromStdWString(AppConfig::logPath()),
+                 "usvfs*.log", 5, QDir::Name);
 }
 
 void MOApplication::resetForRestart()
@@ -527,9 +509,9 @@ void MOApplication::resetForRestart()
   // clear instance and profile overrides
   InstanceManager::singleton().clearOverrides();
 
-  m_core = {};
-  m_plugins = {};
-  m_nexus = {};
+  m_core     = {};
+  m_plugins  = {};
+  m_nexus    = {};
   m_settings = {};
   m_instance = {};
 }
@@ -543,7 +525,9 @@ bool MOApplication::setStyleFile(const QString& styleName)
   }
   // set new stylesheet or clear it
   if (styleName.length() != 0) {
-    QString styleSheetName = applicationDirPath() + "/" + MOBase::ToQString(AppConfig::stylesheetsPath()) + "/" + styleName;
+    QString styleSheetName = applicationDirPath() + "/" +
+                             MOBase::ToQString(AppConfig::stylesheetsPath()) + "/" +
+                             styleName;
     if (QFile::exists(styleSheetName)) {
       m_styleWatcher.addPath(styleSheetName);
       updateStyle(styleSheetName);
@@ -561,16 +545,14 @@ bool MOApplication::notify(QObject* receiver, QEvent* event)
 {
   try {
     return QApplication::notify(receiver, event);
-  } catch (const std::exception &e) {
-    log::error(
-      "uncaught exception in handler (object {}, eventtype {}): {}",
-      receiver->objectName(), event->type(), e.what());
+  } catch (const std::exception& e) {
+    log::error("uncaught exception in handler (object {}, eventtype {}): {}",
+               receiver->objectName(), event->type(), e.what());
     reportError(tr("an error occurred: %1").arg(e.what()));
     return false;
   } catch (...) {
-    log::error(
-      "uncaught non-std exception in handler (object {}, eventtype {})",
-      receiver->objectName(), event->type());
+    log::error("uncaught non-std exception in handler (object {}, eventtype {})",
+               receiver->objectName(), event->type());
     reportError(tr("an error occurred"));
     return false;
   }
@@ -591,10 +573,8 @@ void MOApplication::updateStyle(const QString& fileName)
   }
 }
 
-
-MOSplash::MOSplash(
-  const Settings& settings, const QString& dataPath,
-  const MOBase::IPluginGame* game)
+MOSplash::MOSplash(const Settings& settings, const QString& dataPath,
+                   const MOBase::IPluginGame* game)
 {
   const auto splashPath = getSplashPath(settings, dataPath, game);
   if (splashPath.isEmpty()) {
@@ -623,9 +603,8 @@ void MOSplash::close()
   }
 }
 
-QString MOSplash::getSplashPath(
-  const Settings& settings, const QString& dataPath,
-  const MOBase::IPluginGame* game) const
+QString MOSplash::getSplashPath(const Settings& settings, const QString& dataPath,
+                                const MOBase::IPluginGame* game) const
 {
   if (!settings.useSplash()) {
     return {};

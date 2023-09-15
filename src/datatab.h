@@ -1,29 +1,34 @@
 #ifndef MODORGANIZER_DATATAB_INCLUDED
 #define MODORGANIZER_DATATAB_INCLUDED
 
-#include "modinfodialogfwd.h"
 #include "modinfo.h"
-#include <filterwidget.h>
+#include "modinfodialogfwd.h"
+#include <QCheckBox>
 #include <QPushButton>
 #include <QTreeWidget>
-#include <QCheckBox>
+#include <filterwidget.h>
 
-namespace Ui { class MainWindow; }
+namespace Ui
+{
+class MainWindow;
+}
 class OrganizerCore;
 class Settings;
 class PluginContainer;
 class FileTree;
 
-namespace MOShared { class DirectoryEntry; }
+namespace MOShared
+{
+class DirectoryEntry;
+}
 
 class DataTab : public QObject
 {
   Q_OBJECT;
 
 public:
-  DataTab(
-    OrganizerCore& core, PluginContainer& pc,
-    QWidget* parent, Ui::MainWindow* ui);
+  DataTab(OrganizerCore& core, PluginContainer& pc, QWidget* parent,
+          Ui::MainWindow* ui);
 
   void saveState(Settings& s) const;
   void restoreState(const Settings& s);
@@ -70,4 +75,4 @@ private:
   void doUpdateTree();
 };
 
-#endif // MODORGANIZER_DATATAB_INCLUDED
+#endif  // MODORGANIZER_DATATAB_INCLUDED

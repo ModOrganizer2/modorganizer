@@ -1,8 +1,8 @@
 #ifndef ENV_MODULE_H
 #define ENV_MODULE_H
 
-#include <QString>
 #include <QDateTime>
+#include <QString>
 
 namespace env
 {
@@ -22,7 +22,6 @@ struct HandleCloser
 };
 
 using HandlePtr = std::unique_ptr<HANDLE, HandleCloser>;
-
 
 // represents one module
 //
@@ -116,7 +115,6 @@ private:
   QString getFileDescription(std::byte* buffer) const;
 };
 
-
 // represents one process
 //
 class Process
@@ -149,7 +147,6 @@ private:
   std::vector<Process> m_children;
 };
 
-
 std::vector<Process> getRunningProcesses();
 std::vector<Module> getLoadedModules();
 
@@ -163,6 +160,6 @@ QString getProcessName(HANDLE process);
 DWORD getProcessParentID(DWORD pid);
 DWORD getProcessParentID(HANDLE handle);
 
-} // namespace env
+}  // namespace env
 
-#endif // ENV_MODULE_H
+#endif  // ENV_MODULE_H

@@ -1,29 +1,32 @@
 #include "persistentcookiejar.h"
-#include <log.h>
-#include <QTemporaryFile>
 #include <QDataStream>
 #include <QNetworkCookie>
+#include <QTemporaryFile>
+#include <log.h>
 
 using namespace MOBase;
 
-PersistentCookieJar::PersistentCookieJar(const QString &fileName, QObject *parent)
-: QNetworkCookieJar(parent), m_FileName(fileName)
+PersistentCookieJar::PersistentCookieJar(const QString& fileName, QObject* parent)
+    : QNetworkCookieJar(parent), m_FileName(fileName)
 {
   restore();
 }
 
-PersistentCookieJar::~PersistentCookieJar() {
+PersistentCookieJar::~PersistentCookieJar()
+{
   log::debug("save {}", m_FileName);
   save();
 }
 
-void PersistentCookieJar::clear() {
-  for (const QNetworkCookie &cookie : allCookies()) {
+void PersistentCookieJar::clear()
+{
+  for (const QNetworkCookie& cookie : allCookies()) {
     deleteCookie(cookie);
   }
 }
 
-void PersistentCookieJar::save() {
+void PersistentCookieJar::save()
+{
   QTemporaryFile file;
   if (!file.open()) {
     log::error("failed to save cookies: couldn't create temporary file");
@@ -34,7 +37,7 @@ void PersistentCookieJar::save() {
   QList<QNetworkCookie> cookies = allCookies();
   data << static_cast<quint32>(cookies.size());
 
-  for (const QNetworkCookie &cookie : allCookies()) {
+  for (const QNetworkCookie& cookie : allCookies()) {
     data << cookie.toRawForm();
   }
 
@@ -45,7 +48,7 @@ void PersistentCookieJar::save() {
         log::error("failed to save cookies: failed to remove {}", m_FileName);
         return;
       }
-    } // if it doesn't exists that's fine
+    }  // if it doesn't exists that's fine
   }
 
   if (!file.copy(m_FileName)) {
@@ -53,7 +56,8 @@ void PersistentCookieJar::save() {
   }
 }
 
-void PersistentCookieJar::restore() {
+void PersistentCookieJar::restore()
+{
   QFile file(m_FileName);
   if (!file.open(QIODevice::ReadOnly)) {
     // not necessarily a problem, the file may just not exist (yet)

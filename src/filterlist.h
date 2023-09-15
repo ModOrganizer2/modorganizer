@@ -4,7 +4,10 @@
 #include "modlistsortproxy.h"
 #include <QTreeWidgetItem>
 
-namespace Ui { class MainWindow; };
+namespace Ui
+{
+class MainWindow;
+};
 class CategoryFactory;
 class Settings;
 class OrganizerCore;
@@ -25,8 +28,8 @@ public:
 
 signals:
   void criteriaChanged(std::vector<ModListSortProxy::Criteria> criteria);
-  void optionsChanged(
-    ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep);
+  void optionsChanged(ModListSortProxy::FilterMode mode,
+                      ModListSortProxy::SeparatorsMode sep);
 
 private:
   class CriteriaItem;
@@ -44,14 +47,13 @@ private:
   std::vector<ModListSortProxy::Criteria> selectedCriteria() const;
   bool cycleItem(QTreeWidgetItem* item, int direction);
 
-  QTreeWidgetItem* addCriteriaItem(
-    QTreeWidgetItem *root, const QString &name, int categoryID,
-    ModListSortProxy::CriteriaType type);
+  QTreeWidgetItem* addCriteriaItem(QTreeWidgetItem* root, const QString& name,
+                                   int categoryID, ModListSortProxy::CriteriaType type);
 
   void addContentCriteria();
-  void addCategoryCriteria(
-    QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID);
+  void addCategoryCriteria(QTreeWidgetItem* root, const std::set<int>& categoriesUsed,
+                           int targetID);
   void addSpecialCriteria(int type);
 };
 
-#endif // MODORGANIZER_CATEGORIESLIST_INCLUDED
+#endif  // MODORGANIZER_CATEGORIESLIST_INCLUDED

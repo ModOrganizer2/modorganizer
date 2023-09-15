@@ -1,21 +1,26 @@
 #include "updatedialog.h"
 #include "ui_updatedialog.h"
 
-#include "lootdialog.h" // for MarkdownPage
+#include "lootdialog.h"  // for MarkdownPage
 #include <QWebChannel>
 
 using namespace MOBase;
 
-UpdateDialog::UpdateDialog(QWidget* parent) :
-  QDialog(parent, Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint), ui(new Ui::UpdateDialog)
+UpdateDialog::UpdateDialog(QWidget* parent)
+    : QDialog(parent, Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint),
+      ui(new Ui::UpdateDialog)
 {
   // Basic UI stuff
   ui->setupUi(this);
-  connect(ui->installButton, &QPushButton::pressed, this, [&]{ done(QDialog::Accepted); });
-  connect(ui->cancelButton, &QPushButton::pressed, this, [&]{ done(QDialog::Rejected); });
+  connect(ui->installButton, &QPushButton::pressed, this, [&] {
+    done(QDialog::Accepted);
+  });
+  connect(ui->cancelButton, &QPushButton::pressed, this, [&] {
+    done(QDialog::Rejected);
+  });
 
   // Replace a label with an icon
-  QIcon icon = style()->standardIcon(QStyle::SP_MessageBoxQuestion);
+  QIcon icon     = style()->standardIcon(QStyle::SP_MessageBoxQuestion);
   QPixmap pixmap = icon.pixmap(QSize(32, 32));
   ui->iconLabel->setPixmap(pixmap);
   ui->iconLabel->setScaledContents(true);
@@ -44,7 +49,9 @@ UpdateDialog::UpdateDialog(QWidget* parent) :
 
   // Setting up the expander
   m_expander.set(ui->detailsButton, ui->detailsWidget);
-  connect(&m_expander, &ExpanderWidget::toggled, this, [&]{ adjustSize(); });
+  connect(&m_expander, &ExpanderWidget::toggled, this, [&] {
+    adjustSize();
+  });
 
   // Adjust sizes after the expander hides stuff
   adjustSize();
@@ -59,9 +66,8 @@ void UpdateDialog::setChangeLogs(const QString& text)
 
 void UpdateDialog::setVersions(const QString& oldVersion, const QString& newVersion)
 {
-  ui->updateLabel->setText(
-    tr("Mod Organizer %1 is available.  The current version is %2.  Updating will not affect your mods or profiles.")
-    .arg(newVersion)
-    .arg(oldVersion)
-  );
+  ui->updateLabel->setText(tr("Mod Organizer %1 is available.  The current version is "
+                              "%2.  Updating will not affect your mods or profiles.")
+                               .arg(newVersion)
+                               .arg(oldVersion));
 }

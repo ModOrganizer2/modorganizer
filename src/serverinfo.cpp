@@ -5,17 +5,12 @@ using namespace MOBase;
 
 const std::size_t MaxDownloadCount = 5;
 
+ServerInfo::ServerInfo() : ServerInfo({}, false, {}, 0, {}) {}
 
-ServerInfo::ServerInfo()
-  : ServerInfo({}, false, {}, 0, {})
-{
-}
-
-ServerInfo::ServerInfo(
-  QString name, bool premium, QDate last, int preferred,
-  SpeedList lastDownloads) :
-    m_name(std::move(name)), m_premium(premium), m_lastSeen(std::move(last)),
-    m_preferred(preferred), m_lastDownloads(std::move(lastDownloads))
+ServerInfo::ServerInfo(QString name, bool premium, QDate last, int preferred,
+                       SpeedList lastDownloads)
+    : m_name(std::move(name)), m_premium(premium), m_lastSeen(std::move(last)),
+      m_preferred(preferred), m_lastDownloads(std::move(lastDownloads))
 {
   if (m_lastDownloads.size() > MaxDownloadCount) {
     m_lastDownloads.resize(MaxDownloadCount);
@@ -84,18 +79,15 @@ int ServerInfo::averageSpeed() const
 void ServerInfo::addDownload(int bytesPerSecond)
 {
   if (bytesPerSecond <= 0) {
-    log::error(
-      "trying to add download with {} B/s to server '{}'; ignoring",
-      bytesPerSecond, m_name);
+    log::error("trying to add download with {} B/s to server '{}'; ignoring",
+               bytesPerSecond, m_name);
 
     return;
   }
 
   if (m_lastDownloads.size() == MaxDownloadCount) {
-    std::rotate(
-      m_lastDownloads.begin(),
-      m_lastDownloads.begin() + 1,
-      m_lastDownloads.end());
+    std::rotate(m_lastDownloads.begin(), m_lastDownloads.begin() + 1,
+                m_lastDownloads.end());
 
     m_lastDownloads.back() = bytesPerSecond;
   } else {
@@ -105,12 +97,11 @@ void ServerInfo::addDownload(int bytesPerSecond)
   log::debug("added download at {} B/s to server '{}'", bytesPerSecond, m_name);
 }
 
-
 void ServerList::add(ServerInfo s)
 {
   m_servers.push_back(std::move(s));
 
-  std::sort(m_servers.begin(), m_servers.end(), [](auto&& a, auto&& b){
+  std::sort(m_servers.begin(), m_servers.end(), [](auto&& a, auto&& b) {
     return (a.preferred() < b.preferred());
   });
 }
@@ -162,13 +153,13 @@ void ServerList::cleanup()
 {
   QDate now = QDate::currentDate();
 
-  for (auto itor=m_servers.begin(); itor!=m_servers.end(); ) {
+  for (auto itor = m_servers.begin(); itor != m_servers.end();) {
     const QDate lastSeen = itor->lastSeen();
 
     if (lastSeen.daysTo(now) > 30) {
-      log::debug(
-        "removing server {} since it hasn't been available for downloads "
-        "in over a month", itor->name());
+      log::debug("removing server {} since it hasn't been available for downloads "
+                 "in over a month",
+                 itor->name());
 
       itor = m_servers.erase(itor);
     } else {

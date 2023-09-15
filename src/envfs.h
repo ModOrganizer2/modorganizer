@@ -29,25 +29,15 @@ struct Directory
   Directory(std::wstring_view name);
 };
 
-
 template <class T>
 class ThreadPool
 {
 public:
-  ThreadPool(std::size_t max=1)
-  {
-    setMax(max);
-  }
+  ThreadPool(std::size_t max = 1) { setMax(max); }
 
-  ~ThreadPool()
-  {
-    stopAndJoin();
-  }
+  ~ThreadPool() { stopAndJoin(); }
 
-  void setMax(std::size_t n)
-  {
-    m_threads.resize(n);
-  }
+  void setMax(std::size_t n) { m_threads.resize(n); }
 
   void stopAndJoin()
   {
@@ -124,10 +114,11 @@ private:
 
     std::atomic<bool> stop;
 
-    ThreadInfo()
-      : busy(true), ready(false), stop(false)
+    ThreadInfo() : busy(true), ready(false), stop(false)
     {
-      thread = MOShared::startSafeThread([&]{ run(); });
+      thread = MOShared::startSafeThread([&] {
+        run();
+      });
     }
 
     ~ThreadInfo()
@@ -155,7 +146,9 @@ private:
 
       while (!stop) {
         std::unique_lock lock(mutex);
-        cv.wait(lock, [&]{ return ready; });
+        cv.wait(lock, [&] {
+          return ready;
+        });
 
         if (stop) {
           break;
@@ -164,7 +157,7 @@ private:
         o.run();
 
         ready = false;
-        busy = false;
+        busy  = false;
       }
     }
   };
@@ -172,33 +165,28 @@ private:
   std::list<ThreadInfo> m_threads;
 };
 
-
-using DirStartF = void (void*, std::wstring_view);
-using DirEndF = void (void*, std::wstring_view);
-using FileF = void (void*, std::wstring_view, FILETIME, uint64_t);
+using DirStartF = void(void*, std::wstring_view);
+using DirEndF   = void(void*, std::wstring_view);
+using FileF     = void(void*, std::wstring_view, FILETIME, uint64_t);
 
 void setHandleCloserThreadCount(std::size_t n);
-
 
 class DirectoryWalker
 {
 public:
-  void forEachEntry(
-    const std::wstring& path, void* cx,
-    DirStartF* dirStartF, DirEndF* dirEndF, FileF* fileF);
+  void forEachEntry(const std::wstring& path, void* cx, DirStartF* dirStartF,
+                    DirEndF* dirEndF, FileF* fileF);
 
 private:
   std::vector<std::unique_ptr<unsigned char[]>> m_buffers;
 };
 
-
-void forEachEntry(
-  const std::wstring& path, void* cx,
-  DirStartF* dirStartF, DirEndF* dirEndF, FileF* fileF);
+void forEachEntry(const std::wstring& path, void* cx, DirStartF* dirStartF,
+                  DirEndF* dirEndF, FileF* fileF);
 
 Directory getFilesAndDirs(const std::wstring& path);
 Directory getFilesAndDirsWithFind(const std::wstring& path);
 
-} // namespace
+}  // namespace env
 
-#endif // ENV_ENVFS_H
+#endif  // ENV_ENVFS_H

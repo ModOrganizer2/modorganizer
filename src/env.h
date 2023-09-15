@@ -12,7 +12,6 @@ class SecurityProduct;
 class WindowsInfo;
 class Metrics;
 
-
 // used by DesktopDCPtr, calls ReleaseDC(0, dc) as the deleter
 //
 struct DesktopDCReleaser
@@ -28,7 +27,6 @@ struct DesktopDCReleaser
 };
 
 using DesktopDCPtr = std::unique_ptr<HDC, DesktopDCReleaser>;
-
 
 // used by HMenuPtr, calls DestroyMenu() as the deleter
 //
@@ -46,7 +44,6 @@ struct HMenuFreer
 
 using HMenuPtr = std::unique_ptr<HMENU, HMenuFreer>;
 
-
 // used by LibraryPtr, calls FreeLibrary as the deleter
 //
 struct LibraryFreer
@@ -63,7 +60,6 @@ struct LibraryFreer
 
 using LibraryPtr = std::unique_ptr<HINSTANCE, LibraryFreer>;
 
-
 // used by COMPtr, calls Release() as the deleter
 //
 struct COMReleaser
@@ -79,20 +75,15 @@ struct COMReleaser
 template <class T>
 using COMPtr = std::unique_ptr<T, COMReleaser>;
 
-
 // used by MallocPtr, calls std::free() as the deleter
 //
 struct MallocFreer
 {
-  void operator()(void* p)
-  {
-    std::free(p);
-  }
+  void operator()(void* p) { std::free(p); }
 };
 
 template <class T>
 using MallocPtr = std::unique_ptr<T, MallocFreer>;
-
 
 // used by LocalPtr, calls LocalFree() as the deleter
 //
@@ -101,15 +92,11 @@ struct LocalFreer
 {
   using pointer = T;
 
-  void operator()(T p)
-  {
-    ::LocalFree(p);
-  }
+  void operator()(T p) { ::LocalFree(p); }
 };
 
 template <class T>
 using LocalPtr = std::unique_ptr<T, LocalFreer<T>>;
-
 
 // used by the CoTaskMemPtr, calls CoTaskMemFree() as the deleter
 //
@@ -118,15 +105,11 @@ struct CoTaskMemFreer
 {
   using pointer = T;
 
-  void operator()(T p)
-  {
-    ::CoTaskMemFree(p);
-  }
+  void operator()(T p) { ::CoTaskMemFree(p); }
 };
 
 template <class T>
 using CoTaskMemPtr = std::unique_ptr<T, CoTaskMemFreer<T>>;
-
 
 // creates a console in the constructor and destroys it in the destructor,
 // also redirects standard streams
@@ -152,17 +135,16 @@ private:
   FILE* m_err;
 };
 
-
 class ModuleNotification
 {
 public:
-  ModuleNotification(QObject* o, std::function<void (Module)> f);
+  ModuleNotification(QObject* o, std::function<void(Module)> f);
   ~ModuleNotification();
 
-  ModuleNotification(const ModuleNotification&) = delete;
+  ModuleNotification(const ModuleNotification&)            = delete;
   ModuleNotification& operator=(const ModuleNotification&) = delete;
 
-  ModuleNotification(ModuleNotification&&) = default;
+  ModuleNotification(ModuleNotification&&)            = default;
   ModuleNotification& operator=(ModuleNotification&&) = default;
 
   void setCookie(void* c);
@@ -172,9 +154,8 @@ private:
   void* m_cookie;
   QObject* m_object;
   std::set<QString> m_loaded;
-  std::function<void (Module)> m_f;
+  std::function<void(Module)> m_f;
 };
-
 
 // represents the process's environment
 //
@@ -211,8 +192,8 @@ public:
   // will call `f` on the same thread `o` is running on every time a module
   // is loaded in the process
   //
-  std::unique_ptr<ModuleNotification> onModuleLoaded(
-    QObject* o, std::function<void (Module)> f);
+  std::unique_ptr<ModuleNotification> onModuleLoaded(QObject* o,
+                                                     std::function<void(Module)> f);
 
   // logs the environment
   //
@@ -229,7 +210,6 @@ private:
   void dumpDisks(const Settings& s) const;
 };
 
-
 // environment variables
 //
 QString get(const QString& name);
@@ -239,7 +219,6 @@ QString path();
 QString appendToPath(const QString& s);
 QString prependToPath(const QString& s);
 void setPath(const QString& s);
-
 
 class Service
 {
@@ -258,7 +237,6 @@ public:
     Running
   };
 
-
   explicit Service(QString name);
   Service(QString name, StartType st, Status s);
 
@@ -276,11 +254,9 @@ private:
   Status m_status;
 };
 
-
 Service getService(const QString& name);
 QString toString(Service::StartType st);
 QString toString(Service::Status st);
-
 
 struct Association
 {
@@ -300,7 +276,6 @@ struct Association
 //
 Association getAssociation(const QFileInfo& file);
 
-
 // returns whether the given value exists
 //
 bool registryValueExists(const QString& key, const QString& value);
@@ -313,6 +288,6 @@ void deleteRegistryKeyIfEmpty(const QString& name);
 //
 std::filesystem::path thisProcessPath();
 
-} // namespace env
+}  // namespace env
 
-#endif // ENV_ENV_H
+#endif  // ENV_ENV_H

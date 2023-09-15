@@ -1,22 +1,20 @@
 #include "moshortcut.h"
 
 MOShortcut::MOShortcut(const QString& link)
-  : m_valid(link.startsWith("moshortcut://"))
-  , m_hasInstance(false)
-  , m_hasExecutable(false)
+    : m_valid(link.startsWith("moshortcut://")), m_hasInstance(false),
+      m_hasExecutable(false)
 {
   if (m_valid) {
     int start = (int)strlen("moshortcut://");
-    int sep = link.indexOf(':', start);
+    int sep   = link.indexOf(':', start);
     if (sep >= 0) {
       m_hasInstance = true;
-      m_instance = link.mid(start, sep - start);
-      m_executable = link.mid(sep + 1);
-    }
-    else
+      m_instance    = link.mid(start, sep - start);
+      m_executable  = link.mid(sep + 1);
+    } else
       m_executable = link.mid(start);
-	if(!(m_executable==""))
-		m_hasExecutable=true;
+    if (!(m_executable == ""))
+      m_hasExecutable = true;
   }
 }
 

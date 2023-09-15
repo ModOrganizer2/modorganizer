@@ -1,10 +1,10 @@
 #include "envshortcut.h"
 #include "env.h"
 #include "executableslist.h"
-#include "instancemanager.h"
 #include "filesystemutilities.h"
-#include <utility.h>
+#include "instancemanager.h"
 #include <log.h>
+#include <utility.h>
 
 namespace env
 {
@@ -14,15 +14,9 @@ using namespace MOBase;
 class ShellLinkException
 {
 public:
-  ShellLinkException(QString s)
-    : m_what(std::move(s))
-  {
-  }
+  ShellLinkException(QString s) : m_what(std::move(s)) {}
 
-  const QString& what() const
-  {
-    return m_what;
-  }
+  const QString& what() const { return m_what; }
 
 private:
   QString m_what;
@@ -99,9 +93,7 @@ private:
   void throwOnFail(HRESULT r, const QString& s)
   {
     if (FAILED(r)) {
-      throw ShellLinkException(QString("%1, %2")
-        .arg(s)
-        .arg(formatSystemMessage(r)));
+      throw ShellLinkException(QString("%1, %2").arg(s).arg(formatSystemMessage(r)));
     }
   }
 
@@ -109,9 +101,8 @@ private:
   {
     void* link = nullptr;
 
-    const auto r = CoCreateInstance(
-      CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
-      IID_IShellLink, &link);
+    const auto r = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
+                                    IID_IShellLink, &link);
 
     throwOnFail(r, "failed to create IShellLink instance");
 
@@ -137,23 +128,18 @@ private:
   }
 };
 
+Shortcut::Shortcut() : m_iconIndex(0) {}
 
-Shortcut::Shortcut()
-  : m_iconIndex(0)
-{
-}
-
-Shortcut::Shortcut(const Executable& exe)
-  : Shortcut()
+Shortcut::Shortcut(const Executable& exe) : Shortcut()
 {
   const auto i = *InstanceManager::singleton().currentInstance();
 
-  m_name = MOBase::sanitizeFileName(exe.title());
+  m_name   = MOBase::sanitizeFileName(exe.title());
   m_target = QFileInfo(qApp->applicationFilePath()).absoluteFilePath();
 
   m_arguments = QString("\"moshortcut://%1:%2\"")
-    .arg(i.isPortable() ? "" : i.displayName())
-    .arg(exe.title());
+                    .arg(i.isPortable() ? "" : i.displayName())
+                    .arg(exe.title());
 
   m_description = QString("Run %1 with ModOrganizer").arg(exe.title());
 
@@ -190,7 +176,7 @@ Shortcut& Shortcut::description(const QString& s)
 
 Shortcut& Shortcut::icon(const QString& s, int index)
 {
-  m_icon = s;
+  m_icon      = s;
   m_iconIndex = index;
   return *this;
 }
@@ -222,21 +208,15 @@ bool Shortcut::toggle(Locations loc)
 
 bool Shortcut::add(Locations loc)
 {
-  log::debug(
-    "adding shortcut to {}:\n"
-    "  . name: '{}'\n"
-    "  . target: '{}'\n"
-    "  . arguments: '{}'\n"
-    "  . description: '{}'\n"
-    "  . icon: '{}' @ {}\n"
-    "  . working directory: '{}'",
-    toString(loc),
-    m_name,
-    m_target,
-    m_arguments,
-    m_description,
-    m_icon, m_iconIndex,
-    m_workingDirectory);
+  log::debug("adding shortcut to {}:\n"
+             "  . name: '{}'\n"
+             "  . target: '{}'\n"
+             "  . arguments: '{}'\n"
+             "  . description: '{}'\n"
+             "  . icon: '{}' @ {}\n"
+             "  . working directory: '{}'",
+             toString(loc), m_name, m_target, m_arguments, m_description, m_icon,
+             m_iconIndex, m_workingDirectory);
 
   if (m_target.isEmpty()) {
     log::error("shortcut: target is empty");
@@ -250,8 +230,7 @@ bool Shortcut::add(Locations loc)
 
   log::debug("shorcut file will be saved at '{}'", path);
 
-  try
-  {
+  try {
     ShellLinkWrapper link;
 
     link.setPath(m_target);
@@ -263,9 +242,7 @@ bool Shortcut::add(Locations loc)
     link.save(path);
 
     return true;
-  }
-  catch(ShellLinkException& e)
-  {
+  } catch (ShellLinkException& e) {
     log::error("{}\nshortcut file was not saved", e.what());
   }
 
@@ -291,9 +268,7 @@ bool Shortcut::remove(Locations loc)
   if (!MOBase::shellDelete({path})) {
     const auto e = ::GetLastError();
 
-    log::error(
-      "failed to remove shortcut '{}', {}",
-      path, formatSystemMessage(e));
+    log::error("failed to remove shortcut '{}', {}", path, formatSystemMessage(e));
 
     return false;
   }
@@ -320,26 +295,22 @@ QString Shortcut::shortcutDirectory(Locations loc) const
 {
   QString dir;
 
-  try
-  {
-    switch (loc)
-    {
-      case Desktop:
-        dir = MOBase::getDesktopDirectory();
-        break;
+  try {
+    switch (loc) {
+    case Desktop:
+      dir = MOBase::getDesktopDirectory();
+      break;
 
-      case StartMenu:
-        dir = MOBase::getStartMenuDirectory();
-        break;
+    case StartMenu:
+      dir = MOBase::getStartMenuDirectory();
+      break;
 
-      case None:
-      default:
-        log::error("shortcut: bad location {}", loc);
-        break;
+    case None:
+    default:
+      log::error("shortcut: bad location {}", loc);
+      break;
     }
-  }
-  catch(std::exception&)
-  {
+  } catch (std::exception&) {
   }
 
   return QDir::toNativeSeparators(dir);
@@ -355,23 +326,21 @@ QString Shortcut::shortcutFilename() const
   return m_name + ".lnk";
 }
 
-
 QString toString(Shortcut::Locations loc)
 {
-  switch (loc)
-  {
-    case Shortcut::None:
-      return "none";
+  switch (loc) {
+  case Shortcut::None:
+    return "none";
 
-    case Shortcut::Desktop:
-      return "desktop";
+  case Shortcut::Desktop:
+    return "desktop";
 
-    case Shortcut::StartMenu:
-      return "start menu";
+  case Shortcut::StartMenu:
+    return "start menu";
 
-    default:
-      return QString("? (%1)").arg(static_cast<int>(loc));
+  default:
+    return QString("? (%1)").arg(static_cast<int>(loc));
   }
 }
 
-} // namespace
+}  // namespace env

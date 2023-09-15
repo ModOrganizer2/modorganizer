@@ -26,7 +26,6 @@ public:
     StartMenu
   };
 
-
   // empty shortcut
   //
   Shortcut();
@@ -53,12 +52,11 @@ public:
 
   // path to a binary that contains the icon and its index
   //
-  Shortcut& icon(const QString& s, int index=0);
+  Shortcut& icon(const QString& s, int index = 0);
 
   // "start in" option for this shortcut
   //
   Shortcut& workingDirectory(const QString& s);
-
 
   // returns whether this shortcut already exists at the given location; this
   // does not check whether the shortcut parameters are different, it merely if
@@ -100,11 +98,10 @@ private:
   QString shortcutFilename() const;
 };
 
-
 // returns a string representation of the given location
 //
 QString toString(Shortcut::Locations loc);
 
-} // namespace
+}  // namespace env
 
-#endif // ENV_SHORTCUT_H
+#endif  // ENV_SHORTCUT_H

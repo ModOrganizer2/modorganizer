@@ -1,13 +1,13 @@
 #ifndef MODORGANIZER_MOSHORTCUT_INCLUDED
 #define MODORGANIZER_MOSHORTCUT_INCLUDED
 
-#include <QString>
 #include "instancemanager.h"
+#include <QString>
 
 class MOShortcut
 {
 public:
-  MOShortcut(const QString& link={});
+  MOShortcut(const QString& link = {});
 
   // true if initialized using a valid moshortcut link
   //

@@ -14,10 +14,10 @@ public:
   ShellMenu(QMainWindow* mw);
 
   // noncopyable
-  ShellMenu(const ShellMenu&) = delete;
+  ShellMenu(const ShellMenu&)            = delete;
   ShellMenu& operator=(const ShellMenu&) = delete;
-  ShellMenu(ShellMenu&&) = default;
-  ShellMenu& operator=(ShellMenu&&) = default;
+  ShellMenu(ShellMenu&&)                 = default;
+  ShellMenu& operator=(ShellMenu&&)      = default;
 
   void addFile(QFileInfo fi);
   int fileCount() const;
@@ -48,10 +48,8 @@ private:
   CoTaskMemPtr<LPITEMIDLIST> getIDList(IPersistIDList* pidlist);
   HMenuPtr createDummyMenu(const QString& what);
 
-  void onMenuSelect(
-    HWND hwnd, HMENU hmenu, int item, HMENU hmenuPopup, UINT flags);
+  void onMenuSelect(HWND hwnd, HMENU hmenu, int item, HMENU hmenuPopup, UINT flags);
 };
-
 
 class ShellMenuCollection
 {
@@ -77,10 +75,9 @@ private:
 
   bool wndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, LRESULT* out);
 
-  void onMenuSelect(
-    HWND hwnd, HMENU hmenu, int item, HMENU hmenuPopup, UINT flags);
+  void onMenuSelect(HWND hwnd, HMENU hmenu, int item, HMENU hmenuPopup, UINT flags);
 };
 
-} // namespace
+}  // namespace env
 
-#endif // ENV_SHELL_H
+#endif  // ENV_SHELL_H

@@ -21,44 +21,48 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define DOWNLOADMANAGER_H
 
 #include "serverinfo.h"
-#include <idownloadmanager.h>
-#include <modrepositoryfileinfo.h>
-#include <set>
-#include <QObject>
-#include <QUrl>
-#include <QQueue>
+#include <QElapsedTimer>
 #include <QFile>
+#include <QFileSystemWatcher>
+#include <QMap>
 #include <QNetworkReply>
+#include <QObject>
+#include <QQueue>
+#include <QSettings>
+#include <QStringList>
 #include <QTime>
 #include <QTimer>
-#include <QElapsedTimer>
+#include <QUrl>
 #include <QVector>
-#include <QMap>
-#include <QStringList>
-#include <QFileSystemWatcher>
-#include <QSettings>
-#include <boost/signals2.hpp>
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
+#include <boost/signals2.hpp>
+#include <idownloadmanager.h>
+#include <modrepositoryfileinfo.h>
+#include <set>
 using namespace boost::accumulators;
 
-namespace MOBase { class IPluginGame; }
+namespace MOBase
+{
+class IPluginGame;
+}
 
 class NexusInterface;
 class PluginContainer;
 class OrganizerCore;
 
 /*!
- * \brief manages downloading of files and provides progress information for gui elements
+ * \brief manages downloading of files and provides progress information for gui
+ *elements
  **/
 class DownloadManager : public QObject
 {
   Q_OBJECT
 
 public:
-
-  enum DownloadState {
+  enum DownloadState
+  {
     STATE_STARTED = 0,
     STATE_DOWNLOADING,
     STATE_CANCELING,
@@ -76,8 +80,8 @@ public:
   };
 
 private:
-
-  struct DownloadInfo {
+  struct DownloadInfo
+  {
     ~DownloadInfo() { delete m_FileInfo; }
     accumulator_set<qint64, stats<tag::rolling_mean>> m_DownloadAcc;
     accumulator_set<qint64, stats<tag::rolling_mean>> m_DownloadTimeAcc;
@@ -86,7 +90,7 @@ private:
     unsigned int m_DownloadID;
     QString m_FileName;
     QFile m_Output;
-    QNetworkReply *m_Reply;
+    QNetworkReply* m_Reply;
     QElapsedTimer m_StartTime;
     qint64 m_PreResumeSize;
     std::pair<int, QString> m_Progress;
@@ -96,7 +100,8 @@ private:
     QStringList m_Urls;
     qint64 m_ResumePos;
     qint64 m_TotalSize;
-    QDateTime m_Created; // used as a cache in DownloadManager::getFileTime, may not be valid elsewhere
+    QDateTime m_Created;  // used as a cache in DownloadManager::getFileTime, may not be
+                          // valid elsewhere
     QByteArray m_Hash;
     QStringList m_GamesToQuery;
     QString m_RemoteFileName;
@@ -106,22 +111,23 @@ private:
 
     quint32 m_TaskProgressId;
 
-    MOBase::ModRepositoryFileInfo *m_FileInfo { nullptr };
+    MOBase::ModRepositoryFileInfo* m_FileInfo{nullptr};
 
     bool m_Hidden;
 
-    static DownloadInfo *createNew(const MOBase::ModRepositoryFileInfo *fileInfo, const QStringList &URLs);
-    static DownloadInfo *createFromMeta(
-      const QString &filePath, bool showHidden, const QString outputDirectory,
-      std::optional<uint64_t> fileSize={});
+    static DownloadInfo* createNew(const MOBase::ModRepositoryFileInfo* fileInfo,
+                                   const QStringList& URLs);
+    static DownloadInfo* createFromMeta(const QString& filePath, bool showHidden,
+                                        const QString outputDirectory,
+                                        std::optional<uint64_t> fileSize = {});
 
     /**
      * @brief rename the file
      * this will change the file name as well as the display name. It will automatically
      * append .unfinished to the name if this file is still being downloaded
      * @param newName the new name to setName
-     * @param renameFile if true, the file is assumed to exist and renamed. If the file does not
-     *                   yet exist, set this to false
+     * @param renameFile if true, the file is assumed to exist and renamed. If the file
+     *does not yet exist, set this to false
      **/
     void setName(QString newName, bool renameFile);
 
@@ -130,13 +136,17 @@ private:
     bool isPausedState();
 
     QString currentURL();
+
   private:
     static unsigned int s_NextDownloadID;
+
   private:
-    DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_HasData(false),
-      m_DownloadTimeLast(0), m_DownloadLast(0),
-      m_DownloadAcc(tag::rolling_window::window_size = 200),
-      m_DownloadTimeAcc(tag::rolling_window::window_size = 200) {}
+    DownloadInfo()
+        : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_HasData(false),
+          m_DownloadTimeLast(0), m_DownloadLast(0),
+          m_DownloadAcc(tag::rolling_window::window_size = 200),
+          m_DownloadTimeAcc(tag::rolling_window::window_size = 200)
+    {}
   };
 
   friend class DownloadManagerProxy;
@@ -144,14 +154,14 @@ private:
   using SignalDownloadCallback = boost::signals2::signal<void(int)>;
 
 public:
-
   /**
    * @brief constructor
    *
-   * @param nexusInterface interface to use to retrieve information from the relevant nexus page
+   * @param nexusInterface interface to use to retrieve information from the relevant
+   *nexus page
    * @param parent parent object
    **/
-  explicit DownloadManager(NexusInterface *nexusInterface, QObject *parent);
+  explicit DownloadManager(NexusInterface* nexusInterface, QObject* parent);
 
   ~DownloadManager();
 
@@ -165,10 +175,12 @@ public:
   bool downloadsInProgress();
 
   /**
-  * @brief determine if a download is currently in progress, does not count paused ones.
-  *
-  * @return true if there is currently a download in progress (that is not paused already).
-  **/
+   * @brief determine if a download is currently in progress, does not count paused
+   *ones.
+   *
+   * @return true if there is currently a download in progress (that is not paused
+   *already).
+   **/
   bool downloadsInProgressNoPause();
 
   /**
@@ -176,17 +188,19 @@ public:
    *
    * @param outputDirectory the new output directory
    **/
-  void setOutputDirectory(const QString &outputDirectory, const bool refresh = true);
+  void setOutputDirectory(const QString& outputDirectory, const bool refresh = true);
 
   /**
-  * @brief disables feedback from the downlods fileSystemWhatcher untill disableDownloadsWatcherEnd() is called
-  *
-  **/
+   * @brief disables feedback from the downlods fileSystemWhatcher untill
+   *disableDownloadsWatcherEnd() is called
+   *
+   **/
   static void startDisableDirWatcher();
 
   /**
-  * @brief re-enables feedback from the downlods fileSystemWhatcher after disableDownloadsWatcherStart() was called
-  **/
+   * @brief re-enables feedback from the downlods fileSystemWhatcher after
+   *disableDownloadsWatcherStart() was called
+   **/
   static void endDisableDirWatcher();
 
   /**
@@ -199,26 +213,32 @@ public:
    */
   void setShowHidden(bool showHidden);
 
-  void setPluginContainer(PluginContainer *pluginContainer);
+  void setPluginContainer(PluginContainer* pluginContainer);
 
   /**
    * @brief download from an already open network connection
    *
    * @param reply the network reply to download from
    * @param fileInfo information about the file, like mod id, file id, version, ...
-   * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
+   * @return true if the download was started, false if it wasn't. The latter currently
+   *only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(QNetworkReply *reply, const MOBase::ModRepositoryFileInfo *fileInfo);
+  bool addDownload(QNetworkReply* reply, const MOBase::ModRepositoryFileInfo* fileInfo);
 
   /**
    * @brief download from an already open network connection
    *
    * @param reply the network reply to download from
-   * @param fileName the name to use for the file. This may be overridden by the name in the fileInfo-structure or if the http stream specifies a name
+   * @param fileName the name to use for the file. This may be overridden by the name in
+   *the fileInfo-structure or if the http stream specifies a name
    * @param fileInfo information previously retrieved from the nexus network
-   * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
+   * @return true if the download was started, false if it wasn't. The latter currently
+   *only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName, QString gameName, int modID, int fileID = 0, const MOBase::ModRepositoryFileInfo *fileInfo = new MOBase::ModRepositoryFileInfo());
+  bool addDownload(QNetworkReply* reply, const QStringList& URLs,
+                   const QString& fileName, QString gameName, int modID, int fileID = 0,
+                   const MOBase::ModRepositoryFileInfo* fileInfo =
+                       new MOBase::ModRepositoryFileInfo());
 
   /**
    * @brief start a download using a nxm-link
@@ -226,26 +246,30 @@ public:
    * starts a download using a nxm-link. The download manager will first query the nexus
    * page for file information.
    * @param url a nxm link looking like this: nxm://skyrim/mods/1234/files/4711
-   * @todo the game name encoded into the link is currently ignored, all downloads are incorrectly assumed to be for the identified game
+   * @todo the game name encoded into the link is currently ignored, all downloads are
+   *incorrectly assumed to be for the identified game
    **/
-  void addNXMDownload(const QString &url);
+  void addNXMDownload(const QString& url);
 
   /**
-   * @brief retrieve the total number of downloads, both finished and unfinished including downloads from previous sessions
+   * @brief retrieve the total number of downloads, both finished and unfinished
+   *including downloads from previous sessions
    *
    * @return total number of downloads
    **/
   int numTotalDownloads() const;
 
   /**
-   * @brief retrieve number of pending downloads (nexus downloads for which we don't know the name and url yet)
+   * @brief retrieve number of pending downloads (nexus downloads for which we don't
+   * know the name and url yet)
    * @return  number of pending downloads
    */
   int numPendingDownloads() const;
 
   /**
    * @brief retrieve the info of a pending download
-   * @param index index of the pending download (index in the range [0, numPendingDownloads()[)
+   * @param index index of the pending download (index in the range [0,
+   * numPendingDownloads()[)
    * @return pair of modid, fileid
    */
   std::tuple<QString, int, int> getPendingDownload(int index);
@@ -353,7 +377,7 @@ public:
    * @param index index of the file to look up
    * @return the nexus mod information
    **/
-  const MOBase::ModRepositoryFileInfo *getFileInfo(int index) const;
+  const MOBase::ModRepositoryFileInfo* getFileInfo(int index) const;
 
   /**
    * @brief mark a download as installed
@@ -378,23 +402,26 @@ public:
    */
   void refreshList();
 
-public: // IDownloadManager interface:
-
-  int startDownloadURLs(const QStringList &urls);
+public:  // IDownloadManager interface:
+  int startDownloadURLs(const QStringList& urls);
   int startDownloadNexusFile(int modID, int fileID);
   QString downloadPath(int id);
 
-  boost::signals2::connection onDownloadComplete(const std::function<void(int)>& callback);
-  boost::signals2::connection onDownloadPaused(const std::function<void(int)>& callback);
-  boost::signals2::connection onDownloadFailed(const std::function<void(int)>& callback);
-  boost::signals2::connection onDownloadRemoved(const std::function<void(int)>& callback);
+  boost::signals2::connection
+  onDownloadComplete(const std::function<void(int)>& callback);
+  boost::signals2::connection
+  onDownloadPaused(const std::function<void(int)>& callback);
+  boost::signals2::connection
+  onDownloadFailed(const std::function<void(int)>& callback);
+  boost::signals2::connection
+  onDownloadRemoved(const std::function<void(int)>& callback);
 
   /**
    * @brief retrieve a download index from the filename
    * @param fileName file to look up
    * @return index of that download or -1 if it wasn't found
    */
-  int indexByName(const QString &fileName) const;
+  int indexByName(const QString& fileName) const;
   int indexByInfo(const DownloadInfo* info) const;
 
   void pauseAll();
@@ -415,7 +442,7 @@ Q_SIGNALS:
    *
    * @param message the message to display
    **/
-  void showMessage(const QString &message);
+  void showMessage(const QString& message);
 
   /**
    * @brief emitted whenever the state of a download changes
@@ -425,9 +452,10 @@ Q_SIGNALS:
   void stateChanged(int row, DownloadManager::DownloadState state);
 
   /**
-   * @brief emitted whenever a download completes successfully, reporting the download speed for the server used
+   * @brief emitted whenever a download completes successfully, reporting the download
+   * speed for the server used
    */
-  void downloadSpeed(const QString &serverName, int bytesPerSecond);
+  void downloadSpeed(const QString& serverName, int bytesPerSecond);
 
   /**
    * @brief emitted whenever a new download is added to the list
@@ -440,7 +468,8 @@ public slots:
    * @brief removes the specified download
    *
    * @param index index of the download to remove
-   * @param deleteFile if true, the file will also be deleted from disc, otherwise it is only marked as hidden.
+   * @param deleteFile if true, the file will also be deleted from disc, otherwise it is
+   *only marked as hidden.
    **/
   void removeDownload(int index, bool deleteFile);
 
@@ -451,7 +480,8 @@ public slots:
   void restoreDownload(int index);
 
   /**
-   * @brief cancel the specified download. This will lead to the corresponding file to be deleted
+   * @brief cancel the specified download. This will lead to the corresponding file to
+   *be deleted
    *
    * @param index index of the download to cancel
    **/
@@ -473,19 +503,25 @@ public slots:
 
   void openInDownloadsFolder(int index);
 
-  void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData,
+                               QVariant resultData, int requestID);
 
-  void nxmFilesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmFilesAvailable(QString gameName, int modID, QVariant userData,
+                         QVariant resultData, int requestID);
 
-  void nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
+  void nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData,
+                            QVariant resultData, int requestID);
 
-  void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
+  void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID,
+                                QVariant userData, QVariant resultData, int requestID);
 
-  void nxmFileInfoFromMd5Available(QString gameName, QVariant userData, QVariant resultData, int requestID);
+  void nxmFileInfoFromMd5Available(QString gameName, QVariant userData,
+                                   QVariant resultData, int requestID);
 
-  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, int errorCode, const QString &errorString);
+  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData,
+                        int requestID, int errorCode, const QString& errorString);
 
-  void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
+  void managedGameChanged(MOBase::IPluginGame const* gamePlugin);
 
 private slots:
 
@@ -494,16 +530,14 @@ private slots:
   void downloadFinished(int index = 0);
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
-  void directoryChanged(const QString &dirctory);
+  void directoryChanged(const QString& dirctory);
   void checkDownloadTimeout();
 
 private:
-
-  void createMetaFile(DownloadInfo *info);
+  void createMetaFile(DownloadInfo* info);
   DownloadManager::DownloadInfo* getDownloadInfo(QString fileName);
 
 public:
-
   /** Get a unique filename for a download.
    *
    * This allows you multiple versions of download files, useful if the file
@@ -513,11 +547,10 @@ public:
    *
    * @return Unique(ish) name
    */
-  QString getDownloadFileName(const QString &baseName, bool rename = false) const;
+  QString getDownloadFileName(const QString& baseName, bool rename = false) const;
 
 private:
-
-  void startDownload(QNetworkReply *reply, DownloadInfo *newDownload, bool resume);
+  void startDownload(QNetworkReply* reply, DownloadInfo* newDownload, bool resume);
   void resumeDownloadInt(int index);
 
   /**
@@ -525,12 +558,15 @@ private:
    *
    * @param url the url to download from
    * @param fileInfo information previously retrieved from the mod page
-   * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
+   * @return true if the download was started, false if it wasn't. The latter currently
+   *only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(const QStringList &URLs, QString gameName, int modID, int fileID, const MOBase::ModRepositoryFileInfo *fileInfo);
+  bool addDownload(const QStringList& URLs, QString gameName, int modID, int fileID,
+                   const MOBase::ModRepositoryFileInfo* fileInfo);
 
-  // important: the caller has to lock the list-mutex, otherwise the DownloadInfo-pointer might get invalidated at any time
-  DownloadInfo *findDownload(QObject *reply, int *index = nullptr) const;
+  // important: the caller has to lock the list-mutex, otherwise the
+  // DownloadInfo-pointer might get invalidated at any time
+  DownloadInfo* findDownload(QObject* reply, int* index = nullptr) const;
 
   void removeFile(int index, bool deleteFile);
 
@@ -538,27 +574,25 @@ private:
 
   bool ByName(int LHS, int RHS);
 
-  QString getFileNameFromNetworkReply(QNetworkReply *reply);
+  QString getFileNameFromNetworkReply(QNetworkReply* reply);
 
-  void setState(DownloadInfo *info, DownloadManager::DownloadState state);
+  void setState(DownloadInfo* info, DownloadManager::DownloadState state);
 
-  DownloadInfo *downloadInfoByID(unsigned int id);
+  DownloadInfo* downloadInfoByID(unsigned int id);
 
   void removePending(QString gameName, int modID, int fileID);
 
   static QString getFileTypeString(int fileType);
 
-  void writeData(DownloadInfo *info);
+  void writeData(DownloadInfo* info);
 
 private:
-
   static const int AUTOMATIC_RETRIES = 3;
 
 private:
+  NexusInterface* m_NexusInterface;
 
-  NexusInterface *m_NexusInterface;
-
-  OrganizerCore *m_OrganizerCore;
+  OrganizerCore* m_OrganizerCore;
   QWidget* m_ParentWidget;
 
   QVector<std::tuple<QString, int, int>> m_PendingDownloads;
@@ -576,21 +610,20 @@ private:
   SignalDownloadCallback m_DownloadFailed;
   SignalDownloadCallback m_DownloadRemoved;
 
-  //The dirWatcher is actually triggering off normal Mo operations such as deleting downloads or editing .meta files
-  //so it needs to be disabled during operations that are known to cause the creation or deletion of files in the Downloads folder.
-  //Notably using QSettings to edit a file creates a temporarily .lock file that causes the Watcher to trigger multiple listRefreshes freezing the ui.
+  // The dirWatcher is actually triggering off normal Mo operations such as deleting
+  // downloads or editing .meta files so it needs to be disabled during operations that
+  // are known to cause the creation or deletion of files in the Downloads folder.
+  // Notably using QSettings to edit a file creates a temporarily .lock file that causes
+  // the Watcher to trigger multiple listRefreshes freezing the ui.
   static int m_DirWatcherDisabler;
-
 
   std::map<QString, int> m_DownloadFails;
 
   bool m_ShowHidden;
 
-  MOBase::IPluginGame const *m_ManagedGame;
+  MOBase::IPluginGame const* m_ManagedGame;
 
   QTimer m_TimeoutTimer;
 };
 
-
-
-#endif // DOWNLOADMANAGER_H
+#endif  // DOWNLOADMANAGER_H

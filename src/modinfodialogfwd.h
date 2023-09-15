@@ -9,7 +9,7 @@ using ModInfoPtr = QSharedPointer<ModInfo>;
 
 enum class ModInfoTabIDs
 {
-  None = -1,
+  None      = -1,
   TextFiles = 0,
   IniFiles,
   Images,
@@ -23,17 +23,18 @@ enum class ModInfoTabIDs
 
 class PluginContainer;
 
-bool canPreviewFile(const PluginContainer& pluginContainer, bool isArchive, const QString& filename);
+bool canPreviewFile(const PluginContainer& pluginContainer, bool isArchive,
+                    const QString& filename);
 bool canRunFile(bool isArchive, const QString& filename);
 bool canOpenFile(bool isArchive, const QString& filename);
 bool canExploreFile(bool isArchive, const QString& filename);
 bool canHideFile(bool isArchive, const QString& filename);
 bool canUnhideFile(bool isArchive, const QString& filename);
 
-FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString &oldName);
+FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString& oldName);
 FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString& oldName);
-FileRenamer::RenameResults restoreHiddenFilesRecursive(FileRenamer& renamer, const QString &targetDir);
-
+FileRenamer::RenameResults restoreHiddenFilesRecursive(FileRenamer& renamer,
+                                                       const QString& targetDir);
 
 class ElideLeftDelegate : public QStyledItemDelegate
 {
@@ -48,4 +49,4 @@ protected:
   }
 };
 
-#endif // MODINFODIALOGFWD_H
+#endif  // MODINFODIALOGFWD_H

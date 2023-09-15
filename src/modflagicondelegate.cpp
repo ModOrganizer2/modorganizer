@@ -1,18 +1,17 @@
 #include "modflagicondelegate.h"
 #include "modlist.h"
 #include "modlistview.h"
-#include <log.h>
 #include <QList>
+#include <log.h>
 
 using namespace MOBase;
 
 ModFlagIconDelegate::ModFlagIconDelegate(ModListView* view, int column, int compactSize)
-  : IconDelegate(view, column, compactSize), m_view(view)
-{
-}
+    : IconDelegate(view, column, compactSize), m_view(view)
+{}
 
-QList<QString> ModFlagIconDelegate::getIconsForFlags(
-  std::vector<ModInfo::EFlag> flags, bool compact)
+QList<QString> ModFlagIconDelegate::getIconsForFlags(std::vector<ModInfo::EFlag> flags,
+                                                     bool compact)
 {
   QList<QString> result;
 
@@ -29,7 +28,7 @@ QList<QString> ModFlagIconDelegate::getIconsForFlags(
   return result;
 }
 
-QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const
+QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex& index) const
 {
   QVariant modid = index.data(ModList::IndexRole);
 
@@ -45,28 +44,39 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const
 QString ModFlagIconDelegate::getFlagIcon(ModInfo::EFlag flag)
 {
   switch (flag) {
-    case ModInfo::FLAG_BACKUP: return QStringLiteral(":/MO/gui/emblem_backup");
-    case ModInfo::FLAG_INVALID: return QStringLiteral(":/MO/gui/problem");
-    case ModInfo::FLAG_NOTENDORSED: return QStringLiteral(":/MO/gui/emblem_notendorsed");
-    case ModInfo::FLAG_NOTES: return QStringLiteral(":/MO/gui/emblem_notes");
-    case ModInfo::FLAG_HIDDEN_FILES: return QStringLiteral(":/MO/gui/emblem_hidden_files");
-    case ModInfo::FLAG_ALTERNATE_GAME: return QStringLiteral(":/MO/gui/alternate_game");
-    case ModInfo::FLAG_FOREIGN: return QString();
-    case ModInfo::FLAG_SEPARATOR: return QString();
-    case ModInfo::FLAG_OVERWRITE: return QString();
-    case ModInfo::FLAG_PLUGIN_SELECTED: return QString();
-    case ModInfo::FLAG_TRACKED: return QStringLiteral(":/MO/gui/tracked");
-    default:
-      log::warn("ModInfo flag {} has no defined icon", flag);
-      return QString();
+  case ModInfo::FLAG_BACKUP:
+    return QStringLiteral(":/MO/gui/emblem_backup");
+  case ModInfo::FLAG_INVALID:
+    return QStringLiteral(":/MO/gui/problem");
+  case ModInfo::FLAG_NOTENDORSED:
+    return QStringLiteral(":/MO/gui/emblem_notendorsed");
+  case ModInfo::FLAG_NOTES:
+    return QStringLiteral(":/MO/gui/emblem_notes");
+  case ModInfo::FLAG_HIDDEN_FILES:
+    return QStringLiteral(":/MO/gui/emblem_hidden_files");
+  case ModInfo::FLAG_ALTERNATE_GAME:
+    return QStringLiteral(":/MO/gui/alternate_game");
+  case ModInfo::FLAG_FOREIGN:
+    return QString();
+  case ModInfo::FLAG_SEPARATOR:
+    return QString();
+  case ModInfo::FLAG_OVERWRITE:
+    return QString();
+  case ModInfo::FLAG_PLUGIN_SELECTED:
+    return QString();
+  case ModInfo::FLAG_TRACKED:
+    return QStringLiteral(":/MO/gui/tracked");
+  default:
+    log::warn("ModInfo flag {} has no defined icon", flag);
+    return QString();
   }
 }
 
-size_t ModFlagIconDelegate::getNumIcons(const QModelIndex &index) const
+size_t ModFlagIconDelegate::getNumIcons(const QModelIndex& index) const
 {
   unsigned int modIdx = index.data(ModList::IndexRole).toInt();
   if (modIdx < ModInfo::getNumMods()) {
-    ModInfo::Ptr info = ModInfo::getByIndex(modIdx);
+    ModInfo::Ptr info                 = ModInfo::getByIndex(modIdx);
     std::vector<ModInfo::EFlag> flags = info->getFlags();
     return flags.size();
   } else {
@@ -74,10 +84,10 @@ size_t ModFlagIconDelegate::getNumIcons(const QModelIndex &index) const
   }
 }
 
-
-QSize ModFlagIconDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &modelIndex) const
+QSize ModFlagIconDelegate::sizeHint(const QStyleOptionViewItem& option,
+                                    const QModelIndex& modelIndex) const
 {
-  size_t count = getNumIcons(modelIndex);
+  size_t count       = getNumIcons(modelIndex);
   unsigned int index = modelIndex.data(ModList::IndexRole).toInt();
   QSize result;
   if (index < ModInfo::getNumMods()) {
@@ -90,4 +100,3 @@ QSize ModFlagIconDelegate::sizeHint(const QStyleOptionViewItem &option, const QM
   }
   return result;
 }
-

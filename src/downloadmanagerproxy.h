@@ -1,8 +1,8 @@
 #ifndef DOWNLOADMANAGERPROXY_H
 #define DOWNLOADMANAGERPROXY_H
 
-#include <idownloadmanager.h>
 #include "downloadmanager.h"
+#include <idownloadmanager.h>
 
 class OrganizerProxy;
 
@@ -10,7 +10,6 @@ class DownloadManagerProxy : public MOBase::IDownloadManager
 {
 
 public:
-
   DownloadManagerProxy(OrganizerProxy* oproxy, DownloadManager* downloadManager);
   virtual ~DownloadManagerProxy();
 
@@ -24,7 +23,6 @@ public:
   bool onDownloadRemoved(const std::function<void(int)>& callback) override;
 
 private:
-
   friend class OrganizerProxy;
 
   // See OrganizerProxy::connectSignals().
@@ -42,4 +40,4 @@ private:
   std::vector<boost::signals2::connection> m_Connections;
 };
 
-#endif // ORGANIZERPROXY_H
+#endif  // ORGANIZERPROXY_H

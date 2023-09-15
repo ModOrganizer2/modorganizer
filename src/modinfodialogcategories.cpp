@@ -1,19 +1,20 @@
 #include "modinfodialogcategories.h"
-#include "ui_modinfodialog.h"
 #include "categories.h"
 #include "modinfo.h"
+#include "ui_modinfodialog.h"
 
 CategoriesTab::CategoriesTab(ModInfoDialogTabContext cx)
-  : ModInfoDialogTab(std::move(cx))
+    : ModInfoDialogTab(std::move(cx))
 {
-  connect(
-    ui->categories, &QTreeWidget::itemChanged,
-    [&](auto* item, int col){ onCategoryChanged(item, col); });
+  connect(ui->categories, &QTreeWidget::itemChanged, [&](auto* item, int col) {
+    onCategoryChanged(item, col);
+  });
 
-  connect(
-    ui->primaryCategories,
-    static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-    [&](int index){ onPrimaryChanged(index); });
+  connect(ui->primaryCategories,
+          static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+          [&](int index) {
+            onPrimaryChanged(index);
+          });
 }
 
 void CategoriesTab::clear()
@@ -27,9 +28,8 @@ void CategoriesTab::update()
 {
   clear();
 
-  add(
-    CategoryFactory::instance(), mod().getCategories(),
-    ui->categories->invisibleRootItem(), 0);
+  add(CategoryFactory::instance(), mod().getCategories(),
+      ui->categories->invisibleRootItem(), 0);
 
   updatePrimary();
 }
@@ -44,26 +44,26 @@ bool CategoriesTab::usesOriginFiles() const
   return false;
 }
 
-void CategoriesTab::add(
-  const CategoryFactory &factory, const std::set<int>& enabledCategories,
-  QTreeWidgetItem* root, int rootLevel)
+void CategoriesTab::add(const CategoryFactory& factory,
+                        const std::set<int>& enabledCategories, QTreeWidgetItem* root,
+                        int rootLevel)
 {
-  for (int i=0; i<static_cast<int>(factory.numCategories()); ++i) {
+  for (int i = 0; i < static_cast<int>(factory.numCategories()); ++i) {
     if (factory.getParentID(i) != rootLevel) {
       continue;
     }
 
     int categoryID = factory.getCategoryID(i);
 
-    QTreeWidgetItem *newItem
-      = new QTreeWidgetItem(QStringList(factory.getCategoryName(i)));
+    QTreeWidgetItem* newItem =
+        new QTreeWidgetItem(QStringList(factory.getCategoryName(i)));
 
     newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
 
-    newItem->setCheckState(0, enabledCategories.find(categoryID)
-      != enabledCategories.end()
-      ? Qt::Checked
-      : Qt::Unchecked);
+    newItem->setCheckState(0,
+                           enabledCategories.find(categoryID) != enabledCategories.end()
+                               ? Qt::Checked
+                               : Qt::Unchecked);
 
     newItem->setData(0, Qt::UserRole, categoryID);
 
@@ -96,7 +96,7 @@ void CategoriesTab::updatePrimary()
 void CategoriesTab::addChecked(QTreeWidgetItem* tree)
 {
   for (int i = 0; i < tree->childCount(); ++i) {
-    QTreeWidgetItem *child = tree->child(i);
+    QTreeWidgetItem* child = tree->child(i);
     if (child->checkState(0) == Qt::Checked) {
       ui->primaryCategories->addItem(child->text(0), child->data(0, Qt::UserRole));
       addChecked(child);
@@ -107,10 +107,10 @@ void CategoriesTab::addChecked(QTreeWidgetItem* tree)
 void CategoriesTab::save(QTreeWidgetItem* currentNode)
 {
   for (int i = 0; i < currentNode->childCount(); ++i) {
-    QTreeWidgetItem *childNode = currentNode->child(i);
+    QTreeWidgetItem* childNode = currentNode->child(i);
 
-    mod().setCategory(
-      childNode->data(0, Qt::UserRole).toInt(), childNode->checkState(0));
+    mod().setCategory(childNode->data(0, Qt::UserRole).toInt(),
+                      childNode->checkState(0));
 
     save(childNode);
   }
@@ -118,9 +118,10 @@ void CategoriesTab::save(QTreeWidgetItem* currentNode)
 
 void CategoriesTab::onCategoryChanged(QTreeWidgetItem* item, int)
 {
-  QTreeWidgetItem *parent = item->parent();
+  QTreeWidgetItem* parent = item->parent();
 
-  while ((parent != nullptr) && ((parent->flags() & Qt::ItemIsUserCheckable) != 0) && (parent->checkState(0) == Qt::Unchecked)) {
+  while ((parent != nullptr) && ((parent->flags() & Qt::ItemIsUserCheckable) != 0) &&
+         (parent->checkState(0) == Qt::Unchecked)) {
     parent->setCheckState(0, Qt::Checked);
     parent = parent->parent();
   }

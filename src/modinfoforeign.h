@@ -5,7 +5,7 @@
 
 #include "modinfowithconflictinfo.h"
 
-class ModInfoForeign: public ModInfoWithConflictInfo
+class ModInfoForeign : public ModInfoWithConflictInfo
 {
 
   Q_OBJECT
@@ -13,7 +13,6 @@ class ModInfoForeign: public ModInfoWithConflictInfo
   friend class ModInfo;
 
 public:
-
   virtual bool updateAvailable() const override { return false; }
   virtual bool updateIgnored() const override { return false; }
   virtual bool downgradeAvailable() const override { return false; }
@@ -50,7 +49,10 @@ public:
   virtual int nexusId() const override { return -1; }
   virtual bool isForeign() const override { return true; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
-  virtual std::vector<QString> getIniTweaks() const override { return std::vector<QString>(); }
+  virtual std::vector<QString> getIniTweaks() const override
+  {
+    return std::vector<QString>();
+  }
   virtual std::vector<ModInfo::EFlag> getFlags() const override;
   virtual int getHighlight() const override;
   virtual QString getDescription() const override;
@@ -64,25 +66,43 @@ public:
   virtual void setNexusLastModified(QDateTime) override {}
   virtual QString getNexusDescription() const override { return QString(); }
   virtual QStringList archives(bool = false) override { return m_Archives; }
-  virtual QStringList stealFiles() const override { return m_Archives + QStringList(m_ReferenceFile); }
+  virtual QStringList stealFiles() const override
+  {
+    return m_Archives + QStringList(m_ReferenceFile);
+  }
   virtual bool alwaysEnabled() const override { return true; }
   virtual void addInstalledFile(int, int) override {}
   virtual std::set<std::pair<int, int>> installedFiles() const override { return {}; }
 
-  virtual QVariant pluginSetting(const QString& pluginName, const QString& key, const QVariant& defaultValue) const override { return defaultValue; }
-  virtual std::map<QString, QVariant> pluginSettings(const QString& pluginName) const override { return {}; }
-  virtual bool setPluginSetting(const QString& pluginName, const QString& key, const QVariant& value) override { return false; }
-  virtual std::map<QString, QVariant> clearPluginSettings(const QString& pluginName) override { return {}; }
+  virtual QVariant pluginSetting(const QString& pluginName, const QString& key,
+                                 const QVariant& defaultValue) const override
+  {
+    return defaultValue;
+  }
+  virtual std::map<QString, QVariant>
+  pluginSettings(const QString& pluginName) const override
+  {
+    return {};
+  }
+  virtual bool setPluginSetting(const QString& pluginName, const QString& key,
+                                const QVariant& value) override
+  {
+    return false;
+  }
+  virtual std::map<QString, QVariant>
+  clearPluginSettings(const QString& pluginName) override
+  {
+    return {};
+  }
 
   ModInfo::EModType modType() const { return m_ModType; }
 
 protected:
-  ModInfoForeign(const QString &modName, const QString &referenceFile,
-                 const QStringList &archives, ModInfo::EModType modType,
-                 OrganizerCore &core);
+  ModInfoForeign(const QString& modName, const QString& referenceFile,
+                 const QStringList& archives, ModInfo::EModType modType,
+                 OrganizerCore& core);
 
 private:
-
   QString m_Name;
   QString m_InternalName;
   QString m_ReferenceFile;
@@ -92,4 +112,4 @@ private:
   ModInfo::EModType m_ModType;
 };
 
-#endif // MODINFOFOREIGN_H
+#endif  // MODINFOFOREIGN_H

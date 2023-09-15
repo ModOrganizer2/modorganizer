@@ -1,11 +1,13 @@
 #include "iconfetcher.h"
-#include "thread_utils.h"
 #include "shared/util.h"
+#include "thread_utils.h"
 
 void IconFetcher::Waiter::wait()
 {
   std::unique_lock lock(m_wakeUpMutex);
-  m_wakeUp.wait(lock, [&]{ return m_queueAvailable; });
+  m_wakeUp.wait(lock, [&] {
+    return m_queueAvailable;
+  });
   m_queueAvailable = false;
 }
 
@@ -19,14 +21,14 @@ void IconFetcher::Waiter::wakeUp()
   m_wakeUp.notify_one();
 }
 
-
-IconFetcher::IconFetcher()
-  : m_iconSize(GetSystemMetrics(SM_CXSMICON)), m_stop(false)
+IconFetcher::IconFetcher() : m_iconSize(GetSystemMetrics(SM_CXSMICON)), m_stop(false)
 {
-  m_quickCache.file = getPixmapIcon(QFileIconProvider::File);
+  m_quickCache.file      = getPixmapIcon(QFileIconProvider::File);
   m_quickCache.directory = getPixmapIcon(QFileIconProvider::Folder);
 
-  m_thread = MOShared::startSafeThread([&]{ threadFun(); });
+  m_thread = MOShared::startSafeThread([&] {
+    threadFun();
+  });
 }
 
 IconFetcher::~IconFetcher()
@@ -73,10 +75,9 @@ bool IconFetcher::hasOwnIcon(const QString& path) const
   static const QString lnk = ".lnk";
   static const QString ico = ".ico";
 
-  return
-    path.endsWith(exe, Qt::CaseInsensitive) ||
-    path.endsWith(lnk, Qt::CaseInsensitive) ||
-    path.endsWith(ico, Qt::CaseInsensitive);
+  return path.endsWith(exe, Qt::CaseInsensitive) ||
+         path.endsWith(lnk, Qt::CaseInsensitive) ||
+         path.endsWith(ico, Qt::CaseInsensitive);
 }
 
 void IconFetcher::threadFun()

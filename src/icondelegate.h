@@ -20,10 +20,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef ICONDELEGATE_H
 #define ICONDELEGATE_H
 
-#include <QAbstractProxyModel>
 #include <QAbstractItemView>
+#include <QAbstractProxyModel>
 #include <QStyledItemDelegate>
-
 
 class IconDelegate : public QStyledItemDelegate
 {
@@ -32,26 +31,24 @@ class IconDelegate : public QStyledItemDelegate
 public:
   explicit IconDelegate(QTreeView* view, int column = -1, int compactSize = 100);
 
-  void paint(QPainter *painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+  void paint(QPainter* painter, const QStyleOptionViewItem& option,
+             const QModelIndex& index) const override;
 
 protected:
-
   // check if icons should be compacted or not
   //
   bool compact() const { return m_compact; }
 
-  static void paintIcons(
-    QPainter *painter, const QStyleOptionViewItem &option,
-    const QModelIndex &index, const QList<QString>& icons);
+  static void paintIcons(QPainter* painter, const QStyleOptionViewItem& option,
+                         const QModelIndex& index, const QList<QString>& icons);
 
-  virtual QList<QString> getIcons(const QModelIndex &index) const = 0;
-  virtual size_t getNumIcons(const QModelIndex &index) const = 0;
+  virtual QList<QString> getIcons(const QModelIndex& index) const = 0;
+  virtual size_t getNumIcons(const QModelIndex& index) const      = 0;
 
 private:
-
   int m_column;
   int m_compactSize;
   bool m_compact;
 };
 
-#endif // ICONDELEGATE_H
+#endif  // ICONDELEGATE_H

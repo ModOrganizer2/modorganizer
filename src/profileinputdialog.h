@@ -22,23 +22,24 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QDialog>
 
-namespace Ui {
+namespace Ui
+{
 class ProfileInputDialog;
 }
 
 class ProfileInputDialog : public QDialog
 {
   Q_OBJECT
-  
+
 public:
-  explicit ProfileInputDialog(QWidget *parent = 0);
+  explicit ProfileInputDialog(QWidget* parent = 0);
   ~ProfileInputDialog();
 
   QString getName() const;
   bool getPreferDefaultSettings() const;
-  
+
 private:
-  Ui::ProfileInputDialog *ui;
+  Ui::ProfileInputDialog* ui;
 };
 
-#endif // PROFILEINPUTDIALOG_H
+#endif  // PROFILEINPUTDIALOG_H

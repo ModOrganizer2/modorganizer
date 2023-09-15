@@ -19,41 +19,40 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "browserdialog.h"
 
-#include "ui_browserdialog.h"
 #include "browserview.h"
 #include "messagedialog.h"
-#include "report.h"
 #include "persistentcookiejar.h"
+#include "report.h"
 #include "settings.h"
+#include "ui_browserdialog.h"
 
-#include <utility.h>
 #include <log.h>
+#include <utility.h>
 
-#include <QWebEngineSettings>
-#include <QNetworkCookieJar>
-#include <QNetworkCookie>
-#include <QMenu>
-#include <QInputDialog>
-#include <QWebEngineHistory>
 #include <QDir>
+#include <QInputDialog>
 #include <QKeyEvent>
+#include <QMenu>
+#include <QNetworkCookie>
+#include <QNetworkCookieJar>
+#include <QWebEngineHistory>
+#include <QWebEngineSettings>
 
 using namespace MOBase;
 
-
-BrowserDialog::BrowserDialog(QWidget *parent)
-  : QDialog(parent)
-  , ui(new Ui::BrowserDialog)
-  , m_AccessManager(new QNetworkAccessManager(this))
+BrowserDialog::BrowserDialog(QWidget* parent)
+    : QDialog(parent), ui(new Ui::BrowserDialog),
+      m_AccessManager(new QNetworkAccessManager(this))
 {
   ui->setupUi(this);
 
-  m_AccessManager->setCookieJar(new PersistentCookieJar(
-    QDir::fromNativeSeparators(Settings::instance().paths().cache() + "/cookies.dat")));
+  m_AccessManager->setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
+      Settings::instance().paths().cache() + "/cookies.dat")));
 
-  Qt::WindowFlags flags = windowFlags() | Qt::WindowMaximizeButtonHint | Qt::WindowMinimizeButtonHint;
+  Qt::WindowFlags flags =
+      windowFlags() | Qt::WindowMaximizeButtonHint | Qt::WindowMinimizeButtonHint;
   Qt::WindowFlags helpFlag = Qt::WindowContextHelpButtonHint;
-  flags = flags & (~helpFlag);
+  flags                    = flags & (~helpFlag);
   setWindowFlags(flags);
 
   m_Tabs = this->findChild<QTabWidget*>("browserTabWidget");
@@ -70,16 +69,16 @@ BrowserDialog::~BrowserDialog()
   delete ui;
 }
 
-void BrowserDialog::closeEvent(QCloseEvent *event)
+void BrowserDialog::closeEvent(QCloseEvent* event)
 {
   Settings::instance().geometry().saveGeometry(this);
   QDialog::closeEvent(event);
 }
 
-void BrowserDialog::initTab(BrowserView *newView)
+void BrowserDialog::initTab(BrowserView* newView)
 {
-  //newView->page()->setNetworkAccessManager(m_AccessManager);
-  //newView->page()->setForwardUnsupportedContent(true);
+  // newView->page()->setNetworkAccessManager(m_AccessManager);
+  // newView->page()->setForwardUnsupportedContent(true);
 
   connect(newView, SIGNAL(loadProgress(int)), this, SLOT(progress(int)));
   connect(newView, SIGNAL(titleChanged(QString)), this, SLOT(titleChanged(QString)));
@@ -87,8 +86,10 @@ void BrowserDialog::initTab(BrowserView *newView)
   connect(newView, SIGNAL(startFind()), this, SLOT(startSearch()));
   connect(newView, SIGNAL(urlChanged(QUrl)), this, SLOT(urlChanged(QUrl)));
   connect(newView, SIGNAL(openUrlInNewTab(QUrl)), this, SLOT(openInNewTab(QUrl)));
-  connect(newView, SIGNAL(downloadRequested(QNetworkRequest)), this, SLOT(downloadRequested(QNetworkRequest)));
-  connect(newView, SIGNAL(unsupportedContent(QNetworkReply*)), this, SLOT(unsupportedContent(QNetworkReply*)));
+  connect(newView, SIGNAL(downloadRequested(QNetworkRequest)), this,
+          SLOT(downloadRequested(QNetworkRequest)));
+  connect(newView, SIGNAL(unsupportedContent(QNetworkReply*)), this,
+          SLOT(unsupportedContent(QNetworkReply*)));
 
   ui->backBtn->setEnabled(false);
   ui->fwdBtn->setEnabled(false);
@@ -97,24 +98,21 @@ void BrowserDialog::initTab(BrowserView *newView)
   newView->settings()->setAttribute(QWebEngineSettings::AutoLoadImages, true);
 }
 
-
-void BrowserDialog::openInNewTab(const QUrl &url)
+void BrowserDialog::openInNewTab(const QUrl& url)
 {
-  BrowserView *newView = new BrowserView(this);
+  BrowserView* newView = new BrowserView(this);
   initTab(newView);
   newView->setUrl(url);
 }
 
-
-BrowserView *BrowserDialog::getCurrentView()
+BrowserView* BrowserDialog::getCurrentView()
 {
   return qobject_cast<BrowserView*>(m_Tabs->currentWidget());
 }
 
-
-void BrowserDialog::urlChanged(const QUrl &url)
+void BrowserDialog::urlChanged(const QUrl& url)
 {
-  BrowserView *currentView = getCurrentView();
+  BrowserView* currentView = getCurrentView();
   if (currentView != nullptr) {
     ui->backBtn->setEnabled(currentView->history()->canGoBack());
     ui->fwdBtn->setEnabled(currentView->history()->canGoForward());
@@ -122,8 +120,7 @@ void BrowserDialog::urlChanged(const QUrl &url)
   ui->urlEdit->setText(url.toString());
 }
 
-
-void BrowserDialog::openUrl(const QUrl &url)
+void BrowserDialog::openUrl(const QUrl& url)
 {
   if (isHidden()) {
     Settings::instance().geometry().restoreGeometry(this);
@@ -132,21 +129,20 @@ void BrowserDialog::openUrl(const QUrl &url)
   openInNewTab(url);
 }
 
-
 void BrowserDialog::maximizeWidth()
 {
-  int viewportWidth = getCurrentView()->page()->contentsSize ().width();
-  int frameWidth = width() - viewportWidth;
+  int viewportWidth = getCurrentView()->page()->contentsSize().width();
+  int frameWidth    = width() - viewportWidth;
 
   int contentWidth = getCurrentView()->page()->contentsSize().width();
 
   QScreen* screen = this->window()->windowHandle()->screen();
   int screenWidth = screen->geometry().size().width();
 
-  int targetWidth = std::min<int>(std::max<int>(viewportWidth, contentWidth) + frameWidth, screenWidth);
+  int targetWidth = std::min<int>(
+      std::max<int>(viewportWidth, contentWidth) + frameWidth, screenWidth);
   this->resize(targetWidth, height());
 }
-
 
 void BrowserDialog::progress(int value)
 {
@@ -159,10 +155,9 @@ void BrowserDialog::progress(int value)
   }
 }
 
-
-void BrowserDialog::titleChanged(const QString &title)
+void BrowserDialog::titleChanged(const QString& title)
 {
-  BrowserView *view = qobject_cast<BrowserView*>(sender());
+  BrowserView* view = qobject_cast<BrowserView*>(sender());
   for (int i = 0; i < m_Tabs->count(); ++i) {
     if (m_Tabs->widget(i) == view) {
       m_Tabs->setTabText(i, title.mid(0, 15));
@@ -171,8 +166,7 @@ void BrowserDialog::titleChanged(const QString &title)
   }
 }
 
-
-QString BrowserDialog::guessFileName(const QString &url)
+QString BrowserDialog::guessFileName(const QString& url)
 {
   QRegularExpression uploadsExp(QString("https://.+/uploads/([^/]+)$"));
   auto match = uploadsExp.match(url);
@@ -190,10 +184,10 @@ QString BrowserDialog::guessFileName(const QString &url)
   return "unknown";
 }
 
-void BrowserDialog::unsupportedContent(QNetworkReply *reply)
+void BrowserDialog::unsupportedContent(QNetworkReply* reply)
 {
   try {
-    QWebEnginePage *page = qobject_cast<QWebEnginePage*>(sender());
+    QWebEnginePage* page = qobject_cast<QWebEnginePage*>(sender());
     if (page == nullptr) {
       log::error("sender not a page");
       return;
@@ -205,7 +199,7 @@ void BrowserDialog::unsupportedContent(QNetworkReply *reply)
     }*/
 
     emit requestDownload(page->url(), reply);
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     if (isVisible()) {
       MessageDialog::showMessage(tr("failed to start download"), this);
     }
@@ -213,12 +207,10 @@ void BrowserDialog::unsupportedContent(QNetworkReply *reply)
   }
 }
 
-
-void BrowserDialog::downloadRequested(const QNetworkRequest &request)
+void BrowserDialog::downloadRequested(const QNetworkRequest& request)
 {
   log::error("download request {} ignored", request.url().toString());
 }
-
 
 void BrowserDialog::tabCloseRequested(int index)
 {
@@ -232,7 +224,7 @@ void BrowserDialog::tabCloseRequested(int index)
 
 void BrowserDialog::on_backBtn_clicked()
 {
-  BrowserView *currentView = getCurrentView();
+  BrowserView* currentView = getCurrentView();
   if (currentView != nullptr) {
     currentView->back();
   }
@@ -240,25 +232,24 @@ void BrowserDialog::on_backBtn_clicked()
 
 void BrowserDialog::on_fwdBtn_clicked()
 {
-  BrowserView *currentView = getCurrentView();
+  BrowserView* currentView = getCurrentView();
   if (currentView != nullptr) {
     currentView->forward();
   }
 }
-
 
 void BrowserDialog::startSearch()
 {
   ui->searchEdit->setFocus();
 }
 
-
 void BrowserDialog::on_searchEdit_returnPressed()
 {
-//  BrowserView *currentView = getCurrentView();
-//  if (currentView != nullptr) {
-//    currentView->findText(ui->searchEdit->text(), QWebEnginePage::FindWrapsAroundDocument);
-//  }
+  //  BrowserView *currentView = getCurrentView();
+  //  if (currentView != nullptr) {
+  //    currentView->findText(ui->searchEdit->text(),
+  //    QWebEnginePage::FindWrapsAroundDocument);
+  //  }
 }
 
 void BrowserDialog::on_refreshBtn_clicked()
@@ -268,7 +259,8 @@ void BrowserDialog::on_refreshBtn_clicked()
 
 void BrowserDialog::on_browserTabWidget_currentChanged(int index)
 {
-  BrowserView *currentView = qobject_cast<BrowserView*>(ui->browserTabWidget->widget(index));
+  BrowserView* currentView =
+      qobject_cast<BrowserView*>(ui->browserTabWidget->widget(index));
   if (currentView != nullptr) {
     ui->backBtn->setEnabled(currentView->history()->canGoBack());
     ui->fwdBtn->setEnabled(currentView->history()->canGoForward());
@@ -277,18 +269,18 @@ void BrowserDialog::on_browserTabWidget_currentChanged(int index)
 
 void BrowserDialog::on_urlEdit_returnPressed()
 {
-  QWebEngineView *currentView = getCurrentView();
+  QWebEngineView* currentView = getCurrentView();
   if (currentView != nullptr) {
     currentView->setUrl(QUrl(ui->urlEdit->text()));
   }
 }
 
-bool BrowserDialog::eventFilter(QObject *object, QEvent *event)
+bool BrowserDialog::eventFilter(QObject* object, QEvent* event)
 {
   if (event->type() == QEvent::KeyPress) {
-    QKeyEvent *keyEvent = reinterpret_cast<QKeyEvent*>(event);
-    if ((keyEvent->modifiers() & Qt::ControlModifier)
-        && (keyEvent->key() == Qt::Key_U)) {
+    QKeyEvent* keyEvent = reinterpret_cast<QKeyEvent*>(event);
+    if ((keyEvent->modifiers() & Qt::ControlModifier) &&
+        (keyEvent->key() == Qt::Key_U)) {
       ui->urlEdit->setVisible(!ui->urlEdit->isVisible());
       return true;
     }

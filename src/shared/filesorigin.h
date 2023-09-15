@@ -12,40 +12,26 @@ class FilesOrigin
 public:
   FilesOrigin();
 
-  FilesOrigin(
-    OriginID ID, const std::wstring &name, const std::wstring &path,
-    int priority,
-    boost::shared_ptr<FileRegister> fileRegister,
-    boost::shared_ptr<OriginConnection> originConnection);
+  FilesOrigin(OriginID ID, const std::wstring& name, const std::wstring& path,
+              int priority, boost::shared_ptr<FileRegister> fileRegister,
+              boost::shared_ptr<OriginConnection> originConnection);
 
   // noncopyable
-  FilesOrigin(const FilesOrigin&) = delete;
+  FilesOrigin(const FilesOrigin&)            = delete;
   FilesOrigin& operator=(const FilesOrigin&) = delete;
 
   // sets priority for this origin (does not automatically refresh
   // the structure)
   void setPriority(int priority);
 
-  int getPriority() const
-  {
-    return m_Priority;
-  }
+  int getPriority() const { return m_Priority; }
 
-  void setName(const std::wstring &name);
-  const std::wstring &getName() const
-  {
-    return m_Name;
-  }
+  void setName(const std::wstring& name);
+  const std::wstring& getName() const { return m_Name; }
 
-  OriginID getID() const
-  {
-    return m_ID;
-  }
+  OriginID getID() const { return m_ID; }
 
-  const std::wstring &getPath() const
-  {
-    return m_Path;
-  }
+  const std::wstring& getPath() const { return m_Path; }
 
   std::vector<FileEntryPtr> getFiles() const;
   FileEntryPtr findFile(FileIndex index) const;
@@ -53,10 +39,7 @@ public:
   void enable(bool enabled, DirectoryStats& stats);
   void enable(bool enabled);
 
-  bool isDisabled() const
-  {
-    return m_Disabled;
-  }
+  bool isDisabled() const { return m_Disabled; }
 
   void addFile(FileIndex index)
   {
@@ -80,6 +63,6 @@ private:
   mutable std::mutex m_Mutex;
 };
 
-} // namespace
+}  // namespace MOShared
 
-#endif // MO_REGISTER_FILESORIGIN_INCLUDED
+#endif  // MO_REGISTER_FILESORIGIN_INCLUDED

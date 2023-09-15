@@ -1,6 +1,6 @@
 #include "modinfodialogimages.h"
-#include "ui_modinfodialog.h"
 #include "settings.h"
+#include "ui_modinfodialog.h"
 #include "utility.h"
 #include <log.h>
 
@@ -9,37 +9,31 @@ using namespace ImagesTabHelpers;
 
 QSize resizeWithAspectRatio(const QSize& original, const QSize& available)
 {
-  const auto ratio = std::min({
-    1.0,
-    static_cast<double>(available.width()) / original.width(),
-    static_cast<double>(available.height()) / original.height()});
+  const auto ratio =
+      std::min({1.0, static_cast<double>(available.width()) / original.width(),
+                static_cast<double>(available.height()) / original.height()});
 
-  const QSize scaledSize(
-    static_cast<int>(std::round(original.width() * ratio)),
-    static_cast<int>(std::round(original.height() * ratio)));
+  const QSize scaledSize(static_cast<int>(std::round(original.width() * ratio)),
+                         static_cast<int>(std::round(original.height() * ratio)));
 
   return scaledSize;
 }
 
 QRect centeredRect(const QRect& rect, const QSize& size)
 {
-  return QRect(
-    (rect.left()+rect.width()/2) - size.width()/2,
-    (rect.top()+rect.height()/2) - size.height()/2,
-    size.width(),
-    size.height());
+  return QRect((rect.left() + rect.width() / 2) - size.width() / 2,
+               (rect.top() + rect.height() / 2) - size.height() / 2, size.width(),
+               size.height());
 }
 
 QString dimensionString(const QSize& s)
 {
-  return QString::fromUtf8("%1 \xc3\x97 %2")
-    .arg(s.width()).arg(s.height());
+  return QString::fromUtf8("%1 \xc3\x97 %2").arg(s.width()).arg(s.height());
 }
 
-
-ImagesTab::ImagesTab(ModInfoDialogTabContext cx) :
-  ModInfoDialogTab(std::move(cx)), m_image(new ScalableImage),
-  m_ddsAvailable(false), m_ddsEnabled(false)
+ImagesTab::ImagesTab(ModInfoDialogTabContext cx)
+    : ModInfoDialogTab(std::move(cx)), m_image(new ScalableImage),
+      m_ddsAvailable(false), m_ddsEnabled(false)
 {
   getSupportedFormats();
 
@@ -58,16 +52,26 @@ ImagesTab::ImagesTab(ModInfoDialogTabContext cx) :
   ui->imagesThumbnails->setTab(this);
 
   ui->imagesScrollerVBar->setTab(this);
-  connect(ui->imagesScrollerVBar, &QScrollBar::valueChanged, [&]{ onScrolled(); });
+  connect(ui->imagesScrollerVBar, &QScrollBar::valueChanged, [&] {
+    onScrolled();
+  });
 
   ui->imagesShowDDS->setEnabled(m_ddsAvailable);
 
   m_filter.setEdit(ui->imagesFilter);
-  connect(&m_filter, &FilterWidget::changed, [&]{ onFilterChanged(); });
+  connect(&m_filter, &FilterWidget::changed, [&] {
+    onFilterChanged();
+  });
 
-  connect(ui->imagesExplore, &QAbstractButton::clicked, [&]{ onExplore(); });
-  connect(ui->imagesShowDDS, &QCheckBox::toggled, [&]{ onShowDDS(); });
-  connect(ui->previewPluginButton, &QAbstractButton::clicked, [&] { onPreviewButton(); });
+  connect(ui->imagesExplore, &QAbstractButton::clicked, [&] {
+    onExplore();
+  });
+  connect(ui->imagesShowDDS, &QCheckBox::toggled, [&] {
+    onShowDDS();
+  });
+  connect(ui->previewPluginButton, &QAbstractButton::clicked, [&] {
+    onPreviewButton();
+  });
 
   ui->imagesShowDDS->setEnabled(m_ddsAvailable);
 
@@ -78,12 +82,12 @@ ImagesTab::ImagesTab(ModInfoDialogTabContext cx) :
     auto list = std::make_unique<QListWidget>();
     parentWidget()->style()->polish(list.get());
 
-    m_theme.borderColor = QColor(Qt::black);
+    m_theme.borderColor     = QColor(Qt::black);
     m_theme.backgroundColor = QColor(Qt::black);
-    m_theme.textColor = list->palette().color(QPalette::WindowText);
+    m_theme.textColor       = list->palette().color(QPalette::WindowText);
 
     m_theme.highlightBackgroundColor = list->palette().color(QPalette::Highlight);
-    m_theme.highlightTextColor = list->palette().color(QPalette::HighlightedText);
+    m_theme.highlightTextColor       = list->palette().color(QPalette::HighlightedText);
 
     m_theme.font = list->font();
 
@@ -246,7 +250,7 @@ void ImagesTab::select(std::size_t i, Visibility v)
 {
   m_files.select(i);
 
-  if (auto* f=m_files.selectedFile()) {
+  if (auto* f = m_files.selectedFile()) {
     // when jumping elsewhere in the list, such as with page down/up, the file
     // might not be visible yet, which means it hasn't been loaded and would
     // pass a null image in setImage() below
@@ -254,7 +258,8 @@ void ImagesTab::select(std::size_t i, Visibility v)
 
     ui->imagesPath->setText(QDir::toNativeSeparators(f->path()));
     ui->imagesExplore->setEnabled(true);
-    if (plugin().previewGenerator().previewSupported(QFileInfo(f->path()).suffix().toLower()))
+    if (plugin().previewGenerator().previewSupported(
+            QFileInfo(f->path()).suffix().toLower()))
       ui->previewPluginButton->setEnabled(true);
     else
       ui->previewPluginButton->setEnabled(false);
@@ -269,9 +274,11 @@ void ImagesTab::select(std::size_t i, Visibility v)
       paint.fillRect(0, 0, 300, 100, QBrush(QColor(0, 0, 0, 255)));
       paint.setPen(m_theme.textColor);
       paint.setFont(m_theme.font);
-      paint.drawImage(QPoint(150-16, 50-20-16), QImage(":/MO/gui/warning"));
+      paint.drawImage(QPoint(150 - 16, 50 - 20 - 16), QImage(":/MO/gui/warning"));
       const auto flags = Qt::AlignHCenter | Qt::AlignVCenter | Qt::TextWordWrap;
-      paint.drawText(0, 46, 300, 54, flags, "This image format is not supported by Qt, but the preview plugin may be able to display it. Use the button above.");
+      paint.drawText(0, 46, 300, 54, flags,
+                     "This image format is not supported by Qt, but the preview plugin "
+                     "may be able to display it. Use the button above.");
       paint.end();
 
       m_image->setImage(image);
@@ -329,12 +336,12 @@ void ImagesTab::ensureVisible(std::size_t i, Visibility v)
 
   const auto geo = makeGeometry();
 
-  const auto fullyVisible = geo.fullyVisibleCount();
+  const auto fullyVisible     = geo.fullyVisibleCount();
   const auto partiallyVisible = fullyVisible + 1;
 
   const auto first = ui->imagesScrollerVBar->value();
-  const auto last = (v == Visibility::Full ?
-    first + fullyVisible : first + partiallyVisible);
+  const auto last =
+      (v == Visibility::Full ? first + fullyVisible : first + partiallyVisible);
 
   if (i < first) {
     // go up
@@ -390,23 +397,22 @@ void ImagesTab::paintThumbnailsArea(QPaintEvent* e)
 {
   PaintContext cx(ui->imagesThumbnails, makeGeometry());
 
-  cx.painter.fillRect(
-    ui->imagesThumbnails->rect(),
-    ui->imagesThumbnails->palette().color(QPalette::Window));
+  cx.painter.fillRect(ui->imagesThumbnails->rect(),
+                      ui->imagesThumbnails->palette().color(QPalette::Window));
 
   const auto visible = cx.geo.fullyVisibleCount() + 1;
-  const auto first = ui->imagesScrollerVBar->value();
+  const auto first   = ui->imagesScrollerVBar->value();
 
-  for (std::size_t i=0; i<visible; ++i) {
+  for (std::size_t i = 0; i < visible; ++i) {
     const auto fileIndex = first + i;
-    auto* file = m_files.get(fileIndex);
+    auto* file           = m_files.get(fileIndex);
     if (!file) {
       break;
     }
 
-    cx.file = file;
+    cx.file       = file;
     cx.thumbIndex = i;
-    cx.fileIndex = fileIndex;
+    cx.fileIndex  = fileIndex;
 
     paintThumbnail(cx);
   }
@@ -449,9 +455,8 @@ void ImagesTab::paintThumbnailImage(const PaintContext& cx)
 
   cx.file->loadIfNeeded(cx.geo);
 
-  const auto imageRect = cx.geo.imageRect(cx.thumbIndex);
-  const auto scaledThumbRect = centeredRect(
-    imageRect, cx.file->thumbnail().size());
+  const auto imageRect       = cx.geo.imageRect(cx.thumbIndex);
+  const auto scaledThumbRect = centeredRect(imageRect, cx.file->thumbnail().size());
 
   cx.painter.fillRect(scaledThumbRect, m_theme.backgroundColor);
   cx.painter.drawImage(scaledThumbRect, cx.file->thumbnail());
@@ -471,8 +476,7 @@ void ImagesTab::paintThumbnailText(const PaintContext& cx)
 
   QFontMetrics fm(m_theme.font);
 
-  const auto text = fm.elidedText(
-    cx.file->filename(), Qt::ElideRight, tr.width());
+  const auto text = fm.elidedText(cx.file->filename(), Qt::ElideRight, tr.width());
 
   const auto flags = Qt::AlignHCenter | Qt::AlignVCenter | Qt::TextSingleLine;
 
@@ -503,45 +507,44 @@ void ImagesTab::thumbnailAreaWheelEvent(QWheelEvent* e)
 {
   const auto d = (e->angleDelta() / 8).y();
 
-  ui->imagesScrollerVBar->setValue(
-    ui->imagesScrollerVBar->value() + (d > 0 ? -1 : 1));
+  ui->imagesScrollerVBar->setValue(ui->imagesScrollerVBar->value() + (d > 0 ? -1 : 1));
 }
 
 bool ImagesTab::thumbnailAreaKeyPressEvent(QKeyEvent* e)
 {
   switch (e->key()) {
-    case Qt::Key_Down: {
-      moveSelection(ui->imagesScrollerVBar->singleStep());
-      return true;
+  case Qt::Key_Down: {
+    moveSelection(ui->imagesScrollerVBar->singleStep());
+    return true;
+  }
+
+  case Qt::Key_Up: {
+    moveSelection(-ui->imagesScrollerVBar->singleStep());
+    return true;
+  }
+
+  case Qt::Key_PageDown: {
+    moveSelection(ui->imagesScrollerVBar->pageStep());
+    return true;
+  }
+
+  case Qt::Key_PageUp: {
+    moveSelection(-ui->imagesScrollerVBar->pageStep());
+    return true;
+  }
+
+  case Qt::Key_Home: {
+    select(0);
+    return true;
+  }
+
+  case Qt::Key_End: {
+    if (!m_files.empty()) {
+      select(m_files.size() - 1);
     }
 
-    case Qt::Key_Up: {
-      moveSelection(-ui->imagesScrollerVBar->singleStep());
-      return true;
-    }
-
-    case Qt::Key_PageDown: {
-      moveSelection(ui->imagesScrollerVBar->pageStep());
-      return true;
-    }
-
-    case Qt::Key_PageUp: {
-      moveSelection(-ui->imagesScrollerVBar->pageStep());
-      return true;
-    }
-
-    case Qt::Key_Home: {
-      select(0);
-      return true;
-    }
-
-    case Qt::Key_End: {
-      if (!m_files.empty()) {
-        select(m_files.size() - 1);
-      }
-
-      return true;
-    }
+    return true;
+  }
   }
 
   return false;
@@ -562,15 +565,15 @@ void ImagesTab::showTooltip(QHelpEvent* e)
   }
 
   const auto s = QString("%1 (%2)")
-    .arg(QDir::toNativeSeparators(f->path()))
-    .arg(dimensionString(f->original().size()));
+                     .arg(QDir::toNativeSeparators(f->path()))
+                     .arg(dimensionString(f->original().size()));
 
   QToolTip::showText(e->globalPos(), s, ui->imagesThumbnails);
 }
 
 void ImagesTab::onExplore()
 {
-  if (auto* f=m_files.selectedFile()) {
+  if (auto* f = m_files.selectedFile()) {
     shell::Explore(f->path());
   }
 }
@@ -602,9 +605,9 @@ void ImagesTab::updateScrollbar()
     return;
   }
 
-  const auto geo = makeGeometry();
+  const auto geo           = makeGeometry();
   const auto availableSize = ui->imagesThumbnails->size();
-  const auto fullyVisible = geo.fullyVisibleCount();
+  const auto fullyVisible  = geo.fullyVisibleCount();
 
   if (fullyVisible >= m_files.size()) {
     ui->imagesScrollerVBar->setRange(0, 0);
@@ -617,7 +620,6 @@ void ImagesTab::updateScrollbar()
     ui->imagesScrollerVBar->setEnabled(true);
   }
 }
-
 
 namespace ImagesTabHelpers
 {
@@ -633,7 +635,6 @@ void Scrollbar::wheelEvent(QWheelEvent* e)
     m_tab->thumbnailAreaWheelEvent(e);
   }
 }
-
 
 void ThumbnailsWidget::setTab(ImagesTab* tab)
 {
@@ -689,9 +690,7 @@ bool ThumbnailsWidget::event(QEvent* e)
   return QWidget::event(e);
 }
 
-
-ScalableImage::ScalableImage(QString path)
-  : m_path(std::move(path)), m_border(1)
+ScalableImage::ScalableImage(QString path) : m_path(std::move(path)), m_border(1)
 {
   auto sp = sizePolicy();
   sp.setHeightForWidth(true);
@@ -700,9 +699,9 @@ ScalableImage::ScalableImage(QString path)
 
 void ScalableImage::setImage(const QString& path)
 {
-  m_path = path;
+  m_path     = path;
   m_original = {};
-  m_scaled = {};
+  m_scaled   = {};
 
   update();
 }
@@ -711,7 +710,7 @@ void ScalableImage::setImage(QImage image)
 {
   m_path.clear();
   m_original = std::move(image);
-  m_scaled = {};
+  m_scaled   = {};
 
   update();
 }
@@ -733,7 +732,7 @@ int ScalableImage::heightForWidth(int w) const
 
 void ScalableImage::setColors(const QColor& border, const QColor& background)
 {
-  m_borderColor = border;
+  m_borderColor     = border;
   m_backgroundColor = background;
 }
 
@@ -752,20 +751,17 @@ void ScalableImage::paintEvent(QPaintEvent* e)
   }
 
   const QRect widgetRect = rect();
-  const QRect imageRect = widgetRect.adjusted(
-    m_border, m_border, -m_border, -m_border);
+  const QRect imageRect = widgetRect.adjusted(m_border, m_border, -m_border, -m_border);
 
-  const QSize scaledSize = resizeWithAspectRatio(
-    m_original.size(), imageRect.size());
+  const QSize scaledSize = resizeWithAspectRatio(m_original.size(), imageRect.size());
 
   if (m_scaled.isNull() || m_scaled.size() != scaledSize) {
-    m_scaled = m_original.scaled(
-      scaledSize.width(), scaledSize.height(),
-      Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    m_scaled = m_original.scaled(scaledSize.width(), scaledSize.height(),
+                                 Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
   }
 
   const QRect drawBorderRect = widgetRect.adjusted(0, 0, -1, -1);
-  const QRect drawImageRect = centeredRect(imageRect, m_scaled.size());
+  const QRect drawImageRect  = centeredRect(imageRect, m_scaled.size());
 
   QPainter painter(this);
 
@@ -780,41 +776,24 @@ void ScalableImage::paintEvent(QPaintEvent* e)
   painter.drawImage(drawImageRect, m_scaled);
 }
 
-
-Metrics::Metrics() :
-  margins(3),
-  border(1),
-  padding(0),
-  spacing(5),
-  textSpacing(2),
-  textHeight(0)
-{
-}
-
+Metrics::Metrics()
+    : margins(3), border(1), padding(0), spacing(5), textSpacing(2), textHeight(0)
+{}
 
 Geometry::Geometry(QSize widgetSize, Metrics metrics)
-  : m_widgetSize(widgetSize), m_metrics(metrics), m_topRect(calcTopRect())
-{
-}
+    : m_widgetSize(widgetSize), m_metrics(metrics), m_topRect(calcTopRect())
+{}
 
 QRect Geometry::calcTopRect() const
 {
   const auto thumbWidth = m_widgetSize.width();
-  const auto& m = m_metrics;
+  const auto& m         = m_metrics;
 
   const auto imageSize =
-    thumbWidth -
-    (m.margins * 2) -
-    (m.border * 2) -
-    (m.padding * 2);
+      thumbWidth - (m.margins * 2) - (m.border * 2) - (m.padding * 2);
 
-  const auto thumbHeight =
-    m.margins +
-    m.border + m.padding +
-    imageSize +
-    m.padding + m.border +
-    m.textSpacing + m.textHeight +
-    m.margins;
+  const auto thumbHeight = m.margins + m.border + m.padding + imageSize + m.padding +
+                           m.border + m.textSpacing + m.textHeight + m.margins;
 
   return {0, 0, thumbWidth, thumbHeight};
 }
@@ -824,7 +803,7 @@ std::size_t Geometry::fullyVisibleCount() const
   const auto r = thumbRect(0);
 
   const auto thumbWithSpacing = r.height() + m_metrics.spacing;
-  const auto visible = (m_widgetSize.height() / thumbWithSpacing);
+  const auto visible          = (m_widgetSize.height() / thumbWithSpacing);
 
   return static_cast<std::size_t>(visible);
 }
@@ -843,7 +822,7 @@ QRect Geometry::thumbRect(std::size_t i) const
 
 QRect Geometry::borderRect(std::size_t i) const
 {
-  auto r = thumbRect(i);
+  auto r        = thumbRect(i);
   const auto& m = m_metrics;
 
   // remove margins and text
@@ -870,11 +849,8 @@ QRect Geometry::textRect(std::size_t i) const
 {
   const auto r = borderRect(i);
 
-  return QRect(
-    r.left(),
-    r.bottom() + m_metrics.textSpacing,
-    r.width(),
-    m_metrics.textHeight);
+  return QRect(r.left(), r.bottom() + m_metrics.textSpacing, r.width(),
+               m_metrics.textHeight);
 }
 
 QRect Geometry::selectionRect(std::size_t i) const
@@ -882,11 +858,7 @@ QRect Geometry::selectionRect(std::size_t i) const
   const auto br = borderRect(i);
   const auto tr = textRect(i);
 
-  return QRect(
-    br.left(),
-    br.top(),
-    br.width(),
-    tr.bottom() - br.top());
+  return QRect(br.left(), br.top(), br.width(), tr.bottom() - br.top());
 }
 
 std::size_t Geometry::indexAt(const QPoint& p) const
@@ -907,11 +879,7 @@ QSize Geometry::scaledImageSize(const QSize& originalSize) const
   return resizeWithAspectRatio(originalSize, availableSize);
 }
 
-
-File::File(QString path)
-  : m_path(std::move(path)), m_failed(false)
-{
-}
+File::File(QString path) : m_path(std::move(path)), m_failed(false) {}
 
 void File::ensureOriginalLoaded()
 {
@@ -923,9 +891,8 @@ void File::ensureOriginalLoaded()
   QImageReader reader(m_path);
 
   if (!reader.read(&m_original)) {
-    log::error(
-      "failed to load '{}'\n{} (error {})",
-      m_path, reader.errorString(), static_cast<int>(reader.error()));
+    log::error("failed to load '{}'\n{} (error {})", m_path, reader.errorString(),
+               static_cast<int>(reader.error()));
 
     m_failed = true;
   }
@@ -990,28 +957,24 @@ void File::load(const Geometry& geo)
     QImage warning(":/MO/gui/warning");
     const auto scaledSize = geo.scaledImageSize(warning.size());
 
-    m_thumbnail = warning.scaled(
-      scaledSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    m_thumbnail =
+        warning.scaled(scaledSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
   } else {
     const auto scaledSize = geo.scaledImageSize(m_original.size());
 
-    m_thumbnail = m_original.scaled(
-      scaledSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    m_thumbnail =
+        m_original.scaled(scaledSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
   }
 }
 
-
-Files::Files()
-  : m_selection(BadIndex), m_filtered(false)
-{
-}
+Files::Files() : m_selection(BadIndex), m_filtered(false) {}
 
 void Files::clear()
 {
   m_allFiles.clear();
   m_filteredFiles.clear();
   m_selection = BadIndex;
-  m_filtered = false;
+  m_filtered  = false;
 }
 
 void Files::add(File f)
@@ -1077,13 +1040,13 @@ File* Files::get(std::size_t i)
 std::size_t Files::indexOf(const File* f) const
 {
   if (m_filtered) {
-    for (std::size_t i=0; i<m_filteredFiles.size(); ++i) {
+    for (std::size_t i = 0; i < m_filteredFiles.size(); ++i) {
       if (m_filteredFiles[i] == f) {
         return i;
       }
     }
   } else {
-    for (std::size_t i=0; i<m_allFiles.size(); ++i) {
+    for (std::size_t i = 0; i < m_allFiles.size(); ++i) {
       if (&m_allFiles[i] == f) {
         return i;
       }
@@ -1123,10 +1086,8 @@ bool Files::isFiltered() const
   return m_filtered;
 }
 
-
 PaintContext::PaintContext(QWidget* w, Geometry geo)
-  : painter(w), geo(geo), file(nullptr), thumbIndex(0), fileIndex(0)
-{
-}
+    : painter(w), geo(geo), file(nullptr), thumbIndex(0), fileIndex(0)
+{}
 
-} // namespace
+}  // namespace ImagesTabHelpers

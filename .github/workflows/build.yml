@@ -1,0 +1,20 @@
+name: Build ModOrganizer 2
+
+on:
+  push:
+    branches: master
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Build ModOrganizer 2
+        uses: ModOrganizer2/build-with-mob-action@master
+        with:
+          qt-modules: qtpositioning qtwebchannel qtwebengine qtwebsockets
+          mo2-third-parties:
+            7z zlib fmt gtest libbsarch libloot openssl libffi bzip2 python lz4 spdlog
+            boost boost-di sip pyqt pybind11 ss licenses explorerpp usvfs
+          mo2-dependencies: cmake_common uibase githubpp bsatk esptk archive lootcli game_gamebryo

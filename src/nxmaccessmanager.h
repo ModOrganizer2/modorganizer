@@ -22,16 +22,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "apiuseraccount.h"
 #include "ui_validationprogressdialog.h"
+#include <QDialogButtonBox>
+#include <QElapsedTimer>
 #include <QNetworkAccessManager>
-#include <QTimer>
 #include <QNetworkReply>
 #include <QProgressDialog>
-#include <QElapsedTimer>
-#include <QDialogButtonBox>
+#include <QTimer>
 #include <QWebSocket>
 #include <set>
 
-namespace MOBase { class IPluginGame; }
+namespace MOBase
+{
+class IPluginGame;
+}
 class NXMAccessManager;
 class Settings;
 
@@ -50,8 +53,8 @@ public:
     Error
   };
 
-  std::function<void (QString)> keyChanged;
-  std::function<void (States, QString)> stateChanged;
+  std::function<void(QString)> keyChanged;
+  std::function<void(States, QString)> stateChanged;
 
   static QString stateToString(States s, const QString& e);
 
@@ -69,7 +72,7 @@ private:
   bool m_active;
   QTimer m_timeout;
 
-  void setState(States s, const QString& error={});
+  void setState(States s, const QString& error = {});
 
   void close();
   void abort();
@@ -81,7 +84,6 @@ private:
   void onSslErrors(const QList<QSslError>& errors);
   void onTimeout();
 };
-
 
 class ValidationAttempt
 {
@@ -95,11 +97,11 @@ public:
     Cancelled
   };
 
-  std::function<void (APIUserAccount)> success;
-  std::function<void ()> failure;
+  std::function<void(APIUserAccount)> success;
+  std::function<void()> failure;
 
   ValidationAttempt(std::chrono::seconds timeout);
-  ValidationAttempt(const ValidationAttempt&) = delete;
+  ValidationAttempt(const ValidationAttempt&)            = delete;
   ValidationAttempt& operator=(const ValidationAttempt&) = delete;
 
   void start(NXMAccessManager& m, const QString& key);
@@ -130,7 +132,6 @@ private:
   void cleanup();
 };
 
-
 class NexusKeyValidator
 {
 public:
@@ -140,12 +141,11 @@ public:
     Retry
   };
 
-  using FinishedCallback = void (
-    ValidationAttempt::Result, const QString&,
-    std::optional<APIUserAccount>);
+  using FinishedCallback = void(ValidationAttempt::Result, const QString&,
+                                std::optional<APIUserAccount>);
 
   std::function<FinishedCallback> finished;
-  std::function<void (const ValidationAttempt&)> attemptFinished;
+  std::function<void(const ValidationAttempt&)> attemptFinished;
 
   NexusKeyValidator(Settings* s, NXMAccessManager& am);
   ~NexusKeyValidator();
@@ -170,11 +170,9 @@ private:
   void onAttemptSuccess(const ValidationAttempt& a, const APIUserAccount& u);
   void onAttemptFailure(const ValidationAttempt& a);
 
-  void setFinished(
-    ValidationAttempt::Result r, const QString& message,
-    std::optional<APIUserAccount> user);
+  void setFinished(ValidationAttempt::Result r, const QString& message,
+                   std::optional<APIUserAccount> user);
 };
-
 
 class ValidationProgressDialog : public QDialog
 {
@@ -205,7 +203,6 @@ private:
   void updateProgress();
 };
 
-
 /**
  * @brief access manager extended to handle nxm links
  **/
@@ -213,7 +210,7 @@ class NXMAccessManager : public QNetworkAccessManager
 {
   Q_OBJECT
 public:
-  NXMAccessManager(QObject *parent, Settings* s, const QString &moVersion);
+  NXMAccessManager(QObject* parent, Settings* s, const QString& moVersion);
 
   void setTopLevelWidget(QWidget* w);
 
@@ -222,13 +219,13 @@ public:
   bool validateAttempted() const;
   bool validateWaiting() const;
 
-  void apiCheck(const QString &apiKey, bool force=false);
+  void apiCheck(const QString& apiKey, bool force = false);
 
   void showCookies() const;
 
   void clearCookies();
 
-  QString userAgent(const QString &subModule = QString()) const;
+  QString userAgent(const QString& subModule = QString()) const;
   const QString& MOVersion() const;
 
   void clearApiKey();
@@ -242,22 +239,22 @@ signals:
    *
    * @param url the nxm-link
    **/
-  void requestNXMDownload(const QString &url);
+  void requestNXMDownload(const QString& url);
 
   /**
    * @brief emitted after a successful login or if login was not necessary
    *
-   * @param necessary true if a login was necessary and succeeded, false if the user is still logged in
+   * @param necessary true if a login was necessary and succeeded, false if the user is
+   *still logged in
    **/
   void validateSuccessful(bool necessary);
-  void validateFailed(const QString &message);
+  void validateFailed(const QString& message);
   void credentialsReceived(const APIUserAccount& user);
 
 protected:
-
-  virtual QNetworkReply *createRequest(
-      QNetworkAccessManager::Operation operation, const QNetworkRequest &request,
-      QIODevice *device);
+  virtual QNetworkReply* createRequest(QNetworkAccessManager::Operation operation,
+                                       const QNetworkRequest& request,
+                                       QIODevice* device);
 
 private:
   enum States
@@ -276,9 +273,8 @@ private:
 
   void startValidationCheck(const QString& key);
 
-  void onValidatorFinished(
-    ValidationAttempt::Result r, const QString& message,
-    std::optional<APIUserAccount>);
+  void onValidatorFinished(ValidationAttempt::Result r, const QString& message,
+                           std::optional<APIUserAccount>);
 
   void onValidatorAttemptFinished(const ValidationAttempt& a);
 
@@ -286,4 +282,4 @@ private:
   void stopProgress();
 };
 
-#endif // NXMACCESSMANAGER_H
+#endif  // NXMACCESSMANAGER_H

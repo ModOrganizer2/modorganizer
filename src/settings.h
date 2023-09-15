@@ -22,27 +22,26 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "envdump.h"
 #include <filterwidget.h>
+#include <log.h>
 #include <lootcli/lootcli.h>
 #include <questionboxmemory.h>
-#include <log.h>
 #include <usvfsparameters.h>
 
 #ifdef interface
-  #undef interface
+#undef interface
 #endif
 
-namespace MOBase {
-  class IPlugin;
-  class IPluginGame;
-  class ExpanderWidget;
-}
+namespace MOBase
+{
+class IPlugin;
+class IPluginGame;
+class ExpanderWidget;
+}  // namespace MOBase
 
 class QSplitter;
 
 class ServerList;
 class Settings;
-
-
 
 // setting for the currently managed game
 //
@@ -87,7 +86,6 @@ private:
   const MOBase::IPluginGame* m_GamePlugin;
 };
 
-
 // geometry settings for various widgets; this should contain any setting that
 // can get invalid through UI changes or when users change display settings
 // (resolution, monitors, etc.); see WidgetSettings for the counterpart
@@ -111,7 +109,6 @@ public:
   void requestReset();
   void resetIfNeeded();
 
-
   void saveGeometry(const QMainWindow* w);
   bool restoreGeometry(QMainWindow* w) const;
 
@@ -131,7 +128,7 @@ public:
   bool restoreState(MOBase::ExpanderWidget* expander) const;
 
   void saveVisibility(const QWidget* w);
-  bool restoreVisibility(QWidget* w, std::optional<bool> def={}) const;
+  bool restoreVisibility(QWidget* w, std::optional<bool> def = {}) const;
 
   void saveToolbars(const QMainWindow* w);
   void restoreToolbars(QMainWindow* w) const;
@@ -167,9 +164,8 @@ private:
 
   void ensureWindowOnScreen(QWidget* w) const;
   static void centerOnMonitor(QWidget* w, int monitor);
-  static void centerOnParent(QWidget* w, QWidget* parent=nullptr);
+  static void centerOnParent(QWidget* w, QWidget* parent = nullptr);
 };
-
 
 // widget settings that should stay valid regardless of UI changes or when users
 // change display settings (resolution, monitors, etc.); see GeometrySettings
@@ -198,36 +194,35 @@ public:
   //
   std::optional<int> index(const QComboBox* cb) const;
   void saveIndex(const QComboBox* cb);
-  void restoreIndex(QComboBox* cb, std::optional<int> def={}) const;
+  void restoreIndex(QComboBox* cb, std::optional<int> def = {}) const;
 
   // selected tab index for a tab widget
   //
   std::optional<int> index(const QTabWidget* w) const;
   void saveIndex(const QTabWidget* w);
-  void restoreIndex(QTabWidget* w, std::optional<int> def={}) const;
+  void restoreIndex(QTabWidget* w, std::optional<int> def = {}) const;
 
   // check state for a checkable button
   //
   std::optional<bool> checked(const QAbstractButton* w) const;
   void saveChecked(const QAbstractButton* w);
-  void restoreChecked(QAbstractButton* w, std::optional<bool> def={}) const;
+  void restoreChecked(QAbstractButton* w, std::optional<bool> def = {}) const;
 
   // returns the remembered button for a question dialog, or NoButton if the
   // user hasn't saved the choice
   //
-  MOBase::QuestionBoxMemory::Button questionButton(
-    const QString& windowName, const QString& filename) const;
+  MOBase::QuestionBoxMemory::Button questionButton(const QString& windowName,
+                                                   const QString& filename) const;
 
   // sets the button to be remembered for the given window
   //
-  void setQuestionWindowButton(
-    const QString& windowName, MOBase::QuestionBoxMemory::Button button);
+  void setQuestionWindowButton(const QString& windowName,
+                               MOBase::QuestionBoxMemory::Button button);
 
   // sets the button to be remembered for the given file
   //
-  void setQuestionFileButton(
-    const QString& windowName, const QString& filename,
-    MOBase::QuestionBoxMemory::Button choice);
+  void setQuestionFileButton(const QString& windowName, const QString& filename,
+                             MOBase::QuestionBoxMemory::Button choice);
 
   // wipes all the remembered buttons
   //
@@ -236,7 +231,6 @@ public:
 private:
   QSettings& m_Settings;
 };
-
 
 // various color settings
 //
@@ -261,7 +255,7 @@ public:
   void setModlistContainsPlugin(const QColor& c);
 
   QColor pluginListContained() const;
-  void setPluginListContained(const QColor& c) ;
+  void setPluginListContained(const QColor& c);
 
   std::optional<QColor> previousSeparatorColor() const;
   void setPreviousSeparatorColor(const QColor& c) const;
@@ -281,16 +275,14 @@ private:
   QSettings& m_Settings;
 };
 
-
 // settings about plugins
 //
-class PluginSettings: public QObject
+class PluginSettings : public QObject
 {
   Q_OBJECT
 
 public:
   PluginSettings(QSettings& settings);
-
 
   // forgets all the plugins
   //
@@ -298,51 +290,50 @@ public:
 
   // adds/removes the given plugin to the list and loads all of its settings
   //
-  void registerPlugin(MOBase::IPlugin *plugin);
+  void registerPlugin(MOBase::IPlugin* plugin);
   void unregisterPlugin(MOBase::IPlugin* plugin);
 
   // returns all the registered plugins
   //
   std::vector<MOBase::IPlugin*> plugins() const;
 
-
   // returns the plugin setting for the given key
   //
-  QVariant setting(const QString &pluginName, const QString &key) const;
+  QVariant setting(const QString& pluginName, const QString& key) const;
 
   // sets the plugin setting for the given key
   //
-  void setSetting(const QString &pluginName, const QString &key, const QVariant &value);
+  void setSetting(const QString& pluginName, const QString& key, const QVariant& value);
 
   // returns all settings
   //
-  QVariantMap settings(const QString &pluginName) const;
+  QVariantMap settings(const QString& pluginName) const;
 
   // overwrites all settings
   //
-  void setSettings(const QString &pluginName, const QVariantMap& map);
+  void setSettings(const QString& pluginName, const QVariantMap& map);
 
   // returns all descriptions
   //
-  QVariantMap descriptions(const QString &pluginName) const;
+  QVariantMap descriptions(const QString& pluginName) const;
 
   // overwrites all descriptions
   //
-  void setDescriptions(const QString &pluginName, const QVariantMap& map);
-
+  void setDescriptions(const QString& pluginName, const QVariantMap& map);
 
   // ?
-  QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def) const;
-  void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
-
+  QVariant persistent(const QString& pluginName, const QString& key,
+                      const QVariant& def) const;
+  void setPersistent(const QString& pluginName, const QString& key,
+                     const QVariant& value, bool sync);
 
   // adds the given plugin to the blacklist
   //
-  void addBlacklist(const QString &fileName);
+  void addBlacklist(const QString& fileName);
 
   // returns whether the given plugin is blacklisted
   //
-  bool blacklisted(const QString &fileName) const;
+  bool blacklisted(const QString& fileName) const;
 
   // overwrites the whole blacklist
   //
@@ -351,7 +342,6 @@ public:
   // returns the blacklist
   //
   const QSet<QString>& blacklist() const;
-
 
   // commits all the settings to the ini
   //
@@ -362,7 +352,8 @@ Q_SIGNALS:
   /**
    * Emitted when a plugin setting changes.
    */
-  void pluginSettingChanged(QString const& pluginName, const QString& key, const QVariant& oldValue, const QVariant& newValue);
+  void pluginSettingChanged(QString const& pluginName, const QString& key,
+                            const QVariant& oldValue, const QVariant& newValue);
 
 private:
   QSettings& m_Settings;
@@ -379,7 +370,6 @@ private:
   //
   QSet<QString> readBlacklist() const;
 };
-
 
 // paths for the game and various components
 //
@@ -412,13 +402,11 @@ public:
   QString overwrite(bool resolve = true) const;
   void setOverwrite(const QString& path);
 
-
   // map of names to directories, used to remember the last directory used in
   // various file pickers
   //
   std::map<QString, QString> recent() const;
   void setRecent(const std::map<QString, QString>& map);
-
 
   // resolves %BASE_DIR%
   //
@@ -431,10 +419,10 @@ public:
 private:
   QSettings& m_Settings;
 
-  QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
-  void setConfigurablePath(const QString &key, const QString& path);
+  QString getConfigurablePath(const QString& key, const QString& def,
+                              bool resolve) const;
+  void setConfigurablePath(const QString& key, const QString& path);
 };
-
 
 class NetworkSettings
 {
@@ -458,7 +446,7 @@ public:
   // remembers the last couple of download speeds and displays the average in
   // the network settings
   //
-  void setDownloadSpeed(const QString &serverName, int bytesPerSecond);
+  void setDownloadSpeed(const QString& serverName, int bytesPerSecond);
 
   // known servers
   //
@@ -496,7 +484,6 @@ private:
   void updateCustomBrowser();
 };
 
-
 enum class EndorsementState
 {
   Accepted = 1,
@@ -506,7 +493,6 @@ enum class EndorsementState
 
 EndorsementState endorsementStateFromString(const QString& s);
 QString toString(EndorsementState s);
-
 
 class NexusSettings
 {
@@ -546,7 +532,6 @@ private:
   QSettings& m_Settings;
 };
 
-
 class SteamSettings
 {
 public:
@@ -573,7 +558,7 @@ public:
   //
   // returns whether _both_ the username and password have a value
   //
-  bool login(QString &username, QString &password) const;
+  bool login(QString& username, QString& password) const;
 
   // sets the steam login; the username is saved in the ini file and the
   // password in the credentials store
@@ -586,7 +571,6 @@ private:
   Settings& m_Parent;
   QSettings& m_Settings;
 };
-
 
 class InterfaceSettings
 {
@@ -681,7 +665,7 @@ public:
   // whether the given tutorial has been completed
   //
   bool isTutorialCompleted(const QString& windowName) const;
-  void setTutorialCompleted(const QString& windowName, bool b=true);
+  void setTutorialCompleted(const QString& windowName, bool b = true);
 
   // whether to show the confirmation when switching instances
   //
@@ -706,7 +690,6 @@ public:
 private:
   QSettings& m_Settings;
 };
-
 
 class DiagnosticsSettings
 {
@@ -739,7 +722,6 @@ private:
   QSettings& m_Settings;
 };
 
-
 // manages the settings for MO; the settings are accessed directly through a
 // QSettings and so are not cached here
 //
@@ -762,9 +744,8 @@ public:
   // @param globalInsance  whether this is the global instance; creates the
   //                       singleton and asserts if it already exists
   //
-  Settings(const QString& path, bool globalInstance=false);
+  Settings(const QString& path, bool globalInstance = false);
   ~Settings();
-
 
   // throws if there is no global Settings instance
   //
@@ -773,7 +754,6 @@ public:
   // returns null if there is no global Settings instance
   //
   static Settings* maybeInstance();
-
 
   // name of the ini file
   //
@@ -886,16 +866,16 @@ public:
 public slots:
   // this slot is connected to by various parts of MO
   //
-  void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
+  void managedGameChanged(MOBase::IPluginGame const* gamePlugin);
 
 signals:
   // these are fired from outside the settings, mostly by the settings dialog
   //
-  void languageChanged(const QString &newLanguage);
-  void styleChanged(const QString &newStyle);
+  void languageChanged(const QString& newLanguage);
+  void styleChanged(const QString& newStyle);
 
 private:
-  static Settings *s_Instance;
+  static Settings* s_Instance;
   mutable QSettings m_Settings;
 
   GameSettings m_Game;
@@ -910,7 +890,6 @@ private:
   InterfaceSettings m_Interface;
   DiagnosticsSettings m_Diagnostics;
 };
-
 
 // manages global settings in the registry
 //
@@ -954,7 +933,6 @@ private:
   static QSettings settings();
 };
 
-
 // helper class that calls restoreGeometry() in the constructor and
 // saveGeometry() in the destructor
 //
@@ -962,20 +940,16 @@ template <class W>
 class GeometrySaver
 {
 public:
-  GeometrySaver(Settings& s, W* w)
-    : m_settings(s), m_widget(w)
+  GeometrySaver(Settings& s, W* w) : m_settings(s), m_widget(w)
   {
     m_settings.geometry().restoreGeometry(m_widget);
   }
 
-  ~GeometrySaver()
-  {
-    m_settings.geometry().saveGeometry(m_widget);
-  }
+  ~GeometrySaver() { m_settings.geometry().saveGeometry(m_widget); }
 
 private:
   Settings& m_settings;
   W* m_widget;
 };
 
-#endif // SETTINGS_H
+#endif  // SETTINGS_H

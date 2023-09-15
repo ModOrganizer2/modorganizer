@@ -3,8 +3,8 @@
 
 #include <QCheckBox>
 
-#include "settingsdialog.h"
 #include "settings.h"
+#include "settingsdialog.h"
 
 class ThemeSettingsTab : public SettingsTab
 {
@@ -14,11 +14,9 @@ public:
   void update() override;
 
 private:
-
   void addStyles();
   void selectStyle();
   void onExploreStyles();
-
 };
 
-#endif // SETTINGSDIALOGGENERAL_H
+#endif  // SETTINGSDIALOGGENERAL_H

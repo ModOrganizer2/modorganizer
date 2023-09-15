@@ -21,7 +21,6 @@ class ModInfoRegular : public ModInfoWithConflictInfo
   friend class ModInfo;
 
 public:
-
   ~ModInfoRegular();
 
   virtual bool isRegular() const override { return true; }
@@ -36,8 +35,9 @@ public:
    * @brief test if there is a newer version of the mod
    *
    * test if there is a newer version of the mod. This does NOT cause
-   * information to be retrieved from the nexus, it will only test version information already
-   * available locally. Use checkAllForUpdate() to update this version information
+   * information to be retrieved from the nexus, it will only test version information
+   *already available locally. Use checkAllForUpdate() to update this version
+   *information
    *
    * @return true if there is a newer version
    **/
@@ -46,14 +46,18 @@ public:
   /**
    * @return true if the current update is being ignored
    */
-  virtual bool updateIgnored() const override { return m_IgnoredVersion.isValid() && m_IgnoredVersion == m_NewestVersion; }
+  virtual bool updateIgnored() const override
+  {
+    return m_IgnoredVersion.isValid() && m_IgnoredVersion == m_NewestVersion;
+  }
 
   /**
    * @brief test if there is a newer version of the mod
    *
    * test if there is a newer version of the mod. This does NOT cause
-   * information to be retrieved from the nexus, it will only test version information already
-   * available locally. Use checkAllForUpdate() to update this version information
+   * information to be retrieved from the nexus, it will only test version information
+   *already available locally. Use checkAllForUpdate() to update this version
+   *information
    *
    * @return true if there is a newer version
    **/
@@ -65,7 +69,8 @@ public:
    * This requests mod information from the nexus. This is an asynchronous request,
    * so there is no immediate effect of this call.
    *
-   * @return returns true if information for this mod will be updated, false if there is no nexus mod id to use
+   * @return returns true if information for this mod will be updated, false if there is
+   *no nexus mod id to use
    **/
   bool updateNXMInfo() override;
 
@@ -76,7 +81,8 @@ public:
    *
    * @param categoryID id of the category to set
    * @param active determines wheter the category is assigned or unassigned
-   * @note this function does not test whether categoryID actually identifies a valid category
+   * @note this function does not test whether categoryID actually identifies a valid
+   *category
    **/
   void setCategory(int categoryID, bool active) override;
 
@@ -90,19 +96,20 @@ public:
    * @return true on success, false if the new name can't be used (i.e. because the new
    *         directory name wouldn't be valid)
    **/
-  bool setName(const QString &name) override;
+  bool setName(const QString& name) override;
 
   /**
-  * @brief changes the comments (manually set information displayed in the mod list) for this mod
-  * @param comments new comments
-  */
-  void setComments(const QString &comments) override;
+   * @brief changes the comments (manually set information displayed in the mod list)
+   * for this mod
+   * @param comments new comments
+   */
+  void setComments(const QString& comments) override;
 
   /**
    * @brief change the notes (manually set information) for this mod
    * @param notes new notes
    */
-  void setNotes(const QString &notes) override;
+  void setNotes(const QString& notes) override;
 
   /**
    * @brief set/change the source game of this mod
@@ -126,7 +133,7 @@ public:
    *
    * @param version the new version to use
    **/
-  void setVersion(const MOBase::VersionInfo &version) override;
+  void setVersion(const MOBase::VersionInfo& version) override;
 
   /**
    * @brief set the newest version of this mod on the nexus
@@ -135,21 +142,22 @@ public:
    * updating the mod
    *
    * @param version the new version to use
-   * @todo this function should be made obsolete. All queries for mod information should go through
-   *       this class so no public function for this change is required
+   * @todo this function should be made obsolete. All queries for mod information should
+   *go through this class so no public function for this change is required
    **/
-  void setNewestVersion(const MOBase::VersionInfo &version) override;
+  void setNewestVersion(const MOBase::VersionInfo& version) override;
 
   /**
    * @brief changes/updates the nexus description text
    * @param description the current description text
    */
-  virtual void setNexusDescription(const QString &description) override;
+  virtual void setNexusDescription(const QString& description) override;
 
-  virtual void setInstallationFile(const QString &fileName) override;
+  virtual void setInstallationFile(const QString& fileName) override;
 
   /**
-   * @brief sets the category id from a nexus category id. Conversion to MO id happens internally
+   * @brief sets the category id from a nexus category id. Conversion to MO id happens
+   * internally
    * @param categoryID the nexus category id
    * @note if a mapping is not possible, the category is set to the default value
    */
@@ -159,13 +167,20 @@ public:
    * @brief sets the new primary category of the mod
    * @param categoryID the category to set
    */
-  virtual void setPrimaryCategory(int categoryID) override { m_PrimaryCategory = categoryID; m_MetaInfoChanged = true; }
+  virtual void setPrimaryCategory(int categoryID) override
+  {
+    m_PrimaryCategory = categoryID;
+    m_MetaInfoChanged = true;
+  }
 
   /**
    * @brief sets the download repository
    * @param repository
    */
-  virtual void setRepository(const QString &repository) override { m_Repository = repository; }
+  virtual void setRepository(const QString& repository) override
+  {
+    m_Repository = repository;
+  }
 
   /**
    * update the endorsement state for the mod. This only changes the
@@ -175,7 +190,8 @@ public:
   virtual void setIsEndorsed(bool endorsed) override;
 
   /**
-   * set the mod to "i don't intend to endorse". The mod will not show as unendorsed but can still be endorsed
+   * set the mod to "i don't intend to endorse". The mod will not show as unendorsed but
+   * can still be endorsed
    */
   virtual void setNeverEndorse() override;
 
@@ -194,20 +210,22 @@ public:
   virtual void endorse(bool doEndorse) override;
 
   /**
-  * @brief track or untrack the mod.  This will sync with nexus!
-  * @param doTrack if true, the mod is tracked, if false, it's untracked.
-  * @note if doTrack doesn't differ from the current value, nothing happens.
-  */
+   * @brief track or untrack the mod.  This will sync with nexus!
+   * @param doTrack if true, the mod is tracked, if false, it's untracked.
+   * @note if doTrack doesn't differ from the current value, nothing happens.
+   */
   virtual void track(bool doTrack) override;
 
   /**
-  * @brief updates the mod to flag it as converted in order to ignore the alternate game warning
-  */
+   * @brief updates the mod to flag it as converted in order to ignore the alternate
+   * game warning
+   */
   virtual void markConverted(bool converted) override;
 
   /**
-  * @brief updates the mod to flag it as valid in order to ignore the invalid game data flag
-  */
+   * @brief updates the mod to flag it as valid in order to ignore the invalid game data
+   * flag
+   */
   virtual void markValidated(bool validated) override;
 
   /**
@@ -285,12 +303,10 @@ public:
    */
   virtual QString getDescription() const override;
 
-
   /**
    * @return the nexus file status (aka category ID)
    */
   virtual int getNexusFileStatus() const override;
-
 
   /**
    * @brief sets the file status (category ID) from Nexus
@@ -299,8 +315,8 @@ public:
   virtual void setNexusFileStatus(int status) override;
 
   /**
-  * @return comments for this mod
-  */
+   * @return comments for this mod
+   */
   virtual QString comments() const override;
 
   /**
@@ -380,42 +396,47 @@ public:
 
   virtual void setHasCustomURL(bool b) override;
   virtual bool hasCustomURL() const override;
-  virtual void setCustomURL(QString const &) override;
+  virtual void setCustomURL(QString const&) override;
   virtual QString url() const override;
 
   virtual QString gameName() const override { return m_GameName; }
   virtual QString installationFile() const override { return m_InstallationFile; }
   virtual bool converted() const override { return m_Converted; }
   virtual bool validated() const override { return m_Validated; }
-  virtual std::set<std::pair<int, int>> installedFiles() const override { return m_InstalledFileIDs; }
+  virtual std::set<std::pair<int, int>> installedFiles() const override
+  {
+    return m_InstalledFileIDs;
+  }
 
-public: // Plugin operations:
-
-  virtual QVariant pluginSetting(const QString& pluginName, const QString& key, const QVariant& defaultValue) const override;
-  virtual std::map<QString, QVariant> pluginSettings(const QString& pluginName) const override;
-  virtual bool setPluginSetting(const QString& pluginName, const QString& key, const QVariant& value) override;
-  virtual std::map<QString, QVariant> clearPluginSettings(const QString& pluginName) override;
+public:  // Plugin operations:
+  virtual QVariant pluginSetting(const QString& pluginName, const QString& key,
+                                 const QVariant& defaultValue) const override;
+  virtual std::map<QString, QVariant>
+  pluginSettings(const QString& pluginName) const override;
+  virtual bool setPluginSetting(const QString& pluginName, const QString& key,
+                                const QVariant& value) override;
+  virtual std::map<QString, QVariant>
+  clearPluginSettings(const QString& pluginName) override;
 
 private:
-
   void setEndorsedState(MOBase::EndorsedState endorsedState);
   void setTrackedState(MOBase::TrackedState trackedState);
 
 private slots:
 
-  void nxmDescriptionAvailable(QString, int modID, QVariant userData, QVariant resultData);
+  void nxmDescriptionAvailable(QString, int modID, QVariant userData,
+                               QVariant resultData);
   void nxmEndorsementToggled(QString, int, QVariant userData, QVariant resultData);
   void nxmTrackingToggled(QString, int, QVariant userData, bool tracked);
-  void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, int errorCode, const QString &errorMessage);
+  void nxmRequestFailed(QString, int modID, int fileID, QVariant userData,
+                        int errorCode, const QString& errorMessage);
 
 protected:
-
   virtual std::set<int> doGetContents() const override;
 
   ModInfoRegular(const QDir& path, OrganizerCore& core);
 
 private:
-
   QString m_Name;
   QString m_Path;
   QString m_InstallationFile;
@@ -431,7 +452,6 @@ private:
   QString m_GameName;
 
   mutable QStringList m_Archives;
-
 
   QDateTime m_CreationTime;
   QDateTime m_LastNexusQuery;
@@ -462,5 +482,4 @@ private:
   bool needsDescriptionUpdate() const;
 };
 
-
-#endif // MODINFOREGULAR_H
+#endif  // MODINFOREGULAR_H

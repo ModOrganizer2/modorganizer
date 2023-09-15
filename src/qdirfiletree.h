@@ -24,19 +24,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ifiletree.h"
 
-
 /**
- * @brief Class that expose a directory on the drive, using QDir, as a `MOBase::IFileTree`.
+ * @brief Class that expose a directory on the drive, using QDir, as a
+ * `MOBase::IFileTree`.
  *
- * The tree is lazily populated: each subtree is only populated (from the disk) when needed,
- * as specified by IFileTree.
+ * The tree is lazily populated: each subtree is only populated (from the disk) when
+ * needed, as specified by IFileTree.
  *
  * This class does not expose mutable operations, so any mutable operations will
  * fail.
  */
-class QDirFileTree : public MOBase::IFileTree {
+class QDirFileTree : public MOBase::IFileTree
+{
 public:
-
   /**
    * @brief Create a new file tree representing the given directory.
    *
@@ -46,13 +46,15 @@ public:
    *
    * @return a file tree representing the given directory.
    */
-  static std::shared_ptr<const QDirFileTree> makeTree(QDir directory, bool ignoreRootMeta = true);
+  static std::shared_ptr<const QDirFileTree> makeTree(QDir directory,
+                                                      bool ignoreRootMeta = true);
 
 protected:
-
   using IFileTree::IFileTree;
 
-  virtual bool doPopulate(std::shared_ptr<const IFileTree> parent, std::vector<std::shared_ptr<FileTreeEntry>>& entries) const = 0;
+  virtual bool
+  doPopulate(std::shared_ptr<const IFileTree> parent,
+             std::vector<std::shared_ptr<FileTreeEntry>>& entries) const = 0;
 };
 
 #endif

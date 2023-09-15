@@ -17,15 +17,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "lcdnumber.h"
 
-#include <QToolTip>
 #include <QTimer>
+#include <QToolTip>
 
-LCDNumber::LCDNumber(QWidget *parent)
-  : QLCDNumber(parent)
-{
-}
+LCDNumber::LCDNumber(QWidget* parent) : QLCDNumber(parent) {}
 
-void LCDNumber::mousePressEvent(QMouseEvent *event)
+void LCDNumber::mousePressEvent(QMouseEvent* event)
 {
   m_toolTipPosition = mapToGlobal(event->pos());
   QTimer::singleShot(100, this, SLOT(showToolTip()));

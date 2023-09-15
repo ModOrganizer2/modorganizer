@@ -36,25 +36,18 @@ public:
 
   struct SortInfo
   {
-    int column = 0;
+    int column          = 0;
     Qt::SortOrder order = Qt::AscendingOrder;
   };
 
+  FileTreeModel(OrganizerCore& core, QObject* parent = nullptr);
 
-  FileTreeModel(OrganizerCore& core, QObject* parent=nullptr);
-
-  void setFlags(Flags f)
-  {
-    m_flags = f;
-  }
+  void setFlags(Flags f) { m_flags = f; }
 
   void refresh();
   void clear();
 
-  bool fullyLoaded() const
-  {
-    return m_fullyLoaded;
-  }
+  bool fullyLoaded() const { return m_fullyLoaded; }
 
   void ensureFullyLoaded();
 
@@ -64,20 +57,20 @@ public:
   void aboutToExpandAll();
   void expandedAll();
 
-
   const SortInfo& sortInfo() const;
 
-  QModelIndex index(int row, int col, const QModelIndex& parent={}) const override;
+  QModelIndex index(int row, int col, const QModelIndex& parent = {}) const override;
   QModelIndex parent(const QModelIndex& index) const override;
-  int rowCount(const QModelIndex& parent={}) const override;
-  int columnCount(const QModelIndex& parent={}) const override;
-  bool hasChildren(const QModelIndex& parent={}) const override;
+  int rowCount(const QModelIndex& parent = {}) const override;
+  int columnCount(const QModelIndex& parent = {}) const override;
+  bool hasChildren(const QModelIndex& parent = {}) const override;
   bool canFetchMore(const QModelIndex& parent) const override;
   void fetchMore(const QModelIndex& parent) override;
-  QVariant data(const QModelIndex& index, int role=Qt::DisplayRole) const override;
-  QVariant headerData(int i, Qt::Orientation ori, int role=Qt::DisplayRole) const override;
+  QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+  QVariant headerData(int i, Qt::Orientation ori,
+                      int role = Qt::DisplayRole) const override;
   Qt::ItemFlags flags(const QModelIndex& index) const override;
-  void sort(int column, Qt::SortOrder order=Qt::AscendingOrder) override;
+  void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) override;
 
   FileTreeItem* itemFromIndex(const QModelIndex& index) const;
   void sortItem(FileTreeItem& item, bool force);
@@ -105,19 +98,13 @@ private:
   QTimer m_removeTimer;
   QTimer m_sortTimer;
 
-
-  bool showConflictsOnly() const
-  {
-    return (m_flags & ConflictsOnly);
-  }
+  bool showConflictsOnly() const { return (m_flags & ConflictsOnly); }
 
   bool showArchives() const;
 
-
   // for `forFetching`, see top of filetreemodel.cpp
-  void update(
-    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-    const std::wstring& parentPath, bool forFetching);
+  void update(FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
+              const std::wstring& parentPath, bool forFetching);
 
   void doFetchMore(const QModelIndex& parent, bool forFetch, bool doSort);
 
@@ -126,48 +113,44 @@ private:
 
   void sortItems();
 
+  // for `forFetching`, see top of filetreemodel.cpp
+  bool updateDirectories(FileTreeItem& parentItem, const std::wstring& path,
+                         const MOShared::DirectoryEntry& parentEntry, bool forFetching);
 
   // for `forFetching`, see top of filetreemodel.cpp
-  bool updateDirectories(
-    FileTreeItem& parentItem, const std::wstring& path,
-    const MOShared::DirectoryEntry& parentEntry, bool forFetching);
+  void removeDisappearingDirectories(FileTreeItem& parentItem,
+                                     const MOShared::DirectoryEntry& parentEntry,
+                                     const std::wstring& parentPath,
+                                     std::unordered_set<std::wstring_view>& seen,
+                                     bool forFetching);
 
-  // for `forFetching`, see top of filetreemodel.cpp
-  void removeDisappearingDirectories(
-    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-    const std::wstring& parentPath, std::unordered_set<std::wstring_view>& seen,
-    bool forFetching);
+  bool addNewDirectories(FileTreeItem& parentItem,
+                         const MOShared::DirectoryEntry& parentEntry,
+                         const std::wstring& parentPath,
+                         const std::unordered_set<std::wstring_view>& seen);
 
-  bool addNewDirectories(
-    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-    const std::wstring& parentPath,
-    const std::unordered_set<std::wstring_view>& seen);
+  bool updateFiles(FileTreeItem& parentItem, const std::wstring& path,
+                   const MOShared::DirectoryEntry& parentEntry);
 
+  void removeDisappearingFiles(FileTreeItem& parentItem,
+                               const MOShared::DirectoryEntry& parentEntry,
+                               int& firstFileRow,
+                               std::unordered_set<MOShared::FileIndex>& seen);
 
-  bool updateFiles(
-    FileTreeItem& parentItem, const std::wstring& path,
-    const MOShared::DirectoryEntry& parentEntry);
+  bool addNewFiles(FileTreeItem& parentItem,
+                   const MOShared::DirectoryEntry& parentEntry,
+                   const std::wstring& parentPath, int firstFileRow,
+                   const std::unordered_set<MOShared::FileIndex>& seen);
 
-  void removeDisappearingFiles(
-    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-    int& firstFileRow, std::unordered_set<MOShared::FileIndex>& seen);
+  FileTreeItem::Ptr createDirectoryItem(FileTreeItem& parentItem,
+                                        const std::wstring& parentPath,
+                                        const MOShared::DirectoryEntry& d);
 
-  bool addNewFiles(
-    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-    const std::wstring& parentPath, int firstFileRow,
-    const std::unordered_set<MOShared::FileIndex>& seen);
-
-
-  FileTreeItem::Ptr createDirectoryItem(
-    FileTreeItem& parentItem, const std::wstring& parentPath,
-    const MOShared::DirectoryEntry& d);
-
-  FileTreeItem::Ptr createFileItem(
-    FileTreeItem& parentItem, const std::wstring& parentPath,
-    const MOShared::FileEntry& file);
+  FileTreeItem::Ptr createFileItem(FileTreeItem& parentItem,
+                                   const std::wstring& parentPath,
+                                   const MOShared::FileEntry& file);
 
   void updateFileItem(FileTreeItem& item, const MOShared::FileEntry& file);
-
 
   QVariant displayData(const FileTreeItem* item, int column) const;
   std::wstring makeModName(const MOShared::FileEntry& file, int originID) const;
@@ -177,15 +160,16 @@ private:
   void removePendingIcons(const QModelIndex& parent, int first, int last);
 
   bool shouldShowFile(const MOShared::FileEntry& file) const;
-  bool shouldShowFolder(const MOShared::DirectoryEntry& dir, const FileTreeItem* item) const;
+  bool shouldShowFolder(const MOShared::DirectoryEntry& dir,
+                        const FileTreeItem* item) const;
   QString makeTooltip(const FileTreeItem& item) const;
   QVariant makeIcon(const FileTreeItem& item, const QModelIndex& index) const;
 
-  QModelIndex indexFromItem(FileTreeItem& item, int col=0) const;
+  QModelIndex indexFromItem(FileTreeItem& item, int col = 0) const;
   void recursiveFetchMore(const QModelIndex& m);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeModel::Flags);
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeItem::Flags);
 
-#endif // MODORGANIZER_FILETREEMODEL_INCLUDED
+#endif  // MODORGANIZER_FILETREEMODEL_INCLUDED

@@ -20,8 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MODINFO_H
 #define MODINFO_H
 
-#include "imodinterface.h"
 #include "ifiletree.h"
+#include "imodinterface.h"
 #include "versioninfo.h"
 
 class OrganizerCore;
@@ -29,11 +29,11 @@ class PluginContainer;
 class QDir;
 class QDateTime;
 
+#include <QColor>
 #include <QRecursiveMutex>
 #include <QSharedPointer>
 #include <QString>
 #include <QStringList>
-#include <QColor>
 
 #include <boost/function.hpp>
 
@@ -41,8 +41,14 @@ class QDateTime;
 #include <set>
 #include <vector>
 
-namespace MOBase { class IPluginGame; }
-namespace MOShared { class DirectoryEntry; }
+namespace MOBase
+{
+class IPluginGame;
+}
+namespace MOShared
+{
+class DirectoryEntry;
+}
 
 /**
  * @brief Represents meta information about a single mod.
@@ -56,13 +62,13 @@ class ModInfo : public QObject, public MOBase::IModInterface
 
   Q_OBJECT
 
-public: // Type definitions:
-
+public:  // Type definitions:
   typedef QSharedPointer<ModInfo> Ptr;
 
   static QString s_HiddenExt;
 
-  enum EConflictFlag {
+  enum EConflictFlag
+  {
     FLAG_CONFLICT_OVERWRITE,
     FLAG_CONFLICT_OVERWRITTEN,
     FLAG_CONFLICT_MIXED,
@@ -75,7 +81,8 @@ public: // Type definitions:
     FLAG_OVERWRITE_CONFLICT,
   };
 
-  enum EFlag {
+  enum EFlag
+  {
     FLAG_INVALID,
     FLAG_BACKUP,
     FLAG_SEPARATOR,
@@ -89,31 +96,35 @@ public: // Type definitions:
     FLAG_TRACKED,
   };
 
-  enum EHighlight {
-    HIGHLIGHT_NONE = 0,
-    HIGHLIGHT_INVALID = 1,
-    HIGHLIGHT_CENTER = 2,
+  enum EHighlight
+  {
+    HIGHLIGHT_NONE      = 0,
+    HIGHLIGHT_INVALID   = 1,
+    HIGHLIGHT_CENTER    = 2,
     HIGHLIGHT_IMPORTANT = 4,
-    HIGHLIGHT_PLUGIN = 8
+    HIGHLIGHT_PLUGIN    = 8
   };
 
-  enum EModType {
+  enum EModType
+  {
     MOD_DEFAULT,
     MOD_DLC,
     MOD_CC
   };
 
-
-public: // Static functions:
-
+public:  // Static functions:
   /**
    * @brief Read the mod directory and Mod ModInfo objects for all subdirectories.
    */
-  static void updateFromDisc(
-    const QString &modDirectory, OrganizerCore& core,
-    bool displayForeign, std::size_t refreshThreadCount);
+  static void updateFromDisc(const QString& modDirectory, OrganizerCore& core,
+                             bool displayForeign, std::size_t refreshThreadCount);
 
-  static void clear() { s_Collection.clear(); s_ModsByName.clear(); s_ModsByModID.clear(); }
+  static void clear()
+  {
+    s_Collection.clear();
+    s_ModsByName.clear();
+    s_ModsByModID.clear();
+  }
 
   /**
    * @brief Retrieve the number of mods.
@@ -129,8 +140,8 @@ public: // Static functions:
    *
    * @return a reference counting pointer to the mod info.
    *
-   * @note since the pointer is reference counting, the pointer remains valid even if the
-   *     collection is refreshed in a different thread.
+   * @note since the pointer is reference counting, the pointer remains valid even if
+   * the collection is refreshed in a different thread.
    */
   static ModInfo::Ptr getByIndex(unsigned int index);
 
@@ -139,7 +150,8 @@ public: // Static functions:
    *
    * @param modID The mod id to look up.
    *
-   * @return a vector of reference counting pointer to the mod info objects with the given mod ID.
+   * @return a vector of reference counting pointer to the mod info objects with the
+   * given mod ID.
    */
   static std::vector<ModInfo::Ptr> getByModID(QString game, int modID);
 
@@ -153,13 +165,13 @@ public: // Static functions:
    * @note Since the pointer is reference counter, the pointer remains valid even if the
    *     collection is refreshed in a different thread.
    */
-  static ModInfo::Ptr getByName(const QString &name);
+  static ModInfo::Ptr getByName(const QString& name);
 
   /**
    * @brief Remove a mod by index.
    *
-   * This physically deletes the specified mod from the disc and updates the ModInfo collection
-   * but not other structures that reference mods.
+   * This physically deletes the specified mod from the disc and updates the ModInfo
+   * collection but not other structures that reference mods.
    *
    * @param index Index of the mod to delete.
    *
@@ -174,7 +186,7 @@ public: // Static functions:
    *
    * @return The index of the mod. If the mod doesn't exist, UINT_MAX is returned.
    */
-  static unsigned int getIndex(const QString &name);
+  static unsigned int getIndex(const QString& name);
 
   /**
    * @brief Retrieve the overwrite mod.
@@ -182,32 +194,35 @@ public: // Static functions:
   static ModInfo::Ptr getOverwrite() { return s_Overwrite; }
 
   /**
-   * @brief Find the first mod that fulfills the filter function (after no particular order).
+   * @brief Find the first mod that fulfills the filter function (after no particular
+   * order).
    *
    * @param filter A function to filter mods by. Should return true for a match.
    *
    * @return index of the matching mod or UINT_MAX if there was no match.
    */
-  static unsigned int findMod(const boost::function<bool (ModInfo::Ptr)> &filter);
+  static unsigned int findMod(const boost::function<bool(ModInfo::Ptr)>& filter);
 
   /**
    * @brief Run a limited batch of mod update checks for "newest version" information.
    *
    */
-  static void manualUpdateCheck(QObject *receiver, std::multimap<QString, int> IDs);
+  static void manualUpdateCheck(QObject* receiver, std::multimap<QString, int> IDs);
 
   /**
-   * @brief Query nexus information for every mod and update the "newest version" information.
+   * @brief Query nexus information for every mod and update the "newest version"
+   * information.
    *
    * @return true if any mods are checked for update.
    */
-  static bool checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver);
+  static bool checkAllForUpdate(PluginContainer* pluginContainer, QObject* receiver);
 
   /**
    *
    */
-  static std::set<ModInfo::Ptr> filteredMods(
-    QString gameName, QVariantList updateData, bool addOldMods = false, bool markUpdated = false);
+  static std::set<ModInfo::Ptr> filteredMods(QString gameName, QVariantList updateData,
+                                             bool addOldMods  = false,
+                                             bool markUpdated = false);
 
   /**
    * @brief Check wheter a name corresponds to a separator or not,
@@ -230,11 +245,10 @@ public: // Static functions:
    */
   static bool isRegularName(const QString& name);
 
-public: // IModInterface implementations / Re-declaration
-
-  // Note: This section contains default-implementation for some of the virtual methods from
-  // IModInterface, but also redeclaration of all the pure-virtual methods to centralize all
-  // of them in a single place.
+public:  // IModInterface implementations / Re-declaration
+  // Note: This section contains default-implementation for some of the virtual methods
+  // from IModInterface, but also redeclaration of all the pure-virtual methods to
+  // centralize all of them in a single place.
 
   /**
    * @return the name of the mod.
@@ -257,8 +271,8 @@ public: // IModInterface implementations / Re-declaration
   virtual QString notes() const = 0;
 
   /**
-   * @brief Retrieve the short name of the game associated with this mod. This may differ
-   *     from the current game plugin (e.g. you can install a Skyrim LE game in a SSE
+   * @brief Retrieve the short name of the game associated with this mod. This may
+   * differ from the current game plugin (e.g. you can install a Skyrim LE game in a SSE
    *     installation).
    *
    * @return the name of the game associated with this mod.
@@ -281,14 +295,14 @@ public: // IModInterface implementations / Re-declaration
   virtual MOBase::VersionInfo version() const override { return m_Version; }
 
   /**
-   * @return the newest version of thid mod (as known by MO2). If this matches version(),
-   *     then the mod is up-to-date.
+   * @return the newest version of thid mod (as known by MO2). If this matches
+   * version(), then the mod is up-to-date.
    */
   virtual MOBase::VersionInfo newestVersion() const = 0;
 
   /**
-   * @return the ignored version of this mod (for update), or an invalid version if the user
-   *     did not ignore version for this mod.
+   * @return the ignored version of this mod (for update), or an invalid version if the
+   * user did not ignore version for this mod.
    */
   virtual MOBase::VersionInfo ignoredVersion() const = 0;
 
@@ -302,17 +316,17 @@ public: // IModInterface implementations / Re-declaration
   /**
    * @return true if this mod was marked as converted by the user.
    *
-   * @note When a mod is for a different game, a flag is shown to users to warn them, but
-   *     they can mark mods as converted to remove this flag.
+   * @note When a mod is for a different game, a flag is shown to users to warn them,
+   * but they can mark mods as converted to remove this flag.
    */
   virtual bool converted() const = 0;
 
   /**
    * @return true if th is mod was marked as containing valid game data.
    *
-   * @note MO2 uses ModDataChecker to check the content of mods, but sometimes these fail, in
-   *     which case mods are incorrectly marked as 'not containing valid games data'. Users can
-   *     choose to mark these mods as valid to hide the warning / flag.
+   * @note MO2 uses ModDataChecker to check the content of mods, but sometimes these
+   * fail, in which case mods are incorrectly marked as 'not containing valid games
+   * data'. Users can choose to mark these mods as valid to hide the warning / flag.
    */
   virtual bool validated() const = 0;
 
@@ -340,12 +354,18 @@ public: // IModInterface implementations / Re-declaration
   /**
    * @return the tracked state of this mod.
    */
-  virtual MOBase::TrackedState trackedState() const override { return MOBase::TrackedState::TRACKED_FALSE; }
+  virtual MOBase::TrackedState trackedState() const override
+  {
+    return MOBase::TrackedState::TRACKED_FALSE;
+  }
 
   /**
    * @return the endorsement state of this mod.
    */
-  virtual MOBase::EndorsedState endorsedState() const override { return MOBase::EndorsedState::ENDORSED_NEVER; }
+  virtual MOBase::EndorsedState endorsedState() const override
+  {
+    return MOBase::EndorsedState::ENDORSED_NEVER;
+  }
 
   /**
    * @brief Retrieve a file tree corresponding to the underlying disk content
@@ -383,8 +403,7 @@ public: // IModInterface implementations / Re-declaration
    */
   virtual bool isForeign() const { return false; }
 
-public: // Mutable operations:
-
+public:  // Mutable operations:
   /**
    * @brief Sets or changes the version of this mod.
    *
@@ -431,7 +450,8 @@ public: // Mutable operations:
   virtual void addNexusCategory(int categoryID) = 0;
 
   /**
-   * @brief Assigns a category to the mod. If the named category does not exist it is created.
+   * @brief Assigns a category to the mod. If the named category does not exist it is
+   * created.
    *
    * @param categoryName Name of the new category.
    */
@@ -466,8 +486,7 @@ public: // Mutable operations:
    */
   virtual bool setName(const QString& name) = 0;
 
-public: // Methods after this do not come from IModInterface:
-
+public:  // Methods after this do not come from IModInterface:
   /**
    * @return true if this mod is empty, false otherwise.
    */
@@ -490,7 +509,8 @@ public: // Methods after this do not come from IModInterface:
   virtual bool updateIgnored() const = 0;
 
   /**
-   * @brief Check if the "newest" version of the mod is older than the installed version.
+   * @brief Check if the "newest" version of the mod is older than the installed
+   * version.
    *
    * Check if there is a newer version of the mod. This does NOT cause information to be
    * retrieved from the nexus, it will only test version information already available
@@ -504,9 +524,9 @@ public: // Methods after this do not come from IModInterface:
    * @brief Request an update of nexus description for this mod.
    *
    * This requests mod information from the nexus. This is an asynchronous request,
-   * so there is no immediate effect of this call. Right now, Mod Organizer interprets the
-   * "newest version" and "description" from the response, though the description is only
-   * stored in memory.
+   * so there is no immediate effect of this call. Right now, Mod Organizer interprets
+   * the "newest version" and "description" from the response, though the description is
+   * only stored in memory.
    *
    */
   virtual bool updateNXMInfo() = 0;
@@ -519,39 +539,41 @@ public: // Methods after this do not come from IModInterface:
    * @param categoryID ID of the category to set.
    * @param active Determines whether the category is assigned or unassigned.
    *
-   * @note This function does not test whether categoryID actually identifies a valid category.
+   * @note This function does not test whether categoryID actually identifies a valid
+   * category.
    */
   virtual void setCategory(int categoryID, bool active) = 0;
 
   /**
-   * @brief Changes the comments (manually set information displayed in the mod list) for this mod.
+   * @brief Changes the comments (manually set information displayed in the mod list)
+   * for this mod.
    *
    * @param comments The new comments.
    */
-  virtual void setComments(const QString &comments) = 0;
+  virtual void setComments(const QString& comments) = 0;
 
   /**
    * @brief Change the notes (manually set information) for this mod.
    *
    * @param notes The new notes.
    */
-  virtual void setNotes(const QString &notes) = 0;
+  virtual void setNotes(const QString& notes) = 0;
 
   /**
-  * @brief Controls if mod should be highlighted based on plugin selection.
-  *
-  * @param isSelected Whether or not the plugin has a selected mod.
-  */
-  virtual void setPluginSelected(const bool &isSelected);
+   * @brief Controls if mod should be highlighted based on plugin selection.
+   *
+   * @param isSelected Whether or not the plugin has a selected mod.
+   */
+  virtual void setPluginSelected(const bool& isSelected);
 
   /**
    * @brief Sets the repository that was used to download the mod.
    */
-  virtual void setRepository(const QString &) {}
+  virtual void setRepository(const QString&) {}
 
   /**
-   * @brief Set the mod to "I do not intend to endorse.". The mod will not show as unendorsed
-   *     but can still be endorsed.
+   * @brief Set the mod to "I do not intend to endorse.". The mod will not show as
+   * unendorsed but can still be endorsed.
    */
   virtual void setNeverEndorse() = 0;
 
@@ -589,9 +611,9 @@ public: // Methods after this do not come from IModInterface:
   virtual void clearCaches() {}
 
   /**
-   * @brief Retrieve the internal name of the mod. This is usually the same as the regular name,
-   *     but with special mod types it might be used to distinguish between mods that have the same
-   *     visible name.
+   * @brief Retrieve the internal name of the mod. This is usually the same as the
+   * regular name, but with special mod types it might be used to distinguish between
+   * mods that have the same visible name.
    *
    * @return the internal mod name.
    */
@@ -640,8 +662,8 @@ public: // Methods after this do not come from IModInterface:
   /**
    * @return a list of content types contained in a mod.
    *
-   * @note The IDs of the content are game-dependent. See the ModDataContent game feature
-   *     for more details on this.
+   * @note The IDs of the content are game-dependent. See the ModDataContent game
+   * feature for more details on this.
    */
   virtual const std::set<int>& getContents() const = 0;
 
@@ -693,8 +715,8 @@ public: // Methods after this do not come from IModInterface:
   virtual QDateTime creationTime() const = 0;
 
   /**
-   * @return the list of files that, if they exist in the data directory are treated as files in
-   *     THIS mod.
+   * @return the list of files that, if they exist in the data directory are treated as
+   * files in THIS mod.
    */
   virtual QStringList stealFiles() const { return QStringList(); }
 
@@ -710,7 +732,7 @@ public: // Methods after this do not come from IModInterface:
    *
    * @note Currently, this changes the color of the cell under the "Notes" column.
    */
-  virtual void setColor(QColor color) { }
+  virtual void setColor(QColor color) {}
 
   /**
    * @brief Adds the information that a file has been installed into this mod.
@@ -736,7 +758,7 @@ public: // Methods after this do not come from IModInterface:
    *
    * @return the IDs of categories this mod belongs to.
    */
-  const std::set<int> &getCategories() const { return m_Categories; }
+  const std::set<int>& getCategories() const { return m_Categories; }
 
   /**
    * @brief Sets the new primary category of the mod.
@@ -746,20 +768,21 @@ public: // Methods after this do not come from IModInterface:
   virtual void setPrimaryCategory(int categoryID) { m_PrimaryCategory = categoryID; }
 
   /**
-   * @return true if this mod is considered "valid", that is it contains data used by the game.
+   * @return true if this mod is considered "valid", that is it contains data used by
+   * the game.
    */
   virtual bool isValid() const = 0;
 
   /**
-   * @brief Updates the mod to flag it as converted in order to ignore the alternate game
-   *     warning.
+   * @brief Updates the mod to flag it as converted in order to ignore the alternate
+   * game warning.
    */
   virtual void markConverted(bool) {}
 
   /**
-  * @brief Updates the mod to flag it as valid in order to ignore the invalid game data
-  *     flag.
-  */
+   * @brief Updates the mod to flag it as valid in order to ignore the invalid game data
+   *     flag.
+   */
   virtual void markValidated(bool) {}
 
   /**
@@ -797,7 +820,8 @@ public: // Methods after this do not come from IModInterface:
    *
    * @param url The new URL.
    */
-  void setUrl(QString const& url) override {
+  void setUrl(QString const& url) override
+  {
     setHasCustomURL(true);
     setCustomURL(url);
   }
@@ -809,8 +833,7 @@ public: // Methods after this do not come from IModInterface:
    */
   QUrl parseCustomURL() const;
 
-public: // Nexus stuff
-
+public:  // Nexus stuff
   /**
    * @brief Changes the nexus description text.
    *
@@ -865,8 +888,7 @@ public: // Nexus stuff
    */
   virtual void setNexusLastModified(QDateTime time) = 0;
 
-public: // Conflicts
-
+public:  // Conflicts
   // retrieve the list of mods (as mod index) that are overwritten by this one.
   // Updates may be delayed.
   //
@@ -880,22 +902,34 @@ public: // Conflicts
   // retrieve the list of mods (as mod index) with archives that are overwritten by
   // this one. Updates may be delayed
   //
-  virtual const std::set<unsigned int>& getModArchiveOverwrite() const { return s_EmptySet; }
+  virtual const std::set<unsigned int>& getModArchiveOverwrite() const
+  {
+    return s_EmptySet;
+  }
 
-  // retrieve the list of mods (as mod index) with archives that overwrite this one. Updates
-  // may be delayed.
+  // retrieve the list of mods (as mod index) with archives that overwrite this one.
+  // Updates may be delayed.
   //
-  virtual const std::set<unsigned int>& getModArchiveOverwritten() const { return s_EmptySet; }
+  virtual const std::set<unsigned int>& getModArchiveOverwritten() const
+  {
+    return s_EmptySet;
+  }
 
-  // retrieve the list of mods (as mod index) with archives that are overwritten by loose
-  // files of this mod. Updates may be delayed.
+  // retrieve the list of mods (as mod index) with archives that are overwritten by
+  // loose files of this mod. Updates may be delayed.
   //
-  virtual const std::set<unsigned int>& getModArchiveLooseOverwrite() const { return s_EmptySet; }
+  virtual const std::set<unsigned int>& getModArchiveLooseOverwrite() const
+  {
+    return s_EmptySet;
+  }
 
   // retrieve the list of mods (as mod index) with loose files that overwrite this one's
   // archive files. Updates may be delayed.
   //
-  virtual const std::set<unsigned int>& getModArchiveLooseOverwritten() const { return s_EmptySet; }
+  virtual const std::set<unsigned int>& getModArchiveLooseOverwritten() const
+  {
+    return s_EmptySet;
+  }
 
 public slots:
 
@@ -914,7 +948,6 @@ signals:
   void modDetailsUpdated(bool success);
 
 protected:
-
   /**
    *
    */
@@ -928,10 +961,9 @@ protected:
    * using multiple threads for all the mods.
    */
   virtual void prefetch() = 0;
-  static bool ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS);
+  static bool ByName(const ModInfo::Ptr& LHS, const ModInfo::Ptr& RHS);
 
 protected:
-
   // the mod list
   OrganizerCore& m_Core;
 
@@ -948,7 +980,6 @@ protected:
   static const std::set<unsigned int> s_EmptySet;
 
 protected:
-
   friend class OrganizerCore;
 
   /**
@@ -968,9 +999,9 @@ protected:
    *
    * @return a new mod.
    */
-  static ModInfo::Ptr createFromPlugin(
-    const QString& modName, const QString& espName, const QStringList& bsaNames,
-    ModInfo::EModType modType, OrganizerCore& core);
+  static ModInfo::Ptr createFromPlugin(const QString& modName, const QString& espName,
+                                       const QStringList& bsaNames,
+                                       ModInfo::EModType modType, OrganizerCore& core);
 
   static ModInfo::Ptr createFromOverwrite(OrganizerCore& core);
 
@@ -979,15 +1010,12 @@ protected:
   static void updateIndices();
 
 protected:
-
   static QRecursiveMutex s_Mutex;
   static std::vector<ModInfo::Ptr> s_Collection;
   static ModInfo::Ptr s_Overwrite;
   static std::map<QString, unsigned int, MOBase::FileNameComparator> s_ModsByName;
   static std::map<std::pair<QString, int>, std::vector<unsigned int>> s_ModsByModID;
   static int s_NextID;
-
 };
 
-
-#endif // MODINFO_H
+#endif  // MODINFO_H

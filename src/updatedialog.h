@@ -3,10 +3,13 @@
 
 #include <QDialog>
 
+#include "lootdialog.h"  // for MarkdownDocument
 #include <expanderwidget.h>
-#include "lootdialog.h" // for MarkdownDocument
 
-namespace Ui { class UpdateDialog; }
+namespace Ui
+{
+class UpdateDialog;
+}
 
 class UpdateDialog : public QDialog
 {
@@ -25,4 +28,4 @@ private:
   MarkdownDocument m_changeLogs;
 };
 
-#endif // MODORGANIZER_UPDATEDIALOG_H
+#endif  // MODORGANIZER_UPDATEDIALOG_H

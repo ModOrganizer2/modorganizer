@@ -1,9 +1,9 @@
 #ifndef SERVERINFO_H
 #define SERVERINFO_H
 
-#include <QString>
 #include <QDate>
 #include <QMetaType>
+#include <QString>
 
 class ServerInfo
 {
@@ -11,9 +11,8 @@ public:
   using SpeedList = std::vector<int>;
 
   ServerInfo();
-  ServerInfo(
-    QString name, bool premium, QDate lastSeen, int preferred,
-    SpeedList lastDownloads);
+  ServerInfo(QString name, bool premium, QDate lastSeen, int preferred,
+             SpeedList lastDownloads);
 
   const QString& name() const;
 
@@ -40,12 +39,11 @@ private:
 
 Q_DECLARE_METATYPE(ServerInfo)
 
-
 class ServerList
 {
 public:
-  using container = std::vector<ServerInfo>;
-  using iterator = container::iterator;
+  using container      = std::vector<ServerInfo>;
+  using iterator       = container::iterator;
   using const_iterator = container::const_iterator;
 
   void add(ServerInfo s);
@@ -67,4 +65,4 @@ private:
   container m_servers;
 };
 
-#endif // SERVERINFO_H
+#endif  // SERVERINFO_H

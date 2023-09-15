@@ -20,12 +20,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef LOGBUFFER_H
 #define LOGBUFFER_H
 
-
-#include "shared/appconfig.h"
 #include "copyeventfilter.h"
-#include <log.h>
+#include "shared/appconfig.h"
 #include <QTreeView>
 #include <deque>
+#include <log.h>
 
 class OrganizerCore;
 
@@ -46,13 +45,13 @@ public:
 
 protected:
   QModelIndex index(int row, int column, const QModelIndex& parent) const override;
-  QModelIndex parent(const QModelIndex &child) const override;
-  int rowCount(const QModelIndex &parent) const override;
-  int columnCount(const QModelIndex &parent) const override;
-  QVariant data(const QModelIndex &index, int role) const override;
+  QModelIndex parent(const QModelIndex& child) const override;
+  int rowCount(const QModelIndex& parent) const override;
+  int columnCount(const QModelIndex& parent) const override;
+  QVariant data(const QModelIndex& index, int role) const override;
 
-  QVariant headerData(
-    int section, Qt::Orientation ori, int role=Qt::DisplayRole) const override;
+  QVariant headerData(int section, Qt::Orientation ori,
+                      int role = Qt::DisplayRole) const override;
 
 private:
   std::deque<MOBase::log::Entry> m_entries;
@@ -61,13 +60,12 @@ private:
   void onEntryAdded(MOBase::log::Entry e);
 };
 
-
 class LogList : public QTreeView
 {
   Q_OBJECT;
 
 public:
-  LogList(QWidget* parent=nullptr);
+  LogList(QWidget* parent = nullptr);
 
   void setCore(OrganizerCore& core);
 
@@ -75,7 +73,7 @@ public:
   void clear();
   void openLogsFolder();
 
-  QMenu* createMenu(QWidget* parent=nullptr);
+  QMenu* createMenu(QWidget* parent = nullptr);
 
 private:
   OrganizerCore* m_core;
@@ -86,9 +84,8 @@ private:
   void onNewEntry();
 };
 
-
 void logToStdout(bool b);
 void initLogging();
 bool setLogDirectory(const QString& dir);
 
-#endif // LOGBUFFER_H
+#endif  // LOGBUFFER_H

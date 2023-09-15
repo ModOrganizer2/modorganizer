@@ -27,7 +27,6 @@ void logRemoval(const QString& name)
   log::debug("setting '{}' removed", name);
 }
 
-
 QString settingName(const QString& section, const QString& key)
 {
   if (section.isEmpty()) {
@@ -43,9 +42,8 @@ QString settingName(const QString& section, const QString& key)
   }
 }
 
-void removeImpl(
-  QSettings& settings, const QString& displayName,
-  const QString& section, const QString& key)
+void removeImpl(QSettings& settings, const QString& displayName, const QString& section,
+                const QString& key)
 {
   if (key.isEmpty()) {
     if (!settings.childGroups().contains(section, Qt::CaseInsensitive)) {
@@ -73,9 +71,8 @@ void removeSection(QSettings& settings, const QString& section)
   removeImpl(settings, section, section, "");
 }
 
-
 ScopedGroup::ScopedGroup(QSettings& s, const QString& name)
-  : m_settings(s), m_name(name)
+    : m_settings(s), m_name(name)
 {
   m_settings.beginGroup(m_name);
 }
@@ -95,9 +92,8 @@ QStringList ScopedGroup::keys() const
   return m_settings.childKeys();
 }
 
-
 ScopedReadArray::ScopedReadArray(QSettings& s, const QString& section)
-  : m_settings(s), m_count(0)
+    : m_settings(s), m_count(0)
 {
   m_count = m_settings.beginReadArray(section);
 }
@@ -117,13 +113,11 @@ QStringList ScopedReadArray::keys() const
   return m_settings.childKeys();
 }
 
-
-ScopedWriteArray::ScopedWriteArray(
-  QSettings& s, const QString& section, std::size_t size)
+ScopedWriteArray::ScopedWriteArray(QSettings& s, const QString& section,
+                                   std::size_t size)
     : m_settings(s), m_section(section), m_i(0)
 {
-  m_settings.beginWriteArray(
-    section, size == NoSize ? -1 : static_cast<int>(size));
+  m_settings.beginWriteArray(section, size == NoSize ? -1 : static_cast<int>(size));
 }
 
 ScopedWriteArray::~ScopedWriteArray()
@@ -136,7 +130,6 @@ void ScopedWriteArray::next()
   m_settings.setArrayIndex(m_i);
   ++m_i;
 }
-
 
 QString widgetNameWithTopLevel(const QWidget* widget)
 {
@@ -206,12 +199,11 @@ QString checkedSettingName(const QAbstractButton* b)
 void warnIfNotCheckable(const QAbstractButton* b)
 {
   if (!b->isCheckable()) {
-    log::warn(
-      "button '{}' used in the settings as a checkbox or radio button "
-      "but is not checkable", b->objectName());
+    log::warn("button '{}' used in the settings as a checkbox or radio button "
+              "but is not checkable",
+              b->objectName());
   }
 }
-
 
 QString credentialName(const QString& key)
 {
@@ -232,9 +224,8 @@ bool deleteWindowsCredential(const QString& key)
       return true;
     }
 
-    log::error(
-      "failed to delete windows credential {}, {}",
-      credName, formatSystemMessage(e));
+    log::error("failed to delete windows credential {}, {}", credName,
+               formatSystemMessage(e));
     return false;
   }
 
@@ -250,23 +241,22 @@ bool addWindowsCredential(const QString& key, const QString& data)
   const auto wname = credName.toStdWString();
   const auto wdata = data.toStdWString();
 
-  const auto* blob = reinterpret_cast<const BYTE*>(wdata.data());
+  const auto* blob    = reinterpret_cast<const BYTE*>(wdata.data());
   const auto blobSize = wdata.size() * sizeof(decltype(wdata)::value_type);
 
-  CREDENTIALW cred = {};
-  cred.Flags = 0;
-  cred.Type = CRED_TYPE_GENERIC;
-  cred.TargetName = const_cast<wchar_t*>(wname.c_str());
-  cred.CredentialBlob = const_cast<BYTE*>(blob);
+  CREDENTIALW cred        = {};
+  cred.Flags              = 0;
+  cred.Type               = CRED_TYPE_GENERIC;
+  cred.TargetName         = const_cast<wchar_t*>(wname.c_str());
+  cred.CredentialBlob     = const_cast<BYTE*>(blob);
   cred.CredentialBlobSize = static_cast<DWORD>(blobSize);
-  cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
+  cred.Persist            = CRED_PERSIST_LOCAL_MACHINE;
 
   if (!CredWriteW(&cred, 0)) {
     const auto e = GetLastError();
 
-    log::error(
-      "failed to delete windows credential {}, {}",
-      credName, formatSystemMessage(e));
+    log::error("failed to delete windows credential {}, {}", credName,
+               formatSystemMessage(e));
 
     return false;
   }
@@ -294,8 +284,8 @@ QString getWindowsCredential(const QString& key)
 
   CREDENTIALW* rawCreds = nullptr;
 
-  const auto ret = CredReadW(
-    credName.toStdWString().c_str(), CRED_TYPE_GENERIC, 0, &rawCreds);
+  const auto ret =
+      CredReadW(credName.toStdWString().c_str(), CRED_TYPE_GENERIC, 0, &rawCreds);
 
   CredentialPtr creds(rawCreds);
 
@@ -303,9 +293,8 @@ QString getWindowsCredential(const QString& key)
     const auto e = GetLastError();
 
     if (e != ERROR_NOT_FOUND) {
-      log::error(
-        "failed to retrieve windows credential {}: {}",
-        credName, formatSystemMessage(e));
+      log::error("failed to retrieve windows credential {}: {}", credName,
+                 formatSystemMessage(e));
     }
 
     return {};
@@ -313,9 +302,9 @@ QString getWindowsCredential(const QString& key)
 
   QString value;
   if (creds->CredentialBlob) {
-    value = QString::fromWCharArray(
-      reinterpret_cast<const wchar_t*>(creds->CredentialBlob),
-      creds->CredentialBlobSize / sizeof(wchar_t));
+    value =
+        QString::fromWCharArray(reinterpret_cast<const wchar_t*>(creds->CredentialBlob),
+                                creds->CredentialBlobSize / sizeof(wchar_t));
   }
 
   return value;

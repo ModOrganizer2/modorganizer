@@ -1,10 +1,10 @@
 #include "envmetrics.h"
 #include "env.h"
-#include <Windows.h>
-#include <shellscalingapi.h>
-#include <log.h>
-#include <utility.h>
 #include <QScreen>
+#include <Windows.h>
+#include <log.h>
+#include <shellscalingapi.h>
+#include <utility.h>
 
 namespace env
 {
@@ -46,14 +46,13 @@ HMONITOR findMonitor(const QString& name)
     auto& data = *reinterpret_cast<Data*>(lp);
 
     MONITORINFOEX mi = {};
-    mi.cbSize = sizeof(mi);
+    mi.cbSize        = sizeof(mi);
 
     // monitor info will include the name
     if (!GetMonitorInfoW(hm, &mi)) {
       const auto e = GetLastError();
-      log::error(
-        "GetMonitorInfo() failed for '{}', {}",
-        data.name, formatSystemMessage(e));
+      log::error("GetMonitorInfo() failed for '{}', {}", data.name,
+                 formatSystemMessage(e));
 
       // error for this monitor, but continue
       return TRUE;
@@ -69,7 +68,6 @@ HMONITOR findMonitor(const QString& name)
     return TRUE;
   };
 
-
   // for each monitor
   EnumDisplayMonitors(0, nullptr, callback, reinterpret_cast<LPARAM>(&data));
 
@@ -82,11 +80,11 @@ HMONITOR findMonitor(const QString& name)
 int getDpi(const QString& monitorDevice)
 {
   using GetDpiForMonitorFunction =
-    HRESULT WINAPI (HMONITOR, MONITOR_DPI_TYPE, UINT*, UINT*);
+      HRESULT WINAPI(HMONITOR, MONITOR_DPI_TYPE, UINT*, UINT*);
 
   static LibraryPtr shcore;
   static GetDpiForMonitorFunction* GetDpiForMonitor = nullptr;
-  static bool checked = false;
+  static bool checked                               = false;
 
   if (!checked) {
     // try to find GetDpiForMonitor() from shcored.dll
@@ -96,7 +94,7 @@ int getDpi(const QString& monitorDevice)
     if (shcore) {
       // windows 8.1+ only
       GetDpiForMonitor = reinterpret_cast<GetDpiForMonitorFunction*>(
-        GetProcAddress(shcore.get(), "GetDpiForMonitor"));
+          GetProcAddress(shcore.get(), "GetDpiForMonitor"));
     }
 
     checked = true;
@@ -107,7 +105,6 @@ int getDpi(const QString& monitorDevice)
     return getDesktopDpi();
   }
 
-
   // there's no way to get an HMONITOR from a device name, so all monitors
   // will have to be enumerated and their name checked
   HMONITOR hm = findMonitor(monitorDevice);
@@ -116,13 +113,12 @@ int getDpi(const QString& monitorDevice)
     return 0;
   }
 
-  UINT dpiX=0, dpiY=0;
+  UINT dpiX = 0, dpiY = 0;
   const auto r = GetDpiForMonitor(hm, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
 
   if (FAILED(r)) {
-    log::error(
-      "GetDpiForMonitor() failed for '{}', {}",
-      monitorDevice, formatSystemMessage(r));
+    log::error("GetDpiForMonitor() failed for '{}', {}", monitorDevice,
+               formatSystemMessage(r));
 
     return 0;
   }
@@ -131,12 +127,9 @@ int getDpi(const QString& monitorDevice)
   return dpiX;
 }
 
-
-Display::Display(QString adapter, QString monitorDevice, bool primary) :
-  m_adapter(std::move(adapter)),
-  m_monitorDevice(std::move(monitorDevice)),
-  m_primary(primary),
-  m_resX(0), m_resY(0), m_dpi(0), m_refreshRate(0)
+Display::Display(QString adapter, QString monitorDevice, bool primary)
+    : m_adapter(std::move(adapter)), m_monitorDevice(std::move(monitorDevice)),
+      m_primary(primary), m_resX(0), m_resY(0), m_dpi(0), m_refreshRate(0)
 {
   getSettings();
   m_dpi = getDpi(m_monitorDevice);
@@ -180,18 +173,18 @@ int Display::refreshRate() const
 QString Display::toString() const
 {
   return QString("%1*%2 %3hz dpi=%4 on %5%6")
-    .arg(m_resX)
-    .arg(m_resY)
-    .arg(m_refreshRate)
-    .arg(m_dpi)
-    .arg(m_adapter)
-    .arg(m_primary ? " (primary)" : "");
+      .arg(m_resX)
+      .arg(m_resY)
+      .arg(m_refreshRate)
+      .arg(m_dpi)
+      .arg(m_adapter)
+      .arg(m_primary ? " (primary)" : "");
 }
 
 void Display::getSettings()
 {
   DEVMODEW dm = {};
-  dm.dmSize = sizeof(dm);
+  dm.dmSize   = sizeof(dm);
 
   const auto wsDevice = m_monitorDevice.toStdWString();
 
@@ -214,7 +207,6 @@ void Display::getSettings()
     m_resY = dm.dmPelsHeight;
   }
 }
-
 
 Metrics::Metrics()
 {
@@ -240,9 +232,9 @@ QRect Metrics::desktopGeometry() const
 void Metrics::getDisplays()
 {
   // don't bother if it goes over 100
-  for (int i=0; i<100; ++i) {
+  for (int i = 0; i < 100; ++i) {
     DISPLAY_DEVICEW device = {};
-    device.cb = sizeof(device);
+    device.cb              = sizeof(device);
 
     if (!EnumDisplayDevicesW(nullptr, i, &device, 0)) {
       // no more
@@ -256,11 +248,10 @@ void Metrics::getDisplays()
       continue;
     }
 
-    m_displays.emplace_back(
-      QString::fromWCharArray(device.DeviceString),
-      QString::fromWCharArray(device.DeviceName),
-      (device.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE));
+    m_displays.emplace_back(QString::fromWCharArray(device.DeviceString),
+                            QString::fromWCharArray(device.DeviceName),
+                            (device.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE));
   }
 }
 
-} // namespace
+}  // namespace env

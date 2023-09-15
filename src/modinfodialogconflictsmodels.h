@@ -5,10 +5,9 @@ class PluginContainer;
 class ConflictItem
 {
 public:
-  ConflictItem(
-    QString before, QString relativeName, QString after,
-    MOShared::FileIndex index,  QString fileName,
-    bool hasAltOrigins, QString altOrigin,  bool archive);
+  ConflictItem(QString before, QString relativeName, QString after,
+               MOShared::FileIndex index, QString fileName, bool hasAltOrigins,
+               QString altOrigin, bool archive);
 
   const QString& before() const;
   const QString& relativeName() const;
@@ -40,7 +39,6 @@ private:
   bool m_isArchive;
 };
 
-
 class ConflictListModel : public QAbstractItemModel
 {
   Q_OBJECT;
@@ -57,14 +55,14 @@ public:
   void clear();
   void reserve(std::size_t s);
 
-  QModelIndex index(int row, int col, const QModelIndex& ={}) const override;
+  QModelIndex index(int row, int col, const QModelIndex& = {}) const override;
   QModelIndex parent(const QModelIndex&) const override;
-  int rowCount(const QModelIndex& parent={}) const override;
-  int columnCount(const QModelIndex& ={}) const override;
+  int rowCount(const QModelIndex& parent = {}) const override;
+  int columnCount(const QModelIndex& = {}) const override;
   QVariant data(const QModelIndex& index, int role) const override;
   QVariant headerData(int col, Qt::Orientation, int role) const;
 
-  void sort(int colIndex, Qt::SortOrder order=Qt::AscendingOrder);
+  void sort(int colIndex, Qt::SortOrder order = Qt::AscendingOrder);
   void add(ConflictItem item);
 
   void finished();
@@ -84,7 +82,6 @@ private:
   void doSort();
 };
 
-
 class OverwriteConflictListModel : public ConflictListModel
 {
   Q_OBJECT;
@@ -92,7 +89,6 @@ class OverwriteConflictListModel : public ConflictListModel
 public:
   OverwriteConflictListModel(QTreeView* tree);
 };
-
 
 class OverwrittenConflictListModel : public ConflictListModel
 {
@@ -102,7 +98,6 @@ public:
   OverwrittenConflictListModel(QTreeView* tree);
 };
 
-
 class NoConflictListModel : public ConflictListModel
 {
   Q_OBJECT;
@@ -110,7 +105,6 @@ class NoConflictListModel : public ConflictListModel
 public:
   NoConflictListModel(QTreeView* tree);
 };
-
 
 class AdvancedConflictListModel : public ConflictListModel
 {

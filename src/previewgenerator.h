@@ -22,9 +22,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QString>
 #include <QWidget>
-#include <map>
 #include <functional>
 #include <ipluginpreview.h>
+#include <map>
 
 class PluginContainer;
 
@@ -33,15 +33,13 @@ class PreviewGenerator
 public:
   PreviewGenerator(const PluginContainer& pluginContainer);
 
-  bool previewSupported(const QString &fileExtension) const;
+  bool previewSupported(const QString& fileExtension) const;
 
-  QWidget *genPreview(const QString &fileName) const;
+  QWidget* genPreview(const QString& fileName) const;
 
 private:
-
   const PluginContainer& m_PluginContainer;
   QSize m_MaxSize;
-
 };
 
-#endif // PREVIEWGENERATOR_H
+#endif  // PREVIEWGENERATOR_H

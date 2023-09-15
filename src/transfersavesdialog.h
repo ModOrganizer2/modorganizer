@@ -20,8 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef TRANSFERSAVESDIALOG_H
 #define TRANSFERSAVESDIALOG_H
 
-#include "tutorabledialog.h"
 #include "profile.h"
+#include "tutorabledialog.h"
 
 class QListWidget;
 #include <QObject>
@@ -29,21 +29,31 @@ class QPushButton;
 #include <QString>
 class QWidget;
 
-#include <memory>
 #include <map>
+#include <memory>
 #include <vector>
 
-namespace Ui { class TransferSavesDialog; }
-namespace MOBase { class IPluginGame; }
-namespace MOBase { class ISaveGame; }
+namespace Ui
+{
+class TransferSavesDialog;
+}
+namespace MOBase
+{
+class IPluginGame;
+}
+namespace MOBase
+{
+class ISaveGame;
+}
 
-class TransferSavesDialog : public MOBase::TutorableDialog {
+class TransferSavesDialog : public MOBase::TutorableDialog
+{
   Q_OBJECT
 
 public:
-  explicit TransferSavesDialog(const Profile &profile,
-                               MOBase::IPluginGame const *gamePlugin,
-                               QWidget *parent = 0);
+  explicit TransferSavesDialog(const Profile& profile,
+                               MOBase::IPluginGame const* gamePlugin,
+                               QWidget* parent = 0);
   ~TransferSavesDialog();
 
 private slots:
@@ -52,9 +62,9 @@ private slots:
 
   void on_doneButton_clicked();
 
-  void on_globalCharacterList_currentTextChanged(const QString &currentText);
+  void on_globalCharacterList_currentTextChanged(const QString& currentText);
 
-  void on_localCharacterList_currentTextChanged(const QString &currentText);
+  void on_localCharacterList_currentTextChanged(const QString& currentText);
 
   void on_copyToLocalBtn_clicked();
 
@@ -63,41 +73,43 @@ private slots:
   void on_copyToGlobalBtn_clicked();
 
 private:
-  enum OverwriteMode { OVERWRITE_ASK, OVERWRITE_YES, OVERWRITE_NO };
+  enum OverwriteMode
+  {
+    OVERWRITE_ASK,
+    OVERWRITE_YES,
+    OVERWRITE_NO
+  };
 
 private:
   void refreshGlobalCharacters();
   void refreshLocalCharacters();
   void refreshGlobalSaves();
   void refreshLocalSaves();
-  bool testOverwrite(OverwriteMode &overwriteMode,
-                     const QString &destinationFile);
+  bool testOverwrite(OverwriteMode& overwriteMode, const QString& destinationFile);
 
 private:
-  Ui::TransferSavesDialog *ui;
+  Ui::TransferSavesDialog* ui;
 
   Profile m_Profile;
 
-  MOBase::IPluginGame const *m_GamePlugin;
+  MOBase::IPluginGame const* m_GamePlugin;
 
-  using SaveListItem = std::shared_ptr<const MOBase::ISaveGame>;
-  using SaveList = std::vector<SaveListItem>;
+  using SaveListItem   = std::shared_ptr<const MOBase::ISaveGame>;
+  using SaveList       = std::vector<SaveListItem>;
   using SaveCollection = std::map<QString, SaveList>;
 
   SaveCollection m_GlobalSaves;
   SaveCollection m_LocalSaves;
 
-  void refreshSaves(SaveCollection &saveCollection, const QString &savedir);
-  void refreshCharacters(SaveCollection const &saveCollection,
-                         QListWidget *charList, QPushButton *copy,
-                         QPushButton *move);
+  void refreshSaves(SaveCollection& saveCollection, const QString& savedir);
+  void refreshCharacters(SaveCollection const& saveCollection, QListWidget* charList,
+                         QPushButton* copy, QPushButton* move);
 
-  bool transferCharacters(
-      QString const &character, char const *message,
-      QDir const& sourceDirectory, SaveList &saves,
-      QDir const& dest,
-      const std::function<bool(const QString &, const QString &)> &method,
-      char const *errmsg);
+  bool
+  transferCharacters(QString const& character, char const* message,
+                     QDir const& sourceDirectory, SaveList& saves, QDir const& dest,
+                     const std::function<bool(const QString&, const QString&)>& method,
+                     char const* errmsg);
 };
 
-#endif // TRANSFERSAVESDIALOG_H
+#endif  // TRANSFERSAVESDIALOG_H

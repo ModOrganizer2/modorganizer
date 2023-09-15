@@ -3,17 +3,15 @@
 
 #include <log.h>
 
-namespace MOBase {
-  class ExpanderWidget;
+namespace MOBase
+{
+class ExpanderWidget;
 }
 
-template <class T, class=void>
+template <class T, class = void>
 struct ValueConverter
 {
-  static const T& convert(const T& t)
-  {
-    return t;
-  }
+  static const T& convert(const T& t) { return t; }
 };
 
 template <class T>
@@ -37,8 +35,7 @@ struct ValueConverter<QVariantList>
 bool shouldLogSetting(const QString& displayName);
 
 template <class T>
-void logChange(
-  const QString& displayName, std::optional<T> oldValue, const T& newValue)
+void logChange(const QString& displayName, std::optional<T> oldValue, const T& newValue)
 {
   if (!shouldLogSetting(displayName)) {
     return;
@@ -47,25 +44,20 @@ void logChange(
   using VC = ValueConverter<T>;
 
   if (oldValue) {
-    MOBase::log::debug(
-      "setting '{}' changed from '{}' to '{}'",
-      displayName, VC::convert(*oldValue), VC::convert(newValue));
+    MOBase::log::debug("setting '{}' changed from '{}' to '{}'", displayName,
+                       VC::convert(*oldValue), VC::convert(newValue));
   } else {
-    MOBase::log::debug(
-      "setting '{}' set to '{}'",
-      displayName, VC::convert(newValue));
+    MOBase::log::debug("setting '{}' set to '{}'", displayName, VC::convert(newValue));
   }
 }
 
 void logRemoval(const QString& name);
 
-
 QString settingName(const QString& section, const QString& key);
 
 template <class T>
-void setImpl(
-  QSettings& settings, const QString& displayName,
-  const QString& section, const QString& key, const T& value)
+void setImpl(QSettings& settings, const QString& displayName, const QString& section,
+             const QString& key, const T& value)
 {
   const auto current = getOptional<T>(settings, section, key);
 
@@ -79,22 +71,18 @@ void setImpl(
   logChange(displayName, current, value);
 
   if constexpr (std::is_enum_v<T>) {
-    settings.setValue(
-      name, static_cast<std::underlying_type_t<T>>(value));
+    settings.setValue(name, static_cast<std::underlying_type_t<T>>(value));
   } else {
     settings.setValue(name, value);
   }
 }
 
-void removeImpl(
-  QSettings& settings, const QString& displayName,
-  const QString& section, const QString& key);
-
+void removeImpl(QSettings& settings, const QString& displayName, const QString& section,
+                const QString& key);
 
 template <class T>
-std::optional<T> getOptional(
-  const QSettings& settings,
-  const QString& section, const QString& key, std::optional<T> def={})
+std::optional<T> getOptional(const QSettings& settings, const QString& section,
+                             const QString& key, std::optional<T> def = {})
 {
   if (settings.contains(settingName(section, key))) {
     const auto v = settings.value(settingName(section, key));
@@ -110,11 +98,9 @@ std::optional<T> getOptional(
 }
 
 template <class T>
-T get(
-  const QSettings& settings,
-  const QString& section, const QString& key, T def)
+T get(const QSettings& settings, const QString& section, const QString& key, T def)
 {
-  if (auto v=getOptional<T>(settings, section, key)) {
+  if (auto v = getOptional<T>(settings, section, key)) {
     return *v;
   } else {
     return def;
@@ -122,9 +108,8 @@ T get(
 }
 
 template <class T>
-void set(
-  QSettings& settings,
-  const QString& section, const QString& key, const T& value)
+void set(QSettings& settings, const QString& section, const QString& key,
+         const T& value)
 {
   setImpl(settings, settingName(section, key), section, key, value);
 }
@@ -132,14 +117,13 @@ void set(
 void remove(QSettings& settings, const QString& section, const QString& key);
 void removeSection(QSettings& settings, const QString& section);
 
-
 class ScopedGroup
 {
 public:
   ScopedGroup(QSettings& s, const QString& name);
   ~ScopedGroup();
 
-  ScopedGroup(const ScopedGroup&) = delete;
+  ScopedGroup(const ScopedGroup&)            = delete;
   ScopedGroup& operator=(const ScopedGroup&) = delete;
 
   template <class T>
@@ -161,13 +145,13 @@ public:
   }
 
   template <class T>
-  std::optional<T> getOptional(const QString& key, std::optional<T> def={}) const
+  std::optional<T> getOptional(const QString& key, std::optional<T> def = {}) const
   {
     return ::getOptional<T>(m_settings, "", key, def);
   }
 
   template <class T>
-  T get(const QString& key, T def={}) const
+  T get(const QString& key, T def = {}) const
   {
     return ::get<T>(m_settings, "", key, def);
   }
@@ -177,33 +161,32 @@ private:
   QString m_name;
 };
 
-
 class ScopedReadArray
 {
 public:
   ScopedReadArray(QSettings& s, const QString& section);
   ~ScopedReadArray();
 
-  ScopedReadArray(const ScopedReadArray&) = delete;
+  ScopedReadArray(const ScopedReadArray&)            = delete;
   ScopedReadArray& operator=(const ScopedReadArray&) = delete;
 
   template <class F>
   void for_each(F&& f) const
   {
-    for (int i=0; i<count(); ++i) {
+    for (int i = 0; i < count(); ++i) {
       m_settings.setArrayIndex(i);
       f();
     }
   }
 
   template <class T>
-  std::optional<T> getOptional(const QString& key, std::optional<T> def={}) const
+  std::optional<T> getOptional(const QString& key, std::optional<T> def = {}) const
   {
     return ::getOptional<T>(m_settings, "", key, def);
   }
 
   template <class T>
-  T get(const QString& key, T def={}) const
+  T get(const QString& key, T def = {}) const
   {
     return ::get<T>(m_settings, "", key, def);
   }
@@ -216,16 +199,15 @@ private:
   int m_count;
 };
 
-
 class ScopedWriteArray
 {
 public:
   static const auto NoSize = std::numeric_limits<std::size_t>::max();
 
-  ScopedWriteArray(QSettings& s, const QString& section, std::size_t size=NoSize);
+  ScopedWriteArray(QSettings& s, const QString& section, std::size_t size = NoSize);
   ~ScopedWriteArray();
 
-  ScopedWriteArray(const ScopedWriteArray&) = delete;
+  ScopedWriteArray(const ScopedWriteArray&)            = delete;
   ScopedWriteArray& operator=(const ScopedWriteArray&) = delete;
 
   void next();
@@ -233,10 +215,7 @@ public:
   template <class T>
   void set(const QString& key, const T& value)
   {
-    const auto displayName = QString("%1/%2\\%3")
-      .arg(m_section)
-      .arg(m_i)
-      .arg(key);
+    const auto displayName = QString("%1/%2\\%3").arg(m_section).arg(m_i).arg(key);
 
     setImpl(m_settings, displayName, "", key, value);
   }
@@ -246,7 +225,6 @@ private:
   QString m_section;
   int m_i;
 };
-
 
 QString widgetNameWithTopLevel(const QWidget* widget);
 QString widgetName(const QMainWindow* w);
@@ -281,4 +259,4 @@ void warnIfNotCheckable(const QAbstractButton* b);
 bool setWindowsCredential(const QString& key, const QString& data);
 QString getWindowsCredential(const QString& key);
 
-#endif // SETTINGSUTILITIES_H
+#endif  // SETTINGSUTILITIES_H
