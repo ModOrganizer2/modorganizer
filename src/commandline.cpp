@@ -881,14 +881,14 @@ std::optional<int> DownloadFileCommand::runPostOrganizer(OrganizerCore& core)
   if (!url.startsWith("https://")) {
     reportError(
       QObject::tr("Download URL must start with https://"));
-    return {};
+    return 1;
   }
 
   log::debug("starting direct download from command line: {}", url.toStdString());
   MessageDialog::showMessage(QObject::tr("Download started"), qApp->activeWindow(), false);
   core.downloadManager()->startDownloadURLs(QStringList() << url);
 
-  return {};
+  return 0;
 }
 
 
