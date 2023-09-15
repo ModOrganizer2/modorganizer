@@ -3,6 +3,7 @@
 #include "organizercore.h"
 #include "instancemanager.h"
 #include "multiprocess.h"
+#include "messagedialog.h"
 #include "loglist.h"
 #include "shared/util.h"
 #include "shared/appconfig.h"
@@ -60,6 +61,7 @@ CommandLine::CommandLine()
   add<
     RunCommand,
     ReloadPluginCommand,
+    DownloadFileCommand,
     RefreshCommand,
     CrashDumpCommand,
     LaunchCommand>();
@@ -187,8 +189,6 @@ std::optional<int> CommandLine::process(const std::wstring& line)
         // not a shortcut, try a link
         if (isNxmLink(qs)) {
           m_nxmLink = qs;
-        } else if (qs.startsWith("https://", Qt::CaseInsensitive) || qs.startsWith("http://", Qt::CaseInsensitive)) {
-          m_downloadLink = qs;
         } else {
           // assume an executable name/binary
           m_executable = qs;
@@ -223,8 +223,6 @@ bool CommandLine::forwardToPrimary(MOMultiProcess& multiProcess)
     multiProcess.sendMessage(m_shortcut.toString());
   } else if (m_nxmLink) {
     multiProcess.sendMessage(*m_nxmLink);
-  } else if (m_downloadLink) {
-    multiProcess.sendMessage(*m_downloadLink);
   } else if (m_command && m_command->canForwardToPrimary()) {
     multiProcess.sendMessage(QString::fromWCharArray(GetCommandLineW()));
   } else {
@@ -301,9 +299,6 @@ std::optional<int> CommandLine::runPostOrganizer(OrganizerCore& core)
   } else if (m_nxmLink) {
     log::debug("starting download from command line: {}", *m_nxmLink);
     core.downloadRequestedNXM(*m_nxmLink);
-  } else if (m_downloadLink) {
-    log::debug("starting direct download from command line: {}", *m_downloadLink);
-    core.downloadManager()->startDownloadURLs(QStringList() << *m_downloadLink);
   } else if (m_executable) {
     const QString exeName = *m_executable;
     log::debug("starting {} from command line", exeName);
@@ -339,7 +334,6 @@ void CommandLine::clear()
   m_vm.clear();
   m_shortcut = {};
   m_nxmLink = {};
-  m_downloadLink = {};
 }
 
 void CommandLine::createOptions()
@@ -474,11 +468,6 @@ const MOShortcut& CommandLine::shortcut() const
 std::optional<QString> CommandLine::nxmLink() const
 {
   return m_nxmLink;
-}
-
-std::optional<QString> CommandLine::downloadLink() const
-{
-  return m_downloadLink;
 }
 
 std::optional<QString> CommandLine::executable() const
@@ -916,6 +905,52 @@ std::optional<int> ReloadPluginCommand::runPostOrganizer(OrganizerCore& core)
 
   log::debug("reloading plugin from {}", filepath);
   core.pluginContainer().reloadPlugin(filepath);
+
+  return {};
+}
+
+
+Command::Meta DownloadFileCommand::meta() const
+{
+  return {
+    "download",
+    "downloads a file",
+    "URL",
+    ""
+  };
+}
+
+po::options_description DownloadFileCommand::getInternalOptions() const
+{
+  po::options_description d;
+
+  d.add_options()
+    ("URL", po::value<std::string>()->required(), "file URL");
+
+  return d;
+}
+
+po::positional_options_description DownloadFileCommand::getPositional() const
+{
+  po::positional_options_description d;
+
+  d.add("URL", 1);
+
+  return d;
+}
+
+bool DownloadFileCommand::canForwardToPrimary() const
+{
+  return true;
+}
+
+std::optional<int> DownloadFileCommand::runPostOrganizer(OrganizerCore& core)
+{
+  const QString url = QString::fromStdString(vm()["URL"].as<std::string>());
+
+  log::debug("starting direct download from command line: {}", url.toStdString());
+  MessageDialog::showMessage(QObject::tr("Download started"), qApp->activeWindow(), false);
+  core.downloadManager()->startDownloadURLs(QStringList() << url);
 
   return {};
 }

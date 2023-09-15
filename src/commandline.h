@@ -218,6 +218,21 @@ protected:
 };
 
 
+// downloads a file
+//
+class DownloadFileCommand : public Command
+{
+protected:
+  Meta meta() const override;
+
+  po::options_description getInternalOptions() const override;
+  po::positional_options_description getPositional() const override;
+
+  bool canForwardToPrimary() const override;
+  std::optional<int> runPostOrganizer(OrganizerCore& core) override;
+};
+
+
 // refreshes mo
 //
 class RefreshCommand : public Command
@@ -342,10 +357,6 @@ public:
   //
   std::optional<QString> nxmLink() const;
 
-  // returns the direct download link, if any
-  //
-  std::optional<QString> downloadLink() const;
-  
   // returns the executable/binary, if any
   //
   std::optional<QString> executable() const;
@@ -362,7 +373,6 @@ private:
   po::variables_map m_vm;
   MOShortcut m_shortcut;
   std::optional<QString> m_nxmLink;
-  std::optional<QString> m_downloadLink;
   std::optional<QString> m_executable;
   QStringList m_untouched;
   Command* m_command;
