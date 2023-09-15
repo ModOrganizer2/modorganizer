@@ -5,7 +5,7 @@
 #include "ui_mainwindow.h"
 
 DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
-    : m_core(core), ui{mwui->btnRefreshDownloads, mwui->downloadView,
+    : m_core(core), ui{mwui->btnRefreshDownloads, mwui->btnQueryDownloadsInfo, mwui->downloadView,
                        mwui->showHiddenBox, mwui->downloadFilterEdit}
 {
   DownloadList* sourceModel = new DownloadList(m_core, ui.list);
@@ -25,6 +25,9 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
 
   connect(ui.refresh, &QPushButton::clicked, [&] {
     refresh();
+  });
+  connect(ui.queryInfos, &QPushButton::clicked, [&] {
+    queryInfos(); 
   });
   connect(ui.list, SIGNAL(installDownload(int)), &m_core, SLOT(installDownload(int)));
   connect(ui.list, SIGNAL(queryInfo(int)), m_core.downloadManager(),
@@ -78,6 +81,11 @@ void DownloadsTab::update()
 void DownloadsTab::refresh()
 {
   m_core.downloadManager()->refreshList();
+}
+
+void DownloadsTab::queryInfos() 
+{
+  m_core.downloadManager()->queryDownloadListInfo();
 }
 
 void DownloadsTab::resumeDownload(int downloadIndex)
