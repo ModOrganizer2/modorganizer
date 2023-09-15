@@ -937,7 +937,7 @@ void DownloadManager::resumeDownloadInt(int index)
 
   // Check for finished download;
   if (info->m_TotalSize <= info->m_Output.size() && info->m_Reply != nullptr
-      && info->m_Reply->isFinished() && info->m_State != STATE_ERROR) {
+      && info->m_Reply->isOpen() && info->m_Reply->isFinished() && info->m_State != STATE_ERROR) {
     setState(info, STATE_DOWNLOADING);
     downloadFinished(index);
     return;
