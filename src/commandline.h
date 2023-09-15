@@ -205,7 +205,6 @@ protected:
   std::optional<int> runPostOrganizer(OrganizerCore& core) override;
 };
 
-
 // downloads a file
 //
 class DownloadFileCommand : public Command
@@ -219,7 +218,6 @@ protected:
   bool canForwardToPrimary() const override;
   std::optional<int> runPostOrganizer(OrganizerCore& core) override;
 };
-
 
 // refreshes mo
 //

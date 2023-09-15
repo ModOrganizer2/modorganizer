@@ -1,8 +1,8 @@
 #include "commandline.h"
 #include "env.h"
 #include "instancemanager.h"
-#include "messagedialog.h"
 #include "loglist.h"
+#include "messagedialog.h"
 #include "multiprocess.h"
 #include "organizercore.h"
 #include "shared/appconfig.h"
@@ -50,13 +50,8 @@ CommandLine::CommandLine() : m_command(nullptr)
 {
   createOptions();
 
-  add<
-    RunCommand,
-    ReloadPluginCommand,
-    DownloadFileCommand,
-    RefreshCommand,
-    CrashDumpCommand,
-    LaunchCommand>();
+  add<RunCommand, ReloadPluginCommand, DownloadFileCommand, RefreshCommand,
+      CrashDumpCommand, LaunchCommand>();
 }
 
 std::optional<int> CommandLine::process(const std::wstring& line)
@@ -839,23 +834,16 @@ std::optional<int> ReloadPluginCommand::runPostOrganizer(OrganizerCore& core)
   return {};
 }
 
-
 Command::Meta DownloadFileCommand::meta() const
 {
-  return {
-    "download",
-    "downloads a file",
-    "URL",
-    ""
-  };
+  return {"download", "downloads a file", "URL", ""};
 }
 
 po::options_description DownloadFileCommand::getInternalOptions() const
 {
   po::options_description d;
 
-  d.add_options()
-    ("URL", po::value<std::string>()->required(), "file URL");
+  d.add_options()("URL", po::value<std::string>()->required(), "file URL");
 
   return d;
 }
@@ -879,18 +867,17 @@ std::optional<int> DownloadFileCommand::runPostOrganizer(OrganizerCore& core)
   const QString url = QString::fromStdString(vm()["URL"].as<std::string>());
 
   if (!url.startsWith("https://")) {
-    reportError(
-      QObject::tr("Download URL must start with https://"));
+    reportError(QObject::tr("Download URL must start with https://"));
     return 1;
   }
 
   log::debug("starting direct download from command line: {}", url.toStdString());
-  MessageDialog::showMessage(QObject::tr("Download started"), qApp->activeWindow(), false);
+  MessageDialog::showMessage(QObject::tr("Download started"), qApp->activeWindow(),
+                             false);
   core.downloadManager()->startDownloadURLs(QStringList() << url);
 
   return {};
 }
-
 
 Command::Meta RefreshCommand::meta() const
 {

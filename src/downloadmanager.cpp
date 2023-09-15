@@ -439,8 +439,10 @@ bool DownloadManager::addDownload(const QStringList& URLs, QString gameName, int
     fileName = QUrl::fromPercentEncoding(fileName.toUtf8());
   }
 
-  // Temporary URLs for S3-compatible storage are signed for a single method, removing the ability to make HEAD requests to such URLs.
-  // We can use the response-content-disposition GET parameter, setting the Content-Disposition header, to predetermine intended file name without a subrequest. 
+  // Temporary URLs for S3-compatible storage are signed for a single method, removing
+  // the ability to make HEAD requests to such URLs. We can use the
+  // response-content-disposition GET parameter, setting the Content-Disposition header,
+  // to predetermine intended file name without a subrequest.
   if (fileName.contains("response-content-disposition=")) {
     std::regex exp("filename=\"(.+)\"");
     std::cmatch result;
@@ -462,7 +464,8 @@ bool DownloadManager::addDownload(const QStringList& URLs, QString gameName, int
   request.setHeader(QNetworkRequest::UserAgentHeader,
                     m_NexusInterface->getAccessManager()->userAgent());
   request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
-  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
+  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
+                       QNetworkRequest::AlwaysNetwork);
   request.setHttp2Configuration(h2Conf);
   return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName,
                      gameName, modID, fileID, fileInfo);
@@ -965,8 +968,7 @@ void DownloadManager::resumeDownloadInt(int index)
 
   // Check for finished download;
   if (info->m_TotalSize <= info->m_Output.size() && info->m_Reply != nullptr &&
-      info->m_Reply->isFinished() &&
-      info->m_State != STATE_ERROR) {
+      info->m_Reply->isFinished() && info->m_State != STATE_ERROR) {
     setState(info, STATE_DOWNLOADING);
     downloadFinished(index);
     return;
@@ -2161,7 +2163,7 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID,
 
 void DownloadManager::downloadFinished(int index)
 {
-  DownloadInfo *info;
+  DownloadInfo* info;
   if (index > 0)
     info = m_ActiveDownloads[index];
   else {
