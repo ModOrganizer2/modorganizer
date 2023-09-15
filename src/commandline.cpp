@@ -888,7 +888,7 @@ std::optional<int> DownloadFileCommand::runPostOrganizer(OrganizerCore& core)
   MessageDialog::showMessage(QObject::tr("Download started"), qApp->activeWindow(), false);
   core.downloadManager()->startDownloadURLs(QStringList() << url);
 
-  return 0;
+  return {};
 }
 
 
