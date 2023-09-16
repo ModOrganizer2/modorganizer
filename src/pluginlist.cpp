@@ -1544,7 +1544,7 @@ Qt::ItemFlags PluginList::flags(const QModelIndex& modelIndex) const
 
   if (modelIndex.isValid()) {
     if (!m_ESPs[index].forceEnabled && !m_ESPs[index].forceDisabled) {
-      result |= Qt::ItemIsDragEnabled;
+      result |= Qt::ItemIsUserCheckable | Qt::ItemIsDragEnabled;
     }
     if (modelIndex.column() == COL_PRIORITY) {
       result |= Qt::ItemIsEditable;
