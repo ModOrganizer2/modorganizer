@@ -421,6 +421,8 @@ void PluginList::setEnabled(const QModelIndexList& indices, bool enabled)
 {
   QStringList dirty;
   for (auto& idx : indices) {
+    if (m_ESPs[idx.row()].forceEnabled || m_ESPs[idx.row()].forceDisabled)
+      continue;
     if (m_ESPs[idx.row()].enabled != enabled) {
       m_ESPs[idx.row()].enabled = enabled;
       dirty.append(m_ESPs[idx.row()].name);
@@ -437,6 +439,8 @@ void PluginList::setEnabledAll(bool enabled)
 {
   QStringList dirty;
   for (ESPInfo& info : m_ESPs) {
+    if (info.forceEnabled || info.forceDisabled)
+      continue;
     if (info.enabled != enabled) {
       info.enabled = enabled;
       dirty.append(info.name);
