@@ -179,6 +179,8 @@ void PluginList::refresh(const QString& profileName,
   GamePlugins* gamePlugins   = m_GamePlugin->feature<GamePlugins>();
   const bool lightPluginsAreSupported =
       gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
+  const bool overridePluginsAreSupported =
+      gamePlugins ? gamePlugins->overridePluginsAreSupported() : false;
 
   m_CurrentProfile = profileName;
 
@@ -203,6 +205,9 @@ void PluginList::refresh(const QString& profileName,
 
       bool forceEnabled = Settings::instance().game().forceEnableCoreFiles() &&
                           primaryPlugins.contains(filename, Qt::CaseInsensitive);
+      bool forceDisabled =
+          m_GamePlugin->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::None &&
+          !forceEnabled;
 
       bool archive = false;
       try {
@@ -231,9 +236,10 @@ void PluginList::refresh(const QString& profileName,
           originName           = modInfo->name();
         }
 
-        m_ESPs.push_back(ESPInfo(filename, forceEnabled, originName,
+        m_ESPs.push_back(ESPInfo(filename, forceEnabled, forceDisabled, originName,
                                  ToQString(current->getFullPath()), hasIni,
-                                 loadedArchives, lightPluginsAreSupported));
+                                 loadedArchives, lightPluginsAreSupported,
+                                 overridePluginsAreSupported));
         m_ESPs.rbegin()->priority = -1;
       } catch (const std::exception& e) {
         reportError(
@@ -388,7 +394,8 @@ void PluginList::enableESP(const QString& name, bool enable)
 
   if (iter != m_ESPsByName.end()) {
     auto enabled                 = m_ESPs[iter->second].enabled;
-    m_ESPs[iter->second].enabled = enable || m_ESPs[iter->second].forceEnabled;
+    m_ESPs[iter->second].enabled = (enable && !m_ESPs[iter->second].forceDisabled) ||
+                                   m_ESPs[iter->second].forceEnabled;
 
     emit writePluginsList();
     if (enabled != m_ESPs[iter->second].enabled) {
@@ -414,6 +421,8 @@ void PluginList::setEnabled(const QModelIndexList& indices, bool enabled)
 {
   QStringList dirty;
   for (auto& idx : indices) {
+    if (m_ESPs[idx.row()].forceEnabled || m_ESPs[idx.row()].forceDisabled)
+      continue;
     if (m_ESPs[idx.row()].enabled != enabled) {
       m_ESPs[idx.row()].enabled = enabled;
       dirty.append(m_ESPs[idx.row()].name);
@@ -430,6 +439,8 @@ void PluginList::setEnabledAll(bool enabled)
 {
   QStringList dirty;
   for (ESPInfo& info : m_ESPs) {
+    if (info.forceEnabled || info.forceDisabled)
+      continue;
     if (info.enabled != enabled) {
       info.enabled = enabled;
       dirty.append(info.name);
@@ -854,7 +865,8 @@ void PluginList::setState(const QString& name, PluginStates state)
   auto iter = m_ESPsByName.find(name);
   if (iter != m_ESPsByName.end()) {
     m_ESPs[iter->second].enabled =
-        (state == IPluginList::STATE_ACTIVE) || m_ESPs[iter->second].forceEnabled;
+        (state == IPluginList::STATE_ACTIVE && !m_ESPs[iter->second].forceDisabled) ||
+        m_ESPs[iter->second].forceEnabled;
   } else {
     log::warn("Plugin not found: {}", name);
   }
@@ -990,6 +1002,16 @@ bool PluginList::isLightFlagged(const QString& name) const
   }
 }
 
+bool PluginList::isOverrideFlagged(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  } else {
+    return m_ESPs[iter->second].isOverrideFlagged;
+  }
+}
+
 boost::signals2::connection PluginList::onPluginStateChanged(
     const std::function<void(const std::map<QString, PluginStates>&)>& func)
 {
@@ -1049,6 +1071,8 @@ void PluginList::generatePluginIndexes()
   GamePlugins* gamePlugins = m_GamePlugin->feature<GamePlugins>();
   const bool lightPluginsSupported =
       gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
+  const bool overridePluginsSupported =
+      gamePlugins ? gamePlugins->overridePluginsAreSupported() : false;
 
   for (int l = 0; l < m_ESPs.size(); ++l) {
     int i = m_ESPsByPriority.at(l);
@@ -1065,6 +1089,8 @@ void PluginList::generatePluginIndexes()
                             .arg((numESLs) % 4096, 3, 16, QChar('0'))
                             .toUpper();
       ++numESLs;
+    } else if (overridePluginsSupported && m_ESPs[i].isOverrideFlagged) {
+      m_ESPs[i].index = QString("");
     } else {
       m_ESPs[i].index =
           QString("%1").arg(l - numESLs - numSkipped, 2, 16, QChar('0')).toUpper();
@@ -1156,7 +1182,9 @@ QVariant PluginList::checkstateData(const QModelIndex& modelIndex) const
   const int index = modelIndex.row();
 
   if (m_ESPs[index].forceEnabled) {
-    return {};
+    return Qt::Checked;
+  } else if (m_ESPs[index].forceDisabled) {
+    return Qt::Unchecked;
   }
 
   return m_ESPs[index].enabled ? Qt::Checked : Qt::Unchecked;
@@ -1168,6 +1196,10 @@ QVariant PluginList::foregroundData(const QModelIndex& modelIndex) const
 
   if ((modelIndex.column() == COL_NAME) && m_ESPs[index].forceEnabled) {
     return QBrush(Qt::gray);
+  }
+
+  if ((modelIndex.column() == COL_NAME) && m_ESPs[index].forceDisabled) {
+    return QBrush(Qt::darkRed);
   }
 
   return {};
@@ -1224,61 +1256,69 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
   if (esp.forceEnabled) {
     toolTip += "<br><b><i>" +
                tr("This plugin can't be disabled (enforced by the game).") + "</i></b>";
-  } else {
-    if (!esp.author.isEmpty()) {
-      toolTip += "<br><b>" + tr("Author") + "</b>: " + TruncateString(esp.author);
-    }
+  }
 
-    if (esp.description.size() > 0) {
-      toolTip +=
-          "<br><b>" + tr("Description") + "</b>: " + TruncateString(esp.description);
-    }
+  if (!esp.author.isEmpty()) {
+    toolTip += "<br><b>" + tr("Author") + "</b>: " + TruncateString(esp.author);
+  }
 
-    if (esp.masterUnset.size() > 0) {
-      toolTip +=
-          "<br><b>" + tr("Missing Masters") + "</b>: " + "<b>" +
-          TruncateString(
-              QStringList(esp.masterUnset.begin(), esp.masterUnset.end()).join(", ")) +
-          "</b>";
-    }
+  if (esp.description.size() > 0) {
+    toolTip +=
+        "<br><b>" + tr("Description") + "</b>: " + TruncateString(esp.description);
+  }
 
-    std::set<QString> enabledMasters;
-    std::set_difference(esp.masters.begin(), esp.masters.end(), esp.masterUnset.begin(),
-                        esp.masterUnset.end(),
-                        std::inserter(enabledMasters, enabledMasters.end()));
+  if (esp.masterUnset.size() > 0) {
+    toolTip +=
+        "<br><b>" + tr("Missing Masters") + "</b>: " + "<b>" +
+        TruncateString(
+            QStringList(esp.masterUnset.begin(), esp.masterUnset.end()).join(", ")) +
+        "</b>";
+  }
 
-    if (!enabledMasters.empty()) {
-      toolTip += "<br><b>" + tr("Enabled Masters") +
-                 "</b>: " + TruncateString(SetJoin(enabledMasters, ", "));
-    }
+  std::set<QString> enabledMasters;
+  std::set_difference(esp.masters.begin(), esp.masters.end(), esp.masterUnset.begin(),
+                      esp.masterUnset.end(),
+                      std::inserter(enabledMasters, enabledMasters.end()));
 
-    if (!esp.archives.empty()) {
-      toolTip +=
-          "<br><b>" + tr("Loads Archives") + "</b>: " +
-          TruncateString(
-              QStringList(esp.archives.begin(), esp.archives.end()).join(", ")) +
-          "<br>" +
-          tr("There are Archives connected to this plugin. Their assets will be "
-             "added to your game, overwriting in case of conflicts following the "
-             "plugin order. Loose files will always overwrite assets from "
-             "Archives. (This flag only checks for Archives from the same mod as "
-             "the plugin)");
-    }
+  if (!enabledMasters.empty()) {
+    toolTip += "<br><b>" + tr("Enabled Masters") +
+               "</b>: " + TruncateString(SetJoin(enabledMasters, ", "));
+  }
 
-    if (esp.hasIni) {
-      toolTip +=
-          "<br><b>" + tr("Loads INI settings") +
-          "</b>: "
-          "<br>" +
-          tr("There is an ini file connected to this plugin. Its settings will "
-             "be added to your game settings, overwriting in case of conflicts.");
-    }
+  if (!esp.archives.empty()) {
+    QString archiveString =
+        esp.archives.size() < 6
+            ? TruncateString(
+                  QStringList(esp.archives.begin(), esp.archives.end()).join(", ")) +
+                  "<br>"
+            : "";
+    toolTip += "<br><b>" + tr("Loads Archives") + "</b>: " + archiveString +
+               tr("There are Archives connected to this plugin. Their assets will be "
+                  "added to your game, overwriting in case of conflicts following the "
+                  "plugin order. Loose files will always overwrite assets from "
+                  "Archives. (This flag only checks for Archives from the same mod as "
+                  "the plugin)");
+  }
 
-    if (esp.isLightFlagged && !esp.hasLightExtension) {
-      toolTip += "<br><br>" +
-                 tr("This ESP is flagged as an ESL. It will adhere to the ESP load "
-                    "order but the records will be loaded in ESL space.");
-    }
+  if (esp.hasIni) {
+    toolTip += "<br><b>" + tr("Loads INI settings") +
+               "</b>: "
+               "<br>" +
+               tr("There is an ini file connected to this plugin. Its settings will "
+                  "be added to your game settings, overwriting in case of conflicts.");
+  }
+
+  if (esp.isLightFlagged && !esp.hasLightExtension) {
+    QString type = esp.hasMasterExtension ? "ESM" : "ESP";
+    toolTip +=
+        "<br><br>" + tr("This %1 is flagged as an ESL. It will adhere to the %1 load "
+                        "order but the records will be loaded in ESL space.")
+                         .arg(type);
+  }
+
+  if (esp.forceDisabled) {
+    toolTip += "<br><br>" + tr("This game does not currently permit custom plugin "
+                               "loading. There may be manual workarounds.");
   }
 
   // additional info
@@ -1503,7 +1543,7 @@ Qt::ItemFlags PluginList::flags(const QModelIndex& modelIndex) const
   Qt::ItemFlags result = QAbstractItemModel::flags(modelIndex);
 
   if (modelIndex.isValid()) {
-    if (!m_ESPs[index].forceEnabled) {
+    if (!m_ESPs[index].forceEnabled && !m_ESPs[index].forceDisabled) {
       result |= Qt::ItemIsUserCheckable | Qt::ItemIsDragEnabled;
     }
     if (modelIndex.column() == COL_PRIORITY) {
@@ -1702,21 +1742,23 @@ QModelIndex PluginList::parent(const QModelIndex&) const
   return QModelIndex();
 }
 
-PluginList::ESPInfo::ESPInfo(const QString& name, bool enabled,
+PluginList::ESPInfo::ESPInfo(const QString& name, bool enabled, bool forceDisabled,
                              const QString& originName, const QString& fullPath,
                              bool hasIni, std::set<QString> archives,
-                             bool lightPluginsAreSupported)
+                             bool lightSupported, bool overrideSupported)
     : name(name), fullPath(fullPath), enabled(enabled), forceEnabled(enabled),
-      priority(0), loadOrder(-1), originName(originName), hasIni(hasIni),
-      archives(archives.begin(), archives.end()), modSelected(false)
+      forceDisabled(forceDisabled), priority(0), loadOrder(-1), originName(originName),
+      hasIni(hasIni), archives(archives.begin(), archives.end()), modSelected(false)
 {
   try {
     ESP::File file(ToWString(fullPath));
     auto extension     = name.right(3).toLower();
     hasMasterExtension = (extension == "esm");
-    hasLightExtension  = lightPluginsAreSupported && (extension == "esl");
+    hasLightExtension  = lightSupported && (extension == "esl");
     isMasterFlagged    = file.isMaster();
-    isLightFlagged     = lightPluginsAreSupported && file.isLight();
+    isOverrideFlagged  = overrideSupported && file.isOverride();
+    isLightFlagged =
+        lightSupported && !isOverrideFlagged && file.isLight(overrideSupported);
 
     author      = QString::fromLatin1(file.author().c_str());
     description = QString::fromLatin1(file.description().c_str());
@@ -1729,6 +1771,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool enabled,
     hasMasterExtension = false;
     hasLightExtension  = false;
     isMasterFlagged    = false;
+    isOverrideFlagged  = false;
     isLightFlagged     = false;
   }
 }

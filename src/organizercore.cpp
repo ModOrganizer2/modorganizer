@@ -1992,7 +1992,12 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
 
   MappingType result;
 
-  QString dataPath = QDir::toNativeSeparators(game->dataDirectory().absolutePath());
+  QStringList dataPaths;
+  dataPaths.append(QDir::toNativeSeparators(game->dataDirectory().absolutePath()));
+
+  for (auto directory : game->secondaryDataDirectories()) {
+    dataPaths.append(directory.absolutePath());
+  }
 
   bool overwriteActive = false;
 
@@ -2009,8 +2014,10 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
     overwriteActive |= createTarget;
 
     if (modPtr->isRegular()) {
-      result.insert(result.end(), {QDir::toNativeSeparators(std::get<1>(mod)), dataPath,
-                                   true, createTarget});
+      for (auto dataPath : dataPaths) {
+        result.insert(result.end(), {QDir::toNativeSeparators(std::get<1>(mod)),
+                                     dataPath, true, createTarget});
+      }
     }
   }
 
@@ -2031,8 +2038,11 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
     }
   }
 
-  result.insert(result.end(), {QDir::toNativeSeparators(m_Settings.paths().overwrite()),
-                               dataPath, true, customOverwrite.isEmpty()});
+  for (auto dataPath : dataPaths) {
+    result.insert(result.end(),
+                  {QDir::toNativeSeparators(m_Settings.paths().overwrite()), dataPath,
+                   true, customOverwrite.isEmpty()});
+  }
 
   for (MOBase::IPluginFileMapper* mapper :
        m_PluginContainer->plugins<MOBase::IPluginFileMapper>()) {
