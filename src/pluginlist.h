@@ -241,6 +241,7 @@ public:
   bool hasLightExtension(const QString& name) const;
   bool isMasterFlagged(const QString& name) const;
   bool isLightFlagged(const QString& name) const;
+  bool isOverrideFlagged(const QString& name) const;
 
   boost::signals2::connection onRefreshed(const std::function<void()>& callback);
   boost::signals2::connection
@@ -312,14 +313,15 @@ signals:
 private:
   struct ESPInfo
   {
-    ESPInfo(const QString& name, bool enabled, const QString& originName,
-            const QString& fullPath, bool hasIni, std::set<QString> archives,
-            bool lightSupported);
+    ESPInfo(const QString& name, bool enabled, bool forceDisabled,
+            const QString& originName, const QString& fullPath, bool hasIni,
+            std::set<QString> archives, bool lightSupported, bool overrideSupported);
 
     QString name;
     QString fullPath;
     bool enabled;
     bool forceEnabled;
+    bool forceDisabled;
     int priority;
     QString index;
     int loadOrder;
@@ -329,6 +331,7 @@ private:
     bool hasLightExtension;
     bool isMasterFlagged;
     bool isLightFlagged;
+    bool isOverrideFlagged;
     bool modSelected;
     QString author;
     QString description;
