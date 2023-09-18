@@ -2,6 +2,7 @@
 #include "env.h"
 #include "instancemanager.h"
 #include "loglist.h"
+#include "messagedialog.h"
 #include "multiprocess.h"
 #include "organizercore.h"
 #include "shared/appconfig.h"
@@ -49,8 +50,8 @@ CommandLine::CommandLine() : m_command(nullptr)
 {
   createOptions();
 
-  add<RunCommand, ReloadPluginCommand, RefreshCommand, CrashDumpCommand,
-      LaunchCommand>();
+  add<RunCommand, ReloadPluginCommand, DownloadFileCommand, RefreshCommand,
+      CrashDumpCommand, LaunchCommand>();
 }
 
 std::optional<int> CommandLine::process(const std::wstring& line)
@@ -829,6 +830,51 @@ std::optional<int> ReloadPluginCommand::runPostOrganizer(OrganizerCore& core)
 
   log::debug("reloading plugin from {}", filepath);
   core.pluginContainer().reloadPlugin(filepath);
+
+  return {};
+}
+
+Command::Meta DownloadFileCommand::meta() const
+{
+  return {"download", "downloads a file", "URL", ""};
+}
+
+po::options_description DownloadFileCommand::getInternalOptions() const
+{
+  po::options_description d;
+
+  d.add_options()("URL", po::value<std::string>()->required(), "file URL");
+
+  return d;
+}
+
+po::positional_options_description DownloadFileCommand::getPositional() const
+{
+  po::positional_options_description d;
+
+  d.add("URL", 1);
+
+  return d;
+}
+
+bool DownloadFileCommand::canForwardToPrimary() const
+{
+  return true;
+}
+
+std::optional<int> DownloadFileCommand::runPostOrganizer(OrganizerCore& core)
+{
+  const QString url = QString::fromStdString(vm()["URL"].as<std::string>());
+
+  if (!url.startsWith("https://")) {
+    reportError(QObject::tr("Download URL must start with https://"));
+    return 1;
+  }
+
+  log::debug("starting direct download from command line: {}", url.toStdString());
+  MessageDialog::showMessage(QObject::tr("Download started"), qApp->activeWindow(),
+                             false);
+  core.downloadManager()->startDownloadURLs(QStringList() << url);
 
   return {};
 }
