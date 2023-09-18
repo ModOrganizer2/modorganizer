@@ -61,7 +61,8 @@ private:
     LICENSE_SIP,
     LICENSE_CASTLE,
     LICENSE_ANTLR,
-    LICENSE_DXTEX
+    LICENSE_DXTEX,
+    LICENSE_VDF,
   };
 
 private:
