@@ -205,6 +205,20 @@ protected:
   std::optional<int> runPostOrganizer(OrganizerCore& core) override;
 };
 
+// downloads a file
+//
+class DownloadFileCommand : public Command
+{
+protected:
+  Meta meta() const override;
+
+  po::options_description getInternalOptions() const override;
+  po::positional_options_description getPositional() const override;
+
+  bool canForwardToPrimary() const override;
+  std::optional<int> runPostOrganizer(OrganizerCore& core) override;
+};
+
 // refreshes mo
 //
 class RefreshCommand : public Command
