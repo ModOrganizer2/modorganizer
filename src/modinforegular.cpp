@@ -97,6 +97,7 @@ void ModInfoRegular::readMeta()
   m_InstallationFile = metaFile.value("installationFile", "").toString();
   m_NexusDescription = metaFile.value("nexusDescription", "").toString();
   m_NexusFileStatus  = metaFile.value("nexusFileStatus", "1").toInt();
+  m_NexusCategory    = metaFile.value("nexusCategory", 0).toInt();
   m_Repository       = metaFile.value("repository", "Nexus").toString();
   m_Converted        = metaFile.value("converted", false).toBool();
   m_Validated        = metaFile.value("validated", false).toBool();
@@ -171,10 +172,11 @@ void ModInfoRegular::readMeta()
   m_NexusLastModified = QDateTime::fromString(
       metaFile.value("nexusLastModified", QDateTime::currentDateTimeUtc()).toString(),
       Qt::ISODate);
-  m_Color        = metaFile.value("color", QColor()).value<QColor>();
-  m_TrackedState = metaFile.value("tracked", false).toBool()
-                       ? TrackedState::TRACKED_TRUE
-                       : TrackedState::TRACKED_FALSE;
+  m_NexusCategory = metaFile.value("nexusCategory", 0).toInt();
+  m_Color         = metaFile.value("color", QColor()).value<QColor>();
+  m_TrackedState  = metaFile.value("tracked", false).toBool()
+                        ? TrackedState::TRACKED_TRUE
+                        : TrackedState::TRACKED_FALSE;
   if (metaFile.contains("endorsed")) {
     if (metaFile.value("endorsed").canConvert<int>()) {
       using ut = std::underlying_type_t<EndorsedState>;
@@ -266,6 +268,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
       metaFile.setValue("lastNexusUpdate", m_LastNexusUpdate.toString(Qt::ISODate));
       metaFile.setValue("nexusLastModified", m_NexusLastModified.toString(Qt::ISODate));
+      metaFile.setValue("nexusCategory", m_NexusCategory);
       metaFile.setValue("converted", m_Converted);
       metaFile.setValue("validated", m_Validated);
       metaFile.setValue("color", m_Color);
@@ -831,6 +834,18 @@ void ModInfoRegular::setNexusLastModified(QDateTime time)
   m_MetaInfoChanged   = true;
   saveMeta();
   emit modDetailsUpdated(true);
+}
+
+int ModInfoRegular::getNexusCategory() const
+{
+  return m_NexusCategory;
+}
+
+void ModInfoRegular::setNexusCategory(int category)
+{
+  m_NexusCategory   = category;
+  m_MetaInfoChanged = true;
+  saveMeta();
 }
 
 void ModInfoRegular::setCustomURL(QString const& url)

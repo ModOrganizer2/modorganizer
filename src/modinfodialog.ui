@@ -966,7 +966,7 @@ text-align: left;</string>
            <number>0</number>
           </property>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0,0,0,0,1">
+           <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0,0,0,0,0,0,1">
             <item>
              <widget class="QLabel" name="label_3">
               <property name="text">
@@ -1023,6 +1023,29 @@ p, li { white-space: pre-wrap; }
              <widget class="QLineEdit" name="version">
               <property name="maxLength">
                <number>32</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="categoryLabel">
+              <property name="text">
+               <string>Category</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="category">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>1</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="baseSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
               </property>
              </widget>
             </item>

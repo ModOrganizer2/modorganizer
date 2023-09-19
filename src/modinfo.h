@@ -887,6 +887,16 @@ public:  // Nexus stuff
    * @brief Set the last time the mod was updated on Nexus.
    */
   virtual void setNexusLastModified(QDateTime time) = 0;
+  
+  /**
+   * @return the assigned nexus category ID
+   */
+  virtual int getNexusCategory() const = 0;
+
+  /**
+   * @brief Assigns the given Nexus category ID
+   */
+  virtual void setNexusCategory(int category) = 0;
 
 public:  // Conflicts
   // retrieve the list of mods (as mod index) that are overwritten by this one.

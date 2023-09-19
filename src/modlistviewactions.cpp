@@ -265,18 +265,20 @@ void ModListViewActions::assignCategories() const
   for (auto mod : m_core.modList()->allMods()) {
     ModInfo::Ptr modInfo = ModInfo::getByName(mod);
     QString file         = modInfo->installationFile();
-    auto download        = m_core.downloadManager()->getDownloadIndex(file);
-    if (download >= 0) {
-      int nexusCategory = m_core.downloadManager()->getCategoryID(download);
-      int newCategory   = CategoryFactory::instance()->resolveNexusID(nexusCategory);
-      if (newCategory != 0) {
-        for (auto category : modInfo->categories()) {
-          modInfo->removeCategory(category);
-        }
+    int nexusCategory    = modInfo->getNexusCategory();
+    if (!nexusCategory) {
+      auto download = m_core.downloadManager()->getDownloadIndex(file);
+      if (download >= 0) {
+        int nexusCategory = m_core.downloadManager()->getCategoryID(download);
       }
-      modInfo->setCategory(CategoryFactory::instance()->getCategoryID(newCategory),
-                           true);
     }
+    int newCategory = CategoryFactory::instance()->resolveNexusID(nexusCategory);
+    if (newCategory != 0) {
+      for (auto category : modInfo->categories()) {
+        modInfo->removeCategory(category);
+      }
+    }
+    modInfo->setCategory(CategoryFactory::instance()->getCategoryID(newCategory), true);
   }
 }
 
@@ -1108,16 +1110,20 @@ void ModListViewActions::remapCategory(const QModelIndexList& indices) const
   for (auto& idx : indices) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
 
-    int downloadIndex =
-        m_core.downloadManager()->getDownloadIndex(modInfo->installationFile());
-    if (downloadIndex >= 0) {
-      auto downloadInfo = m_core.downloadManager()->getFileInfo(downloadIndex);
-      unsigned int categoryIndex =
-          CategoryFactory::instance()->resolveNexusID(downloadInfo->categoryID);
-      if (categoryIndex != 0)
-        modInfo->setPrimaryCategory(
-            CategoryFactory::instance()->getCategoryID(categoryIndex));
+    int categoryID = modInfo->getNexusCategory();
+    if (!categoryID) {
+      int downloadIndex =
+          m_core.downloadManager()->getDownloadIndex(modInfo->installationFile());
+      if (downloadIndex >= 0) {
+        auto downloadInfo = m_core.downloadManager()->getFileInfo(downloadIndex);
+        categoryID        = downloadInfo->categoryID;
+      }
     }
+    unsigned int categoryIndex =
+        CategoryFactory::instance()->resolveNexusID(categoryID);
+    if (categoryIndex != 0)
+      modInfo->setPrimaryCategory(
+          CategoryFactory::instance()->getCategoryID(categoryIndex));
   }
 }
 

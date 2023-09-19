@@ -4476,6 +4476,8 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
 
     mod->setNexusDescription(result["description"].toString());
 
+    mod->setNexusCategory(result["category_id"].toInt());
+
     if ((mod->endorsedState() != EndorsedState::ENDORSED_NEVER) &&
         (result.contains("endorsement"))) {
       QVariantMap endorsement   = result["endorsement"].toMap();

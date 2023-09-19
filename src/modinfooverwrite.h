@@ -68,6 +68,8 @@ public:
   virtual QDateTime getNexusLastModified() const override { return QDateTime(); }
   virtual void setNexusLastModified(QDateTime) override {}
   virtual QString getNexusDescription() const override { return QString(); }
+  virtual void setNexusCategory(int) override {}
+  virtual int getNexusCategory() const override { return 0; }
   virtual QStringList archives(bool checkOnDisk = false) override;
   virtual void addInstalledFile(int, int) override {}
   virtual std::set<std::pair<int, int>> installedFiles() const override { return {}; }
