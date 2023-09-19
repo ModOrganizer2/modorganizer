@@ -887,7 +887,7 @@ public:  // Nexus stuff
    * @brief Set the last time the mod was updated on Nexus.
    */
   virtual void setNexusLastModified(QDateTime time) = 0;
-  
+
   /**
    * @return the assigned nexus category ID
    */
