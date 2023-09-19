@@ -234,65 +234,75 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categoriesdialog.ui" line="99"/>
+        <location filename="categoriesdialog.ui" line="102"/>
         <source>ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categoriesdialog.ui" line="102"/>
+        <location filename="categoriesdialog.ui" line="105"/>
         <source>Internal ID for the category.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categoriesdialog.ui" line="105"/>
+        <location filename="categoriesdialog.ui" line="108"/>
         <source>Internal ID for the category. The categories a mod belongs to are stored by this ID. It is recommended you use new IDs for categories you add instead of re-using existing ones.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categoriesdialog.ui" line="110"/>
+        <location filename="categoriesdialog.ui" line="113"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categoriesdialog.ui" line="113"/>
         <location filename="categoriesdialog.ui" line="116"/>
-        <source>Name of the Categorie used for display.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="categoriesdialog.ui" line="121"/>
-        <source>Parent ID</source>
+        <location filename="categoriesdialog.ui" line="119"/>
+        <source>The display name of the category.</source>
+        <oldsource>Name of the Categorie used for display.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="124"/>
+        <source>Parent ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="categoriesdialog.ui" line="127"/>
         <source>If set, the category is defined as a sub-category of another one. Parent ID needs to be a valid category ID.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categoriesdialog.ui" line="129"/>
-        <location filename="categoriesdialog.ui" line="155"/>
+        <location filename="categoriesdialog.ui" line="132"/>
+        <location filename="categoriesdialog.ui" line="160"/>
         <source>Nexus Categories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categoriesdialog.ui" line="132"/>
+        <location filename="categoriesdialog.ui" line="135"/>
         <source>Comma-Separated list of Nexus IDs to be matched to the internal ID.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categoriesdialog.ui" line="135"/>
-        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+        <location filename="categoriesdialog.ui" line="138"/>
+        <source>
+                &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+                &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+                p, li { white-space: pre-wrap; }
+                &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;You can match one or multiple nexus categories to a internal ID. Whenever you download a mod from a Nexus Page, Mod Organizer will try to resolve the category defined on the Nexus to one available in MO.&lt;/span&gt;&lt;/p&gt;
+                &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
+                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To find out a category id used by the nexus, visit the categories list of the nexus page and hover over the links there.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+              </source>
+        <oldsource>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;You can match one or multiple nexus categories to a internal ID. Whenever you download a mod from a Nexus Page, Mod Organizer will try to resolve the category defined on the Nexus to one available in MO.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To find out a category id used by the nexus, visit the categories list of the nexus page and hover over the links there.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To find out a category id used by the nexus, visit the categories list of the nexus page and hover over the links there.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categoriesdialog.ui" line="149"/>
+        <location filename="categoriesdialog.ui" line="154"/>
         <source>Drag &amp; drop nexus categories from this pane onto the target category on the left.</source>
         <translation type="unfinished"></translation>
     </message>
