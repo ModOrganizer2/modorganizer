@@ -34,7 +34,6 @@
         <property name="font">
          <font>
           <pointsize>14</pointsize>
-          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -294,7 +293,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>455</width>
-                  <height>286</height>
+                  <height>275</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_26">
@@ -430,7 +429,7 @@
                <x>0</x>
                <y>0</y>
                <width>455</width>
-               <height>278</height>
+               <height>265</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_17">
@@ -530,6 +529,90 @@
           </item>
           <item>
            <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="page">
+      <layout class="QVBoxLayout" name="verticalLayout_31">
+       <item>
+        <widget class="QWidget" name="widget_24" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout_8">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="profileSettingsLabel">
+            <property name="text">
+             <string>&lt;h3&gt;Configure your profile settings.&lt;/h3&gt;</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="widget_25" native="true">
+         <layout class="QVBoxLayout" name="verticalLayout_28">
+          <item>
+           <widget class="QCheckBox" name="profileInisCheckbox">
+            <property name="toolTip">
+             <string extracomment="Enabling this will copy your game's INI files into each profile, which will override the default INI settings"/>
+            </property>
+            <property name="text">
+             <string>Use profile-specific game INI files</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="profileSavesCheckbox">
+            <property name="toolTip">
+             <string extracomment="Enabling this will redirect the game's save files into your active profile, allowing you to separate your saves between profiles"/>
+            </property>
+            <property name="text">
+             <string>Use profile-specific save games</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="archiveInvalidationCheckbox">
+            <property name="toolTip">
+             <string extracomment="Enabling this will allow MO2 to automatically run necessary INI edits or other steps to allow file overrides in the game."/>
+            </property>
+            <property name="text">
+             <string>Automatic archive invalidation</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_7">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
@@ -1242,7 +1325,6 @@
   <tabstop>showAllGames</tabstop>
   <tabstop>gamesFilter</tabstop>
   <tabstop>scrollArea_2</tabstop>
-  <tabstop>instanceName</tabstop>
   <tabstop>location</tabstop>
   <tabstop>browseLocation</tabstop>
   <tabstop>advancedPathOptions</tabstop>

@@ -143,6 +143,12 @@ CreateInstanceDialog::Paths Page::selectedPaths() const
   return {};
 }
 
+CreateInstanceDialog::ProfileSettings Page::profileSettings() const
+{
+  // no-op
+  return {};
+}
+
 IntroPage::IntroPage(CreateInstanceDialog& dlg)
     : Page(dlg), m_skip(GlobalSettings::hideCreateInstanceIntro())
 {
@@ -931,6 +937,22 @@ bool NamePage::checkName(QString parentDir, QString name)
   return okay;
 }
 
+ProfilePage::ProfilePage(CreateInstanceDialog& dlg) : Page(dlg) {}
+
+bool ProfilePage::ready() const
+{
+  return true;
+}
+
+CreateInstanceDialog::ProfileSettings ProfilePage::profileSettings() const
+{
+  CreateInstanceDialog::ProfileSettings profileSettings;
+  profileSettings.localInis           = ui->profileInisCheckbox->isChecked();
+  profileSettings.localSaves          = ui->profileSavesCheckbox->isChecked();
+  profileSettings.archiveInvalidation = ui->archiveInvalidationCheckbox->isChecked();
+  return profileSettings;
+}
+
 PathsPage::PathsPage(CreateInstanceDialog& dlg)
     : Page(dlg), m_lastType(CreateInstanceDialog::NoType), m_label(ui->pathsLabel),
       m_simpleExists(ui->locationExists), m_simpleInvalid(ui->locationInvalid),
@@ -1214,6 +1236,17 @@ QString ConfirmationPage::makeReview() const
   if (ci.type != CreateInstanceDialog::Portable) {
     lines.push_back(QObject::tr("Instance name: %1").arg(ci.instanceName));
   }
+
+  lines.push_back(QObject::tr("Profile settings:"));
+  lines.push_back(
+      QObject::tr("  Local INIs: %1")
+          .arg(ci.profileSettings.localInis ? QObject::tr("yes") : QObject::tr("no")));
+  lines.push_back(
+      QObject::tr("  Local Saves: %1")
+          .arg(ci.profileSettings.localSaves ? QObject::tr("yes") : QObject::tr("no")));
+  lines.push_back(QObject::tr("  Automatic Archive Invalidation: %1")
+                      .arg(ci.profileSettings.archiveInvalidation ? QObject::tr("yes")
+                                                                  : QObject::tr("no")));
 
   if (ci.paths.downloads.isEmpty()) {
     // simple settings
