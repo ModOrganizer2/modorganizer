@@ -233,6 +233,8 @@ void CategoryFactory::saveCategories()
     nexusMapFile.write(line);
   }
   nexusMapFile.close();
+
+  emit categoriesSaved();
 }
 
 unsigned int

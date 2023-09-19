@@ -214,6 +214,9 @@ public:
    */
   static QString nexusMappingFilePath();
 
+signals:
+  void categoriesSaved();
+
 private:
   explicit CategoryFactory();
 

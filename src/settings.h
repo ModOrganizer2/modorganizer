@@ -514,6 +514,11 @@ public:
   bool trackedIntegration() const;
   void setTrackedIntegration(bool b) const;
 
+  // returns whether nexus category mappings are enabled
+  //
+  bool categoryMappings() const;
+  void setCategoryMappings(bool b) const;
+
   // registers MO as the handler for nxm links
   //
   // if 'force' is true, the registration dialog will be shown even if the user

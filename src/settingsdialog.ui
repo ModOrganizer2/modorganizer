@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>4</number>
      </property>
      <widget class="QWidget" name="generalTab">
       <attribute name="title">
@@ -1052,8 +1052,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>778</width>
-            <height>497</height>
+            <width>761</width>
+            <height>515</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -1334,6 +1334,16 @@ If you disable this feature, MO will only display official DLCs this way. Please
                   <widget class="QCheckBox" name="trackedBox">
                    <property name="text">
                     <string>Tracked Integration</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="categoryMappingsBox">
+                   <property name="text">
+                    <string>Use Nexus category mappings</string>
                    </property>
                    <property name="checked">
                     <bool>true</bool>
@@ -1732,8 +1742,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>778</width>
-            <height>475</height>
+            <width>390</width>
+            <height>342</height>
            </rect>
           </property>
           <property name="autoFillBackground">

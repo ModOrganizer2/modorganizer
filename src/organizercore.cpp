@@ -1,4 +1,5 @@
 #include "organizercore.h"
+#include "categoriesdialog.h"
 #include "credentialsdialog.h"
 #include "delayedfilewriter.h"
 #include "directoryrefresher.h"
@@ -759,8 +760,9 @@ OrganizerCore::doInstall(const QString& archivePath, GuessedValue<QString> modNa
     // this prevents issue with third-party plugins, e.g., if the installed mod is
     // activated before the structure is ready
     //
-    // we need to fetch modIndex() within the call back because the index is only valid
-    // after the call to refresh(), but we do not want to connect after refresh()
+    // we need to fetch modIndex() within the call back because the index is only
+    // valid after the call to refresh(), but we do not want to connect after
+    // refresh()
     //
     connect(
         this, &OrganizerCore::directoryStructureReady, this,
@@ -801,16 +803,26 @@ OrganizerCore::doInstall(const QString& archivePath, GuessedValue<QString> modNa
     emit modInstalled(modName);
     return {modIndex, modInfo};
   } else {
-    m_InstallationManager.notifyInstallationEnd(result, nullptr);
-    if (m_InstallationManager.wasCancelled()) {
-      QMessageBox::information(
-          qApp->activeWindow(), tr("Extraction cancelled"),
-          tr("The installation was cancelled while extracting files. "
-             "If this was prior to a FOMOD setup, this warning may be ignored. "
-             "However, if this was during installation, the mod will likely be missing "
-             "files."),
-          QMessageBox::Ok);
-      refresh();
+    if (result.result() == MOBase::IPluginInstaller::RESULT_CATEGORYREQUESTED) {
+      CategoriesDialog dialog(&pluginContainer(), qApp->activeWindow());
+
+      if (dialog.exec() == QDialog::Accepted) {
+        dialog.commitChanges();
+        refresh();
+      }
+    } else {
+      m_InstallationManager.notifyInstallationEnd(result, nullptr);
+      if (m_InstallationManager.wasCancelled()) {
+        QMessageBox::information(
+            qApp->activeWindow(), tr("Extraction cancelled"),
+            tr("The installation was cancelled while extracting files. "
+               "If this was prior to a FOMOD setup, this warning may be ignored. "
+               "However, if this was during installation, the mod will likely be "
+               "missing "
+               "files."),
+            QMessageBox::Ok);
+        refresh();
+      }
     }
   }
 

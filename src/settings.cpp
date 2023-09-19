@@ -1936,6 +1936,16 @@ void NexusSettings::setTrackedIntegration(bool b) const
   set(m_Settings, "Settings", "tracked_integration", b);
 }
 
+bool NexusSettings::categoryMappings() const
+{
+  return get<bool>(m_Settings, "Settings", "category_mappings", true);
+}
+
+void NexusSettings::setCategoryMappings(bool b) const
+{
+  set(m_Settings, "Settings", "category_mappings", b);
+}
+
 void NexusSettings::registerAsNXMHandler(bool force)
 {
   const auto nxmPath = QCoreApplication::applicationDirPath() + "/" +

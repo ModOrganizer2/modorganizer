@@ -645,6 +645,7 @@ InstallationResult InstallationManager::install(const QString& fileName,
   QString gameName      = "";
   QString version       = "";
   QString newestVersion = "";
+  int category          = 0;
   int categoryID        = 0;
   int fileCategoryID    = 1;
   QString repository    = "Nexus";
@@ -659,12 +660,33 @@ InstallationResult InstallationManager::install(const QString& fileName,
     modName.update(doc.toPlainText(), GUESS_FALLBACK);
     modName.update(metaFile.value("modName", "").toString(), GUESS_META);
 
-    version = metaFile.value("version", "").toString();
-    newestVersion = metaFile.value("newestVersion", "").toString();
-    unsigned int categoryIndex = CategoryFactory::instance()->resolveNexusID(
-        metaFile.value("category", 0).toInt());
-    categoryID = CategoryFactory::instance()->getCategoryID(categoryIndex);
-    repository = metaFile.value("repository", "").toString();
+    version                    = metaFile.value("version", "").toString();
+    newestVersion              = metaFile.value("newestVersion", "").toString();
+    category                   = metaFile.value("category", 0).toInt();
+    unsigned int categoryIndex = CategoryFactory::instance()->resolveNexusID(category);
+    if (category != 0 && categoryIndex == 0U &&
+        Settings::instance().nexus().categoryMappings()) {
+      QMessageBox nexusQuery;
+      nexusQuery.setText(tr(
+          "This Nexus category has not yet been mapped. Do you wish to proceed without "
+          "setting a category, proceed and disable automatic Nexus mappings, or stop "
+          "and configure your category mappings?"));
+      nexusQuery.addButton(tr("&Proceed"), QMessageBox::YesRole);
+      nexusQuery.addButton(tr("&Disable"), QMessageBox::AcceptRole);
+      nexusQuery.addButton(tr("&Stop && Configure"), QMessageBox::DestructiveRole);
+      auto ret = nexusQuery.exec();
+      switch (ret) {
+      case 1:
+        Settings::instance().nexus().setCategoryMappings(false);
+      case 0:
+        break;
+      case 2:
+        return MOBase::IPluginInstaller::RESULT_CATEGORYREQUESTED;
+      }
+    } else {
+      categoryID = CategoryFactory::instance()->getCategoryID(categoryIndex);
+    }
+    repository     = metaFile.value("repository", "").toString();
     fileCategoryID = metaFile.value("fileCategory", 1).toInt();
   }
 

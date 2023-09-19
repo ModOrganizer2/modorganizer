@@ -372,6 +372,8 @@ private slots:
 
   void importCategories(bool);
 
+  void categoriesSaved();
+
   // update info
   void nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVariant resultData,
                               int requestID);

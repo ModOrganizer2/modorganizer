@@ -19,11 +19,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "categoriesdialog.h"
 #include "categories.h"
+#include "messagedialog.h"
+#include "nexusinterface.h"
 #include "settings.h"
 #include "ui_categoriesdialog.h"
 #include "utility.h"
-#include "nexusinterface.h"
-#include "messagedialog.h"
 #include <QItemDelegate>
 #include <QLineEdit>
 #include <QMenu>
@@ -105,14 +105,21 @@ private:
 };
 
 CategoriesDialog::CategoriesDialog(PluginContainer* pluginContainer, QWidget* parent)
-  : TutorableDialog("Categories", parent), ui(new Ui::CategoriesDialog), m_PluginContainer(pluginContainer)
+    : TutorableDialog("Categories", parent), ui(new Ui::CategoriesDialog),
+      m_PluginContainer(pluginContainer)
 {
   ui->setupUi(this);
   fillTable();
   connect(ui->categoriesTable, SIGNAL(cellChanged(int, int)), this,
-          SLOT(cellChanged(int,int)));
-  connect(ui->nexusRefresh, SIGNAL(clicked()), this, SLOT(nexusRefresh_clicked()));
-  connect(ui->nexusImportButton, SIGNAL(clicked()), this, SLOT(nexusImport_clicked()));
+          SLOT(cellChanged(int, int)));
+  if (Settings::instance().nexus().categoryMappings()) {
+    connect(ui->nexusRefresh, SIGNAL(clicked()), this, SLOT(nexusRefresh_clicked()));
+    connect(ui->nexusImportButton, SIGNAL(clicked()), this,
+            SLOT(nexusImport_clicked()));
+    ui->nexusCategoryList->setDisabled(false);
+  } else {
+    ui->nexusCategoryList->setDisabled(true);
+  }
 }
 
 CategoriesDialog::~CategoriesDialog()
@@ -141,29 +148,26 @@ void CategoriesDialog::commitChanges()
 
   for (int i = 0; i < ui->categoriesTable->rowCount(); ++i) {
     int index = ui->categoriesTable->verticalHeader()->logicalIndex(i);
-    QVariantList nexusData = ui->categoriesTable->item(index, 3)->data(Qt::UserRole).toList();
+    QVariantList nexusData =
+        ui->categoriesTable->item(index, 3)->data(Qt::UserRole).toList();
     std::vector<CategoryFactory::NexusCategory> nexusCats;
     for (auto nexusCat : nexusData) {
-      nexusCats.push_back(CategoryFactory::NexusCategory(nexusCat.toList()[0].toString(), nexusCat.toList()[1].toInt()));
+      nexusCats.push_back(CategoryFactory::NexusCategory(
+          nexusCat.toList()[0].toString(), nexusCat.toList()[1].toInt()));
     }
 
-    categories->addCategory(
-          ui->categoriesTable->item(index, 0)->text().toInt(),
-          ui->categoriesTable->item(index, 1)->text(),
-          nexusCats,
-          ui->categoriesTable->item(index, 2)->text().toInt());
+    categories->addCategory(ui->categoriesTable->item(index, 0)->text().toInt(),
+                            ui->categoriesTable->item(index, 1)->text(), nexusCats,
+                            ui->categoriesTable->item(index, 2)->text().toInt());
   }
 
   categories->setParents();
 
   std::vector<CategoryFactory::NexusCategory> nexusCats;
   for (int i = 0; i < ui->nexusCategoryList->count(); ++i) {
-      nexusCats.push_back(
-        CategoryFactory::NexusCategory(
-          ui->nexusCategoryList->item(i)->data(Qt::DisplayRole).toString(),
-          ui->nexusCategoryList->item(i)->data(Qt::UserRole).toInt()
-        )
-      );
+    nexusCats.push_back(CategoryFactory::NexusCategory(
+        ui->nexusCategoryList->item(i)->data(Qt::DisplayRole).toString(),
+        ui->nexusCategoryList->item(i)->data(Qt::UserRole).toInt()));
   }
 
   categories->setNexusCategories(nexusCats);
@@ -186,8 +190,8 @@ void CategoriesDialog::refreshIDs()
 void CategoriesDialog::fillTable()
 {
   CategoryFactory* categories = CategoryFactory::instance();
-  QTableWidget* table = ui->categoriesTable;
-  QListWidget* list = ui->nexusCategoryList;
+  QTableWidget* table         = ui->categoriesTable;
+  QListWidget* list           = ui->nexusCategoryList;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
   table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
@@ -196,12 +200,18 @@ void CategoriesDialog::fillTable()
   table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
   table->verticalHeader()->setSectionsMovable(true);
   table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-  table->setItemDelegateForColumn(0, new ValidatingDelegate(this, new NewIDValidator(m_IDs)));
-  table->setItemDelegateForColumn(2, new ValidatingDelegate(this, new ExistingIDValidator(m_IDs)));
-  table->setItemDelegateForColumn(3, new ValidatingDelegate(this, new QRegExpValidator(QRegExp("([0-9]+)?(,[0-9]+)*"), this)));
+  table->setItemDelegateForColumn(
+      0, new ValidatingDelegate(this, new NewIDValidator(m_IDs)));
+  table->setItemDelegateForColumn(
+      2, new ValidatingDelegate(this, new ExistingIDValidator(m_IDs)));
+  table->setItemDelegateForColumn(
+      3, new ValidatingDelegate(this,
+                                new QRegularExpressionValidator(
+                                    QRegularExpression("([0-9]+)?(,[0-9]+)*"), this)));
 
   int row = 0;
-  for (std::vector<CategoryFactory::Category>::const_iterator iter = categories->m_Categories.begin();
+  for (std::vector<CategoryFactory::Category>::const_iterator iter =
+           categories->m_Categories.begin();
        iter != categories->m_Categories.end(); ++iter, ++row) {
     const CategoryFactory::Category& category = *iter;
     if (category.m_ID == 0) {
@@ -225,13 +235,12 @@ void CategoriesDialog::fillTable()
     table->setItem(row, 3, nexusCatItem.take());
   }
 
-  for (auto nexusCat : categories->m_NexusMap)
-  {
+  for (auto nexusCat : categories->m_NexusMap) {
     QScopedPointer<QListWidgetItem> nexusItem(new QListWidgetItem());
     nexusItem->setData(Qt::DisplayRole, nexusCat.second.m_Name);
     nexusItem->setData(Qt::UserRole, nexusCat.second.m_ID);
     list->addItem(nexusItem.take());
-    auto item = table->item(categories->resolveNexusID(nexusCat.first)-1, 3);
+    auto item = table->item(categories->resolveNexusID(nexusCat.first) - 1, 3);
     if (item != nullptr) {
       auto itemData = item->data(Qt::UserRole).toList();
       QVariantList newData;
@@ -267,22 +276,29 @@ void CategoriesDialog::removeCategory_clicked()
   ui->categoriesTable->removeRow(m_ContextRow);
 }
 
+void CategoriesDialog::removeNexusMap_clicked()
+{
+  ui->categoriesTable->item(m_ContextRow, 3)->setData(Qt::UserRole, QVariantList());
+  ui->categoriesTable->item(m_ContextRow, 3)->setData(Qt::DisplayRole, QString());
+  // ui->categoriesTable->update();
+}
 
 void CategoriesDialog::nexusRefresh_clicked()
 {
-  NexusInterface &nexus = NexusInterface::instance();
+  NexusInterface& nexus = NexusInterface::instance();
   nexus.setPluginContainer(m_PluginContainer);
-  nexus.requestGameInfo(Settings::instance().game().plugin()->gameShortName(), this, QVariant(), QString());
+  nexus.requestGameInfo(Settings::instance().game().plugin()->gameShortName(), this,
+                        QVariant(), QString());
 }
-
 
 void CategoriesDialog::nexusImport_clicked()
 {
   if (QMessageBox::question(nullptr, tr("Import Nexus Categories?"),
-    tr("This will overwrite your existing categories with the loaded Nexus categories."),
-    QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+                            tr("This will overwrite your existing categories with the "
+                               "loaded Nexus categories."),
+                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     QTableWidget* table = ui->categoriesTable;
-    QListWidget* list = ui->nexusCategoryList;
+    QListWidget* list   = ui->nexusCategoryList;
 
     table->setRowCount(0);
     refreshIDs();
@@ -295,7 +311,8 @@ void CategoriesDialog::nexusImport_clicked()
       QScopedPointer<QTableWidgetItem> idItem(new QTableWidgetItem());
       idItem->setData(Qt::DisplayRole, ++m_HighestID);
 
-      QScopedPointer<QTableWidgetItem> nameItem(new QTableWidgetItem(list->item(i)->data(Qt::DisplayRole).toString()));
+      QScopedPointer<QTableWidgetItem> nameItem(
+          new QTableWidgetItem(list->item(i)->data(Qt::DisplayRole).toString()));
       QStringList nexusLabel;
       QVariantList nexusData;
       nexusLabel.append(list->item(i)->data(Qt::DisplayRole).toString());
@@ -303,7 +320,8 @@ void CategoriesDialog::nexusImport_clicked()
       data.append(QVariant(list->item(i)->data(Qt::DisplayRole).toString()));
       data.append(QVariant(list->item(i)->data(Qt::UserRole).toInt()));
       nexusData.insert(nexusData.size(), data);
-      QScopedPointer<QTableWidgetItem> nexusCatItem(new QTableWidgetItem(nexusLabel.join(", ")));
+      QScopedPointer<QTableWidgetItem> nexusCatItem(
+          new QTableWidgetItem(nexusLabel.join(", ")));
       nexusCatItem->setData(Qt::UserRole, nexusData);
       QScopedPointer<QTableWidgetItem> parentIDItem(new QTableWidgetItem());
       parentIDItem->setData(Qt::DisplayRole, 0);
@@ -317,13 +335,13 @@ void CategoriesDialog::nexusImport_clicked()
   }
 }
 
-
-void CategoriesDialog::nxmGameInfoAvailable(QString gameName, QVariant, QVariant resultData, int)
+void CategoriesDialog::nxmGameInfoAvailable(QString gameName, QVariant,
+                                            QVariant resultData, int)
 {
-  QVariantMap result = resultData.toMap();
-  QVariantList categories = result["categories"].toList();
-  CategoryFactory *catFactory = CategoryFactory::instance();
-  QListWidget* list = ui->nexusCategoryList;
+  QVariantMap result          = resultData.toMap();
+  QVariantList categories     = result["categories"].toList();
+  CategoryFactory* catFactory = CategoryFactory::instance();
+  QListWidget* list           = ui->nexusCategoryList;
   list->clear();
   for (auto category : categories) {
     auto catMap = category.toMap();
@@ -334,12 +352,13 @@ void CategoriesDialog::nxmGameInfoAvailable(QString gameName, QVariant, QVariant
   }
 }
 
-
-void CategoriesDialog::nxmRequestFailed(QString, int, int, QVariant, int, int errorCode, const QString& errorMessage)
+void CategoriesDialog::nxmRequestFailed(QString, int, int, QVariant, int, int errorCode,
+                                        const QString& errorMessage)
 {
-  MessageDialog::showMessage(tr("Error %1: Request to Nexus failed: %2").arg(errorCode).arg(errorMessage), this);
+  MessageDialog::showMessage(
+      tr("Error %1: Request to Nexus failed: %2").arg(errorCode).arg(errorMessage),
+      this);
 }
-
 
 void CategoriesDialog::on_categoriesTable_customContextMenuRequested(const QPoint& pos)
 {
@@ -347,6 +366,9 @@ void CategoriesDialog::on_categoriesTable_customContextMenuRequested(const QPoin
   QMenu menu;
   menu.addAction(tr("Add"), this, SLOT(addCategory_clicked()));
   menu.addAction(tr("Remove"), this, SLOT(removeCategory_clicked()));
+  if (Settings::instance().nexus().categoryMappings()) {
+    menu.addAction(tr("Remove Nexus Mapping(s)"), this, SLOT(removeNexusMap_clicked()));
+  }
 
   menu.exec(ui->categoriesTable->mapToGlobal(pos));
 }

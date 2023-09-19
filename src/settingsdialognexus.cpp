@@ -294,6 +294,7 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d) : SettingsTab
 {
   ui->endorsementBox->setChecked(settings().nexus().endorsementIntegration());
   ui->trackedBox->setChecked(settings().nexus().trackedIntegration());
+  ui->categoryMappingsBox->setChecked(settings().nexus().categoryMappings());
   ui->hideAPICounterBox->setChecked(settings().interface().hideAPICounter());
 
   // display server preferences
@@ -359,6 +360,7 @@ void NexusSettingsTab::update()
 {
   settings().nexus().setEndorsementIntegration(ui->endorsementBox->isChecked());
   settings().nexus().setTrackedIntegration(ui->trackedBox->isChecked());
+  settings().nexus().setCategoryMappings(ui->categoryMappingsBox->isChecked());
   settings().interface().setHideAPICounter(ui->hideAPICounterBox->isChecked());
 
   auto servers = settings().network().servers();
