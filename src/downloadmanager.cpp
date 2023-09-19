@@ -1323,10 +1323,12 @@ QString DownloadManager::getFileName(int index) const
 
 int DownloadManager::getDownloadIndex(QString filename) const
 {
-  auto file = std::find_if(m_ActiveDownloads.begin(), m_ActiveDownloads.end(), [=](DownloadManager::DownloadInfo *const val) {
-      if (val->m_FileName == filename) return true;
-      return false;
-    });
+  auto file = std::find_if(m_ActiveDownloads.begin(), m_ActiveDownloads.end(),
+                           [=](DownloadManager::DownloadInfo* const val) {
+                             if (val->m_FileName == filename)
+                               return true;
+                             return false;
+                           });
   if (file != m_ActiveDownloads.end()) {
     int fileIndex = m_ActiveDownloads.indexOf(*file);
     return fileIndex;

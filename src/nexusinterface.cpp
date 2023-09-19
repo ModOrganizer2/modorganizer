@@ -93,7 +93,8 @@ void NexusBridge::requestToggleTracking(QString gameName, int modID, bool track,
 
 void NexusBridge::requestGameInfo(QString gameName, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestGameInfo(gameName, this, userData, m_SubModule));
+  m_RequestIDs.insert(
+      m_Interface->requestGameInfo(gameName, this, userData, m_SubModule));
 }
 
 void NexusBridge::nxmDescriptionAvailable(QString gameName, int modID,
@@ -199,7 +200,8 @@ void NexusBridge::nxmTrackingToggled(QString gameName, int modID, QVariant userD
   }
 }
 
-void NexusBridge::nxmGameInfoAvailable(QString gameName, QVariant userData, QVariant resultData, int requestID)
+void NexusBridge::nxmGameInfoAvailable(QString gameName, QVariant userData,
+                                       QVariant resultData, int requestID)
 {
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
@@ -749,7 +751,9 @@ int NexusInterface::requestToggleTracking(QString gameName, int modID, bool trac
   return requestInfo.m_ID;
 }
 
-int NexusInterface::requestGameInfo(QString gameName, QObject* receiver, QVariant userData, const QString& subModule, MOBase::IPluginGame const* game)
+int NexusInterface::requestGameInfo(QString gameName, QObject* receiver,
+                                    QVariant userData, const QString& subModule,
+                                    MOBase::IPluginGame const* game)
 {
   if (m_User.shouldThrottle()) {
     throttledWarning(m_User);
@@ -760,10 +764,13 @@ int NexusInterface::requestGameInfo(QString gameName, QObject* receiver, QVarian
   m_RequestQueue.enqueue(requestInfo);
 
   connect(this, SIGNAL(nxmGameInfoAvailable(QString, QVariant, QVariant, int)),
-    receiver, SLOT(nxmGameInfoAvailable(QString, QVariant, QVariant, int)), Qt::UniqueConnection);
+          receiver, SLOT(nxmGameInfoAvailable(QString, QVariant, QVariant, int)),
+          Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
+  connect(
+      this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+      Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -868,72 +875,104 @@ void NexusInterface::nextRequest()
   if (!info.m_Reroute) {
     bool hasParams = false;
     switch (info.m_Type) {
-      case NXMRequestInfo::TYPE_DESCRIPTION:
-      case NXMRequestInfo::TYPE_MODINFO: {
-        url = QString("%1/games/%2/mods/%3")
+    case NXMRequestInfo::TYPE_DESCRIPTION:
+    case NXMRequestInfo::TYPE_MODINFO: {
+      url = QString("%1/games/%2/mods/%3")
+                .arg(info.m_URL)
+                .arg(info.m_GameName)
+                .arg(info.m_ModID);
+    } break;
+    case NXMRequestInfo::TYPE_CHECKUPDATES: {
+      QString period;
+      switch (info.m_UpdatePeriod) {
+      case UpdatePeriod::DAY:
+        period = "1d";
+        break;
+      case UpdatePeriod::WEEK:
+        period = "1w";
+        break;
+      case UpdatePeriod::MONTH:
+        period = "1m";
+        break;
+      }
+      url = QString("%1/games/%2/mods/updated?period=%3")
+                .arg(info.m_URL)
+                .arg(info.m_GameName)
+                .arg(period);
+    } break;
+    case NXMRequestInfo::TYPE_FILES:
+    case NXMRequestInfo::TYPE_GETUPDATES: {
+      url = QString("%1/games/%2/mods/%3/files")
+                .arg(info.m_URL)
+                .arg(info.m_GameName)
+                .arg(info.m_ModID);
+    } break;
+    case NXMRequestInfo::TYPE_FILEINFO: {
+      url = QString("%1/games/%2/mods/%3/files/%4")
+                .arg(info.m_URL)
+                .arg(info.m_GameName)
+                .arg(info.m_ModID)
+                .arg(info.m_FileID);
+    } break;
+    case NXMRequestInfo::TYPE_DOWNLOADURL: {
+      ModRepositoryFileInfo* fileInfo = qobject_cast<ModRepositoryFileInfo*>(
+          qvariant_cast<QObject*>(info.m_UserData));
+      if (m_User.type() == APIUserAccountTypes::Premium) {
+        url = QString("%1/games/%2/mods/%3/files/%4/download_link")
                   .arg(info.m_URL)
                   .arg(info.m_GameName)
-                  .arg(info.m_ModID);
-      } break;
-      case NXMRequestInfo::TYPE_CHECKUPDATES: {
-        QString period;
-        switch (info.m_UpdatePeriod) {
-        case UpdatePeriod::DAY:
-          period = "1d";
-          break;
-        case UpdatePeriod::WEEK:
-          period = "1w";
-          break;
-        case UpdatePeriod::MONTH:
-          period = "1m";
-          break;
-        }
-        url = QString("%1/games/%2/mods/updated?period=%3").arg(info.m_URL).arg(info.m_GameName).arg(period);
-      } break;
-      case NXMRequestInfo::TYPE_FILES:
-      case NXMRequestInfo::TYPE_GETUPDATES: {
-        url = QString("%1/games/%2/mods/%3/files").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID);
-      } break;
-      case NXMRequestInfo::TYPE_FILEINFO: {
-        url = QString("%1/games/%2/mods/%3/files/%4").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID);
-      } break;
-      case NXMRequestInfo::TYPE_DOWNLOADURL: {
-        ModRepositoryFileInfo *fileInfo = qobject_cast<ModRepositoryFileInfo*>(qvariant_cast<QObject*>(info.m_UserData));
-        if (m_User.type() == APIUserAccountTypes::Premium) {
-          url = QString("%1/games/%2/mods/%3/files/%4/download_link").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID);
-        } else if (!fileInfo->nexusKey.isEmpty() && fileInfo->nexusExpires && fileInfo->nexusDownloadUser == m_User.id().toInt()) {
-          url = QString("%1/games/%2/mods/%3/files/%4/download_link?key=%5&expires=%6")
-          .arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID).arg(fileInfo->nexusKey).arg(fileInfo->nexusExpires);
-        } else {
-          log::warn("{}", tr("Aborting download: Either you clicked on a premium-only link and your account is not premium, "
-            "or the download link was generated by a different account than the one stored in Mod Organizer."));
-          return;
-        }
-      } break;
-      case NXMRequestInfo::TYPE_ENDORSEMENTS: {
-        url = QString("%1/user/endorsements").arg(info.m_URL);
-      } break;
-      case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
-        QString endorse = info.m_Endorse ? "endorse" : "abstain";
-        url = QString("%1/games/%2/mods/%3/%4").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(endorse);
-        postObject.insert("Version", info.m_ModVersion);
-        postData.setObject(postObject);
-      } break;
-      case NXMRequestInfo::TYPE_TOGGLETRACKING: {
-        url = QStringLiteral("%1/user/tracked_mods?domain_name=%2").arg(info.m_URL).arg(info.m_GameName);
-        postObject.insert("mod_id", info.m_ModID);
-        postData.setObject(postObject);
-        requestIsDelete = !info.m_Track;
-      } break;
-      case NXMRequestInfo::TYPE_TRACKEDMODS: {
-        url = QStringLiteral("%1/user/tracked_mods").arg(info.m_URL);
-      } break;
-      case NXMRequestInfo::TYPE_FILEINFO_MD5: {
-        url = QStringLiteral("%1/games/%2/mods/md5_search/%3").arg(info.m_URL).arg(info.m_GameName).arg(QString(info.m_Hash.toHex()));
-      } break;
-      case NXMRequestInfo::TYPE_GAMEINFO: {
-        url = QStringLiteral("%1/games/%2").arg(info.m_URL).arg(info.m_GameName);
-      } break;
+                  .arg(info.m_ModID)
+                  .arg(info.m_FileID);
+      } else if (!fileInfo->nexusKey.isEmpty() && fileInfo->nexusExpires &&
+                 fileInfo->nexusDownloadUser == m_User.id().toInt()) {
+        url = QString("%1/games/%2/mods/%3/files/%4/download_link?key=%5&expires=%6")
+                  .arg(info.m_URL)
+                  .arg(info.m_GameName)
+                  .arg(info.m_ModID)
+                  .arg(info.m_FileID)
+                  .arg(fileInfo->nexusKey)
+                  .arg(fileInfo->nexusExpires);
+      } else {
+        log::warn("{}", tr("Aborting download: Either you clicked on a premium-only "
+                           "link and your account is not premium, "
+                           "or the download link was generated by a different account "
+                           "than the one stored in Mod Organizer."));
+        return;
+      }
+    } break;
+    case NXMRequestInfo::TYPE_ENDORSEMENTS: {
+      url = QString("%1/user/endorsements").arg(info.m_URL);
+    } break;
+    case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
+      QString endorse = info.m_Endorse ? "endorse" : "abstain";
+      url             = QString("%1/games/%2/mods/%3/%4")
+                .arg(info.m_URL)
+                .arg(info.m_GameName)
+                .arg(info.m_ModID)
+                .arg(endorse);
+      postObject.insert("Version", info.m_ModVersion);
+      postData.setObject(postObject);
+    } break;
+    case NXMRequestInfo::TYPE_TOGGLETRACKING: {
+      url = QStringLiteral("%1/user/tracked_mods?domain_name=%2")
+                .arg(info.m_URL)
+                .arg(info.m_GameName);
+      postObject.insert("mod_id", info.m_ModID);
+      postData.setObject(postObject);
+      requestIsDelete = !info.m_Track;
+    } break;
+    case NXMRequestInfo::TYPE_TRACKEDMODS: {
+      url = QStringLiteral("%1/user/tracked_mods").arg(info.m_URL);
+    } break;
+    case NXMRequestInfo::TYPE_FILEINFO_MD5: {
+      url = QStringLiteral("%1/games/%2/mods/md5_search/%3")
+                .arg(info.m_URL)
+                .arg(info.m_GameName)
+                .arg(QString(info.m_Hash.toHex()));
+    } break;
+    case NXMRequestInfo::TYPE_GAMEINFO: {
+      url = QStringLiteral("%1/games/%2").arg(info.m_URL).arg(info.m_GameName);
+    }
     }
   } else {
     url = info.m_URL;
@@ -1045,53 +1084,69 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       if (!responseDoc.isNull()) {
         QVariant result = responseDoc.toVariant();
         switch (iter->m_Type) {
-          case NXMRequestInfo::TYPE_DESCRIPTION: {
-            emit nxmDescriptionAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
-          } break;
-          case NXMRequestInfo::TYPE_MODINFO: {
-            emit nxmModInfoAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
-          } break;
-          case NXMRequestInfo::TYPE_CHECKUPDATES: {
-            emit nxmUpdateInfoAvailable(iter->m_GameName, iter->m_UserData, result, iter->m_ID);
-          } break;
-          case NXMRequestInfo::TYPE_FILES: {
-            emit nxmFilesAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
-          } break;
-          case NXMRequestInfo::TYPE_GETUPDATES: {
-            emit nxmUpdatesAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
-          } break;
-          case NXMRequestInfo::TYPE_FILEINFO: {
-            emit nxmFileInfoAvailable(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, result, iter->m_ID);
-          } break;
-          case NXMRequestInfo::TYPE_DOWNLOADURL: {
-            emit nxmDownloadURLsAvailable(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, result, iter->m_ID);
-          } break;
-          case NXMRequestInfo::TYPE_ENDORSEMENTS: {
-            emit nxmEndorsementsAvailable(iter->m_UserData, result, iter->m_ID);
-          } break;
-          case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
-            emit nxmEndorsementToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
-          } break;
-          case NXMRequestInfo::TYPE_TOGGLETRACKING: {
-            auto results = result.toMap();
-            auto message = results["message"].toString();
-            if (message.contains(QRegularExpression("User [0-9]+ is already Tracking Mod: [0-9]+")) ||
-                message.contains(QRegularExpression("User [0-9]+ is now Tracking Mod: [0-9]+"))) {
-              emit nxmTrackingToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData, true, iter->m_ID);
-            } else if (message.contains(QRegularExpression("User [0-9]+ is no longer tracking [0-9]+")) ||
-                       message.contains(QRegularExpression("Users is not tracking mod. Unable to untrack."))) {
-              emit nxmTrackingToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData, false, iter->m_ID);
-            }
-          } break;
-          case NXMRequestInfo::TYPE_TRACKEDMODS: {
-            emit nxmTrackedModsAvailable(iter->m_UserData, result, iter->m_ID);
-          } break;
-          case NXMRequestInfo::TYPE_FILEINFO_MD5: {
-            emit nxmFileInfoFromMd5Available(iter->m_GameName, iter->m_UserData, result, iter->m_ID);
-          } break;
-          case NXMRequestInfo::TYPE_GAMEINFO: {
-            emit nxmGameInfoAvailable(iter->m_GameName, iter->m_UserData, result, iter->m_ID);
-          } break;
+        case NXMRequestInfo::TYPE_DESCRIPTION: {
+          emit nxmDescriptionAvailable(iter->m_GameName, iter->m_ModID,
+                                       iter->m_UserData, result, iter->m_ID);
+        } break;
+        case NXMRequestInfo::TYPE_MODINFO: {
+          emit nxmModInfoAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData,
+                                   result, iter->m_ID);
+        } break;
+        case NXMRequestInfo::TYPE_CHECKUPDATES: {
+          emit nxmUpdateInfoAvailable(iter->m_GameName, iter->m_UserData, result,
+                                      iter->m_ID);
+        } break;
+        case NXMRequestInfo::TYPE_FILES: {
+          emit nxmFilesAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData,
+                                 result, iter->m_ID);
+        } break;
+        case NXMRequestInfo::TYPE_GETUPDATES: {
+          emit nxmUpdatesAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData,
+                                   result, iter->m_ID);
+        } break;
+        case NXMRequestInfo::TYPE_FILEINFO: {
+          emit nxmFileInfoAvailable(iter->m_GameName, iter->m_ModID, iter->m_FileID,
+                                    iter->m_UserData, result, iter->m_ID);
+        } break;
+        case NXMRequestInfo::TYPE_DOWNLOADURL: {
+          emit nxmDownloadURLsAvailable(iter->m_GameName, iter->m_ModID, iter->m_FileID,
+                                        iter->m_UserData, result, iter->m_ID);
+        } break;
+        case NXMRequestInfo::TYPE_ENDORSEMENTS: {
+          emit nxmEndorsementsAvailable(iter->m_UserData, result, iter->m_ID);
+        } break;
+        case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
+          emit nxmEndorsementToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData,
+                                     result, iter->m_ID);
+        } break;
+        case NXMRequestInfo::TYPE_TOGGLETRACKING: {
+          auto results = result.toMap();
+          auto message = results["message"].toString();
+          if (message.contains(
+                  QRegularExpression("User [0-9]+ is already Tracking Mod: [0-9]+")) ||
+              message.contains(
+                  QRegularExpression("User [0-9]+ is now Tracking Mod: [0-9]+"))) {
+            emit nxmTrackingToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData,
+                                    true, iter->m_ID);
+          } else if (message.contains(QRegularExpression(
+                         "User [0-9]+ is no longer tracking [0-9]+")) ||
+                     message.contains(QRegularExpression(
+                         "Users is not tracking mod. Unable to untrack."))) {
+            emit nxmTrackingToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData,
+                                    false, iter->m_ID);
+          }
+        } break;
+        case NXMRequestInfo::TYPE_TRACKEDMODS: {
+          emit nxmTrackedModsAvailable(iter->m_UserData, result, iter->m_ID);
+        } break;
+        case NXMRequestInfo::TYPE_FILEINFO_MD5: {
+          emit nxmFileInfoFromMd5Available(iter->m_GameName, iter->m_UserData, result,
+                                           iter->m_ID);
+        } break;
+        case NXMRequestInfo::TYPE_GAMEINFO: {
+          emit nxmGameInfoAvailable(iter->m_GameName, iter->m_UserData, result,
+                                    iter->m_ID);
+        } break;
         }
 
         m_User.limits(parseLimits(reply));
@@ -1194,28 +1249,15 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(
       m_Endorse(false), m_Track(false), m_Hash(QByteArray())
 {}
 
-NexusInterface::NXMRequestInfo::NXMRequestInfo(Type type
-  , QVariant userData
-  , const QString & subModule
-  , MOBase::IPluginGame const *game
-)
-  : m_ModID(0)
-  , m_ModVersion("0")
-  , m_FileID(0)
-  , m_Reply(nullptr)
-  , m_Type(type)
-  , m_UpdatePeriod(UpdatePeriod::NONE)
-  , m_UserData(userData)
-  , m_Timeout(nullptr)
-  , m_Reroute(false)
-  , m_ID(s_NextID.fetchAndAddAcquire(1))
-  , m_URL(get_management_url())
-  , m_SubModule(subModule)
-  , m_NexusGameID(game->nexusGameID())
-  , m_GameName(game->gameNexusName())
-  , m_Endorse(false)
-  , m_Track(false)
-  , m_Hash(QByteArray())
+NexusInterface::NXMRequestInfo::NXMRequestInfo(Type type, QVariant userData,
+                                               const QString& subModule,
+                                               MOBase::IPluginGame const* game)
+    : m_ModID(0), m_ModVersion("0"), m_FileID(0), m_Reply(nullptr), m_Type(type),
+      m_UpdatePeriod(UpdatePeriod::NONE), m_UserData(userData), m_Timeout(nullptr),
+      m_Reroute(false), m_ID(s_NextID.fetchAndAddAcquire(1)),
+      m_URL(get_management_url()), m_SubModule(subModule),
+      m_NexusGameID(game->nexusGameID()), m_GameName(game->gameNexusName()),
+      m_Endorse(false), m_Track(false), m_Hash(QByteArray())
 {}
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(

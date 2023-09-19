@@ -31,7 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
  *to look up categories, optimized to where the request comes from. Therefore be very
  *careful which of the two you have available
  **/
-class CategoryFactory : public QObject {
+class CategoryFactory : public QObject
+{
   Q_OBJECT;
 
   friend class CategoriesDialog;
@@ -53,30 +54,37 @@ public:
   };
 
 public:
-  struct NexusCategory {
-    NexusCategory(const QString& name, const int nexusID)
-      : m_Name(name), m_ID(nexusID) {}
+  struct NexusCategory
+  {
+    NexusCategory(const QString& name, const int nexusID) : m_Name(name), m_ID(nexusID)
+    {}
     QString m_Name;
     int m_ID;
     int m_CategoryID = -1;
 
-    friend bool operator==(const NexusCategory& LHS, const NexusCategory& RHS) {
+    friend bool operator==(const NexusCategory& LHS, const NexusCategory& RHS)
+    {
       return LHS.m_ID == RHS.m_ID;
     }
 
-    friend bool operator==(const NexusCategory& LHS, const int RHS) {
+    friend bool operator==(const NexusCategory& LHS, const int RHS)
+    {
       return LHS.m_ID == RHS;
     }
 
-    friend bool operator<(const NexusCategory& LHS, const NexusCategory& RHS) {
+    friend bool operator<(const NexusCategory& LHS, const NexusCategory& RHS)
+    {
       return LHS.m_ID < RHS.m_ID;
     }
   };
 
-  struct Category {
-    Category(int sortValue, int id, const QString& name, int parentID, std::vector<NexusCategory> nexusCats)
-      : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false), m_ParentID(parentID)
-      , m_NexusCats(nexusCats) {}
+  struct Category
+  {
+    Category(int sortValue, int id, const QString& name, int parentID,
+             std::vector<NexusCategory> nexusCats)
+        : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false),
+          m_ParentID(parentID), m_NexusCats(nexusCats)
+    {}
     int m_SortValue;
     int m_ID;
     int m_ParentID;
@@ -108,7 +116,8 @@ public:
 
   void setNexusCategories(std::vector<CategoryFactory::NexusCategory>& nexusCats);
 
-  int addCategory(const QString& name, const std::vector<NexusCategory>& nexusCats, int parentID);
+  int addCategory(const QString& name, const std::vector<NexusCategory>& nexusCats,
+                  int parentID);
 
   /**
    * @brief retrieve the number of available categories
@@ -222,7 +231,8 @@ private:
 
   void loadDefaultCategories();
 
-  void addCategory(int id, const QString& name, const std::vector<NexusCategory>& nexusCats, int parentID);
+  void addCategory(int id, const QString& name,
+                   const std::vector<NexusCategory>& nexusCats, int parentID);
   void addCategory(int id, const QString& name, int parentID);
 
   void setParents();

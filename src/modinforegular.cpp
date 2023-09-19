@@ -738,7 +738,7 @@ QString ModInfoRegular::getDescription() const
       }
       categoryString << "<span style=\"white-space: nowrap;\"><i>"
                      << ToWString(categoryFactory->getCategoryName(
-                         categoryFactory->getCategoryIndex(*catIter)))
+                            categoryFactory->getCategoryIndex(*catIter)))
                      << "</font></span>";
     }
 

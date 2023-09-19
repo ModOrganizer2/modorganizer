@@ -467,17 +467,18 @@ public:
   }
 
   /**
-  * @param gameName the game short name to support multiple game sources
-  * @brief toggle tracking state of the mod
-  * @param modID id of the mod
-  * @param track true if the mod should be tracked, false for not tracked
-  * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
-  * @param userData user data to be returned with the result
-  * @param game the game with which the mods are associated
-  * @return int an id to identify the request
-  */
-  int requestGameInfo(QString gameName, QObject* receiver, QVariant userData, const QString& subModule,
-    MOBase::IPluginGame const* game);
+   * @param gameName the game short name to support multiple game sources
+   * @brief toggle tracking state of the mod
+   * @param modID id of the mod
+   * @param track true if the mod should be tracked, false for not tracked
+   * @param receiver the object to receive the result asynchronously via a signal
+   * (nxmFilesAvailable)
+   * @param userData user data to be returned with the result
+   * @param game the game with which the mods are associated
+   * @return int an id to identify the request
+   */
+  int requestGameInfo(QString gameName, QObject* receiver, QVariant userData,
+                      const QString& subModule, MOBase::IPluginGame const* game);
 
   /**
    *
@@ -651,7 +652,8 @@ private:
                    const QString& subModule, MOBase::IPluginGame const* game);
     NXMRequestInfo(int modID, int fileID, Type type, QVariant userData,
                    const QString& subModule, MOBase::IPluginGame const* game);
-    NXMRequestInfo(Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
+    NXMRequestInfo(Type type, QVariant userData, const QString& subModule,
+                   MOBase::IPluginGame const* game);
     NXMRequestInfo(Type type, QVariant userData, const QString& subModule);
     NXMRequestInfo(UpdatePeriod period, Type type, QVariant userData,
                    const QString& subModule, MOBase::IPluginGame const* game);

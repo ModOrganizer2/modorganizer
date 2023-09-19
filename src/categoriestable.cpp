@@ -21,7 +21,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 CategoriesTable::CategoriesTable(QWidget* parent) : QTableWidget(parent) {}
 
-bool CategoriesTable::dropMimeData(int row, int column, const QMimeData* data, Qt::DropAction action)
+bool CategoriesTable::dropMimeData(int row, int column, const QMimeData* data,
+                                   Qt::DropAction action)
 {
   if (row == -1)
     return false;
@@ -35,15 +36,15 @@ bool CategoriesTable::dropMimeData(int row, int column, const QMimeData* data, Q
   QByteArray encoded = data->data("application/x-qabstractitemmodeldatalist");
   QDataStream stream(&encoded, QIODevice::ReadOnly);
 
-  while (!stream.atEnd())
-  {
+  while (!stream.atEnd()) {
     int curRow, curCol;
     QMap<int, QVariant> roleDataMap;
     stream >> curRow >> curCol >> roleDataMap;
 
-    for (auto item : findItems(roleDataMap.value(Qt::DisplayRole).toString(), Qt::MatchContains | Qt::MatchWrap))
-    {
-      if (item->column() != 3) continue;
+    for (auto item : findItems(roleDataMap.value(Qt::DisplayRole).toString(),
+                               Qt::MatchContains | Qt::MatchWrap)) {
+      if (item->column() != 3)
+        continue;
       QVariantList newData;
       for (auto nexData : item->data(Qt::UserRole).toList()) {
         if (nexData.toList()[1].toInt() != roleDataMap.value(Qt::UserRole)) {
@@ -59,7 +60,7 @@ bool CategoriesTable::dropMimeData(int row, int column, const QMimeData* data, Q
     }
 
     auto nexusItem = item(row, 3);
-    auto itemData = nexusItem->data(Qt::UserRole).toList();
+    auto itemData  = nexusItem->data(Qt::UserRole).toList();
     QVariantList newData;
     newData.append(roleDataMap.value(Qt::DisplayRole).toString());
     newData.append(roleDataMap.value(Qt::UserRole).toInt());

@@ -562,7 +562,9 @@ void ModListContextMenu::addRegularActions(ModInfo::Ptr mod)
   }
 
   if (mod->nexusId() > 0 && !mod->installationFile().isEmpty()) {
-    addAction(tr("Remap Category (From Nexus)"), [=]() { m_actions.remapCategory(m_selected); });
+    addAction(tr("Remap Category (From Nexus)"), [=]() {
+      m_actions.remapCategory(m_selected);
+    });
   }
 
   if (mod->nexusId() > 0 && Settings::instance().nexus().trackedIntegration()) {

@@ -330,67 +330,67 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>CategoryFactory</name>
     <message>
-        <location filename="categories.cpp" line="78"/>
-        <location filename="categories.cpp" line="128"/>
+        <location filename="categories.cpp" line="77"/>
+        <location filename="categories.cpp" line="130"/>
         <source>invalid category id {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="88"/>
+        <location filename="categories.cpp" line="87"/>
         <location filename="categories.cpp" line="97"/>
         <source>invalid category line {}: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="103"/>
+        <location filename="categories.cpp" line="104"/>
         <source>invalid category line {}: {} ({} cells)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="124"/>
+        <location filename="categories.cpp" line="125"/>
         <source>invalid nexus ID {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="134"/>
+        <location filename="categories.cpp" line="136"/>
         <source>invalid nexus category line {}: {} ({} cells)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="194"/>
+        <location filename="categories.cpp" line="197"/>
         <source>Failed to save custom categories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="218"/>
+        <location filename="categories.cpp" line="221"/>
         <source>Failed to save nexus category mappings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="356"/>
-        <location filename="categories.cpp" line="402"/>
-        <location filename="categories.cpp" line="411"/>
-        <location filename="categories.cpp" line="479"/>
+        <location filename="categories.cpp" line="362"/>
+        <location filename="categories.cpp" line="408"/>
+        <location filename="categories.cpp" line="417"/>
+        <location filename="categories.cpp" line="485"/>
         <source>invalid category index: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="394"/>
+        <location filename="categories.cpp" line="400"/>
         <source>{} is no valid category id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="489"/>
+        <location filename="categories.cpp" line="495"/>
         <source>invalid category id: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="513"/>
+        <location filename="categories.cpp" line="519"/>
         <source>nexus category id {} maps to internal {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="517"/>
+        <location filename="categories.cpp" line="524"/>
         <source>nexus category id {} not mapped</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1334,126 +1334,126 @@ File %3:	%4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1340"/>
+        <location filename="downloadmanager.cpp" line="1342"/>
         <source>file time: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1359"/>
+        <location filename="downloadmanager.cpp" line="1361"/>
         <source>file size: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1368"/>
+        <location filename="downloadmanager.cpp" line="1370"/>
         <source>progress: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1377"/>
+        <location filename="downloadmanager.cpp" line="1379"/>
         <source>state: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1386"/>
+        <location filename="downloadmanager.cpp" line="1388"/>
         <source>infocomplete: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1400"/>
-        <location filename="downloadmanager.cpp" line="1408"/>
-        <location filename="downloadmanager.cpp" line="1416"/>
-        <location filename="downloadmanager.cpp" line="1429"/>
+        <location filename="downloadmanager.cpp" line="1402"/>
+        <location filename="downloadmanager.cpp" line="1410"/>
+        <location filename="downloadmanager.cpp" line="1418"/>
+        <location filename="downloadmanager.cpp" line="1431"/>
         <source>mod id: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1437"/>
+        <location filename="downloadmanager.cpp" line="1439"/>
         <source>ishidden: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1445"/>
+        <location filename="downloadmanager.cpp" line="1447"/>
         <source>file info: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1454"/>
+        <location filename="downloadmanager.cpp" line="1456"/>
         <source>mark installed: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1499"/>
+        <location filename="downloadmanager.cpp" line="1501"/>
         <source>mark uninstalled: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1668"/>
+        <location filename="downloadmanager.cpp" line="1670"/>
         <source>%1% - %2 - ~%3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1679"/>
+        <location filename="downloadmanager.cpp" line="1681"/>
         <source>Memory allocation error (in processing progress event).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1688"/>
+        <location filename="downloadmanager.cpp" line="1690"/>
         <source>Memory allocation error (in processing downloaded data).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1810"/>
+        <location filename="downloadmanager.cpp" line="1812"/>
         <source>Information updated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1812"/>
-        <location filename="downloadmanager.cpp" line="1835"/>
+        <location filename="downloadmanager.cpp" line="1814"/>
+        <location filename="downloadmanager.cpp" line="1837"/>
         <source>No matching file found on Nexus! Maybe this file is no longer available or it was renamed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1815"/>
+        <location filename="downloadmanager.cpp" line="1817"/>
         <source>No file on Nexus matches the selected file by name. Please manually choose the correct one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2012"/>
+        <location filename="downloadmanager.cpp" line="2014"/>
         <source>No download server available. Please try again later.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2182"/>
+        <location filename="downloadmanager.cpp" line="2184"/>
         <source>Failed to request file info from nexus: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2214"/>
+        <location filename="downloadmanager.cpp" line="2216"/>
         <source>Warning: Content type is: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2221"/>
+        <location filename="downloadmanager.cpp" line="2223"/>
         <source>Download header content length: %1 downloaded file size: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2225"/>
+        <location filename="downloadmanager.cpp" line="2227"/>
         <source>Download failed: %1 (%2)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2250"/>
+        <location filename="downloadmanager.cpp" line="2252"/>
         <source>We were unable to download the file due to errors after four retries. There may be an issue with the Nexus servers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2339"/>
+        <location filename="downloadmanager.cpp" line="2341"/>
         <source>failed to re-open %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2387"/>
+        <location filename="downloadmanager.cpp" line="2389"/>
         <source>Unable to write download to drive (return %1).
 Check the drive&apos;s available storage.
 
@@ -4995,7 +4995,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="modlistcontextmenu.cpp" line="376"/>
         <location filename="modlistcontextmenu.cpp" line="453"/>
-        <location filename="modlistcontextmenu.cpp" line="618"/>
+        <location filename="modlistcontextmenu.cpp" line="620"/>
         <source>Open in Explorer</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5033,25 +5033,25 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="modlistcontextmenu.cpp" line="429"/>
-        <location filename="modlistcontextmenu.cpp" line="591"/>
+        <location filename="modlistcontextmenu.cpp" line="593"/>
         <source>Ignore missing data</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modlistcontextmenu.cpp" line="435"/>
-        <location filename="modlistcontextmenu.cpp" line="598"/>
+        <location filename="modlistcontextmenu.cpp" line="600"/>
         <source>Mark as converted/working</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modlistcontextmenu.cpp" line="441"/>
-        <location filename="modlistcontextmenu.cpp" line="606"/>
+        <location filename="modlistcontextmenu.cpp" line="608"/>
         <source>Visit on Nexus</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modlistcontextmenu.cpp" line="448"/>
-        <location filename="modlistcontextmenu.cpp" line="613"/>
+        <location filename="modlistcontextmenu.cpp" line="615"/>
         <source>Visit on %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5137,17 +5137,17 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistcontextmenu.cpp" line="571"/>
+        <location filename="modlistcontextmenu.cpp" line="573"/>
         <source>Start tracking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistcontextmenu.cpp" line="576"/>
+        <location filename="modlistcontextmenu.cpp" line="578"/>
         <source>Stop tracking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistcontextmenu.cpp" line="581"/>
+        <location filename="modlistcontextmenu.cpp" line="583"/>
         <source>Tracked state unknown</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5313,68 +5313,68 @@ Please enter the name:</source>
 <context>
     <name>ModListViewActions</name>
     <message>
-        <location filename="modlistviewactions.cpp" line="100"/>
+        <location filename="modlistviewactions.cpp" line="99"/>
         <source>Choose Mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="101"/>
+        <location filename="modlistviewactions.cpp" line="100"/>
         <source>Mod Archive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="121"/>
-        <location filename="modlistviewactions.cpp" line="1297"/>
+        <location filename="modlistviewactions.cpp" line="120"/>
+        <location filename="modlistviewactions.cpp" line="1300"/>
         <source>Create Mod...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="122"/>
+        <location filename="modlistviewactions.cpp" line="121"/>
         <source>This will create an empty mod.
 Please enter a name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="132"/>
-        <location filename="modlistviewactions.cpp" line="1308"/>
+        <location filename="modlistviewactions.cpp" line="131"/>
+        <location filename="modlistviewactions.cpp" line="1311"/>
         <source>A mod with this name already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="159"/>
+        <location filename="modlistviewactions.cpp" line="158"/>
         <source>Create Separator...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="160"/>
+        <location filename="modlistviewactions.cpp" line="159"/>
         <source>This will create a new separator.
 Please enter a name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="169"/>
+        <location filename="modlistviewactions.cpp" line="168"/>
         <source>A separator with this name already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="217"/>
+        <location filename="modlistviewactions.cpp" line="216"/>
         <source>Really enable %1 mod(s)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="217"/>
+        <location filename="modlistviewactions.cpp" line="216"/>
         <source>Really disable %1 mod(s)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="218"/>
+        <location filename="modlistviewactions.cpp" line="217"/>
         <location filename="modlistviewactions.cpp" line="773"/>
         <location filename="modlistviewactions.cpp" line="1022"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="241"/>
+        <location filename="modlistviewactions.cpp" line="240"/>
         <location filename="modlistviewactions.cpp" line="300"/>
         <source>You are not currently authenticated with Nexus. Please do so under Settings -&gt; Nexus.</source>
         <translation type="unfinished"></translation>
@@ -5572,7 +5572,7 @@ This function will guess the versioning scheme under the assumption that the ins
     </message>
     <message>
         <location filename="modlistviewactions.cpp" line="1056"/>
-        <location filename="modlistviewactions.cpp" line="1367"/>
+        <location filename="modlistviewactions.cpp" line="1370"/>
         <source>Are you sure?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5588,38 +5588,38 @@ This function will guess the versioning scheme under the assumption that the ins
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="1249"/>
+        <location filename="modlistviewactions.cpp" line="1252"/>
         <source>Overwrite?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="1250"/>
+        <location filename="modlistviewactions.cpp" line="1253"/>
         <source>This will replace the existing mod &quot;%1&quot;. Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="1254"/>
+        <location filename="modlistviewactions.cpp" line="1257"/>
         <source>failed to remove mod &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="1260"/>
+        <location filename="modlistviewactions.cpp" line="1263"/>
         <source>failed to rename &quot;%1&quot; to &quot;%2&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="1279"/>
+        <location filename="modlistviewactions.cpp" line="1282"/>
         <source>Move successful.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="1298"/>
+        <location filename="modlistviewactions.cpp" line="1301"/>
         <source>This will move all files from overwrite into a new, regular mod.
 Please enter a name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlistviewactions.cpp" line="1368"/>
+        <location filename="modlistviewactions.cpp" line="1371"/>
         <source>About to recursively delete:
 </source>
         <translation type="unfinished"></translation>
@@ -5684,32 +5684,32 @@ Please enter a name:</source>
 <context>
     <name>NexusInterface</name>
     <message>
-        <location filename="nexusinterface.cpp" line="353"/>
+        <location filename="nexusinterface.cpp" line="355"/>
         <source>Please pick the mod ID for &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nexusinterface.cpp" line="839"/>
+        <location filename="nexusinterface.cpp" line="846"/>
         <source>You must authorize MO2 in Settings -&gt; Nexus to use the Nexus API.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nexusinterface.cpp" line="848"/>
+        <location filename="nexusinterface.cpp" line="855"/>
         <source>You&apos;ve exceeded the Nexus API rate limit and requests are now being throttled. Your next batch of requests will be available in approximately %1 minutes and %2 seconds.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nexusinterface.cpp" line="929"/>
+        <location filename="nexusinterface.cpp" line="936"/>
         <source>Aborting download: Either you clicked on a premium-only link and your account is not premium, or the download link was generated by a different account than the one stored in Mod Organizer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nexusinterface.cpp" line="1072"/>
+        <location filename="nexusinterface.cpp" line="1077"/>
         <source>empty response</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nexusinterface.cpp" line="1152"/>
+        <location filename="nexusinterface.cpp" line="1157"/>
         <source>invalid response</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6555,61 +6555,61 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="277"/>
+        <location filename="profile.cpp" line="276"/>
         <source>failed to write mod list: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="288"/>
+        <location filename="profile.cpp" line="287"/>
         <source>failed to update tweaked ini file, wrong settings may be used: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="310"/>
+        <location filename="profile.cpp" line="309"/>
         <source>failed to create tweaked ini: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="336"/>
+        <location filename="profile.cpp" line="335"/>
         <source>failed to open %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="428"/>
+        <location filename="profile.cpp" line="427"/>
         <source>&quot;%1&quot; is missing or inaccessible</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="490"/>
-        <location filename="profile.cpp" line="528"/>
-        <location filename="profile.cpp" line="620"/>
-        <location filename="profile.cpp" line="678"/>
-        <location filename="profile.cpp" line="687"/>
+        <location filename="profile.cpp" line="489"/>
+        <location filename="profile.cpp" line="527"/>
+        <location filename="profile.cpp" line="619"/>
+        <location filename="profile.cpp" line="677"/>
+        <location filename="profile.cpp" line="686"/>
         <source>invalid mod index: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="573"/>
+        <location filename="profile.cpp" line="572"/>
         <source>A mod named &quot;overwrite&quot; was detected, disabled, and moved to the highest priority on the mod list. You may want to rename this mod and enable it again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="864"/>
+        <location filename="profile.cpp" line="863"/>
         <source>Delete profile-specific save games?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="865"/>
+        <location filename="profile.cpp" line="864"/>
         <source>Do you want to delete the profile-specific save games? (If you select &quot;No&quot;, the save games will show up again if you re-enable profile-specific save games)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="900"/>
+        <location filename="profile.cpp" line="899"/>
         <source>Missing profile-specific game INI files!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="901"/>
+        <location filename="profile.cpp" line="900"/>
         <source>Some of your profile-specific game INI files were missing.  They will now be copied from the vanilla game folder.  You might want to double-check your settings.
 
 Missing files:
@@ -6617,12 +6617,12 @@ Missing files:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="920"/>
+        <location filename="profile.cpp" line="919"/>
         <source>Delete profile-specific game INI files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="921"/>
+        <location filename="profile.cpp" line="920"/>
         <source>Do you want to delete the profile-specific game INI files? (If you select &quot;No&quot;, the INI files will be used again if you re-enable profile-specific game INI files.)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6912,57 +6912,57 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="422"/>
+        <location filename="categories.cpp" line="428"/>
         <source>Active</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="425"/>
+        <location filename="categories.cpp" line="431"/>
         <source>Update available</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="428"/>
+        <location filename="categories.cpp" line="434"/>
         <source>Has category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="431"/>
+        <location filename="categories.cpp" line="437"/>
         <source>Conflicted</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="434"/>
+        <location filename="categories.cpp" line="440"/>
         <source>Has hidden files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="437"/>
+        <location filename="categories.cpp" line="443"/>
         <source>Endorsed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="440"/>
+        <location filename="categories.cpp" line="446"/>
         <source>Has backup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="443"/>
+        <location filename="categories.cpp" line="449"/>
         <source>Managed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="446"/>
+        <location filename="categories.cpp" line="452"/>
         <source>Has valid game data</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="449"/>
+        <location filename="categories.cpp" line="455"/>
         <source>Has Nexus ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="452"/>
+        <location filename="categories.cpp" line="458"/>
         <source>Tracked on Nexus</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7045,7 +7045,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="createinstancedialogpages.cpp" line="37"/>
-        <location filename="createinstancedialogpages.cpp" line="1234"/>
+        <location filename="createinstancedialogpages.cpp" line="1232"/>
         <source>Instance type: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7166,82 +7166,82 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1236"/>
+        <location filename="createinstancedialogpages.cpp" line="1234"/>
         <source>Instance location: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1239"/>
+        <location filename="createinstancedialogpages.cpp" line="1237"/>
         <source>Instance name: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1242"/>
+        <location filename="createinstancedialogpages.cpp" line="1240"/>
         <source>Profile settings:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1244"/>
+        <location filename="createinstancedialogpages.cpp" line="1242"/>
         <source>  Local INIs: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1245"/>
+        <location filename="createinstancedialogpages.cpp" line="1243"/>
+        <location filename="createinstancedialogpages.cpp" line="1246"/>
         <location filename="createinstancedialogpages.cpp" line="1248"/>
-        <location filename="createinstancedialogpages.cpp" line="1250"/>
         <source>yes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1245"/>
-        <location filename="createinstancedialogpages.cpp" line="1248"/>
-        <location filename="createinstancedialogpages.cpp" line="1251"/>
+        <location filename="createinstancedialogpages.cpp" line="1243"/>
+        <location filename="createinstancedialogpages.cpp" line="1246"/>
+        <location filename="createinstancedialogpages.cpp" line="1249"/>
         <source>no</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1247"/>
+        <location filename="createinstancedialogpages.cpp" line="1245"/>
         <source>  Local Saves: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1249"/>
+        <location filename="createinstancedialogpages.cpp" line="1247"/>
         <source>  Automatic Archive Invalidation: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1256"/>
-        <location filename="createinstancedialogpages.cpp" line="1260"/>
+        <location filename="createinstancedialogpages.cpp" line="1254"/>
+        <location filename="createinstancedialogpages.cpp" line="1258"/>
         <source>Base directory: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1261"/>
+        <location filename="createinstancedialogpages.cpp" line="1259"/>
         <source>Downloads</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1262"/>
+        <location filename="createinstancedialogpages.cpp" line="1260"/>
         <source>Mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1263"/>
+        <location filename="createinstancedialogpages.cpp" line="1261"/>
         <source>Profiles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1264"/>
+        <location filename="createinstancedialogpages.cpp" line="1262"/>
         <source>Overwrite</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1273"/>
+        <location filename="createinstancedialogpages.cpp" line="1271"/>
         <source>Game: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1274"/>
+        <location filename="createinstancedialogpages.cpp" line="1272"/>
         <source>Game location: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7773,12 +7773,12 @@ This program is known to cause issues with Mod Organizer, such as freezing or bl
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialoggeneral.cpp" line="171"/>
+        <location filename="settingsdialoggeneral.cpp" line="173"/>
         <source>Confirm?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialoggeneral.cpp" line="172"/>
+        <location filename="settingsdialoggeneral.cpp" line="174"/>
         <source>This will reset all the choices you made to dialogs and make them all visible again. Continue?</source>
         <translation type="unfinished"></translation>
     </message>

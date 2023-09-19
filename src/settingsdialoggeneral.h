@@ -1,14 +1,15 @@
 #ifndef SETTINGSDIALOGGENERAL_H
 #define SETTINGSDIALOGGENERAL_H
 
+#include "plugincontainer.h"
 #include "settings.h"
 #include "settingsdialog.h"
-#include "plugincontainer.h"
 
 class GeneralSettingsTab : public SettingsTab
 {
 public:
-  GeneralSettingsTab(Settings& settings, PluginContainer *pluginContainer, SettingsDialog& dialog);
+  GeneralSettingsTab(Settings& settings, PluginContainer* pluginContainer,
+                     SettingsDialog& dialog);
 
   void update();
 
@@ -23,7 +24,6 @@ private:
 
 private:
   PluginContainer* m_PluginContainer;
-
 };
 
 #endif  // SETTINGSDIALOGGENERAL_H
