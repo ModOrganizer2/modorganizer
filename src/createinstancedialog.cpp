@@ -110,6 +110,7 @@ CreateInstanceDialog::CreateInstanceDialog(const PluginContainer& pc, Settings* 
   m_pages.push_back(std::make_unique<GamePage>(*this));
   m_pages.push_back(std::make_unique<VariantsPage>(*this));
   m_pages.push_back(std::make_unique<NamePage>(*this));
+  m_pages.push_back(std::make_unique<ProfilePage>(*this));
   m_pages.push_back(std::make_unique<PathsPage>(*this));
   m_pages.push_back(std::make_unique<NexusPage>(*this));
   m_pages.push_back(std::make_unique<ConfirmationPage>(*this));
@@ -355,6 +356,10 @@ void CreateInstanceDialog::finish()
       s.paths().setOverwrite(ci.paths.overwrite);
     }
 
+    s.setProfileLocalInis(ci.profileSettings.localInis);
+    s.setProfileLocalSaves(ci.profileSettings.localSaves);
+    s.setProfileArchiveInvalidation(ci.profileSettings.archiveInvalidation);
+
     logCreation(tr("Writing %1...").arg(ci.iniPath));
 
     // writing ini
@@ -475,12 +480,13 @@ CreateInstanceDialog::CreationInfo CreateInstanceDialog::rawCreationInfo() const
 
   CreationInfo ci;
 
-  ci.type         = getSelected(&cid::Page::selectedInstanceType);
-  ci.game         = getSelected(&cid::Page::selectedGame);
-  ci.gameLocation = getSelected(&cid::Page::selectedGameLocation);
-  ci.gameVariant  = getSelected(&cid::Page::selectedGameVariant, ci.game);
-  ci.instanceName = getSelected(&cid::Page::selectedInstanceName);
-  ci.paths        = getSelected(&cid::Page::selectedPaths);
+  ci.type            = getSelected(&cid::Page::selectedInstanceType);
+  ci.game            = getSelected(&cid::Page::selectedGame);
+  ci.gameLocation    = getSelected(&cid::Page::selectedGameLocation);
+  ci.gameVariant     = getSelected(&cid::Page::selectedGameVariant, ci.game);
+  ci.instanceName    = getSelected(&cid::Page::selectedInstanceName);
+  ci.profileSettings = getSelected(&cid::Page::profileSettings);
+  ci.paths           = getSelected(&cid::Page::selectedPaths);
 
   if (ci.type == Portable) {
     ci.dataPath = QDir(InstanceManager::singleton().portablePath()).absolutePath();
