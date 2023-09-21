@@ -2450,6 +2450,16 @@ void GlobalSettings::setHideCategoryReminder(bool b)
   settings().setValue("HideCategoryReminder", b);
 }
 
+bool GlobalSettings::hideAssignCategoriesQuestion()
+{
+  return settings().value("HideAssignCategoriesQuestion", false).toBool();
+}
+
+void GlobalSettings::setHideAssignCategoriesQuestion(bool b)
+{
+  settings().setValue("HideAssignCategoriesQuestion", b);
+}
+
 bool GlobalSettings::nexusApiKey(QString& apiKey)
 {
   QString tempKey = getWindowsCredential("APIKEY");

@@ -262,6 +262,21 @@ void ModListViewActions::checkModsForUpdates() const
 
 void ModListViewActions::assignCategories() const
 {
+  if (!GlobalSettings::hideAssignCategoriesQuestion()) {
+    QMessageBox warning;
+    warning.setWindowTitle(tr("Are you sure?"));
+    warning.setText(
+        tr("This action will remove any existing categories on any mod with a valid "
+           "Nexus category mapping. Are you certain you want to proceed?"));
+    warning.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    QCheckBox dontShow(tr("&Don't show this again"));
+    warning.setCheckBox(&dontShow);
+    auto result = warning.exec();
+    if (dontShow.isChecked())
+      GlobalSettings::setHideAssignCategoriesQuestion(true);
+    if (result == QMessageBox::Cancel)
+      return;
+  }
   for (auto mod : m_core.modList()->allMods()) {
     ModInfo::Ptr modInfo = ModInfo::getByName(mod);
     QString file         = modInfo->installationFile();
@@ -269,7 +284,7 @@ void ModListViewActions::assignCategories() const
     if (!nexusCategory) {
       auto download = m_core.downloadManager()->getDownloadIndex(file);
       if (download >= 0) {
-        int nexusCategory = m_core.downloadManager()->getCategoryID(download);
+        nexusCategory = m_core.downloadManager()->getCategoryID(download);
       }
     }
     int newCategory = CategoryFactory::instance()->resolveNexusID(nexusCategory);

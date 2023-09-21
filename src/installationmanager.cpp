@@ -667,20 +667,21 @@ InstallationResult InstallationManager::install(const QString& fileName,
     if (category != 0 && categoryIndex == 0U &&
         Settings::instance().nexus().categoryMappings()) {
       QMessageBox nexusQuery;
+      nexusQuery.setWindowTitle(tr("No category found"));
       nexusQuery.setText(tr(
           "This Nexus category has not yet been mapped. Do you wish to proceed without "
           "setting a category, proceed and disable automatic Nexus mappings, or stop "
           "and configure your category mappings?"));
-      nexusQuery.addButton(tr("&Proceed"), QMessageBox::YesRole);
-      nexusQuery.addButton(tr("&Disable"), QMessageBox::AcceptRole);
-      nexusQuery.addButton(tr("&Stop && Configure"), QMessageBox::DestructiveRole);
-      auto ret = nexusQuery.exec();
-      switch (ret) {
-      case 1:
+      QPushButton* proceedButton =
+          nexusQuery.addButton(tr("&Proceed"), QMessageBox::YesRole);
+      QPushButton* disableButton =
+          nexusQuery.addButton(tr("&Disable"), QMessageBox::AcceptRole);
+      QPushButton* stopButton =
+          nexusQuery.addButton(tr("&Stop && Configure"), QMessageBox::DestructiveRole);
+      nexusQuery.exec();
+      if (nexusQuery.clickedButton() == disableButton) {
         Settings::instance().nexus().setCategoryMappings(false);
-      case 0:
-        break;
-      case 2:
+      } else if (nexusQuery.clickedButton() == stopButton) {
         return MOBase::IPluginInstaller::RESULT_CATEGORYREQUESTED;
       }
     } else {

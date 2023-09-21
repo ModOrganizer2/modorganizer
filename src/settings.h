@@ -931,6 +931,9 @@ public:
   static bool hideCategoryReminder();
   static void setHideCategoryReminder(bool b);
 
+  static bool hideAssignCategoriesQuestion();
+  static void setHideAssignCategoriesQuestion(bool b);
+
   // if the key exists from the credentials store, puts it in `apiKey` and
   // returns true; otherwise, returns false and leaves `apiKey` untouched
   //
