@@ -212,7 +212,8 @@ void ModInfoRegular::readMeta()
       // ignore invalid id
       continue;
     }
-    if (ok && (categoryID != 0) && (CategoryFactory::instance()->categoryExists(categoryID))) {
+    if (ok && (categoryID != 0) &&
+        (CategoryFactory::instance()->categoryExists(categoryID))) {
       m_Categories.insert(categoryID);
       if (iter == categories.begin()) {
         m_PrimaryCategory = categoryID;

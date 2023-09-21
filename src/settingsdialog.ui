@@ -1052,8 +1052,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>761</width>
-            <height>515</height>
+            <width>778</width>
+            <height>497</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -1742,8 +1742,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>390</width>
-            <height>342</height>
+            <width>778</width>
+            <height>475</height>
            </rect>
           </property>
           <property name="autoFillBackground">

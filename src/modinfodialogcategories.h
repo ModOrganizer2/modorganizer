@@ -13,9 +13,8 @@ public:
   bool usesOriginFiles() const override;
 
 private:
-  void add(
-    const CategoryFactory* factory, const std::set<int>& enabledCategories,
-    QTreeWidgetItem* root, int rootLevel);
+  void add(const CategoryFactory* factory, const std::set<int>& enabledCategories,
+           QTreeWidgetItem* root, int rootLevel);
 
   void updatePrimary();
   void addChecked(QTreeWidgetItem* tree);

@@ -95,7 +95,7 @@ void ModListGlobalContextMenu::populate(OrganizerCore& core, ModListView* view,
     view->actions().checkModsForUpdates();
   });
   addAction(tr("Auto assign categories"), [=]() {
-   view->actions().assignCategories();
+    view->actions().assignCategories();
   });
   addAction(tr("Refresh"), &core, &OrganizerCore::profileRefresh);
   addAction(tr("Export to csv..."), [=]() {
@@ -187,11 +187,11 @@ void ModListPrimaryCategoryMenu::populate(const CategoryFactory* factory,
   clear();
   const std::set<int>& categories = mod->getCategories();
   for (int categoryID : categories) {
-    int catIdx            = factory.getCategoryIndex(categoryID);
+    int catIdx            = factory->getCategoryIndex(categoryID);
     QWidgetAction* action = new QWidgetAction(this);
     try {
       QRadioButton* categoryBox =
-          new QRadioButton(factory.getCategoryName(catIdx).replace('&', "&&"), this);
+          new QRadioButton(factory->getCategoryName(catIdx).replace('&', "&&"), this);
       categoryBox->setChecked(categoryID == mod->primaryCategory());
       action->setDefaultWidget(categoryBox);
       action->setData(categoryID);

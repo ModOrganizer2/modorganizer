@@ -193,7 +193,6 @@ void CategoriesDialog::fillTable()
   QTableWidget* table         = ui->categoriesTable;
   QListWidget* list           = ui->nexusCategoryList;
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
   table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
   table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
   table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Fixed);

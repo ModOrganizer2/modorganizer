@@ -125,104 +125,111 @@ bool ModListSortProxy::lessThan(const QModelIndex& left, const QModelIndex& righ
             right.data(ModList::PriorityRole).toInt();
 
   switch (left.column()) {
-    case ModList::COL_FLAGS: {
-      std::vector<ModInfo::EFlag> leftFlags = leftMod->getFlags();
-      std::vector<ModInfo::EFlag> rightFlags = rightMod->getFlags();
-      if (leftFlags.size() != rightFlags.size()) {
-        lt = leftFlags.size() < rightFlags.size();
-      } else {
-        lt = flagsId(leftFlags) < flagsId(rightFlags);
-      }
-    } break;
-    case ModList::COL_CONFLICTFLAGS: {
-      std::vector<ModInfo::EConflictFlag> leftFlags = leftMod->getConflictFlags();
-      std::vector<ModInfo::EConflictFlag> rightFlags = rightMod->getConflictFlags();
-      if (leftFlags.size() != rightFlags.size()) {
-        lt = leftFlags.size() < rightFlags.size();
-      } else {
-        lt = conflictFlagsId(leftFlags) < conflictFlagsId(rightFlags);
-      }
-    } break;
-    case ModList::COL_CONTENT: {
-      const auto& lContents = leftMod->getContents();
-      const auto& rContents = rightMod->getContents();
-      unsigned int lValue   = 0;
-      unsigned int rValue   = 0;
-      m_Organizer->modDataContents().forEachContentIn(
+  case ModList::COL_FLAGS: {
+    std::vector<ModInfo::EFlag> leftFlags  = leftMod->getFlags();
+    std::vector<ModInfo::EFlag> rightFlags = rightMod->getFlags();
+    if (leftFlags.size() != rightFlags.size()) {
+      lt = leftFlags.size() < rightFlags.size();
+    } else {
+      lt = flagsId(leftFlags) < flagsId(rightFlags);
+    }
+  } break;
+  case ModList::COL_CONFLICTFLAGS: {
+    std::vector<ModInfo::EConflictFlag> leftFlags  = leftMod->getConflictFlags();
+    std::vector<ModInfo::EConflictFlag> rightFlags = rightMod->getConflictFlags();
+    if (leftFlags.size() != rightFlags.size()) {
+      lt = leftFlags.size() < rightFlags.size();
+    } else {
+      lt = conflictFlagsId(leftFlags) < conflictFlagsId(rightFlags);
+    }
+  } break;
+  case ModList::COL_CONTENT: {
+    const auto& lContents = leftMod->getContents();
+    const auto& rContents = rightMod->getContents();
+    unsigned int lValue   = 0;
+    unsigned int rValue   = 0;
+    m_Organizer->modDataContents().forEachContentIn(
         lContents, [&lValue](auto const& content) {
           lValue += 2U << static_cast<unsigned int>(content.id());
         });
-      m_Organizer->modDataContents().forEachContentIn(
+    m_Organizer->modDataContents().forEachContentIn(
         rContents, [&rValue](auto const& content) {
           rValue += 2U << static_cast<unsigned int>(content.id());
-      });
-      lt = lValue < rValue;
-    } break;
-    case ModList::COL_NAME: {
-      int comp = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
+        });
+    lt = lValue < rValue;
+  } break;
+  case ModList::COL_NAME: {
+    int comp = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
+    if (comp != 0)
+      lt = comp < 0;
+  } break;
+  case ModList::COL_CATEGORY: {
+    if (leftMod->primaryCategory() != rightMod->primaryCategory()) {
+      if (leftMod->primaryCategory() < 0)
+        lt = false;
+      else if (rightMod->primaryCategory() < 0)
+        lt = true;
+      else {
+        try {
+          CategoryFactory* categories = CategoryFactory::instance();
+          QString leftCatName         = categories->getCategoryName(
+              categories->getCategoryIndex(leftMod->primaryCategory()));
+          QString rightCatName = categories->getCategoryName(
+              categories->getCategoryIndex(rightMod->primaryCategory()));
+          lt = leftCatName < rightCatName;
+        } catch (const std::exception& e) {
+          log::error("failed to compare categories: {}", e.what());
+        }
+      }
+    }
+  } break;
+  case ModList::COL_MODID: {
+    if (leftMod->nexusId() != rightMod->nexusId())
+      lt = leftMod->nexusId() < rightMod->nexusId();
+  } break;
+  case ModList::COL_VERSION: {
+    if (leftMod->version() != rightMod->version())
+      lt = leftMod->version() < rightMod->version();
+  } break;
+  case ModList::COL_INSTALLTIME: {
+    QDateTime leftTime  = left.data().toDateTime();
+    QDateTime rightTime = right.data().toDateTime();
+    if (leftTime != rightTime)
+      return leftTime < rightTime;
+  } break;
+  case ModList::COL_GAME: {
+    if (leftMod->gameName() != rightMod->gameName()) {
+      lt = leftMod->gameName() < rightMod->gameName();
+    } else {
+      int comp =
+          QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
       if (comp != 0)
         lt = comp < 0;
-    } break;
-    case ModList::COL_CATEGORY: {
-      if (leftMod->primaryCategory() != rightMod->primaryCategory()) {
-        if (leftMod->primaryCategory() < 0)
-          lt = false;
-        else if (rightMod->primaryCategory() < 0)
-          lt = true;
-        else {
-          try {
-            CategoryFactory* categories = CategoryFactory::instance();
-            QString leftCatName = categories->getCategoryName(categories->getCategoryIndex(leftMod->primaryCategory()));
-            QString rightCatName = categories->getCategoryName(categories->getCategoryIndex(rightMod->primaryCategory()));
-            lt = leftCatName < rightCatName;
-          } catch (const std::exception& e) {
-            log::error("failed to compare categories: {}", e.what());
-          }
-        }
-      }
-    } break;
-    case ModList::COL_MODID: {
-      if (leftMod->nexusId() != rightMod->nexusId())
-        lt = leftMod->nexusId() < rightMod->nexusId();
-    } break;
-    case ModList::COL_VERSION: {
-      if (leftMod->version() != rightMod->version())
-        lt = leftMod->version() < rightMod->version();
-    } break;
-    case ModList::COL_INSTALLTIME: {
-      QDateTime leftTime = left.data().toDateTime();
-      QDateTime rightTime = right.data().toDateTime();
-      if (leftTime != rightTime)
-        return leftTime < rightTime;
-    } break;
-    case ModList::COL_GAME: {
-      if (leftMod->gameName() != rightMod->gameName()) {
-        lt = leftMod->gameName() < rightMod->gameName();
+    }
+  } break;
+  case ModList::COL_NOTES: {
+    QString leftComments  = leftMod->comments();
+    QString rightComments = rightMod->comments();
+    if (leftComments != rightComments) {
+      if (leftComments.isEmpty()) {
+        lt = sortOrder() == Qt::DescendingOrder;
+      } else if (rightComments.isEmpty()) {
+        lt = sortOrder() == Qt::AscendingOrder;
       } else {
-        int comp = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
-        if (comp != 0)
-          lt = comp < 0;
-       }
-    } break;
-    case ModList::COL_NOTES: {
-      QString leftComments = leftMod->comments();
-      QString rightComments = rightMod->comments();
-      if (leftComments != rightComments) {
-        if (leftComments.isEmpty()) {
-          lt = sortOrder() == Qt::DescendingOrder;
-        } else if (rightComments.isEmpty()) {
-          lt = sortOrder() == Qt::AscendingOrder;
-        } else {
-          lt = leftComments < rightComments;
-        }
+        lt = leftComments < rightComments;
       }
-    } break;
-    case ModList::COL_PRIORITY: {
-      // nop, already compared by priority
-    } break;
-    default: {
-      log::warn("Sorting is not defined for column {}", left.column());
-    } break;
+    }
+  } break;
+  case ModList::COL_PRIORITY: {
+    if (leftMod->isBackup() != rightMod->isBackup()) {
+      lt = leftMod->isBackup();
+    } else if (leftMod->isOverwrite() != rightMod->isOverwrite()) {
+      lt = rightMod->isOverwrite();
+    }
+  } break;
+  default: {
+    log::warn("Sorting is not defined for column {}", left.column());
+  } break;
   }
   return lt;
 }

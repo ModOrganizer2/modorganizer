@@ -157,13 +157,6 @@ public:
 public slots:
   void refresherProgress(const DirectoryRefreshProgress* p);
 
-  void directory_refreshed();
-
-  void toolPluginInvoke();
-  void modPagePluginInvoke();
-
-  void requestNexusCategories();
-
 signals:
   // emitted after the information dialog has been closed, used by tutorials
   //
@@ -289,8 +282,6 @@ private:
   int m_OldExecutableIndex;
 
   QAction* m_ContextAction;
-
-  QAction* m_browseModPage;
 
   CategoryFactory* m_CategoryFactory;
 

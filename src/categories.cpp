@@ -40,15 +40,9 @@ QString CategoryFactory::categoriesFilePath()
   return qApp->property("dataPath").toString() + "/categories.dat";
 }
 
-
-QString CategoryFactory::nexusMappingFilePath()
-{
-  return qApp->property("dataPath").toString() + "/nexuscatmap.dat";
-}
-
-
 CategoryFactory::CategoryFactory() : QObject()
 {
+  atexit(&cleanup);
 }
 
 QString CategoryFactory::nexusMappingFilePath()
