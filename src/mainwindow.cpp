@@ -1289,14 +1289,15 @@ void MainWindow::showEvent(QShowEvent* event)
       }
 
       QMessageBox newCatDialog;
-      newCatDialog.setWindowTitle(tr("Import Categories"));
+      newCatDialog.setWindowTitle(tr("Category Setup"));
       newCatDialog.setText(
           tr("Please choose how to handle the default category setup.\n\n"
              "If you've already connected to Nexus, you can automatically import Nexus "
              "categories for this game (if applicable). Otherwise, use the old Mod "
-             "Organizer default category structure, or leave the categories blank."));
+             "Organizer default category structure, or leave the categories blank (for "
+             "manual setup)."));
       QPushButton importBtn(tr("&Import Nexus Categories"));
-      QPushButton defaultBtn(tr("Use &Default Categories"));
+      QPushButton defaultBtn(tr("Use &Old Category Defaults"));
       QPushButton cancelBtn(tr("Do &Nothing"));
       if (NexusInterface::instance().getAccessManager()->validated()) {
         newCatDialog.addButton(&importBtn, QMessageBox::ButtonRole::AcceptRole);
@@ -1319,7 +1320,7 @@ void MainWindow::showEvent(QShowEvent* event)
       if (m_LastVersion < QVersionNumber(2, 5) &&
           !GlobalSettings::hideCategoryReminder()) {
         QMessageBox migrateCatDialog;
-        migrateCatDialog.setWindowTitle("Category Updates");
+        migrateCatDialog.setWindowTitle("Category Migration");
         migrateCatDialog.setText(
             tr("This is your first time running version 2.5 or higher with an old MO2 "
                "instance. The category system now relies on an updated system to map "
@@ -1335,16 +1336,16 @@ void MainWindow::showEvent(QShowEvent* event)
                "which can be changed at any time in the Settings dialog."));
         QPushButton importBtn(tr("&Import Nexus Categories"));
         QPushButton openSettingsBtn(tr("&Open Categories Dialog"));
-        QPushButton showTutorialBtn(tr("&Show Tutorial"));
+        QPushButton disableBtn(tr("&Disable Nexus Mappings"));
         QPushButton closeBtn(tr("&Close"));
         QCheckBox dontShow(tr("&Don't show this again"));
         if (NexusInterface::instance().getAccessManager()->validated()) {
           migrateCatDialog.addButton(&importBtn, QMessageBox::ButtonRole::AcceptRole);
         }
         migrateCatDialog.addButton(&openSettingsBtn,
-                                   QMessageBox::ButtonRole::AcceptRole);
-        migrateCatDialog.addButton(&showTutorialBtn,
-                                   QMessageBox::ButtonRole::AcceptRole);
+                                   QMessageBox::ButtonRole::ActionRole);
+        migrateCatDialog.addButton(&disableBtn,
+                                   QMessageBox::ButtonRole::DestructiveRole);
         migrateCatDialog.addButton(&closeBtn, QMessageBox::ButtonRole::RejectRole);
         migrateCatDialog.setCheckBox(&dontShow);
         migrateCatDialog.exec();
@@ -1352,8 +1353,8 @@ void MainWindow::showEvent(QShowEvent* event)
           importCategories(dontShow.isChecked());
         } else if (migrateCatDialog.clickedButton() == &openSettingsBtn) {
           this->ui->filtersEdit->click();
-        } else if (migrateCatDialog.clickedButton() == &showTutorialBtn) {
-          // TODO: Implement tutorial
+        } else if (migrateCatDialog.clickedButton() == &disableBtn) {
+          Settings::instance().nexus().setCategoryMappings(false);
         }
         if (dontShow.isChecked()) {
           GlobalSettings::setHideCategoryReminder(true);
