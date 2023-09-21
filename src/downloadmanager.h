@@ -357,14 +357,6 @@ public:
   int getModID(int index) const;
 
   /**
-   * @brief retrieve the nexus category id of the download specified by index
-   *
-   * @param index index of the file to look up
-   * @return the nexus category id
-   */
-  int getCategoryID(int index) const;
-
-  /**
    * @brief retrieve the displayable game name of the download specified by the index
    *
    * @param index index of the file to look up

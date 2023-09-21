@@ -279,12 +279,13 @@ void ModListViewActions::assignCategories() const
   }
   for (auto mod : m_core.modList()->allMods()) {
     ModInfo::Ptr modInfo = ModInfo::getByName(mod);
-    QString file         = modInfo->installationFile();
     int nexusCategory    = modInfo->getNexusCategory();
     if (!nexusCategory) {
-      auto download = m_core.downloadManager()->getDownloadIndex(file);
-      if (download >= 0) {
-        nexusCategory = m_core.downloadManager()->getCategoryID(download);
+      QSettings downloadMeta(m_core.downloadsPath() + "/" +
+                                 modInfo->installationFile() + ".meta",
+                             QSettings::IniFormat);
+      if (downloadMeta.contains("category")) {
+        nexusCategory = downloadMeta.value("category", 0).toInt();
       }
     }
     int newCategory = CategoryFactory::instance()->resolveNexusID(nexusCategory);
@@ -1127,11 +1128,11 @@ void ModListViewActions::remapCategory(const QModelIndexList& indices) const
 
     int categoryID = modInfo->getNexusCategory();
     if (!categoryID) {
-      int downloadIndex =
-          m_core.downloadManager()->getDownloadIndex(modInfo->installationFile());
-      if (downloadIndex >= 0) {
-        auto downloadInfo = m_core.downloadManager()->getFileInfo(downloadIndex);
-        categoryID        = downloadInfo->categoryID;
+      QSettings downloadMeta(m_core.downloadsPath() + "/" +
+                                 modInfo->installationFile() + ".meta",
+                             QSettings::IniFormat);
+      if (downloadMeta.contains("category")) {
+        categoryID = downloadMeta.value("category", 0).toInt();
       }
     }
     unsigned int categoryIndex =
