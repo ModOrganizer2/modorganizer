@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "categoriesdialog.h"
 #include "categories.h"
+#include "categoryimportdialog.h"
 #include "messagedialog.h"
 #include "nexusinterface.h"
 #include "settings.h"
@@ -292,43 +293,59 @@ void CategoriesDialog::nexusRefresh_clicked()
 
 void CategoriesDialog::nexusImport_clicked()
 {
-  if (QMessageBox::question(nullptr, tr("Import Nexus Categories?"),
-                            tr("This will overwrite your existing categories with the "
-                               "loaded Nexus categories."),
-                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+  auto importDialog = CategoryImportDialog(this);
+  if (importDialog.exec() && importDialog.strategy()) {
+    refreshIDs();
     QTableWidget* table = ui->categoriesTable;
     QListWidget* list   = ui->nexusCategoryList;
-
-    table->setRowCount(0);
-    refreshIDs();
+    if (importDialog.strategy() == CategoryImportDialog::Overwrite) {
+      table->setRowCount(0);
+      m_HighestID = 0;
+    }
     int row = 0;
     for (int i = 0; i < list->count(); ++i) {
-      row = table->rowCount();
-      table->insertRow(table->rowCount());
-      //    table->setVerticalHeaderItem(row, new QTableWidgetItem("  "));
-
-      QScopedPointer<QTableWidgetItem> idItem(new QTableWidgetItem());
-      idItem->setData(Qt::DisplayRole, ++m_HighestID);
-
-      QScopedPointer<QTableWidgetItem> nameItem(
-          new QTableWidgetItem(list->item(i)->data(Qt::DisplayRole).toString()));
+      QString name = list->item(i)->data(Qt::DisplayRole).toString();
+      int nexusID  = list->item(i)->data(Qt::UserRole).toInt();
       QStringList nexusLabel;
       QVariantList nexusData;
-      nexusLabel.append(list->item(i)->data(Qt::DisplayRole).toString());
+      nexusLabel.append(name);
       QVariantList data;
-      data.append(QVariant(list->item(i)->data(Qt::DisplayRole).toString()));
-      data.append(QVariant(list->item(i)->data(Qt::UserRole).toInt()));
+      data.append(QVariant(name));
+      data.append(QVariant(nexusID));
       nexusData.insert(nexusData.size(), data);
       QScopedPointer<QTableWidgetItem> nexusCatItem(
           new QTableWidgetItem(nexusLabel.join(", ")));
       nexusCatItem->setData(Qt::UserRole, nexusData);
-      QScopedPointer<QTableWidgetItem> parentIDItem(new QTableWidgetItem());
-      parentIDItem->setData(Qt::DisplayRole, 0);
+      if (!table->findItems(name, Qt::MatchExactly).size()) {
+        row = table->rowCount();
+        table->insertRow(table->rowCount());
+        //    table->setVerticalHeaderItem(row, new QTableWidgetItem("  "));
 
-      table->setItem(row, 0, idItem.take());
-      table->setItem(row, 1, nameItem.take());
-      table->setItem(row, 2, parentIDItem.take());
-      table->setItem(row, 3, nexusCatItem.take());
+        QScopedPointer<QTableWidgetItem> idItem(new QTableWidgetItem());
+        idItem->setData(Qt::DisplayRole, ++m_HighestID);
+
+        QScopedPointer<QTableWidgetItem> nameItem(new QTableWidgetItem(name));
+        QScopedPointer<QTableWidgetItem> parentIDItem(new QTableWidgetItem());
+        parentIDItem->setData(Qt::DisplayRole, 0);  // No parent
+
+        table->setItem(row, 0, idItem.take());
+        table->setItem(row, 1, nameItem.take());
+        table->setItem(row, 2, parentIDItem.take());
+
+        if (importDialog.assign()) {
+          table->setItem(row, 3, nexusCatItem.take());
+        }
+      } else {
+        for (auto item : table->findItems(name, Qt::MatchContains | Qt::MatchWrap)) {
+          if (item->column() == 1 && item->text() == name && importDialog.remap()) {
+            table->setItem(item->row(), 3, nexusCatItem.take());
+          } else if (importDialog.remap()) {
+            QScopedPointer<QTableWidgetItem> blankItem(new QTableWidgetItem());
+            blankItem->setData(Qt::UserRole, QVariantList());
+            table->setItem(item->row(), 3, blankItem.get());
+          }
+        }
+      }
     }
     refreshIDs();
   }
