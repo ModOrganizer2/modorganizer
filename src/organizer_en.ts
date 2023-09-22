@@ -781,59 +781,59 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="downloadlist.cpp" line="352"/>
-        <location filename="downloadlist.cpp" line="411"/>
+        <location filename="downloadlist.cpp" line="414"/>
         <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="375"/>
+        <location filename="downloadlist.cpp" line="378"/>
         <source>Started</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="378"/>
+        <location filename="downloadlist.cpp" line="381"/>
         <source>Canceling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="381"/>
+        <location filename="downloadlist.cpp" line="384"/>
         <source>Pausing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="384"/>
+        <location filename="downloadlist.cpp" line="387"/>
         <source>Canceled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="387"/>
+        <location filename="downloadlist.cpp" line="390"/>
         <source>Paused</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="390"/>
+        <location filename="downloadlist.cpp" line="393"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="393"/>
         <location filename="downloadlist.cpp" line="396"/>
         <location filename="downloadlist.cpp" line="399"/>
+        <location filename="downloadlist.cpp" line="402"/>
         <source>Fetching Info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="402"/>
+        <location filename="downloadlist.cpp" line="405"/>
         <source>Downloaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="405"/>
+        <location filename="downloadlist.cpp" line="408"/>
         <source>Installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="408"/>
+        <location filename="downloadlist.cpp" line="411"/>
         <source>Uninstalled</source>
         <translation type="unfinished"></translation>
     </message>

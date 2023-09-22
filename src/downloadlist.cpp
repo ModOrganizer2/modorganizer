@@ -359,6 +359,9 @@ void DownloadList::buildDownload(Download* download) {
         MOBase::localizedByteSize(m_manager.getFileSize(download->downloadId));
     download->fileTime = m_manager.getFileTime(download->downloadId);
 
+    download->showInfoIncompleteWarning =
+        m_manager.isInfoIncomplete(download->downloadId);
+
     if (!m_manager.isInfoIncomplete(download->downloadId)) {
       const MOBase::ModRepositoryFileInfo* info =
           m_manager.getFileInfo(download->downloadId);

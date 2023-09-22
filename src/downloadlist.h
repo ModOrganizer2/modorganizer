@@ -32,9 +32,9 @@ class Settings;
  **/
 struct Download
 {
-  int downloadId;
-  bool isPending;
-  bool showInfoIncompleteWarning;
+  int downloadId{0};
+  bool isPending{false};
+  bool showInfoIncompleteWarning{false};
   QString name;
   QString status;
   QString size;
