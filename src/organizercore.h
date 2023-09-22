@@ -396,7 +396,7 @@ public slots:
 
   void refreshLists();
 
-  ModInfo::Ptr installDownload(int downloadIndex, int priority = -1);
+  ModInfo::Ptr installDownload(int downloadId, int priority = -1);
   ModInfo::Ptr installArchive(const QString& archivePath, int priority = -1,
                               bool reinstallation     = false,
                               ModInfo::Ptr currentMod = nullptr,
@@ -484,10 +484,10 @@ private:
   static const unsigned int PROBLEM_MO1SCRIPTEXTENDERWORKAROUND = 1;
 
 private:
-  IUserInterface* m_UserInterface;
-  PluginContainer* m_PluginContainer;
+  IUserInterface* m_UserInterface{nullptr};
+  PluginContainer* m_PluginContainer{nullptr};
   QString m_GameName;
-  MOBase::IPluginGame* m_GamePlugin;
+  MOBase::IPluginGame* m_GamePlugin{nullptr};
   ModDataContentHolder m_Contents;
 
   std::unique_ptr<Profile> m_CurrentProfile;

@@ -21,10 +21,30 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define DOWNLOADLIST_H
 
 #include <QAbstractTableModel>
+#include <QList>
 
 class OrganizerCore;
 class DownloadManager;
 class Settings;
+
+/**
+ * @brief model of the list of active, pending, and completed downloads
+ **/
+struct Download
+{
+  int downloadId;
+  bool isPending;
+  bool showInfoIncompleteWarning;
+  QString name;
+  QString status;
+  QString size;
+  QDateTime fileTime;
+  QString modName;
+  QString version;
+  QString modId;
+  QString game;
+  QString tooltip;
+};
 
 /**
  * @brief model of the list of active and completed downloads
@@ -69,6 +89,8 @@ public:
 
   virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
+  const Download& getDownloadByRow(int row);
+
   /**
    * @brief retrieve the data to display in a specific row. Invoked by Qt
    *
@@ -83,8 +105,12 @@ public:
   //
   bool lessThanPredicate(const QModelIndex& left, const QModelIndex& right);
 
-public slots:
+private:
+  void buildDownload(Download* download);
+  Download* getDownload(int downloadId);
+  int getDownloadIndex(int downloadId);
 
+public slots:
   /**
    * @brief used to inform the model that data has changed
    *
@@ -93,10 +119,17 @@ public slots:
   void update(int row);
 
   void aboutToUpdate();
+  void downloadAdded(int downloadId);
+  void downloadUpdated(int downloadId);
+  void downloadRemoved(int downloadId);
+  void pendingDownloadAdded(int index);
+  void pendingDownloadRemoved(int index);
 
 private:
   DownloadManager& m_manager;
   Settings& m_settings;
+
+  QList<Download> m_downloads;
 };
 
 #endif  // DOWNLOADLIST_H

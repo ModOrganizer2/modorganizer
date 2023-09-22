@@ -22,10 +22,10 @@ public:
 private:
   struct DownloadsTabUi
   {
-    QPushButton* refresh;
-    DownloadListView* list;
-    QCheckBox* showHidden;
-    QLineEdit* filter;
+    QPushButton* refresh{nullptr};
+    DownloadListView* list{nullptr};
+    QCheckBox* showHidden{nullptr};
+    QLineEdit* filter{nullptr};
   };
 
   OrganizerCore& m_core;
@@ -33,7 +33,7 @@ private:
   MOBase::FilterWidget m_filter;
 
   void refresh();
-  void resumeDownload(int downloadIndex);
+  void resumeDownload(int downloadId);
 };
 
 #endif  // MODORGANIZER_DOWNLOADTAB_INCLUDED

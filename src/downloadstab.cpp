@@ -12,8 +12,9 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
 
   ui.list->setModel(sourceModel);
   ui.list->setManager(m_core.downloadManager());
+  ui.list->setSourceModel(sourceModel);
   ui.list->setItemDelegate(
-      new DownloadProgressDelegate(m_core.downloadManager(), ui.list));
+      new DownloadProgressDelegate(m_core.downloadManager(), ui.list, sourceModel));
 
   update();
 
@@ -80,9 +81,9 @@ void DownloadsTab::refresh()
   m_core.downloadManager()->refreshList();
 }
 
-void DownloadsTab::resumeDownload(int downloadIndex)
+void DownloadsTab::resumeDownload(int downloadId)
 {
-  m_core.loggedInAction(ui.list, [this, downloadIndex] {
-    m_core.downloadManager()->resumeDownload(downloadIndex);
+  m_core.loggedInAction(ui.list, [this, downloadId] {
+    m_core.downloadManager()->resumeDownload(downloadId);
   });
 }

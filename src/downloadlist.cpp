@@ -37,16 +37,16 @@ DownloadList::DownloadList(OrganizerCore& core, QObject* parent)
 {
   connect(&m_manager, SIGNAL(update(int)), this, SLOT(update(int)));
   connect(&m_manager, SIGNAL(aboutToUpdate()), this, SLOT(aboutToUpdate()));
+  connect(&m_manager, SIGNAL(downloadAdded(int)), this, SLOT(downloadAdded(int)));
+  connect(&m_manager, SIGNAL(downloadUpdated(int)), this, SLOT(downloadUpdated(int)));
+  connect(&m_manager, SIGNAL(downloadRemoved(int)), this, SLOT(downloadRemoved(int)));
+  connect(&m_manager, SIGNAL(pendingDownloadAdded(int)), this, SLOT(pendingDownloadAdded(int)));
+  connect(&m_manager, SIGNAL(pendingDownloadRemoved(int)), this, SLOT(pendingDownloadRemoved(int)));
 }
 
 int DownloadList::rowCount(const QModelIndex& parent) const
 {
-  if (!parent.isValid()) {
-    // root item
-    return m_manager.numTotalDownloads() + m_manager.numPendingDownloads();
-  } else {
-    return 0;
-  }
+  return parent.isValid() ? 0 : m_downloads.size();
 }
 
 int DownloadList::columnCount(const QModelIndex&) const
@@ -93,6 +93,12 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation,
   }
 }
 
+const Download& DownloadList::getDownloadByRow(int row)
+{
+  auto& download = m_downloads[row]; 
+  return download;
+}
+
 Qt::ItemFlags DownloadList::flags(const QModelIndex& idx) const
 {
   return QAbstractTableModel::flags(idx) | Qt::ItemIsDragEnabled;
@@ -107,159 +113,134 @@ QMimeData* DownloadList::mimeData(const QModelIndexList& indexes) const
 
 QVariant DownloadList::data(const QModelIndex& index, int role) const
 {
-  bool pendingDownload = index.row() >= m_manager.numTotalDownloads();
+  if (!index.isValid()) {
+    return QVariant();
+  }
+
+  if (index.row() >= m_downloads.size() || index.row() < 0) {
+    return QVariant();
+  }
+  
+  const auto& download = m_downloads.at(index.row());
+
   if (role == Qt::DisplayRole) {
-    if (pendingDownload) {
-      std::tuple<QString, int, int> nexusids =
-          m_manager.getPendingDownload(index.row() - m_manager.numTotalDownloads());
-      switch (index.column()) {
-      case COL_NAME:
-        return tr("< game %1 mod %2 file %3 >")
-            .arg(std::get<0>(nexusids))
-            .arg(std::get<1>(nexusids))
-            .arg(std::get<2>(nexusids));
-      case COL_SIZE:
-        return tr("Unknown");
-      case COL_STATUS:
-        return tr("Pending");
-      }
-    } else {
-      switch (index.column()) {
-      case COL_NAME:
-        return m_settings.interface().metaDownloads()
-                   ? m_manager.getDisplayName(index.row())
-                   : m_manager.getFileName(index.row());
-      case COL_MODNAME: {
-        if (m_manager.isInfoIncomplete(index.row())) {
-          return {};
-        } else {
-          const MOBase::ModRepositoryFileInfo* info =
-              m_manager.getFileInfo(index.row());
-          return info->modName;
-        }
-      }
-      case COL_VERSION: {
-        if (m_manager.isInfoIncomplete(index.row())) {
-          return {};
-        } else {
-          const MOBase::ModRepositoryFileInfo* info =
-              m_manager.getFileInfo(index.row());
-          return info->version.canonicalString();
-        }
-      }
-      case COL_ID: {
-        if (m_manager.isInfoIncomplete(index.row())) {
-          return {};
-        } else {
-          return QString("%1").arg(m_manager.getModID(index.row()));
-        }
-      }
-      case COL_SOURCEGAME: {
-        if (m_manager.isInfoIncomplete(index.row())) {
-          return {};
-        } else {
-          return QString("%1").arg(m_manager.getDisplayGameName(index.row()));
-        }
-      }
-      case COL_SIZE:
-        return MOBase::localizedByteSize(m_manager.getFileSize(index.row()));
-      case COL_FILETIME:
-        return m_manager.getFileTime(index.row());
-      case COL_STATUS:
-        switch (m_manager.getState(index.row())) {
-        // STATE_DOWNLOADING handled by DownloadProgressDelegate
-        case DownloadManager::STATE_STARTED:
-          return tr("Started");
-        case DownloadManager::STATE_CANCELING:
-          return tr("Canceling");
-        case DownloadManager::STATE_PAUSING:
-          return tr("Pausing");
-        case DownloadManager::STATE_CANCELED:
-          return tr("Canceled");
-        case DownloadManager::STATE_PAUSED:
-          return tr("Paused");
-        case DownloadManager::STATE_ERROR:
-          return tr("Error");
-        case DownloadManager::STATE_FETCHINGMODINFO:
-          return tr("Fetching Info");
-        case DownloadManager::STATE_FETCHINGFILEINFO:
-          return tr("Fetching Info");
-        case DownloadManager::STATE_FETCHINGMODINFO_MD5:
-          return tr("Fetching Info");
-        case DownloadManager::STATE_READY:
-          return tr("Downloaded");
-        case DownloadManager::STATE_INSTALLED:
-          return tr("Installed");
-        case DownloadManager::STATE_UNINSTALLED:
-          return tr("Uninstalled");
-        }
-      }
+
+    // TODO: Figure out how to handle translations
+    switch (index.column()) {
+    case COL_NAME:
+      return download.name;
+    case COL_STATUS:
+      return download.status;
+    case COL_FILETIME:
+      return download.fileTime;
+    case COL_SIZE:
+      return download.size;
+    case COL_MODNAME:
+      return download.modName;
+    case COL_VERSION:
+      return download.version;
+    case COL_ID:
+      return download.modId;
+    case COL_SOURCEGAME:
+      return download.game;
     }
   } else if (role == Qt::ForegroundRole && index.column() == COL_STATUS) {
-    if (pendingDownload) {
+    if (download.isPending) {
       return QColor(Qt::darkBlue);
     } else {
-      DownloadManager::DownloadState state = m_manager.getState(index.row());
-      if (state == DownloadManager::STATE_READY)
+      if (download.status == "Downloaded") {
         return QColor(Qt::darkGreen);
-      else if (state == DownloadManager::STATE_UNINSTALLED)
+      } else if (download.status == "Paused") {
         return QColor(Qt::darkYellow);
-      else if (state == DownloadManager::STATE_PAUSED)
+      } else if (download.status == "Uninstalled") {
         return QColor(Qt::darkRed);
+      }
     }
   } else if (role == Qt::ToolTipRole) {
-    if (pendingDownload) {
-      return tr("Pending download");
-    } else {
-      QString text = m_manager.getFileName(index.row()) + "\n";
-      if (m_manager.isInfoIncomplete(index.row())) {
-        text += tr("Information missing, please select \"Query Info\" from the context "
-                   "menu to re-retrieve.");
-      } else {
-        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(index.row());
-        return QString("%1 (ID %2) %3<br><span>%4</span>")
-            .arg(info->modName)
-            .arg(m_manager.getModID(index.row()))
-            .arg(info->version.canonicalString())
-            .arg(info->description.chopped(4096));
-      }
-      return text;
-    }
+    return download.tooltip;
   } else if (role == Qt::DecorationRole && index.column() == COL_NAME) {
-    if (!pendingDownload &&
-        m_manager.getState(index.row()) >= DownloadManager::STATE_READY &&
-        m_manager.isInfoIncomplete(index.row()))
+    if (download.showInfoIncompleteWarning) {
       return QIcon(":/MO/gui/warning_16");
+    }
   } else if (role == Qt::TextAlignmentRole) {
     if (index.column() == COL_SIZE)
       return QVariant(Qt::AlignVCenter | Qt::AlignRight);
     else
       return QVariant(Qt::AlignVCenter | Qt::AlignLeft);
   }
+
   return QVariant();
 }
 
-void DownloadList::aboutToUpdate()
-{
-  emit beginResetModel();
+void DownloadList::downloadAdded(int downloadId) {
+  auto download = new Download;
+  download->isPending = false;
+  download->downloadId = downloadId;
+  buildDownload(download);
+
+  m_downloads.push_back(*download);
 }
 
-void DownloadList::update(int row)
-{
-  if (row < 0)
-    emit endResetModel();
-  else if (row < this->rowCount())
-    emit dataChanged(
-        this->index(row, 0, QModelIndex()),
-        this->index(row, this->columnCount(QModelIndex()) - 1, QModelIndex()));
-  else
-    log::error("invalid row {} in download list, update failed", row);
+void DownloadList::downloadUpdated(int downloadId) {
+  auto download = getDownload(downloadId);
+  if (!download)
+    return;
+
+  buildDownload(download);
+  auto index = getDownloadIndex(downloadId);
+  if (index < 0) {
+    return;
+  }
+
+  m_downloads[index].downloadId = download->downloadId;
+  m_downloads[index].fileTime   = download->fileTime;
+  m_downloads[index].game       = download->game;
+  m_downloads[index].isPending  = download->isPending;
+  m_downloads[index].modId      = download->modId;
+  m_downloads[index].modName    = download->modName;
+  m_downloads[index].name       = download->name;
+  m_downloads[index].size       = download->size;
+  m_downloads[index].status     = download->status;
+  m_downloads[index].tooltip    = download->tooltip;
+  m_downloads[index].version    = download->version;
+  m_downloads[index].showInfoIncompleteWarning = download->showInfoIncompleteWarning;
+}
+
+void DownloadList::downloadRemoved(int downloadId) {
+  auto index = getDownloadIndex(downloadId);
+  if (index < 0) {
+    return;
+  }
+
+  m_downloads.removeAt(index);
+}
+
+void DownloadList::pendingDownloadAdded(int index) {
+  auto download       = new Download;
+  download->isPending = true;
+  download->downloadId = index;
+  buildDownload(download);
+
+  m_downloads.push_back(*download);
+  delete download;
+}
+
+void DownloadList::pendingDownloadRemoved(int index) {
+  auto downloadIndex = getDownloadIndex(index);
+  if (downloadIndex < 0) {
+    return;
+  }
+
+  m_downloads.removeAt(downloadIndex);
 }
 
 bool DownloadList::lessThanPredicate(const QModelIndex& left, const QModelIndex& right)
 {
   int leftIndex  = left.row();
   int rightIndex = right.row();
+  int lDownloadId = m_downloads[leftIndex].downloadId;
+  int rDownloadId = m_downloads[rightIndex].downloadId;
+
   if ((leftIndex < m_manager.numTotalDownloads()) &&
       (rightIndex < m_manager.numTotalDownloads())) {
     if (left.column() == DownloadList::COL_NAME) {
@@ -270,13 +251,13 @@ bool DownloadList::lessThanPredicate(const QModelIndex& left, const QModelIndex&
     } else if (left.column() == DownloadList::COL_MODNAME) {
       QString leftName, rightName;
 
-      if (!m_manager.isInfoIncomplete(left.row())) {
-        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(left.row());
+      if (!m_manager.isInfoIncomplete(lDownloadId)) {
+        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(lDownloadId);
         leftName                                  = info->modName;
       }
 
-      if (!m_manager.isInfoIncomplete(right.row())) {
-        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(right.row());
+      if (!m_manager.isInfoIncomplete(rDownloadId)) {
+        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(rDownloadId);
         rightName                                 = info->modName;
       }
 
@@ -284,13 +265,13 @@ bool DownloadList::lessThanPredicate(const QModelIndex& left, const QModelIndex&
     } else if (left.column() == DownloadList::COL_VERSION) {
       MOBase::VersionInfo versionLeft, versionRight;
 
-      if (!m_manager.isInfoIncomplete(left.row())) {
-        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(left.row());
+      if (!m_manager.isInfoIncomplete(lDownloadId)) {
+        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(lDownloadId);
         versionLeft                               = info->version;
       }
 
-      if (!m_manager.isInfoIncomplete(right.row())) {
-        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(right.row());
+      if (!m_manager.isInfoIncomplete(rDownloadId)) {
+        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(rDownloadId);
         versionRight                              = info->version;
       }
 
@@ -298,35 +279,163 @@ bool DownloadList::lessThanPredicate(const QModelIndex& left, const QModelIndex&
     } else if (left.column() == DownloadList::COL_ID) {
       int leftID = 0, rightID = 0;
 
-      if (!m_manager.isInfoIncomplete(left.row())) {
-        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(left.row());
+      if (!m_manager.isInfoIncomplete(lDownloadId)) {
+        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(lDownloadId);
         leftID                                    = info->modID;
       }
 
-      if (!m_manager.isInfoIncomplete(right.row())) {
-        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(right.row());
+      if (!m_manager.isInfoIncomplete(rDownloadId)) {
+        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(rDownloadId);
         rightID                                   = info->modID;
       }
 
       return leftID < rightID;
     } else if (left.column() == DownloadList::COL_STATUS) {
-      DownloadManager::DownloadState leftState  = m_manager.getState(left.row());
-      DownloadManager::DownloadState rightState = m_manager.getState(right.row());
+      DownloadManager::DownloadState leftState  = m_manager.getState(lDownloadId);
+      DownloadManager::DownloadState rightState = m_manager.getState(rDownloadId);
       if (leftState == rightState)
-        return m_manager.getFileTime(left.row()) > m_manager.getFileTime(right.row());
+        return m_manager.getFileTime(lDownloadId) >
+               m_manager.getFileTime(rDownloadId);
       else
         return leftState < rightState;
     } else if (left.column() == DownloadList::COL_SIZE) {
-      return m_manager.getFileSize(left.row()) < m_manager.getFileSize(right.row());
+      return m_manager.getFileSize(lDownloadId) < m_manager.getFileSize(rDownloadId);
     } else if (left.column() == DownloadList::COL_FILETIME) {
-      return m_manager.getFileTime(left.row()) < m_manager.getFileTime(right.row());
+      return m_manager.getFileTime(lDownloadId) <
+             m_manager.getFileTime(rDownloadId);
     } else if (left.column() == DownloadList::COL_SOURCEGAME) {
-      return m_manager.getDisplayGameName(left.row()) <
-             m_manager.getDisplayGameName(right.row());
+      return m_manager.getDisplayGameName(lDownloadId) <
+             m_manager.getDisplayGameName(rDownloadId);
     } else {
       return leftIndex < rightIndex;
     }
   } else {
     return leftIndex < rightIndex;
   }
+}
+
+Download* DownloadList::getDownload(int downloadId) {
+  auto download = std::find_if(m_downloads.begin(), m_downloads.end(),
+                      [downloadId](const Download download) {
+                        return download.downloadId == downloadId;
+                      });
+  if (download != m_downloads.end()) {
+    return download;
+  }
+
+  return nullptr;
+}
+
+int DownloadList::getDownloadIndex(int downloadId)
+{
+  auto download = std::find_if(m_downloads.begin(), m_downloads.end(),
+                               [downloadId](const Download download) {
+                                 return download.downloadId == downloadId;
+                               });
+  
+  if (download != m_downloads.end()) {
+    return download - m_downloads.begin();
+  }
+
+  return -1;
+}
+
+void DownloadList::buildDownload(Download* download) {
+  if (download->isPending) {
+    // In the case of a pending download, the downloadId will be the index
+    std::tuple<QString, int, int> nexusids = m_manager.getPendingDownload(download->downloadId);
+    download->name = tr("< game %1 mod %2 file %3 >")
+        .arg(std::get<0>(nexusids))
+        .arg(std::get<1>(nexusids))
+        .arg(std::get<2>(nexusids));
+    download->status = tr("Pending");
+    download->size   = tr("Unknown");
+  } else {
+    download->name = m_settings.interface().metaDownloads()
+                         ? m_manager.getDisplayName(download->downloadId)
+                         : m_manager.getFileName(download->downloadId);
+
+    download->size =
+        MOBase::localizedByteSize(m_manager.getFileSize(download->downloadId));
+    download->fileTime = m_manager.getFileTime(download->downloadId);
+
+    if (!m_manager.isInfoIncomplete(download->downloadId)) {
+      const MOBase::ModRepositoryFileInfo* info =
+          m_manager.getFileInfo(download->downloadId);
+      download->modName = info->modName;
+      download->version = info->version.canonicalString();
+      download->modId   = QString("%1").arg(m_manager.getModID(download->downloadId));
+      download->game =
+          QString("%1").arg(m_manager.getDisplayGameName(download->downloadId));
+    }
+
+    switch (m_manager.getState(download->downloadId)) {
+    // STATE_DOWNLOADING handled by DownloadProgressDelegate
+    case DownloadManager::STATE_STARTED:
+      download->status = tr("Started");
+      break;
+    case DownloadManager::STATE_CANCELING:
+      download->status = tr("Canceling");
+      break;
+    case DownloadManager::STATE_PAUSING:
+      download->status = tr("Pausing");
+      break;
+    case DownloadManager::STATE_CANCELED:
+      download->status = tr("Canceled");
+      break;
+    case DownloadManager::STATE_PAUSED:
+      download->status = tr("Paused");
+      break;
+    case DownloadManager::STATE_ERROR:
+      download->status = tr("Error");
+      break;
+    case DownloadManager::STATE_FETCHINGMODINFO:
+      download->status = tr("Fetching Info");
+      break;
+    case DownloadManager::STATE_FETCHINGFILEINFO:
+      download->status = tr("Fetching Info");
+      break;
+    case DownloadManager::STATE_FETCHINGMODINFO_MD5:
+      download->status = tr("Fetching Info");
+      break;
+    case DownloadManager::STATE_READY:
+      download->status = tr("Downloaded");
+      break;
+    case DownloadManager::STATE_INSTALLED:
+      download->status = tr("Installed");
+      break;
+    case DownloadManager::STATE_UNINSTALLED:
+      download->status = tr("Uninstalled");
+      break;
+    default:
+      download->status = tr("Unknown");
+    }
+  }
+}
+
+void DownloadList::update(int downloadId)
+{
+  if (downloadId < 0) {
+    emit endResetModel();
+    return;
+  }
+
+  auto row = getDownloadIndex(downloadId);
+
+  if (row < 0) {
+    log::error("invalid row {} in download list, update failed", row);
+    return;
+  }
+
+  auto download = getDownload(downloadId);
+  buildDownload(download);
+
+  emit dataChanged(
+    this->index(row, 0, QModelIndex()),
+    this->index(row, this->columnCount(QModelIndex()) - 1, QModelIndex()));  
+}
+
+void DownloadList::aboutToUpdate()
+{
+  emit beginResetModel();
 }
