@@ -119,7 +119,7 @@ private:
                                    const QStringList& URLs);
     static DownloadInfo* createFromMeta(const QString& filePath, bool showHidden,
                                         const QString outputDirectory,
-                                        std::optional<uint64_t> fileSize = {});
+                                        std::optional<uint64_t> fileSize = {});    
 
     /**
      * @brief rename the file
@@ -147,6 +147,9 @@ private:
           m_DownloadAcc(tag::rolling_window::window_size = 200),
           m_DownloadTimeAcc(tag::rolling_window::window_size = 200)
     {}
+
+  public: 
+    static void resetNextDownloadID();
   };
 
   friend class DownloadManagerProxy;

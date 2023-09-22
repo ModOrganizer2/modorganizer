@@ -79,6 +79,10 @@ DownloadManager::DownloadInfo::createNew(const ModRepositoryFileInfo* fileInfo,
   return info;
 }
 
+void DownloadManager::DownloadInfo::resetNextDownloadID() {
+  s_NextDownloadID = 0;
+}
+
 DownloadManager::DownloadInfo*
 DownloadManager::DownloadInfo::createFromMeta(const QString& filePath, bool showHidden,
                                               const QString outputDirectory,
@@ -379,6 +383,8 @@ void DownloadManager::refreshList()
       cx.seen.insert(
           QFileInfo(d->m_Output.fileName()).fileName().toLower().toStdWString());
     }
+
+    DownloadInfo::resetNextDownloadID();
 
     env::forEachEntry(
         QDir::toNativeSeparators(m_OutputDirectory).toStdWString(), &cx, nullptr,
