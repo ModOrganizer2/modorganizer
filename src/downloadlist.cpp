@@ -38,7 +38,6 @@ DownloadList::DownloadList(OrganizerCore& core, QObject* parent)
   connect(&m_manager, SIGNAL(update(int)), this, SLOT(update(int)));
   connect(&m_manager, SIGNAL(aboutToUpdate()), this, SLOT(aboutToUpdate()));
   connect(&m_manager, SIGNAL(downloadAdded(int)), this, SLOT(downloadAdded(int)));
-  connect(&m_manager, SIGNAL(downloadUpdated(int)), this, SLOT(downloadUpdated(int)));
   connect(&m_manager, SIGNAL(downloadRemoved(int)), this, SLOT(downloadRemoved(int)));
   connect(&m_manager, SIGNAL(pendingDownloadAdded(int)), this, SLOT(pendingDownloadAdded(int)));
   connect(&m_manager, SIGNAL(pendingDownloadRemoved(int)), this, SLOT(pendingDownloadRemoved(int)));
@@ -430,8 +429,7 @@ void DownloadList::update(int downloadId)
     return;
   }
 
-  auto download = getDownload(downloadId);
-  buildDownload(download);
+  downloadUpdated(downloadId);
 
   emit dataChanged(
     this->index(row, 0, QModelIndex()),

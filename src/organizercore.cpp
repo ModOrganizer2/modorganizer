@@ -819,6 +819,8 @@ OrganizerCore::doInstall(const QString& archivePath, GuessedValue<QString> modNa
 
 ModInfo::Ptr OrganizerCore::installDownload(int downloadId, int priority)
 {
+  ScopedDisableDirWatcher scopedDirwatcher(&m_DownloadManager);
+
   try {
     QString fileName        = m_DownloadManager.getFilePath(downloadId);
     QString gameName        = m_DownloadManager.getGameName(downloadId);

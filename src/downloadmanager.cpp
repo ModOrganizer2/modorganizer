@@ -157,6 +157,20 @@ DownloadManager::DownloadInfo::createFromMeta(const QString& filePath, bool show
   return info;
 }
 
+ScopedDisableDirWatcher::ScopedDisableDirWatcher(DownloadManager* downloadManager)
+{
+  m_downloadManager = downloadManager;
+  m_downloadManager->startDisableDirWatcher();
+  log::debug("Scoped Disable DirWatcher: Started");
+}
+
+ScopedDisableDirWatcher::~ScopedDisableDirWatcher()
+{
+  m_downloadManager->endDisableDirWatcher();
+  m_downloadManager = nullptr;
+  log::debug("Scoped Disable DirWatcher: Stopped");
+}
+
 void DownloadManager::startDisableDirWatcher()
 {
   DownloadManager::m_DirWatcherDisabler++;
@@ -321,10 +335,10 @@ void DownloadManager::refreshList()
 {
   TimeThis tt("DownloadManager::refreshList()");
 
-  try {
-    // avoid triggering other refreshes
-    startDisableDirWatcher();
+  // avoid triggering other refreshes
+  ScopedDisableDirWatcher scopedDirWatcher(this);
 
+  try {
     int downloadsBefore = m_ActiveDownloads.size();
 
     // remove finished downloads
@@ -429,9 +443,6 @@ void DownloadManager::refreshList()
     log::debug("saw {} downloads", m_ActiveDownloads.size());
 
     emit update(-1);
-
-    // let watcher trigger refreshes again
-    endDisableDirWatcher();
 
   } catch (const std::bad_alloc&) {
     reportError(tr("Memory allocation error (in refreshing directory)."));
@@ -770,7 +781,7 @@ void DownloadManager::addNXMDownload(const QString& url)
 void DownloadManager::removeFile(int downloadId, bool deleteFile)
 {
   // Avoid triggering refreshes from DirWatcher
-  startDisableDirWatcher();
+  ScopedDisableDirWatcher scopedDirWatcher(this);
 
   DownloadInfo* download = getDownloadInfoById(downloadId);
 
@@ -779,7 +790,6 @@ void DownloadManager::removeFile(int downloadId, bool deleteFile)
       (download->m_State == STATE_DOWNLOADING)) {
     // shouldn't have been possible
     log::error("tried to remove active download");
-    endDisableDirWatcher();
     return;
   }
 
@@ -790,7 +800,6 @@ void DownloadManager::removeFile(int downloadId, bool deleteFile)
   if (deleteFile) {
     if (!shellDelete(QStringList(filePath), true)) {
       reportError(tr("failed to delete %1").arg(filePath));
-      endDisableDirWatcher();
       return;
     }
 
@@ -804,8 +813,6 @@ void DownloadManager::removeFile(int downloadId, bool deleteFile)
       metaSettings.setValue("removed", true);
   }
   m_DownloadRemoved(downloadId);
-
-  endDisableDirWatcher();
 }
 
 class LessThanWrapper
@@ -910,7 +917,7 @@ void DownloadManager::removeDownload(int downloadId, bool deleteFile)
 
     emit downloadRemoved(downloadId);
     emit update(-1);
-    endDisableDirWatcher();
+
   } catch (const std::exception& e) {
     log::error("failed to remove download: {}", e.what());
   }
@@ -1381,14 +1388,12 @@ const ModRepositoryFileInfo* DownloadManager::getFileInfo(int downloadId) const
 void DownloadManager::markInstalled(int downloadId)
 {
   // Avoid triggering refreshes from DirWatcher
-  startDisableDirWatcher();
+  ScopedDisableDirWatcher scopedDirWatcher(this);
 
   DownloadInfo* info = getDownloadInfoById(downloadId);
   QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
   metaFile.setValue("installed", true);
   metaFile.setValue("uninstalled", false);
-
-  endDisableDirWatcher();
 
   setState(info, STATE_INSTALLED);
 }
@@ -1423,13 +1428,11 @@ DownloadManager::DownloadInfo* DownloadManager::getDownloadInfo(QString fileName
 void DownloadManager::markUninstalled(int downloadId)
 {
   // Avoid triggering refreshes from DirWatcher
-  startDisableDirWatcher();
+  ScopedDisableDirWatcher scopedDirWatcher(this);
 
   DownloadInfo* info = getDownloadInfoById(downloadId);
   QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
   metaFile.setValue("uninstalled", true);
-
-  endDisableDirWatcher();
 
   setState(info, STATE_UNINSTALLED);
 }
@@ -1612,7 +1615,7 @@ void DownloadManager::downloadReadyRead()
 void DownloadManager::createMetaFile(DownloadInfo* info)
 {
   // Avoid triggering refreshes from DirWatcher
-  startDisableDirWatcher();
+  ScopedDisableDirWatcher scopedDirWatcher(this);
 
   QSettings metaFile(QString("%1.meta").arg(info->m_Output.fileName()),
                      QSettings::IniFormat);
@@ -1636,7 +1639,6 @@ void DownloadManager::createMetaFile(DownloadInfo* info)
                                   (info->m_State == DownloadManager::STATE_ERROR));
   metaFile.setValue("removed", info->m_Hidden);
 
-  endDisableDirWatcher();
   emit update(info->getDownloadID());
 }
 
@@ -2107,7 +2109,7 @@ void DownloadManager::downloadFinished(int downloadId)
 {
   DownloadInfo* info = getDownloadInfoById(downloadId);
 
-  if (info != nullptr) {
+  if (info != nullptr) {    
     QNetworkReply* reply = info->m_Reply;
     QByteArray data;
     if (reply->isOpen() && info->m_HasData) {

@@ -469,7 +469,6 @@ Q_SIGNALS:
   void downloadAdded();
 
   void downloadAdded(int downloadId);
-  void downloadUpdated(int downloadId);
   void downloadRemoved(int downloadId);
   void pendingDownloadAdded(int index);
   void pendingDownloadRemoved(int index);
@@ -638,6 +637,17 @@ private:
   MOBase::IPluginGame const* m_ManagedGame;
 
   QTimer m_TimeoutTimer;
+};
+
+
+class ScopedDisableDirWatcher
+{
+public:
+  ScopedDisableDirWatcher(DownloadManager* downloadManager);
+  ~ScopedDisableDirWatcher();
+
+private:
+  DownloadManager* m_downloadManager;
 };
 
 #endif  // DOWNLOADMANAGER_H

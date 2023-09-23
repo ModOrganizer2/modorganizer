@@ -109,6 +109,7 @@ private:
   void buildDownload(Download* download);
   Download* getDownload(int downloadId);
   int getDownloadIndex(int downloadId);
+  void downloadUpdated(int downloadId);
 
 public slots:
   /**
@@ -119,8 +120,7 @@ public slots:
   void update(int row);
 
   void aboutToUpdate();
-  void downloadAdded(int downloadId);
-  void downloadUpdated(int downloadId);
+  void downloadAdded(int downloadId);  
   void downloadRemoved(int downloadId);
   void pendingDownloadAdded(int index);
   void pendingDownloadRemoved(int index);
