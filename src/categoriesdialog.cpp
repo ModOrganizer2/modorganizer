@@ -234,7 +234,7 @@ void CategoriesDialog::fillTable()
     table->setItem(row, 3, nexusCatItem.take());
   }
 
-  for (auto nexusCat : categories.m_NexusMap) {
+  for (const auto& nexusCat : categories.m_NexusMap) {
     QScopedPointer<QListWidgetItem> nexusItem(new QListWidgetItem());
     nexusItem->setData(Qt::DisplayRole, nexusCat.second.name());
     nexusItem->setData(Qt::UserRole, nexusCat.second.ID());
@@ -355,7 +355,7 @@ void CategoriesDialog::nxmGameInfoAvailable(QString gameName, QVariant,
   CategoryFactory& catFactory = CategoryFactory::instance();
   QListWidget* list           = ui->nexusCategoryList;
   list->clear();
-  for (auto category : categories) {
+  for (const auto& category : categories) {
     auto catMap = category.toMap();
     QScopedPointer<QListWidgetItem> nexusItem(new QListWidgetItem());
     nexusItem->setData(Qt::DisplayRole, catMap["name"].toString());

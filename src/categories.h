@@ -92,7 +92,7 @@ public:
     Category(int sortValue, int id, const QString name, int parentID,
              std::vector<NexusCategory> nexusCats)
         : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false),
-          m_ParentID(parentID), m_NexusCats(nexusCats)
+          m_ParentID(parentID), m_NexusCats(std::move(nexusCats))
     {}
 
     friend bool operator<(const Category& LHS, const Category& RHS)
@@ -132,7 +132,7 @@ public:
    **/
   void saveCategories();
 
-  void setNexusCategories(std::vector<CategoryFactory::NexusCategory>& nexusCats);
+  void setNexusCategories(const std::vector<CategoryFactory::NexusCategory>& nexusCats);
 
   void refreshNexusCategories(CategoriesDialog* dialog);
 

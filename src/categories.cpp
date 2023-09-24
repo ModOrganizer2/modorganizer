@@ -162,16 +162,14 @@ void CategoryFactory::reset()
 
 void CategoryFactory::setParents()
 {
-  for (std::vector<Category>::iterator iter = m_Categories.begin();
-       iter != m_Categories.end(); ++iter) {
-    iter->setHasChildren(false);
+  for (auto& category : m_Categories) {
+    category.setHasChildren(false);
   }
 
-  for (std::vector<Category>::const_iterator categoryIter = m_Categories.begin();
-       categoryIter != m_Categories.end(); ++categoryIter) {
-    if (categoryIter->parentID() != 0) {
+  for (const auto& category : m_Categories) {
+    if (category.parentID() != 0) {
       std::map<int, unsigned int>::const_iterator iter =
-          m_IDMap.find(categoryIter->parentID());
+          m_IDMap.find(category.parentID());
       if (iter != m_IDMap.end()) {
         m_Categories[iter->second].setHasChildren(true);
       }
@@ -195,17 +193,16 @@ void CategoryFactory::saveCategories()
   }
 
   categoryFile.resize(0);
-  for (std::vector<Category>::const_iterator iter = m_Categories.begin();
-       iter != m_Categories.end(); ++iter) {
-    if (iter->ID() == 0) {
+  for (const auto& category : m_Categories) {
+    if (category.ID() == 0) {
       continue;
     }
     QByteArray line;
-    line.append(QByteArray::number(iter->ID()))
+    line.append(QByteArray::number(category.ID()))
         .append("|")
-        .append(iter->name().toUtf8())
+        .append(category.name().toUtf8())
         .append("|")
-        .append(QByteArray::number(iter->parentID()))
+        .append(QByteArray::number(category.parentID()))
         .append("\n");
     categoryFile.write(line);
   }
@@ -219,11 +216,11 @@ void CategoryFactory::saveCategories()
   }
 
   nexusMapFile.resize(0);
-  for (auto iter = m_NexusMap.begin(); iter != m_NexusMap.end(); ++iter) {
+  for (const auto& nexMap : m_NexusMap) {
     QByteArray line;
-    line.append(QByteArray::number(iter->second.categoryID())).append("|");
-    line.append(iter->second.name().toUtf8()).append("|");
-    line.append(QByteArray::number(iter->second.ID())).append("\n");
+    line.append(QByteArray::number(nexMap.second.categoryID())).append("|");
+    line.append(nexMap.second.name().toUtf8()).append("|");
+    line.append(QByteArray::number(nexMap.second.ID())).append("\n");
     nexusMapFile.write(line);
   }
   nexusMapFile.close();
@@ -269,7 +266,7 @@ void CategoryFactory::addCategory(int id, const QString& name,
                                   const std::vector<NexusCategory>& nexusCats,
                                   int parentID)
 {
-  for (auto nexusCat : nexusCats) {
+  for (const auto& nexusCat : nexusCats) {
     m_NexusMap.insert_or_assign(nexusCat.ID(), nexusCat);
     m_NexusMap.at(nexusCat.ID()).setCategoryID(id);
   }
@@ -279,9 +276,9 @@ void CategoryFactory::addCategory(int id, const QString& name,
 }
 
 void CategoryFactory::setNexusCategories(
-    std::vector<CategoryFactory::NexusCategory>& nexusCats)
+    const std::vector<CategoryFactory::NexusCategory>& nexusCats)
 {
-  for (auto nexusCat : nexusCats) {
+  for (const auto& nexusCat : nexusCats) {
     m_NexusMap.emplace(nexusCat.ID(), nexusCat);
   }
 
