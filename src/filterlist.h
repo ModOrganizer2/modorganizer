@@ -9,7 +9,6 @@ namespace Ui
 class MainWindow;
 };
 class CategoryFactory;
-class PluginContainer;
 class Settings;
 class OrganizerCore;
 
