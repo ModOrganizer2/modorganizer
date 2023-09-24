@@ -299,14 +299,6 @@ public:
   QString getFileName(int index) const;
 
   /**
-   * @brief retrieve the file index from the filename
-   *
-   * @param filename the filename of the download
-   * @return the index of the file
-   */
-  int getDownloadIndex(QString filename) const;
-
-  /**
    * @brief retrieve the file size of the download specified by index
    *
    * @param index index of the file to look up
