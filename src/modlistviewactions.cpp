@@ -1135,8 +1135,7 @@ void ModListViewActions::remapCategory(const QModelIndexList& indices) const
         categoryID = downloadMeta.value("category", 0).toInt();
       }
     }
-    unsigned int categoryIndex =
-        CategoryFactory::instance().resolveNexusID(categoryID);
+    unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(categoryID);
     if (categoryIndex != 0)
       modInfo->setPrimaryCategory(
           CategoryFactory::instance().getCategoryID(categoryIndex));

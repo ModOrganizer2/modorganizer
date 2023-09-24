@@ -58,46 +58,62 @@ public:
 public:
   struct NexusCategory
   {
-    NexusCategory(const QString& name, const int nexusID) : m_Name(name), m_ID(nexusID)
+    NexusCategory(const QString name, const int nexusID) : m_Name(name), m_ID(nexusID)
     {}
-    QString m_Name;
-    int m_ID;
-    int m_CategoryID = -1;
 
     friend bool operator==(const NexusCategory& LHS, const NexusCategory& RHS)
     {
-      return LHS.m_ID == RHS.m_ID;
+      return LHS.ID() == RHS.ID();
     }
 
     friend bool operator==(const NexusCategory& LHS, const int RHS)
     {
-      return LHS.m_ID == RHS;
+      return LHS.ID() == RHS;
     }
 
     friend bool operator<(const NexusCategory& LHS, const NexusCategory& RHS)
     {
-      return LHS.m_ID < RHS.m_ID;
+      return LHS.ID() < RHS.ID();
     }
+
+    QString name() const { return m_Name; }
+    int ID() const { return m_ID; }
+    int categoryID() const { return m_CategoryID; }
+    void setCategoryID(int categoryID) { m_CategoryID = categoryID; }
+
+  private:
+    QString m_Name;
+    int m_ID;
+    int m_CategoryID = -1;
   };
 
   struct Category
   {
-    Category(int sortValue, int id, const QString& name, int parentID,
+    Category(int sortValue, int id, const QString name, int parentID,
              std::vector<NexusCategory> nexusCats)
         : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false),
           m_ParentID(parentID), m_NexusCats(nexusCats)
     {}
-    int m_SortValue;
-    int m_ID;
-    int m_ParentID;
-    bool m_HasChildren;
-    QString m_Name;
-    std::vector<NexusCategory> m_NexusCats;
 
     friend bool operator<(const Category& LHS, const Category& RHS)
     {
-      return LHS.m_SortValue < RHS.m_SortValue;
+      return LHS.sortValue() < RHS.sortValue();
     }
+
+    int sortValue() const { return m_SortValue; }
+    int ID() const { return m_ID; }
+    int parentID() const { return m_ParentID; }
+    QString name() const { return m_Name; }
+    bool hasChildren() const { return m_HasChildren; }
+    void setHasChildren(bool b) { m_HasChildren = b; }
+
+  private:
+    int m_SortValue;
+    int m_ID;
+    int m_ParentID;
+    QString m_Name;
+    std::vector<NexusCategory> m_NexusCats;
+    bool m_HasChildren;
   };
 
 public:

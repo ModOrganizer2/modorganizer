@@ -131,7 +131,7 @@ void CategoryFactory::loadCategories()
                        nexCells[0].constData());
           }
           m_NexusMap.insert_or_assign(nexID, NexusCategory(nexName, nexID));
-          m_NexusMap.at(nexID).m_CategoryID = catID;
+          m_NexusMap.at(nexID).setCategoryID(catID);
         } else {
           log::error(tr("invalid nexus category line {}: {} ({} cells)").toStdString(),
                      lineNum, nexLine.constData(), nexCells.count());
@@ -157,10 +157,6 @@ void CategoryFactory::reset()
   m_Categories.clear();
   m_NexusMap.clear();
   m_IDMap.clear();
-  // 28 =
-  // 43 = Savegames (makes no sense to install them through MO)
-  // 45 = Videos and trailers
-  // 87 = Miscelanous
   addCategory(0, "None", std::vector<NexusCategory>(), 0);
 }
 
@@ -168,16 +164,16 @@ void CategoryFactory::setParents()
 {
   for (std::vector<Category>::iterator iter = m_Categories.begin();
        iter != m_Categories.end(); ++iter) {
-    iter->m_HasChildren = false;
+    iter->setHasChildren(false);
   }
 
   for (std::vector<Category>::const_iterator categoryIter = m_Categories.begin();
        categoryIter != m_Categories.end(); ++categoryIter) {
-    if (categoryIter->m_ParentID != 0) {
+    if (categoryIter->parentID() != 0) {
       std::map<int, unsigned int>::const_iterator iter =
-          m_IDMap.find(categoryIter->m_ParentID);
+          m_IDMap.find(categoryIter->parentID());
       if (iter != m_IDMap.end()) {
-        m_Categories[iter->second].m_HasChildren = true;
+        m_Categories[iter->second].setHasChildren(true);
       }
     }
   }
@@ -201,15 +197,15 @@ void CategoryFactory::saveCategories()
   categoryFile.resize(0);
   for (std::vector<Category>::const_iterator iter = m_Categories.begin();
        iter != m_Categories.end(); ++iter) {
-    if (iter->m_ID == 0) {
+    if (iter->ID() == 0) {
       continue;
     }
     QByteArray line;
-    line.append(QByteArray::number(iter->m_ID))
+    line.append(QByteArray::number(iter->ID()))
         .append("|")
-        .append(iter->m_Name.toUtf8())
+        .append(iter->name().toUtf8())
         .append("|")
-        .append(QByteArray::number(iter->m_ParentID))
+        .append(QByteArray::number(iter->parentID()))
         .append("\n");
     categoryFile.write(line);
   }
@@ -225,9 +221,9 @@ void CategoryFactory::saveCategories()
   nexusMapFile.resize(0);
   for (auto iter = m_NexusMap.begin(); iter != m_NexusMap.end(); ++iter) {
     QByteArray line;
-    line.append(QByteArray::number(iter->second.m_CategoryID)).append("|");
-    line.append(iter->second.m_Name.toUtf8()).append("|");
-    line.append(QByteArray::number(iter->second.m_ID)).append("\n");
+    line.append(QByteArray::number(iter->second.categoryID())).append("|");
+    line.append(iter->second.name().toUtf8()).append("|");
+    line.append(QByteArray::number(iter->second.ID())).append("\n");
     nexusMapFile.write(line);
   }
   nexusMapFile.close();
@@ -274,8 +270,8 @@ void CategoryFactory::addCategory(int id, const QString& name,
                                   int parentID)
 {
   for (auto nexusCat : nexusCats) {
-    m_NexusMap.insert_or_assign(nexusCat.m_ID, nexusCat);
-    m_NexusMap.at(nexusCat.m_ID).m_CategoryID = id;
+    m_NexusMap.insert_or_assign(nexusCat.ID(), nexusCat);
+    m_NexusMap.at(nexusCat.ID()).setCategoryID(id);
   }
   int index = static_cast<int>(m_Categories.size());
   m_Categories.push_back(Category(index, id, name, parentID, nexusCats));
@@ -285,9 +281,8 @@ void CategoryFactory::addCategory(int id, const QString& name,
 void CategoryFactory::setNexusCategories(
     std::vector<CategoryFactory::NexusCategory>& nexusCats)
 {
-  m_NexusMap.clear();
   for (auto nexusCat : nexusCats) {
-    m_NexusMap.emplace(nexusCat.m_ID, nexusCat);
+    m_NexusMap.emplace(nexusCat.ID(), nexusCat);
   }
 
   saveCategories();
@@ -367,7 +362,7 @@ int CategoryFactory::getParentID(unsigned int index) const
     throw MyException(tr("invalid category index: %1").arg(index));
   }
 
-  return m_Categories[index].m_ParentID;
+  return m_Categories[index].parentID();
 }
 
 bool CategoryFactory::categoryExists(int id) const
@@ -394,12 +389,12 @@ bool CategoryFactory::isDescendantOfImpl(int id, int parentID,
 
   if (iter != m_IDMap.end()) {
     unsigned int index = iter->second;
-    if (m_Categories[index].m_ParentID == 0) {
+    if (m_Categories[index].parentID() == 0) {
       return false;
-    } else if (m_Categories[index].m_ParentID == parentID) {
+    } else if (m_Categories[index].parentID() == parentID) {
       return true;
     } else {
-      return isDescendantOfImpl(m_Categories[index].m_ParentID, parentID, seen);
+      return isDescendantOfImpl(m_Categories[index].parentID(), parentID, seen);
     }
   } else {
     log::warn(tr("{} is no valid category id").toStdString(), id);
@@ -413,7 +408,7 @@ bool CategoryFactory::hasChildren(unsigned int index) const
     throw MyException(tr("invalid category index: %1").arg(index));
   }
 
-  return m_Categories[index].m_HasChildren;
+  return m_Categories[index].hasChildren();
 }
 
 QString CategoryFactory::getCategoryName(unsigned int index) const
@@ -422,7 +417,7 @@ QString CategoryFactory::getCategoryName(unsigned int index) const
     throw MyException(tr("invalid category index: %1").arg(index));
   }
 
-  return m_Categories[index].m_Name;
+  return m_Categories[index].name();
 }
 
 QString CategoryFactory::getSpecialCategoryName(SpecialCategories type) const
@@ -480,7 +475,7 @@ QString CategoryFactory::getCategoryNameByID(int id) const
       return {};
     }
 
-    return m_Categories[index].m_Name;
+    return m_Categories[index].name();
   }
 }
 
@@ -490,7 +485,7 @@ int CategoryFactory::getCategoryID(unsigned int index) const
     throw MyException(tr("invalid category index: %1").arg(index));
   }
 
-  return m_Categories[index].m_ID;
+  return m_Categories[index].ID();
 }
 
 int CategoryFactory::getCategoryIndex(int ID) const
@@ -506,11 +501,11 @@ int CategoryFactory::getCategoryID(const QString& name) const
 {
   auto iter = std::find_if(m_Categories.begin(), m_Categories.end(),
                            [name](const Category& cat) -> bool {
-                             return cat.m_Name == name;
+                             return cat.name() == name;
                            });
 
   if (iter != m_Categories.end()) {
-    return iter->m_ID;
+    return iter->ID();
   } else {
     return -1;
   }
@@ -520,10 +515,10 @@ unsigned int CategoryFactory::resolveNexusID(int nexusID) const
 {
   auto result = m_NexusMap.find(nexusID);
   if (result != m_NexusMap.end()) {
-    if (m_IDMap.count(result->second.m_CategoryID)) {
+    if (m_IDMap.count(result->second.categoryID())) {
       log::debug(tr("nexus category id {} maps to internal {}").toStdString(), nexusID,
-                 m_IDMap.at(result->second.m_CategoryID));
-      return m_IDMap.at(result->second.m_CategoryID);
+                 m_IDMap.at(result->second.categoryID()));
+      return m_IDMap.at(result->second.categoryID());
     }
   }
   log::debug(tr("nexus category id {} not mapped").toStdString(), nexusID);

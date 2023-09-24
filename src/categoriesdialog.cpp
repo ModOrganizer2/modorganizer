@@ -213,7 +213,7 @@ void CategoriesDialog::fillTable()
            categories.m_Categories.begin();
        iter != categories.m_Categories.end(); ++iter, ++row) {
     const CategoryFactory::Category& category = *iter;
-    if (category.m_ID == 0) {
+    if (category.ID() == 0) {
       --row;
       continue;
     }
@@ -221,11 +221,11 @@ void CategoriesDialog::fillTable()
     //    table->setVerticalHeaderItem(row, new QTableWidgetItem("  "));
 
     QScopedPointer<QTableWidgetItem> idItem(new QTableWidgetItem());
-    idItem->setData(Qt::DisplayRole, category.m_ID);
+    idItem->setData(Qt::DisplayRole, category.ID());
 
-    QScopedPointer<QTableWidgetItem> nameItem(new QTableWidgetItem(category.m_Name));
+    QScopedPointer<QTableWidgetItem> nameItem(new QTableWidgetItem(category.name()));
     QScopedPointer<QTableWidgetItem> parentIDItem(new QTableWidgetItem());
-    parentIDItem->setData(Qt::DisplayRole, category.m_ParentID);
+    parentIDItem->setData(Qt::DisplayRole, category.parentID());
     QScopedPointer<QTableWidgetItem> nexusCatItem(new QTableWidgetItem());
 
     table->setItem(row, 0, idItem.take());
@@ -236,15 +236,15 @@ void CategoriesDialog::fillTable()
 
   for (auto nexusCat : categories.m_NexusMap) {
     QScopedPointer<QListWidgetItem> nexusItem(new QListWidgetItem());
-    nexusItem->setData(Qt::DisplayRole, nexusCat.second.m_Name);
-    nexusItem->setData(Qt::UserRole, nexusCat.second.m_ID);
+    nexusItem->setData(Qt::DisplayRole, nexusCat.second.name());
+    nexusItem->setData(Qt::UserRole, nexusCat.second.ID());
     list->addItem(nexusItem.take());
     auto item = table->item(categories.resolveNexusID(nexusCat.first) - 1, 3);
     if (item != nullptr) {
       auto itemData = item->data(Qt::UserRole).toList();
       QVariantList newData;
-      newData.append(nexusCat.second.m_Name);
-      newData.append(nexusCat.second.m_ID);
+      newData.append(nexusCat.second.name());
+      newData.append(nexusCat.second.ID());
       itemData.insert(itemData.length(), newData);
       QStringList names;
       for (auto cat : itemData) {

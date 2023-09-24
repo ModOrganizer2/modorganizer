@@ -432,7 +432,7 @@ void DownloadManager::refreshList()
 
     log::debug("saw {} downloads", m_ActiveDownloads.size());
 
-    emit update(-1);  
+    emit update(-1);
 
   } catch (const std::bad_alloc&) {
     reportError(tr("Memory allocation error (in refreshing directory)."));
