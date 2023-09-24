@@ -209,10 +209,7 @@ void CategoriesDialog::fillTable()
                                     QRegularExpression("([0-9]+)?(,[0-9]+)*"), this)));
 
   int row = 0;
-  for (std::vector<CategoryFactory::Category>::const_iterator iter =
-           categories.m_Categories.begin();
-       iter != categories.m_Categories.end(); ++iter, ++row) {
-    const CategoryFactory::Category& category = *iter;
+  for (const auto& category : categories.m_Categories) {
     if (category.ID() == 0) {
       --row;
       continue;
@@ -232,6 +229,7 @@ void CategoriesDialog::fillTable()
     table->setItem(row, 1, nameItem.take());
     table->setItem(row, 2, parentIDItem.take());
     table->setItem(row, 3, nexusCatItem.take());
+    ++row;
   }
 
   for (const auto& nexusCat : categories.m_NexusMap) {
