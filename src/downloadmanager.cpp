@@ -153,20 +153,6 @@ DownloadManager::DownloadInfo::createFromMeta(const QString& filePath, bool show
   return info;
 }
 
-ScopedDisableDirWatcher::ScopedDisableDirWatcher(DownloadManager* downloadManager)
-{
-  m_downloadManager = downloadManager;
-  m_downloadManager->startDisableDirWatcher();
-  log::debug("Scoped Disable DirWatcher: Started");
-}
-
-ScopedDisableDirWatcher::~ScopedDisableDirWatcher()
-{
-  m_downloadManager->endDisableDirWatcher();
-  m_downloadManager = nullptr;
-  log::debug("Scoped Disable DirWatcher: Stopped");
-}
-
 void DownloadManager::startDisableDirWatcher()
 {
   DownloadManager::m_DirWatcherDisabler++;
@@ -331,9 +317,10 @@ void DownloadManager::refreshList()
 {
   TimeThis tt("DownloadManager::refreshList()");
 
-  // avoid triggering other refreshes
-  ScopedDisableDirWatcher scopedDirWatcher(this);
   try {
+    // avoid triggering other refreshes
+    startDisableDirWatcher();
+
     int downloadsBefore = m_ActiveDownloads.size();
 
     // remove finished downloads
@@ -433,6 +420,9 @@ void DownloadManager::refreshList()
     log::debug("saw {} downloads", m_ActiveDownloads.size());
 
     emit update(-1);
+
+    // let watcher trigger refreshes again
+    endDisableDirWatcher();
 
   } catch (const std::bad_alloc&) {
     reportError(tr("Memory allocation error (in refreshing directory)."));
@@ -768,7 +758,7 @@ void DownloadManager::addNXMDownload(const QString& url)
 void DownloadManager::removeFile(int index, bool deleteFile)
 {
   // Avoid triggering refreshes from DirWatcher
-  ScopedDisableDirWatcher scopedDirWatcher(this);
+  startDisableDirWatcher();
 
   if (index >= m_ActiveDownloads.size()) {
     throw MyException(tr("remove: invalid download index %1").arg(index));
@@ -780,6 +770,7 @@ void DownloadManager::removeFile(int index, bool deleteFile)
       (download->m_State == STATE_DOWNLOADING)) {
     // shouldn't have been possible
     log::error("tried to remove active download");
+    endDisableDirWatcher();
     return;
   }
 
@@ -790,6 +781,7 @@ void DownloadManager::removeFile(int index, bool deleteFile)
   if (deleteFile) {
     if (!shellDelete(QStringList(filePath), true)) {
       reportError(tr("failed to delete %1").arg(filePath));
+      endDisableDirWatcher();
       return;
     }
 
@@ -803,6 +795,8 @@ void DownloadManager::removeFile(int index, bool deleteFile)
       metaSettings.setValue("removed", true);
   }
   m_DownloadRemoved(index);
+
+  endDisableDirWatcher();
 }
 
 class LessThanWrapper
@@ -1440,12 +1434,14 @@ void DownloadManager::markInstalled(int index)
   }
 
   // Avoid triggering refreshes from DirWatcher
-  ScopedDisableDirWatcher scopedDirWatcher(this);
+  startDisableDirWatcher();
 
   DownloadInfo* info = m_ActiveDownloads.at(index);
   QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
   metaFile.setValue("installed", true);
   metaFile.setValue("uninstalled", false);
+
+  endDisableDirWatcher();
 
   setState(m_ActiveDownloads.at(index), STATE_INSTALLED);
 }
@@ -1675,7 +1671,7 @@ void DownloadManager::downloadReadyRead()
 void DownloadManager::createMetaFile(DownloadInfo* info)
 {
   // Avoid triggering refreshes from DirWatcher
-  ScopedDisableDirWatcher scopedDirWatcher(this);
+  startDisableDirWatcher();
 
   QSettings metaFile(QString("%1.meta").arg(info->m_Output.fileName()),
                      QSettings::IniFormat);
@@ -1699,6 +1695,7 @@ void DownloadManager::createMetaFile(DownloadInfo* info)
                                   (info->m_State == DownloadManager::STATE_ERROR));
   metaFile.setValue("removed", info->m_Hidden);
 
+  endDisableDirWatcher();
   // slightly hackish...
   for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
     if (m_ActiveDownloads[i] == info) {
