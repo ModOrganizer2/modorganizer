@@ -8,9 +8,8 @@
 
 using namespace MOBase;
 
-GeneralSettingsTab::GeneralSettingsTab(Settings& s, PluginContainer* pluginContainer,
-                                       SettingsDialog& d)
-    : SettingsTab(s, d), m_PluginContainer(pluginContainer)
+GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
+    : SettingsTab(s, d)
 {
   // language
   addLanguages();
