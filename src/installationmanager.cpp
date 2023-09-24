@@ -663,7 +663,7 @@ InstallationResult InstallationManager::install(const QString& fileName,
     version                    = metaFile.value("version", "").toString();
     newestVersion              = metaFile.value("newestVersion", "").toString();
     category                   = metaFile.value("category", 0).toInt();
-    unsigned int categoryIndex = CategoryFactory::instance()->resolveNexusID(category);
+    unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(category);
     if (category != 0 && categoryIndex == 0U &&
         Settings::instance().nexus().categoryMappings()) {
       QMessageBox nexusQuery;
@@ -685,7 +685,7 @@ InstallationResult InstallationManager::install(const QString& fileName,
         return MOBase::IPluginInstaller::RESULT_CATEGORYREQUESTED;
       }
     } else {
-      categoryID = CategoryFactory::instance()->getCategoryID(categoryIndex);
+      categoryID = CategoryFactory::instance().getCategoryID(categoryIndex);
     }
     repository     = metaFile.value("repository", "").toString();
     fileCategoryID = metaFile.value("fileCategory", 1).toInt();

@@ -38,7 +38,7 @@ class CategoriesDialog : public MOBase::TutorableDialog
   Q_OBJECT
 
 public:
-  explicit CategoriesDialog(PluginContainer* pluginContainer, QWidget* parent = 0);
+  explicit CategoriesDialog(QWidget* parent = 0);
   ~CategoriesDialog();
 
   // also saves and restores geometry
@@ -52,16 +52,11 @@ public:
   void commitChanges();
 
 public slots:
-
   void nxmGameInfoAvailable(QString gameName, QVariant, QVariant resultData, int);
   void nxmRequestFailed(QString, int, int, QVariant, int, int errorCode,
                         const QString& errorMessage);
 
-signals:
-  void refreshNexusCategories();
-
 private slots:
-
   void on_categoriesTable_customContextMenuRequested(const QPoint& pos);
   void addCategory_clicked();
   void removeCategory_clicked();

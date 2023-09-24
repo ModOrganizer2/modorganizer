@@ -146,10 +146,10 @@ void CategoryFactory::loadCategories()
     loadDefaultCategories();
 }
 
-CategoryFactory* CategoryFactory::instance()
+CategoryFactory& CategoryFactory::instance()
 {
   static CategoryFactory s_Instance;
-  return &s_Instance;
+  return s_Instance;
 }
 
 void CategoryFactory::reset()
@@ -285,12 +285,17 @@ void CategoryFactory::addCategory(int id, const QString& name,
 void CategoryFactory::setNexusCategories(
     std::vector<CategoryFactory::NexusCategory>& nexusCats)
 {
-  m_NexusMap.empty();
+  m_NexusMap.clear();
   for (auto nexusCat : nexusCats) {
     m_NexusMap.emplace(nexusCat.m_ID, nexusCat);
   }
 
   saveCategories();
+}
+
+void CategoryFactory::refreshNexusCategories(CategoriesDialog* dialog)
+{
+  emit nexusCategoryRefresh(dialog);
 }
 
 void CategoryFactory::loadDefaultCategories()

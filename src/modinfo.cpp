@@ -493,9 +493,9 @@ void ModInfo::setPluginSelected(const bool& isSelected)
 
 void ModInfo::addCategory(const QString& categoryName)
 {
-  int id = CategoryFactory::instance()->getCategoryID(categoryName);
+  int id = CategoryFactory::instance().getCategoryID(categoryName);
   if (id == -1) {
-    id = CategoryFactory::instance()->addCategory(
+    id = CategoryFactory::instance().addCategory(
         categoryName, std::vector<CategoryFactory::NexusCategory>(), 0);
   }
   setCategory(id, true);
@@ -503,7 +503,7 @@ void ModInfo::addCategory(const QString& categoryName)
 
 bool ModInfo::removeCategory(const QString& categoryName)
 {
-  int id = CategoryFactory::instance()->getCategoryID(categoryName);
+  int id = CategoryFactory::instance().getCategoryID(categoryName);
   if (id == -1) {
     return false;
   }
@@ -518,9 +518,9 @@ QStringList ModInfo::categories() const
 {
   QStringList result;
 
-  CategoryFactory* catFac = CategoryFactory::instance();
+  CategoryFactory& catFac = CategoryFactory::instance();
   for (int id : m_Categories) {
-    result.append(catFac->getCategoryName(catFac->getCategoryIndex(id)));
+    result.append(catFac.getCategoryName(catFac.getCategoryIndex(id)));
   }
 
   return result;
@@ -550,7 +550,7 @@ bool ModInfo::categorySet(int categoryID) const
   for (std::set<int>::const_iterator iter = m_Categories.begin();
        iter != m_Categories.end(); ++iter) {
     if ((*iter == categoryID) ||
-        (CategoryFactory::instance()->isDescendantOf(*iter, categoryID))) {
+        (CategoryFactory::instance().isDescendantOf(*iter, categoryID))) {
       return true;
     }
   }

@@ -290,7 +290,7 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
     ui->statusBar->setAPI(ni.getAPIStats(), ni.getAPIUserAccount());
   }
 
-  m_CategoryFactory->loadCategories();
+  m_CategoryFactory.loadCategories();
 
   ui->logList->setCore(m_OrganizerCore);
 
@@ -455,8 +455,9 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this,
           &MainWindow::modInstalled);
 
-  connect(m_CategoryFactory, &CategoryFactory::categoriesSaved, this,
-          &MainWindow::categoriesSaved);
+  connect(&m_CategoryFactory, SIGNAL(nexusCategoryRefresh(CategoriesDialog*)), this,
+          SLOT(refreshNexusCategories(CategoriesDialog*)));
+  connect(&m_CategoryFactory, SIGNAL(categoriesSaved()), this, SLOT(categoriesSaved()));
 
   m_CheckBSATimer.setSingleShot(true);
   connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
@@ -540,7 +541,7 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
 
 void MainWindow::setupModList()
 {
-  ui->modList->setup(m_OrganizerCore, *m_CategoryFactory, this, ui);
+  ui->modList->setup(m_OrganizerCore, m_CategoryFactory, this, ui);
 
   connect(&ui->modList->actions(), &ModListViewActions::overwriteCleared, [=]() {
     scheduleCheckForProblems();
@@ -1291,11 +1292,11 @@ void MainWindow::showEvent(QShowEvent* event)
       if (newCatDialog.clickedButton() == &importBtn) {
         importCategories(false);
       } else if (newCatDialog.clickedButton() == &cancelBtn) {
-        m_CategoryFactory->reset();
+        m_CategoryFactory.reset();
       } else if (newCatDialog.clickedButton() == &defaultBtn) {
-        m_CategoryFactory->loadCategories();
+        m_CategoryFactory.loadCategories();
       }
-      m_CategoryFactory->saveCategories();
+      m_CategoryFactory.saveCategories();
 
       m_OrganizerCore.settings().setFirstStart(false);
     } else {
@@ -2087,7 +2088,7 @@ void MainWindow::fixCategories()
     std::set<int> categories = modInfo->getCategories();
     for (std::set<int>::iterator iter = categories.begin(); iter != categories.end();
          ++iter) {
-      if (!m_CategoryFactory->categoryExists(*iter)) {
+      if (!m_CategoryFactory.categoryExists(*iter)) {
         modInfo->setCategory(*iter, false);
       }
     }
@@ -2831,12 +2832,20 @@ void MainWindow::onPluginRegistrationChanged()
   m_DownloadsTab->update();
 }
 
+void MainWindow::refreshNexusCategories(CategoriesDialog* dialog)
+{
+  NexusInterface& nexus = NexusInterface::instance();
+  nexus.setPluginContainer(&m_PluginContainer);
+  nexus.requestGameInfo(Settings::instance().game().plugin()->gameShortName(), dialog,
+                        QVariant(), QString());
+}
+
 void MainWindow::categoriesSaved()
 {
   for (auto modName : m_OrganizerCore.modList()->allMods()) {
     auto mod = ModInfo::getByName(modName);
     for (auto category : mod->getCategories()) {
-      if (!m_CategoryFactory->categoryExists(category))
+      if (!m_CategoryFactory.categoryExists(category))
         mod->setCategory(category, false);
     }
   }
@@ -3457,14 +3466,14 @@ void MainWindow::nxmGameInfoAvailable(QString gameName, QVariant, QVariant resul
 {
   QVariantMap result          = resultData.toMap();
   QVariantList categories     = result["categories"].toList();
-  CategoryFactory* catFactory = CategoryFactory::instance();
-  catFactory->reset();
+  CategoryFactory& catFactory = CategoryFactory::instance();
+  catFactory.reset();
   for (auto category : categories) {
     auto catMap = category.toMap();
     std::vector<CategoryFactory::NexusCategory> nexusCat;
     nexusCat.push_back(CategoryFactory::NexusCategory(catMap["name"].toString(),
                                                       catMap["category_id"].toInt()));
-    catFactory->addCategory(catMap["name"].toString(), nexusCat, 0);
+    catFactory.addCategory(catMap["name"].toString(), nexusCat, 0);
   }
 }
 

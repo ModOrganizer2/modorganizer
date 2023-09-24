@@ -296,7 +296,7 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
             m_instance->gamePlugin()->steamAPPId(),
             m_instance->gamePlugin()->gameDirectory().absolutePath());
 
-  CategoryFactory::instance()->loadCategories();
+  CategoryFactory::instance().loadCategories();
   m_core->updateExecutablesList();
   m_core->updateModInfoFromDisc();
   m_core->setCurrentProfile(m_instance->profileName());

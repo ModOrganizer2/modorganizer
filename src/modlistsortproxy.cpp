@@ -171,11 +171,11 @@ bool ModListSortProxy::lessThan(const QModelIndex& left, const QModelIndex& righ
         lt = true;
       else {
         try {
-          CategoryFactory* categories = CategoryFactory::instance();
-          QString leftCatName         = categories->getCategoryName(
-              categories->getCategoryIndex(leftMod->primaryCategory()));
-          QString rightCatName = categories->getCategoryName(
-              categories->getCategoryIndex(rightMod->primaryCategory()));
+          CategoryFactory& categories = CategoryFactory::instance();
+          QString leftCatName         = categories.getCategoryName(
+              categories.getCategoryIndex(leftMod->primaryCategory()));
+          QString rightCatName = categories.getCategoryName(
+              categories.getCategoryIndex(rightMod->primaryCategory()));
           lt = leftCatName < rightCatName;
         } catch (const std::exception& e) {
           log::error("failed to compare categories: {}", e.what());

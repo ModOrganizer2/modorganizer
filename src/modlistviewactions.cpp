@@ -288,13 +288,13 @@ void ModListViewActions::assignCategories() const
         nexusCategory = downloadMeta.value("category", 0).toInt();
       }
     }
-    int newCategory = CategoryFactory::instance()->resolveNexusID(nexusCategory);
+    int newCategory = CategoryFactory::instance().resolveNexusID(nexusCategory);
     if (newCategory != 0) {
       for (auto category : modInfo->categories()) {
         modInfo->removeCategory(category);
       }
     }
-    modInfo->setCategory(CategoryFactory::instance()->getCategoryID(newCategory), true);
+    modInfo->setCategory(CategoryFactory::instance().getCategoryID(newCategory), true);
   }
 }
 
@@ -1136,10 +1136,10 @@ void ModListViewActions::remapCategory(const QModelIndexList& indices) const
       }
     }
     unsigned int categoryIndex =
-        CategoryFactory::instance()->resolveNexusID(categoryID);
+        CategoryFactory::instance().resolveNexusID(categoryID);
     if (categoryIndex != 0)
       modInfo->setPrimaryCategory(
-          CategoryFactory::instance()->getCategoryID(categoryIndex));
+          CategoryFactory::instance().getCategoryID(categoryIndex));
   }
 }
 

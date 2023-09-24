@@ -25,6 +25,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 #include <vector>
 
+class CategoriesDialog;
+
 /**
  * @brief Manage the available mod categories
  * @warning member functions of this class currently use a wild mix of ids and indexes
@@ -115,6 +117,8 @@ public:
   void saveCategories();
 
   void setNexusCategories(std::vector<CategoryFactory::NexusCategory>& nexusCats);
+
+  void refreshNexusCategories(CategoriesDialog* dialog);
 
   int addCategory(const QString& name, const std::vector<NexusCategory>& nexusCats,
                   int parentID);
@@ -211,7 +215,7 @@ public:
    *
    * @return the reference to the singleton
    **/
-  static CategoryFactory* instance();
+  static CategoryFactory& instance();
 
   /**
    * @return path to the file that contains the categories list
@@ -224,6 +228,7 @@ public:
   static QString nexusMappingFilePath();
 
 signals:
+  void nexusCategoryRefresh(CategoriesDialog*);
   void categoriesSaved();
 
 private:

@@ -13,7 +13,7 @@ public:
   bool usesOriginFiles() const override;
 
 private:
-  void add(const CategoryFactory* factory, const std::set<int>& enabledCategories,
+  void add(const CategoryFactory& factory, const std::set<int>& enabledCategories,
            QTreeWidgetItem* root, int rootLevel);
 
   void updatePrimary();

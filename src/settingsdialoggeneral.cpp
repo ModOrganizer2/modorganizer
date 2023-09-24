@@ -160,7 +160,7 @@ void GeneralSettingsTab::resetDialogs()
 
 void GeneralSettingsTab::onEditCategories()
 {
-  CategoriesDialog catDialog(m_PluginContainer, &dialog());
+  CategoriesDialog catDialog(&dialog());
 
   if (catDialog.exec() == QDialog::Accepted) {
     catDialog.commitChanges();

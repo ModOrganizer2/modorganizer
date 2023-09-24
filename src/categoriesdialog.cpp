@@ -105,9 +105,8 @@ private:
   QValidator* m_Validator;
 };
 
-CategoriesDialog::CategoriesDialog(PluginContainer* pluginContainer, QWidget* parent)
-    : TutorableDialog("Categories", parent), ui(new Ui::CategoriesDialog),
-      m_PluginContainer(pluginContainer)
+CategoriesDialog::CategoriesDialog(QWidget* parent)
+    : TutorableDialog("Categories", parent), ui(new Ui::CategoriesDialog)
 {
   ui->setupUi(this);
   fillTable();
@@ -144,8 +143,8 @@ void CategoriesDialog::cellChanged(int row, int)
 
 void CategoriesDialog::commitChanges()
 {
-  CategoryFactory* categories = CategoryFactory::instance();
-  categories->reset();
+  CategoryFactory& categories = CategoryFactory::instance();
+  categories.reset();
 
   for (int i = 0; i < ui->categoriesTable->rowCount(); ++i) {
     int index = ui->categoriesTable->verticalHeader()->logicalIndex(i);
@@ -157,12 +156,12 @@ void CategoriesDialog::commitChanges()
           nexusCat.toList()[0].toString(), nexusCat.toList()[1].toInt()));
     }
 
-    categories->addCategory(ui->categoriesTable->item(index, 0)->text().toInt(),
-                            ui->categoriesTable->item(index, 1)->text(), nexusCats,
-                            ui->categoriesTable->item(index, 2)->text().toInt());
+    categories.addCategory(ui->categoriesTable->item(index, 0)->text().toInt(),
+                           ui->categoriesTable->item(index, 1)->text(), nexusCats,
+                           ui->categoriesTable->item(index, 2)->text().toInt());
   }
 
-  categories->setParents();
+  categories.setParents();
 
   std::vector<CategoryFactory::NexusCategory> nexusCats;
   for (int i = 0; i < ui->nexusCategoryList->count(); ++i) {
@@ -171,9 +170,9 @@ void CategoriesDialog::commitChanges()
         ui->nexusCategoryList->item(i)->data(Qt::UserRole).toInt()));
   }
 
-  categories->setNexusCategories(nexusCats);
+  categories.setNexusCategories(nexusCats);
 
-  categories->saveCategories();
+  categories.saveCategories();
 }
 
 void CategoriesDialog::refreshIDs()
@@ -190,7 +189,7 @@ void CategoriesDialog::refreshIDs()
 
 void CategoriesDialog::fillTable()
 {
-  CategoryFactory* categories = CategoryFactory::instance();
+  CategoryFactory& categories = CategoryFactory::instance();
   QTableWidget* table         = ui->categoriesTable;
   QListWidget* list           = ui->nexusCategoryList;
 
@@ -211,8 +210,8 @@ void CategoriesDialog::fillTable()
 
   int row = 0;
   for (std::vector<CategoryFactory::Category>::const_iterator iter =
-           categories->m_Categories.begin();
-       iter != categories->m_Categories.end(); ++iter, ++row) {
+           categories.m_Categories.begin();
+       iter != categories.m_Categories.end(); ++iter, ++row) {
     const CategoryFactory::Category& category = *iter;
     if (category.m_ID == 0) {
       --row;
@@ -235,12 +234,12 @@ void CategoriesDialog::fillTable()
     table->setItem(row, 3, nexusCatItem.take());
   }
 
-  for (auto nexusCat : categories->m_NexusMap) {
+  for (auto nexusCat : categories.m_NexusMap) {
     QScopedPointer<QListWidgetItem> nexusItem(new QListWidgetItem());
     nexusItem->setData(Qt::DisplayRole, nexusCat.second.m_Name);
     nexusItem->setData(Qt::UserRole, nexusCat.second.m_ID);
     list->addItem(nexusItem.take());
-    auto item = table->item(categories->resolveNexusID(nexusCat.first) - 1, 3);
+    auto item = table->item(categories.resolveNexusID(nexusCat.first) - 1, 3);
     if (item != nullptr) {
       auto itemData = item->data(Qt::UserRole).toList();
       QVariantList newData;
@@ -285,10 +284,7 @@ void CategoriesDialog::removeNexusMap_clicked()
 
 void CategoriesDialog::nexusRefresh_clicked()
 {
-  NexusInterface& nexus = NexusInterface::instance();
-  nexus.setPluginContainer(m_PluginContainer);
-  nexus.requestGameInfo(Settings::instance().game().plugin()->gameShortName(), this,
-                        QVariant(), QString());
+  CategoryFactory::instance().refreshNexusCategories(this);
 }
 
 void CategoriesDialog::nexusImport_clicked()
@@ -356,7 +352,7 @@ void CategoriesDialog::nxmGameInfoAvailable(QString gameName, QVariant,
 {
   QVariantMap result          = resultData.toMap();
   QVariantList categories     = result["categories"].toList();
-  CategoryFactory* catFactory = CategoryFactory::instance();
+  CategoryFactory& catFactory = CategoryFactory::instance();
   QListWidget* list           = ui->nexusCategoryList;
   list->clear();
   for (auto category : categories) {

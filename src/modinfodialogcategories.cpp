@@ -44,19 +44,19 @@ bool CategoriesTab::usesOriginFiles() const
   return false;
 }
 
-void CategoriesTab::add(const CategoryFactory* factory,
+void CategoriesTab::add(const CategoryFactory& factory,
                         const std::set<int>& enabledCategories, QTreeWidgetItem* root,
                         int rootLevel)
 {
-  for (int i = 0; i < static_cast<int>(factory->numCategories()); ++i) {
-    if (factory->getParentID(i) != rootLevel) {
+  for (int i = 0; i < static_cast<int>(factory.numCategories()); ++i) {
+    if (factory.getParentID(i) != rootLevel) {
       continue;
     }
 
-    int categoryID = factory->getCategoryID(i);
+    int categoryID = factory.getCategoryID(i);
 
     QTreeWidgetItem* newItem =
-        new QTreeWidgetItem(QStringList(factory->getCategoryName(i)));
+        new QTreeWidgetItem(QStringList(factory.getCategoryName(i)));
 
     newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
 
@@ -67,7 +67,7 @@ void CategoriesTab::add(const CategoryFactory* factory,
 
     newItem->setData(0, Qt::UserRole, categoryID);
 
-    if (factory->hasChildren(i)) {
+    if (factory.hasChildren(i)) {
       add(factory, enabledCategories, newItem, categoryID);
     }
 

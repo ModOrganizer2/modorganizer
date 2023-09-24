@@ -283,7 +283,7 @@ private:
 
   QAction* m_ContextAction;
 
-  CategoryFactory* m_CategoryFactory;
+  CategoryFactory& m_CategoryFactory;
 
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;
@@ -363,6 +363,7 @@ private slots:
 
   void importCategories(bool);
 
+  void refreshNexusCategories(CategoriesDialog* dialog);
   void categoriesSaved();
 
   // update info

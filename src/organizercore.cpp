@@ -804,7 +804,7 @@ OrganizerCore::doInstall(const QString& archivePath, GuessedValue<QString> modNa
     return {modIndex, modInfo};
   } else {
     if (result.result() == MOBase::IPluginInstaller::RESULT_CATEGORYREQUESTED) {
-      CategoriesDialog dialog(&pluginContainer(), qApp->activeWindow());
+      CategoriesDialog dialog(qApp->activeWindow());
 
       if (dialog.exec() == QDialog::Accepted) {
         dialog.commitChanges();
@@ -831,6 +831,7 @@ OrganizerCore::doInstall(const QString& archivePath, GuessedValue<QString> modNa
 
 ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
 {
+  ScopedDisableDirWatcher scopedDirwatcher(&m_DownloadManager);
   try {
     QString fileName        = m_DownloadManager.getFilePath(index);
     QString gameName        = m_DownloadManager.getGameName(index);
