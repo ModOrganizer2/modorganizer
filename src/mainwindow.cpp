@@ -371,8 +371,8 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
 
   if (organizerCore.managedGame()->sortMechanism() ==
       MOBase::IPluginGame::SortMechanism::NONE) {
-    ui->bossButton->setDisabled(true);
-    ui->bossButton->setToolTip(tr("There is no supported sort mechanism for this game. "
+    ui->sortButton->setDisabled(true);
+    ui->sortButton->setToolTip(tr("There is no supported sort mechanism for this game. "
                                   "You will probably have to use a third-party tool."));
   }
 
@@ -2265,14 +2265,8 @@ void MainWindow::tutorialTriggered()
 {
   QAction* tutorialAction = qobject_cast<QAction*>(sender());
   if (tutorialAction != nullptr) {
-    if (QMessageBox::question(this, tr("Start Tutorial?"),
-                              tr("You're about to start a tutorial. For technical "
-                                 "reasons it's not possible to end "
-                                 "the tutorial early. Continue?"),
-                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      TutorialManager::instance().activateTutorial("MainWindow",
-                                                   tutorialAction->data().toString());
-    }
+    TutorialManager::instance().activateTutorial("MainWindow",
+                                                 tutorialAction->data().toString());
   }
 }
 

@@ -206,7 +206,7 @@ void PluginListView::setup(OrganizerCore& core, MainWindow* mw, Ui::MainWindow* 
   });
 
   // sort
-  connect(mwui->bossButton, &QPushButton::clicked, [=] {
+  connect(mwui->sortButton, &QPushButton::clicked, [=] {
     onSortButtonClicked();
   });
 

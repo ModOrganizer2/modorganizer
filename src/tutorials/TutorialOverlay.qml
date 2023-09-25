@@ -46,6 +46,15 @@ Rectangle  {
     }
   }
 
+  TutorialCanceller {
+    id: tutorialCanceller
+    innerWidth: 200
+    anchors.bottomMargin: offsetBottom - 30
+    onClicked: {
+      Logic.cancelTutorial()
+    }
+  }
+
   Rectangle {
     id: disabledBackground
     anchors.fill: parent
