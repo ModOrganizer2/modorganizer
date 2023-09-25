@@ -60,6 +60,8 @@ public:
   virtual void setNexusFileStatus(int) override {}
   virtual QDateTime getLastNexusUpdate() const override { return QDateTime(); }
   virtual void setLastNexusUpdate(QDateTime) override {}
+  virtual int getNexusCategory() const override { return 0; }
+  virtual void setNexusCategory(int) override {}
   virtual QDateTime getLastNexusQuery() const override { return QDateTime(); }
   virtual void setLastNexusQuery(QDateTime) override {}
   virtual QDateTime getNexusLastModified() const override { return QDateTime(); }

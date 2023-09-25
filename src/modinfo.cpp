@@ -495,7 +495,8 @@ void ModInfo::addCategory(const QString& categoryName)
 {
   int id = CategoryFactory::instance().getCategoryID(categoryName);
   if (id == -1) {
-    id = CategoryFactory::instance().addCategory(categoryName, std::vector<int>(), 0);
+    id = CategoryFactory::instance().addCategory(
+        categoryName, std::vector<CategoryFactory::NexusCategory>(), 0);
   }
   setCategory(id, true);
 }

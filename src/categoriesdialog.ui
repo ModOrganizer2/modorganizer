@@ -6,18 +6,57 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>553</width>
-    <height>444</height>
+    <width>711</width>
+    <height>434</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Categories</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QTableWidget" name="categoriesTable">
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="4" column="3">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="5">
+    <widget class="QPushButton" name="nexusRefresh">
+     <property name="text">
+      <string>Refresh from Nexus</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="4">
+    <widget class="QPushButton" name="nexusImportButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>&lt;-- Import Nexus Cats</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="3">
+    <widget class="CategoriesTable" name="categoriesTable">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="contextMenuPolicy">
       <enum>Qt::CustomContextMenu</enum>
+     </property>
+     <property name="acceptDrops">
+      <bool>true</bool>
      </property>
      <property name="dragEnabled">
       <bool>false</bool>
@@ -26,7 +65,7 @@
       <bool>false</bool>
      </property>
      <property name="dragDropMode">
-      <enum>QAbstractItemView::NoDragDrop</enum>
+      <enum>QAbstractItemView::DropOnly</enum>
      </property>
      <property name="defaultDropAction">
       <enum>Qt::IgnoreAction</enum>
@@ -40,20 +79,23 @@
      <property name="gridStyle">
       <enum>Qt::DashLine</enum>
      </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
      <property name="wordWrap">
       <bool>false</bool>
      </property>
      <attribute name="horizontalHeaderVisible">
       <bool>true</bool>
      </attribute>
+     <attribute name="horizontalHeaderMinimumSectionSize">
+      <number>26</number>
+     </attribute>
      <attribute name="horizontalHeaderDefaultSectionSize">
       <number>100</number>
      </attribute>
      <attribute name="horizontalHeaderHighlightSections">
       <bool>true</bool>
-     </attribute>
-     <attribute name="horizontalHeaderMinimumSectionSize">
-      <number>26</number>
      </attribute>
      <attribute name="horizontalHeaderStretchLastSection">
       <bool>false</bool>
@@ -77,27 +119,10 @@
        <string>Name</string>
       </property>
       <property name="toolTip">
-       <string>Name of the Categorie used for display.</string>
+       <string>The display name of the category.</string>
       </property>
       <property name="whatsThis">
-       <string>Name of the Categorie used for display.</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Nexus IDs</string>
-      </property>
-      <property name="toolTip">
-       <string>Comma-Separated list of Nexus IDs to be matched to the internal ID.</string>
-      </property>
-      <property name="whatsThis">
-       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;You can match one or multiple nexus categories to a internal ID. Whenever you download a mod from a Nexus Page, Mod Organizer will try to resolve the category defined on the Nexus to one available in MO.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To find out a category id used by the nexus, visit the categories list of the nexus page and hover over the links there.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>The display name of the category.</string>
       </property>
      </column>
      <column>
@@ -108,20 +133,79 @@ p, li { white-space: pre-wrap; }
        <string>If set, the category is defined as a sub-category of another one. Parent ID needs to be a valid category ID.</string>
       </property>
      </column>
+     <column>
+      <property name="text">
+       <string>Nexus Categories</string>
+      </property>
+      <property name="toolTip">
+       <string>Comma-Separated list of Nexus IDs to be matched to the internal ID.</string>
+      </property>
+      <property name="whatsThis">
+       <string>
+                &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+                &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+                p, li { white-space: pre-wrap; }
+                &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;You can match one or multiple nexus categories to a internal ID. Whenever you download a mod from a Nexus Page, Mod Organizer will try to resolve the category defined on the Nexus to one available in MO.&lt;/span&gt;&lt;/p&gt;
+                &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
+                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To find out a category id used by the nexus, visit the categories list of the nexus page and hover over the links there.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+              </string>
+      </property>
+     </column>
     </widget>
    </item>
-   <item>
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+   <item row="0" column="4" colspan="2">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
      </property>
+     <property name="toolTip">
+      <string>Drag &amp; drop nexus categories from this pane onto the target category on the left.</string>
+     </property>
+     <property name="layoutDirection">
+      <enum>Qt::LeftToRight</enum>
+     </property>
+     <property name="title">
+      <string>Nexus Categories (Drag &amp;&amp; Drop to Assign)</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QListWidget" name="nexusCategoryList">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="dragEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="dragDropMode">
+         <enum>QAbstractItemView::DragOnly</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CategoriesTable</class>
+   <extends>QTableWidget</extends>
+   <header>categoriestable.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

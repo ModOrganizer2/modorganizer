@@ -57,6 +57,7 @@ private:
   void onModIDChanged();
   void onSourceGameChanged();
   void onVersionChanged();
+  void onCategoryChanged();
 
   void onRefreshBrowser();
   void onVisitNexus();

@@ -42,8 +42,14 @@ mo2_add_filter(NAME src/browser GROUPS
 	browserview
 )
 
+mo2_add_filter(NAME src/categories GROUPS
+        categories
+	categoriestable
+        categoriesdialog
+	categoryimportdialog
+)
+
 mo2_add_filter(NAME src/core GROUPS
-	categories
 	archivefiletree
 	installationmanager
 	nexusinterface
@@ -60,7 +66,6 @@ mo2_add_filter(NAME src/core GROUPS
 mo2_add_filter(NAME src/dialogs GROUPS
 	aboutdialog
 	activatemodsdialog
-	categoriesdialog
 	credentialsdialog
 	filedialogmemory
 	forcedloaddialog

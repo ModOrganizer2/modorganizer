@@ -12,6 +12,7 @@
 #include "categories.h"
 #include "csvbuilder.h"
 #include "directoryrefresher.h"
+#include "downloadmanager.h"
 #include "filedialogmemory.h"
 #include "filterlist.h"
 #include "listdialog.h"
@@ -256,6 +257,44 @@ void ModListViewActions::checkModsForUpdates() const
 
     m_filters.setSelection(
         {{ModListSortProxy::TypeSpecial, CategoryFactory::UpdateAvailable, false}});
+  }
+}
+
+void ModListViewActions::assignCategories() const
+{
+  if (!GlobalSettings::hideAssignCategoriesQuestion()) {
+    QMessageBox warning;
+    warning.setWindowTitle(tr("Are you sure?"));
+    warning.setText(
+        tr("This action will remove any existing categories on any mod with a valid "
+           "Nexus category mapping. Are you certain you want to proceed?"));
+    warning.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    QCheckBox dontShow(tr("&Don't show this again"));
+    warning.setCheckBox(&dontShow);
+    auto result = warning.exec();
+    if (dontShow.isChecked())
+      GlobalSettings::setHideAssignCategoriesQuestion(true);
+    if (result == QMessageBox::Cancel)
+      return;
+  }
+  for (auto mod : m_core.modList()->allMods()) {
+    ModInfo::Ptr modInfo = ModInfo::getByName(mod);
+    int nexusCategory    = modInfo->getNexusCategory();
+    if (!nexusCategory) {
+      QSettings downloadMeta(m_core.downloadsPath() + "/" +
+                                 modInfo->installationFile() + ".meta",
+                             QSettings::IniFormat);
+      if (downloadMeta.contains("category")) {
+        nexusCategory = downloadMeta.value("category", 0).toInt();
+      }
+    }
+    int newCategory = CategoryFactory::instance().resolveNexusID(nexusCategory);
+    if (newCategory != 0) {
+      for (auto category : modInfo->categories()) {
+        modInfo->removeCategory(category);
+      }
+    }
+    modInfo->setCategory(CategoryFactory::instance().getCategoryID(newCategory), true);
   }
 }
 
@@ -1079,6 +1118,27 @@ void ModListViewActions::willNotEndorsed(const QModelIndexList& indices) const
 {
   for (auto& idx : indices) {
     ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->setNeverEndorse();
+  }
+}
+
+void ModListViewActions::remapCategory(const QModelIndexList& indices) const
+{
+  for (auto& idx : indices) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+
+    int categoryID = modInfo->getNexusCategory();
+    if (!categoryID) {
+      QSettings downloadMeta(m_core.downloadsPath() + "/" +
+                                 modInfo->installationFile() + ".meta",
+                             QSettings::IniFormat);
+      if (downloadMeta.contains("category")) {
+        categoryID = downloadMeta.value("category", 0).toInt();
+      }
+    }
+    unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(categoryID);
+    if (categoryIndex != 0)
+      modInfo->setPrimaryCategory(
+          CategoryFactory::instance().getCategoryID(categoryIndex));
   }
 }
 

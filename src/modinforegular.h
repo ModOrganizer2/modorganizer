@@ -379,6 +379,16 @@ public:
    */
   virtual void setNexusLastModified(QDateTime time) override;
 
+  /**
+   * @return the assigned nexus category ID
+   */
+  virtual int getNexusCategory() const override;
+
+  /**
+   * @brief Assigns the given Nexus category ID
+   */
+  virtual void setNexusCategory(int category) override;
+
   virtual QStringList archives(bool checkOnDisk = false) override;
 
   virtual void setColor(QColor color) override;
@@ -457,6 +467,7 @@ private:
   QDateTime m_LastNexusQuery;
   QDateTime m_LastNexusUpdate;
   QDateTime m_NexusLastModified;
+  int m_NexusCategory;
 
   QColor m_Color;
 

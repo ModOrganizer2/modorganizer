@@ -645,6 +645,7 @@ InstallationResult InstallationManager::install(const QString& fileName,
   QString gameName      = "";
   QString version       = "";
   QString newestVersion = "";
+  int category          = 0;
   int categoryID        = 0;
   int fileCategoryID    = 1;
   QString repository    = "Nexus";
@@ -661,9 +662,31 @@ InstallationResult InstallationManager::install(const QString& fileName,
 
     version                    = metaFile.value("version", "").toString();
     newestVersion              = metaFile.value("newestVersion", "").toString();
-    unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(
-        metaFile.value("category", 0).toInt());
-    categoryID     = CategoryFactory::instance().getCategoryID(categoryIndex);
+    category                   = metaFile.value("category", 0).toInt();
+    unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(category);
+    if (category != 0 && categoryIndex == 0U &&
+        Settings::instance().nexus().categoryMappings()) {
+      QMessageBox nexusQuery;
+      nexusQuery.setWindowTitle(tr("No category found"));
+      nexusQuery.setText(tr(
+          "This Nexus category has not yet been mapped. Do you wish to proceed without "
+          "setting a category, proceed and disable automatic Nexus mappings, or stop "
+          "and configure your category mappings?"));
+      QPushButton* proceedButton =
+          nexusQuery.addButton(tr("&Proceed"), QMessageBox::YesRole);
+      QPushButton* disableButton =
+          nexusQuery.addButton(tr("&Disable"), QMessageBox::AcceptRole);
+      QPushButton* stopButton =
+          nexusQuery.addButton(tr("&Stop && Configure"), QMessageBox::DestructiveRole);
+      nexusQuery.exec();
+      if (nexusQuery.clickedButton() == disableButton) {
+        Settings::instance().nexus().setCategoryMappings(false);
+      } else if (nexusQuery.clickedButton() == stopButton) {
+        return MOBase::IPluginInstaller::RESULT_CATEGORYREQUESTED;
+      }
+    } else {
+      categoryID = CategoryFactory::instance().getCategoryID(categoryIndex);
+    }
     repository     = metaFile.value("repository", "").toString();
     fileCategoryID = metaFile.value("fileCategory", 1).toInt();
   }

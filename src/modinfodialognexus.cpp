@@ -32,6 +32,9 @@ NexusTab::NexusTab(ModInfoDialogTabContext cx)
   connect(ui->version, &QLineEdit::editingFinished, [&] {
     onVersionChanged();
   });
+  connect(ui->category, &QLineEdit::editingFinished, [&] {
+    onCategoryChanged();
+  });
 
   connect(ui->refresh, &QPushButton::clicked, [&] {
     onRefreshBrowser();
@@ -75,6 +78,7 @@ void NexusTab::clear()
   ui->modID->clear();
   ui->sourceGame->clear();
   ui->version->clear();
+  ui->category->clear();
   ui->browser->setPage(new NexusTabWebpage(ui->browser));
   ui->hasCustomURL->setChecked(false);
   ui->customURL->clear();
@@ -107,6 +111,8 @@ void NexusTab::update()
   }
 
   ui->sourceGame->setCurrentIndex(ui->sourceGame->findData(gameName));
+
+  ui->category->setText(QString("%1").arg(mod().getNexusCategory()));
 
   auto* page = new NexusTabWebpage(ui->browser);
   ui->browser->setPage(page);
@@ -358,6 +364,16 @@ void NexusTab::onVersionChanged()
   MOBase::VersionInfo version(ui->version->text());
   mod().setVersion(version);
   updateVersionColor();
+}
+
+void NexusTab::onCategoryChanged()
+{
+  if (m_loading) {
+    return;
+  }
+
+  int category = ui->category->text().toInt();
+  mod().setNexusCategory(category);
 }
 
 void NexusTab::onRefreshBrowser()
