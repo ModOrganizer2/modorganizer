@@ -214,6 +214,7 @@ void CategoriesDialog::fillTable()
       --row;
       continue;
     }
+    ++row;
     table->insertRow(row);
     //    table->setVerticalHeaderItem(row, new QTableWidgetItem("  "));
 
@@ -229,7 +230,6 @@ void CategoriesDialog::fillTable()
     table->setItem(row, 1, nameItem.take());
     table->setItem(row, 2, parentIDItem.take());
     table->setItem(row, 3, nexusCatItem.take());
-    ++row;
   }
 
   for (const auto& nexusCat : categories.m_NexusMap) {
@@ -270,14 +270,16 @@ void CategoriesDialog::addCategory_clicked()
 
 void CategoriesDialog::removeCategory_clicked()
 {
-  ui->categoriesTable->removeRow(m_ContextRow);
+  if (m_ContextRow >= 0)
+    ui->categoriesTable->removeRow(m_ContextRow);
 }
 
 void CategoriesDialog::removeNexusMap_clicked()
 {
-  ui->categoriesTable->item(m_ContextRow, 3)->setData(Qt::UserRole, QVariantList());
-  ui->categoriesTable->item(m_ContextRow, 3)->setData(Qt::DisplayRole, QString());
-  // ui->categoriesTable->update();
+  if (m_ContextRow >= 0) {
+    ui->categoriesTable->item(m_ContextRow, 3)->setData(Qt::UserRole, QVariantList());
+    ui->categoriesTable->item(m_ContextRow, 3)->setData(Qt::DisplayRole, QString());
+  }
 }
 
 void CategoriesDialog::nexusRefresh_clicked()
