@@ -111,9 +111,9 @@ OrganizerCore::OrganizerCore(Settings& settings)
 
   connect(&m_DownloadManager, SIGNAL(downloadSpeed(QString, int)), this,
           SLOT(downloadSpeed(QString, int)));
-  connect(m_DirectoryRefresher.get(), SIGNAL(refreshed()), this,
-          SLOT(directory_refreshed()));
-
+  connect(m_DirectoryRefresher.get(), &DirectoryRefresher::refreshed, [this]() {
+    onDirectoryRefreshed();
+  });
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this, SLOT(removeOrigin(QString)));
   connect(&m_ModList, &ModList::modStatesChanged, [=] {
     currentProfile()->writeModlist();
@@ -1134,8 +1134,8 @@ bool OrganizerCore::previewFile(QWidget* parent, const QString& originName,
   return true;
 }
 
-boost::signals2::connection
-OrganizerCore::onAboutToRun(const std::function<bool(const QString&)>& func)
+boost::signals2::connection OrganizerCore::onAboutToRun(
+    const std::function<bool(const QString&, const QDir&, const QString&)>& func)
 {
   return m_AboutToRun.connect(func);
 }
@@ -1513,13 +1513,13 @@ void OrganizerCore::refreshDirectoryStructure()
                                 std::set<QString>(archives.begin(), archives.end()));
 
   // runs refresh() in a thread
-  QTimer::singleShot(0, m_DirectoryRefresher.get(), SLOT(refresh()));
+  QTimer::singleShot(0, m_DirectoryRefresher.get(), &DirectoryRefresher::refresh);
 }
 
-void OrganizerCore::directory_refreshed()
+void OrganizerCore::onDirectoryRefreshed()
 {
   log::debug("directory refreshed, finishing up");
-  TimeThis tt("OrganizerCore::directory_refreshed()");
+  TimeThis tt("OrganizerCore::onDirectoryRefreshed()");
 
   DirectoryEntry* newStructure = m_DirectoryRefresher->stealDirectoryStructure();
   Q_ASSERT(newStructure != m_DirectoryStructure);
@@ -1569,11 +1569,6 @@ void OrganizerCore::directory_refreshed()
   emit directoryStructureReady();
 
   log::debug("refresh done");
-}
-
-void OrganizerCore::profileRefresh()
-{
-  refresh();
 }
 
 void OrganizerCore::clearCaches(std::vector<unsigned int> const& indices) const
@@ -1920,7 +1915,8 @@ ProcessRunner OrganizerCore::processRunner()
 }
 
 bool OrganizerCore::beforeRun(
-    const QFileInfo& binary, const QString& profileName, const QString& customOverwrite,
+    const QFileInfo& binary, const QDir& cwd, const QString& arguments,
+    const QString& profileName, const QString& customOverwrite,
     const QList<MOBase::ExecutableForcedLoadSetting>& forcedLibraries)
 {
   saveCurrentProfile();
@@ -1939,7 +1935,7 @@ bool OrganizerCore::beforeRun(
   }
 
   // TODO: should also pass arguments
-  if (!m_AboutToRun(binary.absoluteFilePath())) {
+  if (!m_AboutToRun(binary.absoluteFilePath(), cwd, arguments)) {
     log::debug("start of \"{}\" cancelled by plugin", binary.absoluteFilePath());
     return false;
   }

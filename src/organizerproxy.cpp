@@ -324,6 +324,19 @@ MOBase::IPluginGame const* OrganizerProxy::managedGame() const
 
 bool OrganizerProxy::onAboutToRun(const std::function<bool(const QString&)>& func)
 {
+  return m_Proxied
+      ->onAboutToRun(MOShared::callIfPluginActive(
+          this,
+          [func](const QString& binary, const QDir&, const QString&) {
+            return func(binary);
+          },
+          true))
+      .connected();
+}
+
+bool OrganizerProxy::onAboutToRun(
+    const std::function<bool(const QString&, const QDir&, const QString&)>& func)
+{
   return m_Proxied->onAboutToRun(MOShared::callIfPluginActive(this, func, true))
       .connected();
 }

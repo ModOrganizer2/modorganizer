@@ -73,6 +73,8 @@ public:  // IOrganizer interface
   virtual void refresh(bool saveChanges);
 
   virtual bool onAboutToRun(const std::function<bool(const QString&)>& func) override;
+  virtual bool onAboutToRun(const std::function<bool(const QString&, const QDir&,
+                                                     const QString&)>& func) override;
   virtual bool
   onFinishedRun(const std::function<void(const QString&, unsigned int)>& func) override;
   virtual bool

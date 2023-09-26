@@ -83,7 +83,8 @@ private:
 
 private:
   using SignalAboutToRunApplication =
-      boost::signals2::signal<bool(const QString&), SignalCombinerAnd>;
+      boost::signals2::signal<bool(const QString&, const QDir&, const QString&),
+                              SignalCombinerAnd>;
   using SignalFinishedRunApplication =
       boost::signals2::signal<void(const QString&, unsigned int)>;
   using SignalUserInterfaceInitialized = boost::signals2::signal<void(QMainWindow*)>;
@@ -269,8 +270,8 @@ public:
 
   ProcessRunner processRunner();
 
-  bool beforeRun(const QFileInfo& binary, const QString& profileName,
-                 const QString& customOverwrite,
+  bool beforeRun(const QFileInfo& binary, const QDir& cwd, const QString& arguments,
+                 const QString& profileName, const QString& customOverwrite,
                  const QList<MOBase::ExecutableForcedLoadSetting>& forcedLibraries);
 
   void afterRun(const QFileInfo& binary, DWORD exitCode);
@@ -356,8 +357,8 @@ public:
   ModList* modList();
   void refresh(bool saveChanges = true);
 
-  boost::signals2::connection
-  onAboutToRun(const std::function<bool(const QString&)>& func);
+  boost::signals2::connection onAboutToRun(
+      const std::function<bool(const QString&, const QDir&, const QString&)>& func);
   boost::signals2::connection
   onFinishedRun(const std::function<void(const QString&, unsigned int)>& func);
   boost::signals2::connection
@@ -387,8 +388,6 @@ public:  // IPluginDiagnose interface
   virtual void startGuidedFix(unsigned int key) const;
 
 public slots:
-
-  void profileRefresh();
 
   void syncOverwrite();
 
@@ -472,7 +471,7 @@ private:
 
 private slots:
 
-  void directory_refreshed();
+  void onDirectoryRefreshed();
   void downloadRequested(QNetworkReply* reply, QString gameName, int modID,
                          const QString& fileName);
   void removeOrigin(const QString& name);
