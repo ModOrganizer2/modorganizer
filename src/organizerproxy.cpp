@@ -347,6 +347,22 @@ bool OrganizerProxy::onFinishedRun(
   return m_Proxied->onFinishedRun(MOShared::callIfPluginActive(this, func)).connected();
 }
 
+bool OrganizerProxy::onUserInterfaceInitialized(
+    std::function<void(QMainWindow*)> const& func)
+{
+  // Always call this one to allow plugin to initialize themselves even when not active:
+  return m_UserInterfaceInitialized.connect(func).connected();
+}
+
+bool OrganizerProxy::onNextRefresh(const std::function<void()>& func,
+                                   bool immediateIfPossible)
+{
+  return m_Proxied
+      ->onNextRefresh(MOShared::callIfPluginActive(this, func),
+                      OrganizerCore::RefreshCallbackGroup::PLUGIN, immediateIfPossible)
+      .connected();
+}
+
 bool OrganizerProxy::onProfileCreated(std::function<void(IProfile*)> const& func)
 {
   return m_ProfileCreated.connect(func).connected();
@@ -368,14 +384,6 @@ bool OrganizerProxy::onProfileChanged(
 {
   return m_ProfileChanged.connect(func).connected();
 }
-
-bool OrganizerProxy::onUserInterfaceInitialized(
-    std::function<void(QMainWindow*)> const& func)
-{
-  // Always call this one to allow plugin to initialize themselves even when not active:
-  return m_UserInterfaceInitialized.connect(func).connected();
-}
-
 // Always call these one, otherwise plugin cannot detect they are being enabled /
 // disabled:
 bool OrganizerProxy::onPluginSettingChanged(

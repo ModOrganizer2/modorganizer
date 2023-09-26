@@ -212,6 +212,20 @@ public:
     friend class OrganizerCore;
   };
 
+  // enumeration for the groups where refresh callbacks can be put
+  //
+  enum class RefreshCallbackGroup : int
+  {
+    // for callbacks by the core itself, highest priority
+    CORE = 0,
+
+    // internal MO2 callbacks
+    INTERNAL = 1,
+
+    // plugins callbacks
+    PLUGIN = 2
+  };
+
 public:
   OrganizerCore(Settings& settings);
 
@@ -380,6 +394,16 @@ public:
   boost::signals2::connection
   onPluginDisabled(std::function<void(const MOBase::IPlugin*)> const& func);
 
+  // add a function to be called after the next refresh is done
+  //
+  // - group to add the function to
+  // - if immediateIfReady is true, the function will be called immediately if no
+  //   directory update is running
+  boost::signals2::connection
+  onNextRefresh(std::function<void()> const& func,
+                RefreshCallbackGroup group = RefreshCallbackGroup::INTERNAL,
+                bool immediateIfReady      = true);
+
 public:  // IPluginDiagnose interface
   virtual std::vector<unsigned int> activeProblems() const;
   virtual QString shortDescription(unsigned int key) const;
@@ -506,11 +530,12 @@ private:
   SignalPluginEnabled m_PluginEnabled;
   SignalPluginEnabled m_PluginDisabled;
 
+  boost::signals2::signal<void()> m_OnNextRefreshCallbacks;
+
   ModList m_ModList;
   PluginList m_PluginList;
 
   QList<std::function<void()>> m_PostLoginTasks;
-  QList<std::function<void()>> m_PostRefreshTasks;
 
   ExecutablesList m_ExecutablesList;
   QStringList m_PendingDownloads;
@@ -528,7 +553,7 @@ private:
 
   std::thread m_StructureDeleter;
 
-  bool m_DirectoryUpdate;
+  std::atomic<bool> m_DirectoryUpdate;
   bool m_ArchivesInit;
 
   MOBase::DelayedFileWriter m_PluginListsWriter;

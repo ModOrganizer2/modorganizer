@@ -1195,6 +1195,18 @@ OrganizerCore::onPluginDisabled(std::function<void(const IPlugin*)> const& func)
   return m_PluginDisabled.connect(func);
 }
 
+boost::signals2::connection
+OrganizerCore::onNextRefresh(std::function<void()> const& func,
+                             RefreshCallbackGroup group, bool immediateIfPossible)
+{
+  if (!immediateIfPossible || m_DirectoryUpdate) {
+    return m_OnNextRefreshCallbacks.connect(static_cast<int>(group), func);
+  } else {
+    func();
+    return {};
+  }
+}
+
 void OrganizerCore::refresh(bool saveChanges)
 {
   // don't lose changes!
@@ -1212,25 +1224,21 @@ void OrganizerCore::refresh(bool saveChanges)
 
 void OrganizerCore::refreshESPList(bool force)
 {
-  TimeThis tt("OrganizerCore::refreshESPList()");
+  onNextRefresh(
+      [this, force] {
+        TimeThis tt("OrganizerCore::refreshESPList()");
 
-  if (m_DirectoryUpdate) {
-    // don't mess up the esp list if we're currently updating the directory
-    // structure
-    m_PostRefreshTasks.append([=]() {
-      this->refreshESPList(force);
-    });
-    return;
-  }
-  m_CurrentProfile->writeModlist();
+        m_CurrentProfile->writeModlist();
 
-  // clear list
-  try {
-    m_PluginList.refresh(m_CurrentProfile->name(), *m_DirectoryStructure,
-                         m_CurrentProfile->getLockedOrderFileName(), force);
-  } catch (const std::exception& e) {
-    reportError(tr("Failed to refresh list of esps: %1").arg(e.what()));
-  }
+        // clear list
+        try {
+          m_PluginList.refresh(m_CurrentProfile->name(), *m_DirectoryStructure,
+                               m_CurrentProfile->getLockedOrderFileName(), force);
+        } catch (const std::exception& e) {
+          reportError(tr("Failed to refresh list of esps: %1").arg(e.what()));
+        }
+      },
+      RefreshCallbackGroup::CORE);
 }
 
 void OrganizerCore::refreshBSAList()
@@ -1543,23 +1551,18 @@ void OrganizerCore::onDirectoryRefreshed()
     log::debug("structure deleter thread done");
   });
 
-  m_DirectoryUpdate = false;
-
   log::debug("clearing caches");
   for (int i = 0; i < m_ModList.rowCount(); ++i) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
     modInfo->clearCaches();
   }
 
-  if (!m_PostRefreshTasks.empty()) {
-    log::debug("running {} post refresh tasks", m_PostRefreshTasks.size());
+  // needs to be done before post refresh tasks
+  m_DirectoryUpdate = false;
 
-    for (auto task : m_PostRefreshTasks) {
-      task();
-    }
-
-    m_PostRefreshTasks.clear();
-  }
+  log::debug("running {} post refresh tasks");
+  m_OnNextRefreshCallbacks();
+  m_OnNextRefreshCallbacks.disconnect_all_slots();
 
   if (m_CurrentProfile != nullptr) {
     log::debug("refreshing lists");
@@ -1886,15 +1889,12 @@ bool OrganizerCore::saveCurrentLists()
 
 void OrganizerCore::savePluginList()
 {
-  if (m_DirectoryUpdate) {
-    // delay save till after directory update
-    m_PostRefreshTasks.append([this]() {
-      this->savePluginList();
-    });
-    return;
-  }
-  m_PluginList.saveTo(m_CurrentProfile->getLockedOrderFileName());
-  m_PluginList.saveLoadOrder(*m_DirectoryStructure);
+  onNextRefresh(
+      [this]() {
+        m_PluginList.saveTo(m_CurrentProfile->getLockedOrderFileName());
+        m_PluginList.saveLoadOrder(*m_DirectoryStructure);
+      },
+      RefreshCallbackGroup::CORE);
 }
 
 void OrganizerCore::saveCurrentProfile()

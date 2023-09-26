@@ -79,6 +79,8 @@ public:  // IOrganizer interface
   onFinishedRun(const std::function<void(const QString&, unsigned int)>& func) override;
   virtual bool
   onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func) override;
+  virtual bool onNextRefresh(const std::function<void()>& func,
+                             bool immediateIfPossible) override;
   virtual bool
   onProfileCreated(std::function<void(MOBase::IProfile*)> const& func) override;
   virtual bool onProfileRenamed(
