@@ -1934,7 +1934,6 @@ bool OrganizerCore::beforeRun(
     m_CurrentProfile->writeModlistNow(true);
   }
 
-  // TODO: should also pass arguments
   if (!m_AboutToRun(binary.absoluteFilePath(), cwd, arguments)) {
     log::debug("start of \"{}\" cancelled by plugin", binary.absoluteFilePath());
     return false;
