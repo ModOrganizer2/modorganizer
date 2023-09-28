@@ -1197,9 +1197,9 @@ OrganizerCore::onPluginDisabled(std::function<void(const IPlugin*)> const& func)
 
 boost::signals2::connection
 OrganizerCore::onNextRefresh(std::function<void()> const& func,
-                             RefreshCallbackGroup group, bool immediateIfPossible)
+                             RefreshCallbackGroup group, RefreshCallbackMode mode)
 {
-  if (!immediateIfPossible || m_DirectoryUpdate) {
+  if (m_DirectoryUpdate || mode == RefreshCallbackMode::FORCE_WAIT_FOR_REFRESH) {
     return m_OnNextRefreshCallbacks.connect(static_cast<int>(group), func);
   } else {
     func();
@@ -1238,7 +1238,7 @@ void OrganizerCore::refreshESPList(bool force)
           reportError(tr("Failed to refresh list of esps: %1").arg(e.what()));
         }
       },
-      RefreshCallbackGroup::CORE);
+      RefreshCallbackGroup::CORE, RefreshCallbackMode::RUN_NOW_IF_POSSIBLE);
 }
 
 void OrganizerCore::refreshBSAList()
@@ -1894,7 +1894,7 @@ void OrganizerCore::savePluginList()
         m_PluginList.saveTo(m_CurrentProfile->getLockedOrderFileName());
         m_PluginList.saveLoadOrder(*m_DirectoryStructure);
       },
-      RefreshCallbackGroup::CORE);
+      RefreshCallbackGroup::CORE, RefreshCallbackMode::RUN_NOW_IF_POSSIBLE);
 }
 
 void OrganizerCore::saveCurrentProfile()

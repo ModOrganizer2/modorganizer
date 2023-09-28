@@ -212,6 +212,17 @@ public:
     friend class OrganizerCore;
   };
 
+  // enumeration for the mode when adding refresh callbacks
+  //
+  enum class RefreshCallbackMode : int
+  {
+    // run the callbacks immediately if no refresh is running
+    RUN_NOW_IF_POSSIBLE = 0,
+
+    // wait for the next refresh if none is running
+    FORCE_WAIT_FOR_REFRESH = 1
+  };
+
   // enumeration for the groups where refresh callbacks can be put
   //
   enum class RefreshCallbackGroup : int
@@ -222,8 +233,8 @@ public:
     // internal MO2 callbacks
     INTERNAL = 1,
 
-    // plugins callbacks
-    PLUGIN = 2
+    // external callbacks, typically MO2 plugins
+    EXTERNAL = 2
   };
 
 public:
@@ -399,10 +410,9 @@ public:
   // - group to add the function to
   // - if immediateIfReady is true, the function will be called immediately if no
   //   directory update is running
-  boost::signals2::connection
-  onNextRefresh(std::function<void()> const& func,
-                RefreshCallbackGroup group = RefreshCallbackGroup::INTERNAL,
-                bool immediateIfReady      = true);
+  boost::signals2::connection onNextRefresh(std::function<void()> const& func,
+                                            RefreshCallbackGroup group,
+                                            RefreshCallbackMode mode);
 
 public:  // IPluginDiagnose interface
   virtual std::vector<unsigned int> activeProblems() const;

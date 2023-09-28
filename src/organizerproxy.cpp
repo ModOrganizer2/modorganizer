@@ -357,9 +357,12 @@ bool OrganizerProxy::onUserInterfaceInitialized(
 bool OrganizerProxy::onNextRefresh(const std::function<void()>& func,
                                    bool immediateIfPossible)
 {
+  using enum OrganizerCore::RefreshCallbackMode;
   return m_Proxied
       ->onNextRefresh(MOShared::callIfPluginActive(this, func),
-                      OrganizerCore::RefreshCallbackGroup::PLUGIN, immediateIfPossible)
+                      OrganizerCore::RefreshCallbackGroup::EXTERNAL,
+                      immediateIfPossible ? RUN_NOW_IF_POSSIBLE
+                                          : FORCE_WAIT_FOR_REFRESH)
       .connected();
 }
 
