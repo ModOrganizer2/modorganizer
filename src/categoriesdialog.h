@@ -20,6 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CATEGORIESDIALOG_H
 #define CATEGORIESDIALOG_H
 
+#include "categories.h"
+#include "plugincontainer.h"
 #include "tutorabledialog.h"
 #include <set>
 
@@ -49,11 +51,18 @@ public:
    **/
   void commitChanges();
 
-private slots:
+public slots:
+  void nxmGameInfoAvailable(QString gameName, QVariant, QVariant resultData, int);
+  void nxmRequestFailed(QString, int, int, QVariant, int, int errorCode,
+                        const QString& errorMessage);
 
+private slots:
   void on_categoriesTable_customContextMenuRequested(const QPoint& pos);
   void addCategory_clicked();
   void removeCategory_clicked();
+  void removeNexusMap_clicked();
+  void nexusRefresh_clicked();
+  void nexusImport_clicked();
   void cellChanged(int row, int column);
 
 private:
@@ -62,10 +71,12 @@ private:
 
 private:
   Ui::CategoriesDialog* ui;
+  PluginContainer* m_PluginContainer;
   int m_ContextRow;
 
   int m_HighestID;
   std::set<int> m_IDs;
+  std::vector<CategoryFactory::NexusCategory> m_NexusCategories;
 };
 
 #endif  // CATEGORIESDIALOG_H

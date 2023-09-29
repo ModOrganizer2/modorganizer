@@ -31,51 +31,48 @@ function highlightAction(actionName, click) {
     highlight.visible = true
 }
 
-function unhighlight()
-{
+function unhighlight() {
     highlight.visible = false
 }
 
-function waitForClick()
-{
+function waitForClick() {
     waitingForClick = true;
     description.continueVisible = true
     // ui needs to be locked, otherwise the tutorial-view does not receive mouse-events!
     tutorialControl.lockUI(true)
 }
 
-function clickNext()
-{
+function cancelTutorial() {
+    tutorialControl.finish()
+}
+
+function clickNext() {
     if (waitingForClick) {
         nextStep()
     }
 }
 
-function nextStep()
-{
-  waitingForClick = false;
-  description.continueVisible = false
-  if (step < tutorialSteps.length) {
-    tutorialControl.lockUI(false)
-    step++
+function nextStep() {
+    waitingForClick = false;
+    description.continueVisible = false
+    if (step < tutorialSteps.length) {
+        tutorialControl.lockUI(false)
+        step++
+        tutorialSteps[step - 1]()
+    } else {
+        tutorialControl.finish()
+    }
+}
+
+function sameStep() {
     tutorialSteps[step - 1]()
-  } else {
-    tutorialControl.finish()
-  }
 }
 
-function sameStep()
-{
-  tutorialSteps[step - 1]()
+function onTabChanged(func) {
+    tutToplevel.tabChanged.connect(func)
 }
 
-function onTabChanged(func)
-{
-  tutToplevel.tabChanged.connect(func)
-}
-
-function init()
-{
+function init() {
     var res = Qt.include("file:///" + scriptName)
     if (res.status !== 0) {
         console.log("failed to load " + scriptName + ": " + res.status)

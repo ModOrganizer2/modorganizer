@@ -25,14 +25,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 #include <vector>
 
+class CategoriesDialog;
+
 /**
  * @brief Manage the available mod categories
  * @warning member functions of this class currently use a wild mix of ids and indexes
  *to look up categories, optimized to where the request comes from. Therefore be very
  *careful which of the two you have available
  **/
-class CategoryFactory
+class CategoryFactory : public QObject
 {
+  Q_OBJECT;
 
   friend class CategoriesDialog;
 
@@ -53,24 +56,64 @@ public:
   };
 
 public:
+  struct NexusCategory
+  {
+    NexusCategory(const QString name, const int nexusID) : m_Name(name), m_ID(nexusID)
+    {}
+
+    friend bool operator==(const NexusCategory& LHS, const NexusCategory& RHS)
+    {
+      return LHS.ID() == RHS.ID();
+    }
+
+    friend bool operator==(const NexusCategory& LHS, const int RHS)
+    {
+      return LHS.ID() == RHS;
+    }
+
+    friend bool operator<(const NexusCategory& LHS, const NexusCategory& RHS)
+    {
+      return LHS.ID() < RHS.ID();
+    }
+
+    QString name() const { return m_Name; }
+    int ID() const { return m_ID; }
+    int categoryID() const { return m_CategoryID; }
+    void setCategoryID(int categoryID) { m_CategoryID = categoryID; }
+
+  private:
+    QString m_Name;
+    int m_ID;
+    int m_CategoryID = -1;
+  };
+
   struct Category
   {
-    Category(int sortValue, int id, const QString& name,
-             const std::vector<int>& nexusIDs, int parentID)
+    Category(int sortValue, int id, const QString name, int parentID,
+             std::vector<NexusCategory> nexusCats)
         : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false),
-          m_NexusIDs(nexusIDs), m_ParentID(parentID)
+          m_ParentID(parentID), m_NexusCats(std::move(nexusCats))
     {}
-    int m_SortValue;
-    int m_ID;
-    int m_ParentID;
-    bool m_HasChildren;
-    QString m_Name;
-    std::vector<int> m_NexusIDs;
 
     friend bool operator<(const Category& LHS, const Category& RHS)
     {
-      return LHS.m_SortValue < RHS.m_SortValue;
+      return LHS.sortValue() < RHS.sortValue();
     }
+
+    int sortValue() const { return m_SortValue; }
+    int ID() const { return m_ID; }
+    int parentID() const { return m_ParentID; }
+    QString name() const { return m_Name; }
+    bool hasChildren() const { return m_HasChildren; }
+    void setHasChildren(bool b) { m_HasChildren = b; }
+
+  private:
+    int m_SortValue;
+    int m_ID;
+    int m_ParentID;
+    QString m_Name;
+    std::vector<NexusCategory> m_NexusCats;
+    bool m_HasChildren;
   };
 
 public:
@@ -89,7 +132,12 @@ public:
    **/
   void saveCategories();
 
-  int addCategory(const QString& name, const std::vector<int>& nexusIDs, int parentID);
+  void setNexusCategories(const std::vector<CategoryFactory::NexusCategory>& nexusCats);
+
+  void refreshNexusCategories(CategoriesDialog* dialog);
+
+  int addCategory(const QString& name, const std::vector<NexusCategory>& nexusCats,
+                  int parentID);
 
   /**
    * @brief retrieve the number of available categories
@@ -190,13 +238,23 @@ public:
    */
   static QString categoriesFilePath();
 
+  /**
+   * @return path to the file that contains the nexus category mappings
+   */
+  static QString nexusMappingFilePath();
+
+signals:
+  void nexusCategoryRefresh(CategoriesDialog*);
+  void categoriesSaved();
+
 private:
-  CategoryFactory();
+  explicit CategoryFactory();
 
   void loadDefaultCategories();
 
-  void addCategory(int id, const QString& name, const std::vector<int>& nexusID,
-                   int parentID);
+  void addCategory(int id, const QString& name,
+                   const std::vector<NexusCategory>& nexusCats, int parentID);
+  void addCategory(int id, const QString& name, int parentID);
 
   void setParents();
 
@@ -207,7 +265,7 @@ private:
 
   std::vector<Category> m_Categories;
   std::map<int, unsigned int> m_IDMap;
-  std::map<int, unsigned int> m_NexusMap;
+  std::map<int, NexusCategory> m_NexusMap;
 
 private:
   // called by isDescendantOf()

@@ -1,16 +1,18 @@
 function getTutorialSteps()
 {
+    tutorialCanceller.visible = false
     return [
         function() {
             highlightItem("tabWidget", true)
-            tutorial.text = qsTr("You can use your regular browser to download from Nexus.\nPlease open the \"Nexus\"-tab")
+            tutorial.text = qsTr("It is possible to download files directly from Nexus.\n\n"
+                               + "Please open the \"Nexus\" tab.")
             tutorialControl.waitForTabOpen("tabWidget", "nexusTab")
         },
 
         function() {
             highlightItem("associateButton", false)
-            tutorial.text = qsTr("Click this button so that \"DOWNLOAD WITH MANAGER\"-buttons "
-                                +"are download with Mod Organizer.")
+            tutorial.text = qsTr("Clicking on this button should register Nexus \"Download with Manager\" buttons "
+                                +"to download with Mod Organizer.")
             waitForClick()
         },
 

@@ -1936,6 +1936,16 @@ void NexusSettings::setTrackedIntegration(bool b) const
   set(m_Settings, "Settings", "tracked_integration", b);
 }
 
+bool NexusSettings::categoryMappings() const
+{
+  return get<bool>(m_Settings, "Settings", "category_mappings", true);
+}
+
+void NexusSettings::setCategoryMappings(bool b) const
+{
+  set(m_Settings, "Settings", "category_mappings", b);
+}
+
 void NexusSettings::registerAsNXMHandler(bool force)
 {
   const auto nxmPath = QCoreApplication::applicationDirPath() + "/" +
@@ -2428,6 +2438,26 @@ bool GlobalSettings::hideTutorialQuestion()
 void GlobalSettings::setHideTutorialQuestion(bool b)
 {
   settings().setValue("HideTutorialQuestion", b);
+}
+
+bool GlobalSettings::hideCategoryReminder()
+{
+  return settings().value("HideCategoryReminder", false).toBool();
+}
+
+void GlobalSettings::setHideCategoryReminder(bool b)
+{
+  settings().setValue("HideCategoryReminder", b);
+}
+
+bool GlobalSettings::hideAssignCategoriesQuestion()
+{
+  return settings().value("HideAssignCategoriesQuestion", false).toBool();
+}
+
+void GlobalSettings::setHideAssignCategoriesQuestion(bool b)
+{
+  settings().setValue("HideAssignCategoriesQuestion", b);
 }
 
 bool GlobalSettings::nexusApiKey(QString& apiKey)

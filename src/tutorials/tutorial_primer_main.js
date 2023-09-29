@@ -126,6 +126,7 @@ function setupTooptips() {
 }
 
 function getTutorialSteps() {
+    tutorialCanceller.visible = false
     return [
         function() {
           tutorial.text = qsTr("Click to quit")

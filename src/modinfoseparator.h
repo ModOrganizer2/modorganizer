@@ -45,6 +45,8 @@ public:
   virtual void setLastNexusQuery(QDateTime) override {}
   virtual QDateTime getNexusLastModified() const override { return QDateTime(); }
   virtual void setNexusLastModified(QDateTime) override {}
+  virtual int getNexusCategory() const override { return 0; }
+  virtual void setNexusCategory(int) override {}
   virtual QDateTime creationTime() const override { return QDateTime(); }
   virtual QString getNexusDescription() const override { return QString(); }
   virtual void addInstalledFile(int /*modId*/, int /*fileId*/) override {}

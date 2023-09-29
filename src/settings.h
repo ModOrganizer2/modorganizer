@@ -514,6 +514,11 @@ public:
   bool trackedIntegration() const;
   void setTrackedIntegration(bool b) const;
 
+  // returns whether nexus category mappings are enabled
+  //
+  bool categoryMappings() const;
+  void setCategoryMappings(bool b) const;
+
   // registers MO as the handler for nxm links
   //
   // if 'force' is true, the registration dialog will be shown even if the user
@@ -922,6 +927,12 @@ public:
 
   static bool hideTutorialQuestion();
   static void setHideTutorialQuestion(bool b);
+
+  static bool hideCategoryReminder();
+  static void setHideCategoryReminder(bool b);
+
+  static bool hideAssignCategoriesQuestion();
+  static void setHideAssignCategoriesQuestion(bool b);
 
   // if the key exists from the credentials store, puts it in `apiKey` and
   // returns true; otherwise, returns false and leaves `apiKey` untouched

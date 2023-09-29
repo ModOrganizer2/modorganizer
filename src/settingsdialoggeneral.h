@@ -1,6 +1,7 @@
 #ifndef SETTINGSDIALOGGENERAL_H
 #define SETTINGSDIALOGGENERAL_H
 
+#include "plugincontainer.h"
 #include "settings.h"
 #include "settingsdialog.h"
 

@@ -65,7 +65,7 @@ void MOMultiProcess::sendMessage(const QString& message)
   }
 
   socket.write(message.toUtf8());
-  if (!socket.waitForBytesWritten(s_Timeout)) {
+  if (socket.bytesToWrite() && !socket.waitForBytesWritten(s_Timeout)) {
     reportError(
         tr("failed to communicate with running process: %1").arg(socket.errorString()));
     return;

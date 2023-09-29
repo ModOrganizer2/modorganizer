@@ -3,20 +3,25 @@ function getTutorialSteps()
 {
   return [
     function() {
-        tutorial.text = qsTr("Welcome to the ModOrganizer Tutorial! This will guide you through the most common features of MO."
-                           + "\nPlease go along with the tutorial because some things can't be demonstrated if you skip something.")
+        tutorial.text = qsTr("Welcome to the Mod Organizer Tutorial! This will guide you through the most common "
+                           + "features of MO2.\n\n"
+                           + "It is highly recommended for first-time users to complete the tutorial from beginning "
+                           + "to end to properly demonstrate key components of the tool.")
         waitForClick()
     },
 
     function() {
-        tutorial.text = qsTr("Before we continue with the step-by-step tutorial, I'd like to tell you about the other ways you can receive help on ModOrganizer.")
+        tutorial.text = qsTr("Before we continue with the step-by-step tutorial, here are a few ways you can receive "
+                           + "help with Mod Organizer.")
         waitForClick()
     },
 
     function() {
-        tutorial.text = qsTr("The highlighted button provides hints on solving potential problems MO recognized automatically.")
+        tutorial.text = qsTr("The highlighted button will display potential problems detected with your setup and may "
+                           + "suggest solutions. (Click it and then close the window to proceed.)")
         if (tutorialControl.waitForAction("actionNotifications")) {
-            tutorial.text += qsTr("\nThere IS a notification now but you may want to hold off on clearing it until after completing the tutorial.")
+            tutorial.text += qsTr("\n\nIt appears you have one now, however you can hold off on clearing it until after "
+                                + "completing the tutorial.")
             highlightAction("actionNotifications", true)
         } else {
             highlightAction("actionNotifications", false)
@@ -26,7 +31,8 @@ function getTutorialSteps()
 
     function() {
         console.log("next")
-        tutorial.text = qsTr("This button provides multiple sources of information and further tutorials.")
+        tutorial.text = qsTr("This button contains additional information about the application, links to other sources "
+                           + "of help, and further tutorials. (Open the menu to proceed.)")
         if (tutorialControl.waitForAction("actionHelp")) {
           highlightAction("actionHelp", true)
         } else {
@@ -37,21 +43,23 @@ function getTutorialSteps()
 
     function() {
         unhighlight()
-        tutorial.text = qsTr("Finally there are tooltips on almost every part of Mod Organizer. If there is a control "
-                           + "in MO you don't understand, please try hovering over it to get a short description or "
-                           + "use \"Help on UI\" from the help menu to get a longer explanation")
+        tutorial.text = qsTr("Finally, there are tooltips and extra information available all across Mod Organizer. If "
+                           + "there is a control you don't understand, please try hovering over it for a short "
+                           + "description. Alternatively, you can use \"Help on UI\" from the Help menu to click on "
+                           + "some controls and get a comprehensive explanation.")
         waitForClick()
     },
 
     function() {
-        tutorial.text = qsTr("This list displays all mods installed through MO. It also displays installed DLCs and some mods "
-                           + "installed outside MO but you have limited control over those in MO.")
+        tutorial.text = qsTr("This list displays all mods installed through MO2. It also displays installed DLCs and "
+                           + "any 'unmanaged' mods installed outside MO2. You have limited control over those.")
         highlightItem("modList", false)
         waitForClick()
     },
 
     function() {
-        tutorial.text = qsTr("Before we start installing mods, let's have a quick look at the settings.")
+        tutorial.text = qsTr("Before we start installing mods, let's have a quick look at the settings. (Open the "
+                           + "settings dialog to proceed via the highlighted button.)")
         manager.activateTutorial("SettingsDialog", "tutorial_firststeps_settings.js")
         if (tutorialControl.waitForAction("actionSettings")) {
             highlightAction("actionSettings", true)
@@ -63,13 +71,13 @@ function getTutorialSteps()
 
     function() {
         unhighlight()
-        tutorial.text = qsTr("Now it's time to install a few mods!"
-                            + "Please go along with this because we need a few mods installed to demonstrate other features")
+        tutorial.text = qsTr("Now it's time to install a mod!\n\n"
+                            + "(This will be a requirement in order to demonstrate other features later.)")
         waitForClick()
     },
 
     function() {
-        tutorial.text = qsTr("There are a few ways to get mods into ModOrganizer. "
+        tutorial.text = qsTr("There are a few ways to get mods into Mod Organizer. "
                            + "If you associated MO with NXM links in the settings you can now use your regular browser to send downloads from Nexus to MO. "
                            + "Click on \"Nexus\" to open nexus, find a mod and click the green download buttons on Nexus saying \"Download with Manager\".")
         if (tutorialControl.waitForAction("actionNexus") &&
@@ -89,7 +97,8 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("Downloads will appear on the \"Downloads\"-tab here. You have to download and install at least one mod to proceed.")
+        tutorial.text = qsTr("Downloads will appear on the \"Downloads\" tab here. You have to download and install at "
+                           + "least one mod to proceed.")
         organizer.modInstalled.connect(nextStep)
         highlightItem("tabWidget", true)
     },
@@ -97,18 +106,19 @@ function getTutorialSteps()
     function() {
         unhighlight()
         organizer.modInstalled.disconnect(nextStep)
-        tutorial.text = qsTr("Great, you just installed your first mod. Please note that the installation procedure may differ based on how a mod was packaged.")
+        tutorial.text = qsTr("Great, you just installed your first mod. Please note that the installation procedure "
+                           + "may differ based on how a mod was packaged.")
         waitForClick()
     },
 
     function() {
         unhighlight()
-        tutorial.text = qsTr("Now you know all about downloading and installing mods but they are not enabled yet...")
+        tutorial.text = qsTr("Now you know all about downloading and installing mods, but they are not enabled yet...")
         waitForClick()
     },
 
     function() {
-        tutorial.text = qsTr("Install a few more mods if you want, then enable mods by checking them in the left pane. "
+        tutorial.text = qsTr("Install a few more mods if you want, then enable them by checking them in the left pane. "
                              + "Mods that aren't enabled have no effect on the game whatsoever. ")
         highlightItem("modList", true)
         modList.tutorialModlistUpdate.connect(nextStep)
@@ -122,9 +132,9 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("...but most contain plugins. These are plugins for the game and are required "
-                            +"to add stuff to the game (new weapons, armors, quests, areas, ...). "
-                            +"Please open the \"Plugins\"-tab to get a list of plugins.")
+        tutorial.text = qsTr("...but for some games they may contain plugins. These are files the game must load and "
+                            + "are required to change or add aspects of the game (new weapons, armors, quests, areas, ...).\n\n"
+                            + "Please open the \"Plugins\" tab to get a list of plugins.")
         if (tutorialControl.waitForTabOpen("tabWidget", "espTab")) {
             highlightItem("tabWidget", true)
         } else {
@@ -133,13 +143,13 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("You will notice some plugins are grayed out. These are part of the main game and can't be "
+        tutorial.text = qsTr("You may notice some plugins are grayed out. These are part of the main game and can't be "
                             +"disabled.")
         waitForClick()
     },
 
     function() {
-        tutorial.text = qsTr("A single mod may contain zero, one or multiple esps. Some or all may be optional. "
+        tutorial.text = qsTr("A single mod may contain zero, one, or multiple plugin files. Some or all may be optional. "
                               + "If in doubt, please consult the documentation of the individual mod. "
                               + "To do so, right-click the mod and select \"Information\".")
         highlightItem("modList", true)
@@ -148,7 +158,7 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("Now you know how to download, install and enable mods.\n"
+        tutorial.text = qsTr("Now you know how to download, install, and enable mods.\n\n"
                            + "It's important you always start the game from inside MO, otherwise "
                            + "the mods you installed here won't work.")
         highlightItem("startGroup", false)
@@ -156,16 +166,17 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("This combobox lets you choose <i>what</i> to start. This way you can start the game, Launcher, "
-                              + "Script Extender, the Creation Kit or other tools. If you miss a tool you can also configure this list "
-                              + "but that is an advanced topic.")
+        tutorial.text = qsTr("This combobox lets you choose <i>what</i> to start. This is how you will launch the game "
+                              + "or any other tool which must access the game's mod directories. If a tool is not "
+                              + "listed here, you can also configure these options, but that is an advanced topic.")
         highlightItem("executablesListBox", false)
         waitForClick()
     },
 
     function() {
-        tutorial.text = qsTr("This completes the basic tutorial. As homework go play a bit! After you "
-                           + "have installed more mods you may want to read the tutorial on conflict resolution.")
+        tutorial.text = qsTr("This completes the basic tutorial. Feel free to play the game and try out your new mods! "
+                           + "Once you have installed a larger number, you may want to continue with the tutorial "
+                           + "on conflict resolution.")
         highlightItem("startButton", false)
         waitForClick()
     }
