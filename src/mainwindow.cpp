@@ -1803,7 +1803,9 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
       m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
   if (invalidation != nullptr) {
     if (invalidation->prepareProfile(m_OrganizerCore.currentProfile())) {
-      QTimer::singleShot(5, &m_OrganizerCore, SLOT(profileRefresh()));
+      QTimer::singleShot(5, [this] {
+        m_OrganizerCore.refresh();
+      });
     }
   }
 }
@@ -2389,7 +2391,9 @@ void MainWindow::on_actionAdd_Profile_triggered()
       m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
   if (invalidation != nullptr) {
     if (invalidation->prepareProfile(m_OrganizerCore.currentProfile())) {
-      QTimer::singleShot(5, &m_OrganizerCore, SLOT(profileRefresh()));
+      QTimer::singleShot(5, [this] {
+        m_OrganizerCore.refresh();
+      });
     }
   }
 }
@@ -2549,7 +2553,7 @@ void MainWindow::setWindowEnabled(bool enabled)
 
 void MainWindow::refreshProfile_activated()
 {
-  m_OrganizerCore.profileRefresh();
+  m_OrganizerCore.refresh();
 }
 
 void MainWindow::saveArchiveList()
@@ -2776,7 +2780,7 @@ void MainWindow::on_actionSettings_triggered()
 
   if ((settings.paths().mods() != oldModDirectory) ||
       (settings.interface().displayForeign() != oldDisplayForeign)) {
-    m_OrganizerCore.profileRefresh();
+    m_OrganizerCore.refresh();
   }
 
   const auto state = settings.archiveParsing();

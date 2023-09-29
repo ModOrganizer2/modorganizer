@@ -324,6 +324,19 @@ MOBase::IPluginGame const* OrganizerProxy::managedGame() const
 
 bool OrganizerProxy::onAboutToRun(const std::function<bool(const QString&)>& func)
 {
+  return m_Proxied
+      ->onAboutToRun(MOShared::callIfPluginActive(
+          this,
+          [func](const QString& binary, const QDir&, const QString&) {
+            return func(binary);
+          },
+          true))
+      .connected();
+}
+
+bool OrganizerProxy::onAboutToRun(
+    const std::function<bool(const QString&, const QDir&, const QString&)>& func)
+{
   return m_Proxied->onAboutToRun(MOShared::callIfPluginActive(this, func, true))
       .connected();
 }
@@ -332,6 +345,25 @@ bool OrganizerProxy::onFinishedRun(
     const std::function<void(const QString&, unsigned int)>& func)
 {
   return m_Proxied->onFinishedRun(MOShared::callIfPluginActive(this, func)).connected();
+}
+
+bool OrganizerProxy::onUserInterfaceInitialized(
+    std::function<void(QMainWindow*)> const& func)
+{
+  // Always call this one to allow plugin to initialize themselves even when not active:
+  return m_UserInterfaceInitialized.connect(func).connected();
+}
+
+bool OrganizerProxy::onNextRefresh(const std::function<void()>& func,
+                                   bool immediateIfPossible)
+{
+  using enum OrganizerCore::RefreshCallbackMode;
+  return m_Proxied
+      ->onNextRefresh(MOShared::callIfPluginActive(this, func),
+                      OrganizerCore::RefreshCallbackGroup::EXTERNAL,
+                      immediateIfPossible ? RUN_NOW_IF_POSSIBLE
+                                          : FORCE_WAIT_FOR_REFRESH)
+      .connected();
 }
 
 bool OrganizerProxy::onProfileCreated(std::function<void(IProfile*)> const& func)
@@ -355,14 +387,6 @@ bool OrganizerProxy::onProfileChanged(
 {
   return m_ProfileChanged.connect(func).connected();
 }
-
-bool OrganizerProxy::onUserInterfaceInitialized(
-    std::function<void(QMainWindow*)> const& func)
-{
-  // Always call this one to allow plugin to initialize themselves even when not active:
-  return m_UserInterfaceInitialized.connect(func).connected();
-}
-
 // Always call these one, otherwise plugin cannot detect they are being enabled /
 // disabled:
 bool OrganizerProxy::onPluginSettingChanged(
