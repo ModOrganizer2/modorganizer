@@ -83,7 +83,8 @@ private:
 
 private:
   using SignalAboutToRunApplication =
-      boost::signals2::signal<bool(const QString&), SignalCombinerAnd>;
+      boost::signals2::signal<bool(const QString&, const QDir&, const QString&),
+                              SignalCombinerAnd>;
   using SignalFinishedRunApplication =
       boost::signals2::signal<void(const QString&, unsigned int)>;
   using SignalUserInterfaceInitialized = boost::signals2::signal<void(QMainWindow*)>;
@@ -211,6 +212,31 @@ public:
     friend class OrganizerCore;
   };
 
+  // enumeration for the mode when adding refresh callbacks
+  //
+  enum class RefreshCallbackMode : int
+  {
+    // run the callbacks immediately if no refresh is running
+    RUN_NOW_IF_POSSIBLE = 0,
+
+    // wait for the next refresh if none is running
+    FORCE_WAIT_FOR_REFRESH = 1
+  };
+
+  // enumeration for the groups where refresh callbacks can be put
+  //
+  enum class RefreshCallbackGroup : int
+  {
+    // for callbacks by the core itself, highest priority
+    CORE = 0,
+
+    // internal MO2 callbacks
+    INTERNAL = 1,
+
+    // external callbacks, typically MO2 plugins
+    EXTERNAL = 2
+  };
+
 public:
   OrganizerCore(Settings& settings);
 
@@ -269,8 +295,8 @@ public:
 
   ProcessRunner processRunner();
 
-  bool beforeRun(const QFileInfo& binary, const QString& profileName,
-                 const QString& customOverwrite,
+  bool beforeRun(const QFileInfo& binary, const QDir& cwd, const QString& arguments,
+                 const QString& profileName, const QString& customOverwrite,
                  const QList<MOBase::ExecutableForcedLoadSetting>& forcedLibraries);
 
   void afterRun(const QFileInfo& binary, DWORD exitCode);
@@ -356,8 +382,8 @@ public:
   ModList* modList();
   void refresh(bool saveChanges = true);
 
-  boost::signals2::connection
-  onAboutToRun(const std::function<bool(const QString&)>& func);
+  boost::signals2::connection onAboutToRun(
+      const std::function<bool(const QString&, const QDir&, const QString&)>& func);
   boost::signals2::connection
   onFinishedRun(const std::function<void(const QString&, unsigned int)>& func);
   boost::signals2::connection
@@ -379,6 +405,15 @@ public:
   boost::signals2::connection
   onPluginDisabled(std::function<void(const MOBase::IPlugin*)> const& func);
 
+  // add a function to be called after the next refresh is done
+  //
+  // - group to add the function to
+  // - if immediateIfReady is true, the function will be called immediately if no
+  //   directory update is running
+  boost::signals2::connection onNextRefresh(std::function<void()> const& func,
+                                            RefreshCallbackGroup group,
+                                            RefreshCallbackMode mode);
+
 public:  // IPluginDiagnose interface
   virtual std::vector<unsigned int> activeProblems() const;
   virtual QString shortDescription(unsigned int key) const;
@@ -387,8 +422,6 @@ public:  // IPluginDiagnose interface
   virtual void startGuidedFix(unsigned int key) const;
 
 public slots:
-
-  void profileRefresh();
 
   void syncOverwrite();
 
@@ -472,7 +505,7 @@ private:
 
 private slots:
 
-  void directory_refreshed();
+  void onDirectoryRefreshed();
   void downloadRequested(QNetworkReply* reply, QString gameName, int modID,
                          const QString& fileName);
   void removeOrigin(const QString& name);
@@ -507,11 +540,12 @@ private:
   SignalPluginEnabled m_PluginEnabled;
   SignalPluginEnabled m_PluginDisabled;
 
+  boost::signals2::signal<void()> m_OnNextRefreshCallbacks;
+
   ModList m_ModList;
   PluginList m_PluginList;
 
   QList<std::function<void()>> m_PostLoginTasks;
-  QList<std::function<void()>> m_PostRefreshTasks;
 
   ExecutablesList m_ExecutablesList;
   QStringList m_PendingDownloads;
@@ -529,7 +563,7 @@ private:
 
   std::thread m_StructureDeleter;
 
-  bool m_DirectoryUpdate;
+  std::atomic<bool> m_DirectoryUpdate;
   bool m_ArchivesInit;
 
   MOBase::DelayedFileWriter m_PluginListsWriter;

@@ -768,8 +768,8 @@ std::optional<ProcessRunner::Results> ProcessRunner::runBinary()
   // saves profile, sets up usvfs, notifies plugins, etc.; can return false if
   // a plugin doesn't want the program to run (such as when checkFNIS fails to
   // run FNIS and the user clicks cancel)
-  if (!m_core.beforeRun(m_sp.binary, m_profileName, m_customOverwrite,
-                        m_forcedLibraries)) {
+  if (!m_core.beforeRun(m_sp.binary, m_sp.currentDirectory, m_sp.arguments,
+                        m_profileName, m_customOverwrite, m_forcedLibraries)) {
     return Error;
   }
 

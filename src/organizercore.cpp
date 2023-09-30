@@ -111,9 +111,9 @@ OrganizerCore::OrganizerCore(Settings& settings)
 
   connect(&m_DownloadManager, SIGNAL(downloadSpeed(QString, int)), this,
           SLOT(downloadSpeed(QString, int)));
-  connect(m_DirectoryRefresher.get(), SIGNAL(refreshed()), this,
-          SLOT(directory_refreshed()));
-
+  connect(m_DirectoryRefresher.get(), &DirectoryRefresher::refreshed, [this]() {
+    onDirectoryRefreshed();
+  });
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this, SLOT(removeOrigin(QString)));
   connect(&m_ModList, &ModList::modStatesChanged, [=] {
     currentProfile()->writeModlist();
@@ -1138,8 +1138,8 @@ bool OrganizerCore::previewFile(QWidget* parent, const QString& originName,
   return true;
 }
 
-boost::signals2::connection
-OrganizerCore::onAboutToRun(const std::function<bool(const QString&)>& func)
+boost::signals2::connection OrganizerCore::onAboutToRun(
+    const std::function<bool(const QString&, const QDir&, const QString&)>& func)
 {
   return m_AboutToRun.connect(func);
 }
@@ -1199,6 +1199,18 @@ OrganizerCore::onPluginDisabled(std::function<void(const IPlugin*)> const& func)
   return m_PluginDisabled.connect(func);
 }
 
+boost::signals2::connection
+OrganizerCore::onNextRefresh(std::function<void()> const& func,
+                             RefreshCallbackGroup group, RefreshCallbackMode mode)
+{
+  if (m_DirectoryUpdate || mode == RefreshCallbackMode::FORCE_WAIT_FOR_REFRESH) {
+    return m_OnNextRefreshCallbacks.connect(static_cast<int>(group), func);
+  } else {
+    func();
+    return {};
+  }
+}
+
 void OrganizerCore::refresh(bool saveChanges)
 {
   // don't lose changes!
@@ -1216,25 +1228,21 @@ void OrganizerCore::refresh(bool saveChanges)
 
 void OrganizerCore::refreshESPList(bool force)
 {
-  TimeThis tt("OrganizerCore::refreshESPList()");
+  onNextRefresh(
+      [this, force] {
+        TimeThis tt("OrganizerCore::refreshESPList()");
 
-  if (m_DirectoryUpdate) {
-    // don't mess up the esp list if we're currently updating the directory
-    // structure
-    m_PostRefreshTasks.append([=]() {
-      this->refreshESPList(force);
-    });
-    return;
-  }
-  m_CurrentProfile->writeModlist();
+        m_CurrentProfile->writeModlist();
 
-  // clear list
-  try {
-    m_PluginList.refresh(m_CurrentProfile->name(), *m_DirectoryStructure,
-                         m_CurrentProfile->getLockedOrderFileName(), force);
-  } catch (const std::exception& e) {
-    reportError(tr("Failed to refresh list of esps: %1").arg(e.what()));
-  }
+        // clear list
+        try {
+          m_PluginList.refresh(m_CurrentProfile->name(), *m_DirectoryStructure,
+                               m_CurrentProfile->getLockedOrderFileName(), force);
+        } catch (const std::exception& e) {
+          reportError(tr("Failed to refresh list of esps: %1").arg(e.what()));
+        }
+      },
+      RefreshCallbackGroup::CORE, RefreshCallbackMode::RUN_NOW_IF_POSSIBLE);
 }
 
 void OrganizerCore::refreshBSAList()
@@ -1517,13 +1525,13 @@ void OrganizerCore::refreshDirectoryStructure()
                                 std::set<QString>(archives.begin(), archives.end()));
 
   // runs refresh() in a thread
-  QTimer::singleShot(0, m_DirectoryRefresher.get(), SLOT(refresh()));
+  QTimer::singleShot(0, m_DirectoryRefresher.get(), &DirectoryRefresher::refresh);
 }
 
-void OrganizerCore::directory_refreshed()
+void OrganizerCore::onDirectoryRefreshed()
 {
   log::debug("directory refreshed, finishing up");
-  TimeThis tt("OrganizerCore::directory_refreshed()");
+  TimeThis tt("OrganizerCore::onDirectoryRefreshed()");
 
   DirectoryEntry* newStructure = m_DirectoryRefresher->stealDirectoryStructure();
   Q_ASSERT(newStructure != m_DirectoryStructure);
@@ -1547,23 +1555,18 @@ void OrganizerCore::directory_refreshed()
     log::debug("structure deleter thread done");
   });
 
-  m_DirectoryUpdate = false;
-
   log::debug("clearing caches");
   for (int i = 0; i < m_ModList.rowCount(); ++i) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
     modInfo->clearCaches();
   }
 
-  if (!m_PostRefreshTasks.empty()) {
-    log::debug("running {} post refresh tasks", m_PostRefreshTasks.size());
+  // needs to be done before post refresh tasks
+  m_DirectoryUpdate = false;
 
-    for (auto task : m_PostRefreshTasks) {
-      task();
-    }
-
-    m_PostRefreshTasks.clear();
-  }
+  log::debug("running {} post refresh tasks");
+  m_OnNextRefreshCallbacks();
+  m_OnNextRefreshCallbacks.disconnect_all_slots();
 
   if (m_CurrentProfile != nullptr) {
     log::debug("refreshing lists");
@@ -1573,11 +1576,6 @@ void OrganizerCore::directory_refreshed()
   emit directoryStructureReady();
 
   log::debug("refresh done");
-}
-
-void OrganizerCore::profileRefresh()
-{
-  refresh();
 }
 
 void OrganizerCore::clearCaches(std::vector<unsigned int> const& indices) const
@@ -1895,15 +1893,12 @@ bool OrganizerCore::saveCurrentLists()
 
 void OrganizerCore::savePluginList()
 {
-  if (m_DirectoryUpdate) {
-    // delay save till after directory update
-    m_PostRefreshTasks.append([this]() {
-      this->savePluginList();
-    });
-    return;
-  }
-  m_PluginList.saveTo(m_CurrentProfile->getLockedOrderFileName());
-  m_PluginList.saveLoadOrder(*m_DirectoryStructure);
+  onNextRefresh(
+      [this]() {
+        m_PluginList.saveTo(m_CurrentProfile->getLockedOrderFileName());
+        m_PluginList.saveLoadOrder(*m_DirectoryStructure);
+      },
+      RefreshCallbackGroup::CORE, RefreshCallbackMode::RUN_NOW_IF_POSSIBLE);
 }
 
 void OrganizerCore::saveCurrentProfile()
@@ -1924,7 +1919,8 @@ ProcessRunner OrganizerCore::processRunner()
 }
 
 bool OrganizerCore::beforeRun(
-    const QFileInfo& binary, const QString& profileName, const QString& customOverwrite,
+    const QFileInfo& binary, const QDir& cwd, const QString& arguments,
+    const QString& profileName, const QString& customOverwrite,
     const QList<MOBase::ExecutableForcedLoadSetting>& forcedLibraries)
 {
   saveCurrentProfile();
@@ -1942,8 +1938,7 @@ bool OrganizerCore::beforeRun(
     m_CurrentProfile->writeModlistNow(true);
   }
 
-  // TODO: should also pass arguments
-  if (!m_AboutToRun(binary.absoluteFilePath())) {
+  if (!m_AboutToRun(binary.absoluteFilePath(), cwd, arguments)) {
     log::debug("start of \"{}\" cancelled by plugin", binary.absoluteFilePath());
     return false;
   }
