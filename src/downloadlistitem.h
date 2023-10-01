@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define DOWNLOADLISTITEM_H
 
 #include <QtCore>
+#include "downloadmanager.h"
 
 /**
  * @brief model of the list of active and pending downloads
