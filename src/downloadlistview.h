@@ -123,7 +123,7 @@ private slots:
 
 private:
   DownloadManager* m_Manager;
-  DownloadList* m_SourceModel;
+  DownloadList* m_SourceModel{nullptr};
 
   void resizeEvent(QResizeEvent* event);
 };
