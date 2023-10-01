@@ -158,7 +158,8 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
         text += tr("Information missing, please select \"Query Info\" from the context "
                    "menu to re-retrieve.");
       } else {
-        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(download.fileName);
+        const MOBase::ModRepositoryFileInfo* info =
+            m_manager.getFileInfo(download.fileName);
         return QString("%1 (ID %2) %3<br><span>%4</span>")
             .arg(download.modName)
             .arg(download.modId)
@@ -206,9 +207,9 @@ void DownloadList::downloadUpdated(QString fileName)
 void DownloadList::downloadRemoved(QString fileName)
 {
   auto downloadListItem = std::find_if(m_downloads.begin(), m_downloads.end(),
-                               [fileName](const DownloadListItem download) {
-                                 return download.fileName == fileName;
-                               });
+                                       [fileName](const DownloadListItem download) {
+                                         return download.fileName == fileName;
+                                       });
 
   if (downloadListItem != m_downloads.end()) {
     emit beginResetModel();
@@ -381,10 +382,10 @@ void DownloadList::getDownloadInfo(DownloadListItem& downloadListItem)
                                 .arg(std::get<0>(nexusids))
                                 .arg(std::get<1>(nexusids))
                                 .arg(std::get<2>(nexusids));
-    downloadListItem.game   = std::get<0>(nexusids);
-    downloadListItem.modId  = QString::number(std::get<1>(nexusids));
-    downloadListItem.status = tr("Pending");
-    downloadListItem.size   = tr("Unknown");
+    downloadListItem.game     = std::get<0>(nexusids);
+    downloadListItem.modId    = QString::number(std::get<1>(nexusids));
+    downloadListItem.status   = tr("Pending");
+    downloadListItem.size     = tr("Unknown");
     downloadListItem.fileName = tr("< game %1 mod %2 file %3 >")
                                     .arg(std::get<0>(nexusids))
                                     .arg(std::get<1>(nexusids))
