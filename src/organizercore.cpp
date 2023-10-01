@@ -889,13 +889,13 @@ ModInfo::Ptr OrganizerCore::installArchive(const QString& archivePath, int prior
   }
 
   if (modInfo != nullptr) {
-    auto dlIdx = m_DownloadManager.indexByName(QFileInfo(archivePath).fileName());
+    auto dlIdx     = m_DownloadManager.indexByName(QFileInfo(archivePath).fileName());
     auto& download = m_DownloadManager.getDownloadInfoByIndex(dlIdx);
 
     if (dlIdx != -1) {
       int modId  = m_DownloadManager.getModID(download.m_FileName);
       int fileId = m_DownloadManager.getFileInfo(download.m_FileName)->fileID;
-    modInfo->addInstalledFile(modId, fileId);
+      modInfo->addInstalledFile(modId, fileId);
     }
     m_DownloadManager.markInstalled(archivePath);
   }

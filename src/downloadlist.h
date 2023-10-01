@@ -20,9 +20,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DOWNLOADLIST_H
 #define DOWNLOADLIST_H
 
+#include "downloadlistitem.h"
 #include <QAbstractTableModel>
 #include <QList>
-#include "downloadlistitem.h"
 
 class OrganizerCore;
 class DownloadManager;
@@ -66,7 +66,7 @@ public:
   virtual int columnCount(const QModelIndex& parent) const;
   Qt::ItemFlags flags(const QModelIndex& idx) const override;
   QMimeData* mimeData(const QModelIndexList& indexes) const override;
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;  
+  virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
   /**
    * @brief retrieve the data to display in a specific row. Invoked by Qt
@@ -84,9 +84,9 @@ public:
 
   DownloadListItem* getDownloadListItem(QString fileName);
 
- private:
+private:
   void getDownloadInfo(DownloadListItem& downloadListItem);
-  
+
   DownloadListItem* getDownloadByPendingIndex(int index);
   int getPendingRow(int index);
   void downloadUpdated(QString fileName);
@@ -97,11 +97,11 @@ public slots:
    * @brief used to inform the model that data has changed
    *
    * @param row the row that changed. This can be negative to update the whole view
-  **/
+   **/
   void update(QString fileName);
 
   void aboutToUpdate();
-  void downloadAdded(QString& fileName);  
+  void downloadAdded(QString& fileName);
   void downloadRemoved(QString fileName);
   void pendingDownloadAdded(int index);
   void pendingDownloadFilenameUpdated(int index, QString fileName);

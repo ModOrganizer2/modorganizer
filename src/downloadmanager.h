@@ -86,14 +86,14 @@ private:
     accumulator_set<qint64, stats<tag::rolling_mean>> m_DownloadAcc;
     accumulator_set<qint64, stats<tag::rolling_mean>> m_DownloadTimeAcc;
     qint64 m_DownloadLast;
-    qint64 m_DownloadTimeLast;    
+    qint64 m_DownloadTimeLast;
     int m_DownloadID{0};
     QString m_FileName;
     QFile m_Output;
     QNetworkReply* m_Reply{nullptr};
     QElapsedTimer m_StartTime;
     qint64 m_PreResumeSize{0LL};
-    std::pair<int, QString> m_Progress;    
+    std::pair<int, QString> m_Progress;
     bool m_HasData;
     DownloadState m_State{STATE_STARTED};
     int m_CurrentUrl{0};
@@ -112,14 +112,14 @@ private:
     quint32 m_TaskProgressId{0};
 
     MOBase::ModRepositoryFileInfo* m_FileInfo{nullptr};
-        
+
     bool m_Hidden;
 
     static DownloadInfo* createNew(const MOBase::ModRepositoryFileInfo* fileInfo,
                                    const QStringList& URLs);
     static DownloadInfo* createFromMeta(const QString& filePath, bool showHidden,
                                         const QString outputDirectory,
-                                        std::optional<uint64_t> fileSize = {});    
+                                        std::optional<uint64_t> fileSize = {});
 
     /**
      * @brief rename the file
@@ -148,7 +148,7 @@ private:
           m_DownloadTimeAcc(tag::rolling_window::window_size = 200)
     {}
 
-  public: 
+  public:
     static void resetNextDownloadID();
   };
 
@@ -588,9 +588,9 @@ private:
 
   QString getFileNameFromNetworkReply(QNetworkReply* reply);
 
-  void setState(DownloadInfo* info, DownloadManager::DownloadState state);  
+  void setState(DownloadInfo* info, DownloadManager::DownloadState state);
 
-int getDownloadInfoIndexByFilename(QString fileName) const;
+  int getDownloadInfoIndexByFilename(QString fileName) const;
 
   void removePending(QString gameName, int modID, int fileID);
 
@@ -637,7 +637,6 @@ private:
 
   QTimer m_TimeoutTimer;
 };
-
 
 class ScopedDisableDirWatcher
 {

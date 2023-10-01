@@ -42,7 +42,8 @@ class DownloadProgressDelegate : public QStyledItemDelegate
   Q_OBJECT
 
 public:
-  DownloadProgressDelegate(DownloadManager* manager, DownloadListView* list, DownloadList* sourceModel);
+  DownloadProgressDelegate(DownloadManager* manager, DownloadListView* list,
+                           DownloadList* sourceModel);
 
   void paint(QPainter* painter, const QStyleOptionViewItem& option,
              const QModelIndex& index) const override;

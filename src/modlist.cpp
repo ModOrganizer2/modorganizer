@@ -1099,9 +1099,8 @@ bool ModList::dropMimeData(const QMimeData* mimeData, Qt::DropAction action, int
   }
 
   ModListDropInfo dropInfo(mimeData, *m_Organizer);
-  auto* manager = m_Organizer->downloadManager();
+  auto* manager  = m_Organizer->downloadManager();
   auto& download = manager->getDownloadInfoByIndex(dropInfo.download());
-
 
   if (!m_Profile || !dropInfo.isValid()) {
     return false;

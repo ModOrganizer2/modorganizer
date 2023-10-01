@@ -41,8 +41,8 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
           SLOT(openMetaFile(QString)));
   connect(ui.list, SIGNAL(openInDownloadsFolder(QString)), m_core.downloadManager(),
           SLOT(openInDownloadsFolder(QString)));
-  connect(ui.list, SIGNAL(removeDownload(QString, bool, int)),
-          m_core.downloadManager(), SLOT(removeDownload(QString, bool, int)));
+  connect(ui.list, SIGNAL(removeDownload(QString, bool, int)), m_core.downloadManager(),
+          SLOT(removeDownload(QString, bool, int)));
   connect(ui.list, SIGNAL(restoreDownload(QString)), m_core.downloadManager(),
           SLOT(restoreDownload(QString)));
   connect(ui.list, SIGNAL(cancelDownload(QString)), m_core.downloadManager(),
