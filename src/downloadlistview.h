@@ -48,9 +48,9 @@ public:
              const QModelIndex& index) const override;
 
 private:
-  DownloadManager* m_Manager{nullptr};
-  DownloadListView* m_List{nullptr};
-  DownloadList* m_sourceModel{nullptr};
+  DownloadManager* m_Manager;
+  DownloadListView* m_List;
+  DownloadList* m_sourceModel;
 };
 
 class DownloadListHeader : public QHeaderView
@@ -122,8 +122,8 @@ private slots:
   void issueQueryInfoMd5(QString fileName);
 
 private:
-  DownloadManager* m_Manager{nullptr};
-  DownloadList* m_SourceModel{nullptr};
+  DownloadManager* m_Manager;
+  DownloadList* m_SourceModel;
 
   void resizeEvent(QResizeEvent* event);
 };

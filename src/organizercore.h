@@ -517,10 +517,10 @@ private:
   static const unsigned int PROBLEM_MO1SCRIPTEXTENDERWORKAROUND = 1;
 
 private:
-  IUserInterface* m_UserInterface{nullptr};
-  PluginContainer* m_PluginContainer{nullptr};
+  IUserInterface* m_UserInterface;
+  PluginContainer* m_PluginContainer;
   QString m_GameName;
-  MOBase::IPluginGame* m_GamePlugin{nullptr};
+  MOBase::IPluginGame* m_GamePlugin;
   ModDataContentHolder m_Contents;
 
   std::unique_ptr<Profile> m_CurrentProfile;

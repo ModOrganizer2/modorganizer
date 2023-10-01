@@ -22,10 +22,10 @@ public:
 private:
   struct DownloadsTabUi
   {
-    QPushButton* refresh{nullptr};
-    DownloadListView* list{nullptr};
-    QCheckBox* showHidden{nullptr};
-    QLineEdit* filter{nullptr};
+    QPushButton* refresh;
+    DownloadListView* list;
+    QCheckBox* showHidden;
+    QLineEdit* filter;
   };
 
   OrganizerCore& m_core;
