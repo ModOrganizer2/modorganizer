@@ -336,7 +336,7 @@ signals:
   // emitted when an item is dropped from the download list, the row is from the
   // download list
   //
-  void downloadArchiveDropped(int row, int priority);
+  void downloadArchiveDropped(const QString& fileName, int priority);
 
   // emitted when an external archive is dropped on the mod list
   //

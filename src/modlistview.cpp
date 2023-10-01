@@ -840,8 +840,8 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   // in the manual installer
   connect(
       m_core->modList(), &ModList::downloadArchiveDropped, this,
-      [=](int row, int priority) {
-        m_core->installDownload(row, priority);
+      [=](const QString& fileName, int priority) {
+        m_core->installDownload(fileName, priority);
       },
       Qt::QueuedConnection);
   connect(

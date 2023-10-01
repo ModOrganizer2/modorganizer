@@ -55,7 +55,7 @@ void DownloadProgressDelegate::paint(QPainter* painter,
 
   bool pendingDownload = download.isPending;
   if (sourceIndex.column() == DownloadList::COL_STATUS && !pendingDownload &&
-      m_Manager->getState(download.downloadId) == DownloadManager::STATE_DOWNLOADING) {
+      m_Manager->getState(download.fileName) == DownloadManager::STATE_DOWNLOADING) {
     QProgressBar progressBar;
     progressBar.setProperty("downloadView", option.widget->property("downloadView"));
     progressBar.setProperty("downloadProgress", true);
@@ -64,8 +64,8 @@ void DownloadProgressDelegate::paint(QPainter* painter,
     progressBar.setAlignment(Qt::AlignCenter);
     progressBar.setMinimum(0);
     progressBar.setMaximum(100);
-    progressBar.setValue(m_Manager->getProgress(download.downloadId).first);
-    progressBar.setFormat(m_Manager->getProgress(download.downloadId).second);
+    progressBar.setValue(m_Manager->getProgress(download.fileName).first);
+    progressBar.setFormat(m_Manager->getProgress(download.fileName).second);
     progressBar.setStyle(QApplication::style());
 
     // paint the background with default delegate first to preserve table cell styling
@@ -171,11 +171,11 @@ void DownloadListView::onDoubleClick(const QModelIndex& index)
 
   auto& download = m_SourceModel->getDownloadByRow(sourceIndex.row());
 
-  if (m_Manager->getState(download.downloadId) >= DownloadManager::STATE_READY)
-    emit installDownload(download.downloadId);
-  else if ((m_Manager->getState(download.downloadId) == DownloadManager::STATE_PAUSED) ||
-           (m_Manager->getState(download.downloadId) == DownloadManager::STATE_PAUSING))
-    emit resumeDownload(download.downloadId);
+  if (m_Manager->getState(download.fileName) >= DownloadManager::STATE_READY)
+    emit installDownload(download.fileName);
+  else if ((m_Manager->getState(download.fileName) == DownloadManager::STATE_PAUSED) ||
+           (m_Manager->getState(download.fileName) == DownloadManager::STATE_PAUSING))
+    emit resumeDownload(download.fileName);
 }
 
 void DownloadListView::onHeaderCustomContextMenu(const QPoint& point)
@@ -230,66 +230,66 @@ void DownloadListView::onCustomContextMenu(const QPoint& point)
       const int row =
           qobject_cast<QSortFilterProxyModel*>(model())->mapToSource(index).row();
       auto& download                        = m_SourceModel->getDownloadByRow(row);
-      DownloadManager::DownloadState state = m_Manager->getState(download.downloadId);
+      DownloadManager::DownloadState state = m_Manager->getState(download.fileName);
 
-      hidden = m_Manager->isHidden(download.downloadId);
+      hidden = m_Manager->isHidden(download.fileName);
 
       if (state >= DownloadManager::STATE_READY) {
         menu.addAction(tr("Install"), [=] {
-          issueInstall(download.downloadId);
+          issueInstall(download.fileName);
         });
-        if (m_Manager->isInfoIncomplete(download.downloadId))
+        if (m_Manager->isInfoIncomplete(download.fileName))
           menu.addAction(tr("Query Info"), [=] {
-            issueQueryInfoMd5(download.downloadId);
+            issueQueryInfoMd5(download.fileName);
           });
         else
           menu.addAction(tr("Visit on Nexus"), [=] {
-            issueVisitOnNexus(download.downloadId);
+            issueVisitOnNexus(download.fileName);
           });
         menu.addAction(tr("Open File"), [=] {
-          issueOpenFile(download.downloadId);
+          issueOpenFile(download.fileName);
         });
         menu.addAction(tr("Open Meta File"), [=] {
-          issueOpenMetaFile(download.downloadId);
+          issueOpenMetaFile(download.fileName);
         });
         menu.addAction(tr("Reveal in Explorer"), [=] {
-          issueOpenInDownloadsFolder(download.downloadId);
+          issueOpenInDownloadsFolder(download.fileName);
         });
 
         menu.addSeparator();
 
         menu.addAction(tr("Delete..."), [=] {
-          issueDelete(download.downloadId);
+          issueDelete(download.fileName);
         });
         if (hidden)
           menu.addAction(tr("Un-Hide"), [=] {
-            issueRestoreToView(download.downloadId);
+            issueRestoreToView(download.fileName);
           });
         else
           menu.addAction(tr("Hide"), [=] {
-            issueRemoveFromView(download.downloadId);
+            issueRemoveFromView(download.fileName);
           });
       } else if (state == DownloadManager::STATE_DOWNLOADING) {
         menu.addAction(tr("Cancel"), [=] {
-          issueCancel(download.downloadId);
+          issueCancel(download.fileName);
         });
         menu.addAction(tr("Pause"), [=] {
-          issuePause(download.downloadId);
+          issuePause(download.fileName);
         });
         menu.addAction(tr("Reveal in Explorer"), [=] {
-          issueOpenInDownloadsFolder(download.downloadId);
+          issueOpenInDownloadsFolder(download.fileName);
         });
       } else if ((state == DownloadManager::STATE_PAUSED) ||
                  (state == DownloadManager::STATE_ERROR) ||
                  (state == DownloadManager::STATE_PAUSING)) {
         menu.addAction(tr("Delete..."), [=] {
-          issueDelete(download.downloadId);
+          issueDelete(download.fileName);
         });
         menu.addAction(tr("Resume"), [=] {
-          issueResume(download.downloadId);
+          issueResume(download.fileName);
         });
         menu.addAction(tr("Reveal in Explorer"), [=] {
-          issueOpenInDownloadsFolder(download.downloadId);
+          issueOpenInDownloadsFolder(download.fileName);
         });
       }
 
@@ -337,53 +337,53 @@ void DownloadListView::keyPressEvent(QKeyEvent* event)
                         ->mapToSource(currentIndex())
                         .row();
     auto& download = m_SourceModel->getDownloadByRow(row);
-    auto state = m_Manager->getState(download.downloadId);
+    auto state = m_Manager->getState(download.fileName);
 
     if (state >= DownloadManager::STATE_READY) {
       if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-        issueInstall(download.downloadId);
+        issueInstall(download.fileName);
       } else if (event->key() == Qt::Key_Delete) {
-        issueDelete(download.downloadId);
+        issueDelete(download.fileName);
       }
     } else if (state == DownloadManager::STATE_DOWNLOADING) {
       if (event->key() == Qt::Key_Delete) {
-        issueCancel(download.downloadId);
+        issueCancel(download.fileName);
       } else if (event->key() == Qt::Key_Space) {
-        issuePause(download.downloadId);
+        issuePause(download.fileName);
       }
     } else if (state == DownloadManager::STATE_PAUSED ||
                state == DownloadManager::STATE_ERROR ||
                state == DownloadManager::STATE_PAUSING) {
       if (event->key() == Qt::Key_Delete) {
-        issueDelete(download.downloadId);
+        issueDelete(download.fileName);
       } else if (event->key() == Qt::Key_Space) {
-        issueResume(download.downloadId);
+        issueResume(download.fileName);
       }
     }
   }
   QTreeView::keyPressEvent(event);
 }
 
-void DownloadListView::issueInstall(int downloadId)
+void DownloadListView::issueInstall(const QString& fileName)
 {
-  emit installDownload(downloadId);
+  emit installDownload(fileName);
 }
 
-void DownloadListView::issueQueryInfo(int downloadId)
+void DownloadListView::issueQueryInfo(const QString& fileName)
 {
-  emit queryInfo(downloadId);
+  emit queryInfo(fileName);
 }
 
-void DownloadListView::issueQueryInfoMd5(int downloadId)
+void DownloadListView::issueQueryInfoMd5(const QString& fileName)
 {
-  emit queryInfoMd5(downloadId);
+  emit queryInfoMd5(fileName);
 }
 
-void DownloadListView::issueDelete(int downloadId)
+void DownloadListView::issueDelete(const QString& fileName)
 {
   const auto r = MOBase::TaskDialog(this, tr("Delete download"))
                      .main("Are you sure you want to delete this download?")
-                     .content(m_Manager->getFilePath(downloadId))
+                     .content(m_Manager->getFilePath(fileName))
                      .icon(QMessageBox::Question)
                      .button({tr("Move to the Recycle Bin"), QMessageBox::Yes})
                      .button({tr("Cancel"), QMessageBox::Cancel})
@@ -393,58 +393,58 @@ void DownloadListView::issueDelete(int downloadId)
     return;
   }
 
-  emit removeDownload(downloadId, true);
+  emit removeDownload(fileName, true, 0);
 }
 
-void DownloadListView::issueRemoveFromView(int downloadId)
+void DownloadListView::issueRemoveFromView(const QString& fileName)
 {
-  log::debug("removing from view: {}", downloadId);
-  emit removeDownload(downloadId, false);
+  log::debug("removing from view: {}", fileName);
+  emit removeDownload(fileName, false, 0);
 }
 
-void DownloadListView::issueRestoreToView(int downloadId)
+void DownloadListView::issueRestoreToView(const QString& fileName)
 {
-  emit restoreDownload(downloadId);
+  emit restoreDownload(fileName);
 }
 
 void DownloadListView::issueRestoreToViewAll()
 {
-  emit restoreDownload(-1);
+  emit restoreDownload("");
 }
 
-void DownloadListView::issueVisitOnNexus(int downloadId)
+void DownloadListView::issueVisitOnNexus(const QString& fileName)
 {
-  emit visitOnNexus(downloadId);
+  emit visitOnNexus(fileName);
 }
 
-void DownloadListView::issueOpenFile(int downloadId)
+void DownloadListView::issueOpenFile(const QString& fileName)
 {
-  emit openFile(downloadId);
+  emit openFile(fileName);
 }
 
-void DownloadListView::issueOpenMetaFile(int downloadId)
+void DownloadListView::issueOpenMetaFile(const QString& fileName)
 {
-  emit openMetaFile(downloadId);
+  emit openMetaFile(fileName);
 }
 
-void DownloadListView::issueOpenInDownloadsFolder(int downloadId)
+void DownloadListView::issueOpenInDownloadsFolder(const QString& fileName)
 {
-  emit openInDownloadsFolder(downloadId);
+  emit openInDownloadsFolder(fileName);
 }
 
-void DownloadListView::issueCancel(int downloadId)
+void DownloadListView::issueCancel(const QString& fileName)
 {
-  emit cancelDownload(downloadId);
+  emit cancelDownload(fileName);
 }
 
-void DownloadListView::issuePause(int downloadId)
+void DownloadListView::issuePause(const QString& fileName)
 {
-  emit pauseDownload(downloadId);
+  emit pauseDownload(fileName);
 }
 
-void DownloadListView::issueResume(int downloadId)
+void DownloadListView::issueResume(const QString& fileName)
 {
-  emit resumeDownload(downloadId);
+  emit resumeDownload(fileName);
 }
 
 void DownloadListView::issueDeleteAll()
@@ -454,7 +454,7 @@ void DownloadListView::issueDeleteAll()
           tr("This will remove all finished downloads from this list and from "
              "disk.\n\nAre you absolutely sure you want to proceed?"),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    emit removeDownload(-1, true);
+    emit removeDownload("", true, -1);
   }
 }
 
@@ -465,7 +465,7 @@ void DownloadListView::issueDeleteCompleted()
           tr("This will remove all installed downloads from this list and from "
              "disk.\n\nAre you absolutely sure you want to proceed?"),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    emit removeDownload(-2, true);
+    emit removeDownload("", true, -2);
   }
 }
 
@@ -476,7 +476,7 @@ void DownloadListView::issueDeleteUninstalled()
           tr("This will remove all uninstalled downloads from this list and from "
              "disk.\n\nAre you absolutely sure you want to proceed?"),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    emit removeDownload(-3, true);
+    emit removeDownload("", true, -3);
   }
 }
 
@@ -486,7 +486,7 @@ void DownloadListView::issueRemoveFromViewAll()
                             tr("This will remove all finished downloads from this list "
                                "(but NOT from disk)."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    emit removeDownload(-1, false);
+    emit removeDownload("", false, -1);
   }
 }
 
@@ -496,7 +496,7 @@ void DownloadListView::issueRemoveFromViewCompleted()
                             tr("This will remove all installed downloads from this "
                                "list (but NOT from disk)."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    emit removeDownload(-2, false);
+    emit removeDownload("", false, -2);
   }
 }
 
@@ -506,6 +506,6 @@ void DownloadListView::issueRemoveFromViewUninstalled()
                             tr("This will remove all uninstalled downloads from this "
                                "list (but NOT from disk)."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    emit removeDownload(-3, false);
+    emit removeDownload("", false, -3);
   }
 }

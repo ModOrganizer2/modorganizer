@@ -15,12 +15,12 @@ public:
 
   int startDownloadURLs(const QStringList& urls) override;
   int startDownloadNexusFile(int modID, int fileID) override;
-  QString downloadPath(int id) override;
+  QString downloadPath(const QString& fileName) override;
 
-  bool onDownloadComplete(const std::function<void(int)>& callback) override;
-  bool onDownloadPaused(const std::function<void(int)>& callback) override;
-  bool onDownloadFailed(const std::function<void(int)>& callback) override;
-  bool onDownloadRemoved(const std::function<void(int)>& callback) override;
+  bool onDownloadComplete(const std::function<void(const QString&)>& callback) override;
+  bool onDownloadPaused(const std::function<void(const QString&)>& callback) override;
+  bool onDownloadFailed(const std::function<void(const QString&)>& callback) override;
+  bool onDownloadRemoved(const std::function<void(const QString&)>& callback) override;
 
 private:
   friend class OrganizerProxy;

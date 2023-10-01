@@ -32,9 +32,10 @@ class Settings;
  **/
 struct Download
 {
-  int downloadId{0};
+  int pendingIndex{-1};
   bool isPending{false};
   bool showInfoIncompleteWarning{false};
+  QString fileName;
   QString name;
   QString status;
   QString size;
@@ -81,12 +82,8 @@ public:
    **/
   virtual int rowCount(const QModelIndex& parent = QModelIndex()) const;
   virtual int columnCount(const QModelIndex& parent) const;
-
-  QModelIndex index(int row, int column, const QModelIndex& parent) const;
-  QModelIndex parent(const QModelIndex& child) const;
   Qt::ItemFlags flags(const QModelIndex& idx) const override;
   QMimeData* mimeData(const QModelIndexList& indexes) const override;
-
   virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
   const Download& getDownloadByRow(int row);
@@ -106,10 +103,13 @@ public:
   bool lessThanPredicate(const QModelIndex& left, const QModelIndex& right);
 
 private:
-  void buildDownload(Download* download);
-  Download* getDownload(int downloadId);
-  int getDownloadIndex(int downloadId);
-  void downloadUpdated(int downloadId);
+  void getDownloadInfo(Download& download);
+  Download* getDownload(const QString& fileName);
+  Download* getDownloadByPendingIndex(int index);
+  int getDownloadRow(const QString& fileName);
+  int getPendingRow(int index);
+  void downloadUpdated(const QString& fileName);
+  void updateData(int row);
 
 public slots:
   /**
@@ -117,13 +117,14 @@ public slots:
    *
    * @param row the row that changed. This can be negative to update the whole view
    **/
-  void update(int row);
+  void update(const QString& fileName);
 
   void aboutToUpdate();
-  void downloadAdded(int downloadId);  
-  void downloadRemoved(int downloadId);
+  void downloadAdded(const QString& fileName);  
+  void downloadRemoved(const QString& fileName);
   void pendingDownloadAdded(int index);
   void pendingDownloadRemoved(int index);
+  void pendingDownloadFilenameUpdated(int index, QString& fileName);
 
 private:
   DownloadManager& m_manager;
