@@ -112,7 +112,7 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
     return QVariant();
   }
 
-  const auto& download = m_downloads.at(index.row());
+  const auto& download = m_downloads[index.row()];
 
   if (role == Qt::DisplayRole) {
 
@@ -141,11 +141,11 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
     if (download.isPending) {
       return QColor(Qt::darkBlue);
     } else {
-      if (download.status == "Downloaded") {
+      if (download.state == DownloadManager::STATE_DOWNLOADING) {
         return QColor(Qt::darkGreen);
-      } else if (download.status == "Paused") {
+      } else if (download.state == DownloadManager::STATE_PAUSED) {
         return QColor(Qt::darkYellow);
-      } else if (download.status == "Uninstalled") {
+      } else if (download.state == DownloadManager::STATE_UNINSTALLED) {
         return QColor(Qt::darkRed);
       }
     }
@@ -393,7 +393,9 @@ void DownloadList::getDownloadInfo(DownloadListItem& downloadListItem)
           QString("%1").arg(m_manager.getDisplayGameName(downloadListItem.fileName));
     }
 
-    switch (m_manager.getState(downloadListItem.fileName)) {
+    downloadListItem.state = m_manager.getState(downloadListItem.fileName);
+
+    switch (downloadListItem.state) {
     // STATE_DOWNLOADING handled by DownloadProgressDelegate
     case DownloadManager::STATE_STARTED:
       downloadListItem.status = tr("Started");
