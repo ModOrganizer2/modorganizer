@@ -149,6 +149,24 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
         return QColor(Qt::darkRed);
       }
     }
+  } else if (role == Qt::ToolTipRole) {
+    if (download.isPending) {
+      return tr("Pending download");
+    } else {
+      QString text = download.fileName + "\n";
+      if (download.showInfoIncompleteWarning) {
+        text += tr("Information missing, please select \"Query Info\" from the context "
+                   "menu to re-retrieve.");
+      } else {
+        const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(download.fileName);
+        return QString("%1 (ID %2) %3<br><span>%4</span>")
+            .arg(download.modName)
+            .arg(download.modId)
+            .arg(download.version)
+            .arg(info->description.chopped(4096));
+      }
+      return text;
+    }
   } else if (role == Qt::DecorationRole && index.column() == COL_NAME) {
     if (download.showInfoIncompleteWarning) {
       return QIcon(":/MO/gui/warning_16");
