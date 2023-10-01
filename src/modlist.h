@@ -307,7 +307,7 @@ signals:
    * @brief emitted after a mod has been uninstalled
    * @param fileName filename of the mod being uninstalled
    */
-  void modUninstalled(const QString& fileName);
+  void modUninstalled(QString fileName);
 
   /**
    * @brief QML seems to handle overloaded signals poorly - create unique signal for
@@ -336,7 +336,7 @@ signals:
   // emitted when an item is dropped from the download list, the row is from the
   // download list
   //
-  void downloadArchiveDropped(const QString& fileName, int priority);
+  void downloadArchiveDropped(QString fileName, int priority);
 
   // emitted when an external archive is dropped on the mod list
   //

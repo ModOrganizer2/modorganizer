@@ -85,6 +85,7 @@ mo2_add_filter(NAME src/dialogs GROUPS
 
 mo2_add_filter(NAME src/downloads GROUPS
 	downloadlist
+	downloadlistitem
 	downloadlistview
 	downloadmanager
 )

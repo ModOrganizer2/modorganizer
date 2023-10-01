@@ -776,7 +776,7 @@ void DownloadManager::addNXMDownload(const QString& url)
       QVariant::fromValue(test), ""));
 }
 
-void DownloadManager::removeFile(const QString& fileName, bool deleteFile)
+void DownloadManager::removeFile(QString fileName, bool deleteFile)
 {
   // Avoid triggering refreshes from DirWatcher
   ScopedDisableDirWatcher scopedDirWatcher(this);
@@ -847,7 +847,7 @@ void DownloadManager::refreshAlphabeticalTranslation()
             LessThanWrapper(this));
 }
 
-void DownloadManager::restoreDownload(const QString& fileName)
+void DownloadManager::restoreDownload(QString fileName)
 {
   DownloadInfo* download = getDownloadInfoByFilename(fileName);
 
@@ -865,7 +865,7 @@ void DownloadManager::restoreDownload(const QString& fileName)
   }
 }
 
-void DownloadManager::removeDownload(const QString& fileName, bool deleteFile, int flag)
+void DownloadManager::removeDownload(QString fileName, bool deleteFile, int flag)
 {
   try {
     // avoid dirWatcher triggering refreshes
@@ -908,7 +908,7 @@ void DownloadManager::removeDownload(const QString& fileName, bool deleteFile, i
   refreshList();
 }
 
-void DownloadManager::cancelDownload(const QString& fileName)
+void DownloadManager::cancelDownload(QString fileName)
 {
   auto info = getDownloadInfoByFilename(fileName);
 
@@ -917,7 +917,7 @@ void DownloadManager::cancelDownload(const QString& fileName)
   }
 }
 
-void DownloadManager::pauseDownload(const QString& fileName)
+void DownloadManager::pauseDownload(QString fileName)
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
 
@@ -934,16 +934,17 @@ void DownloadManager::pauseDownload(const QString& fileName)
   }
 }
 
-void DownloadManager::resumeDownload(const QString& fileName)
+void DownloadManager::resumeDownload(QString fileName)
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
   info->m_Tries      = AUTOMATIC_RETRIES;
   resumeDownloadInt(fileName);
 }
 
-void DownloadManager::resumeDownloadInt(const QString& fileName)
+void DownloadManager::resumeDownloadInt(QString fileName)
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
+
 
 
   // Check for finished download;
@@ -1006,8 +1007,11 @@ DownloadManager::DownloadInfo* DownloadManager::getDownloadInfoById(int download
   }
 }
 
-DownloadManager::DownloadInfo* DownloadManager::getDownloadInfoByFilename(const QString& fileName) const
+DownloadManager::DownloadInfo*
+DownloadManager::getDownloadInfoByFilename(QString fileName) const
 {
+
+
   auto iter = std::find_if(m_ActiveDownloads.begin(), m_ActiveDownloads.end(),
                            [fileName](DownloadInfo* info) {
                              return info->m_FileName == fileName;
@@ -1024,7 +1028,7 @@ DownloadManager::DownloadInfo& DownloadManager::getDownloadInfoByIndex(int index
   return *m_ActiveDownloads[index];
 }
 
-int DownloadManager::getDownloadInfoIndexByFilename(const QString& fileName) const
+int DownloadManager::getDownloadInfoIndexByFilename(QString fileName) const
 {
   auto iter = std::find_if(m_ActiveDownloads.begin(), m_ActiveDownloads.end(),
                            [fileName](DownloadInfo* info) {
@@ -1037,7 +1041,7 @@ int DownloadManager::getDownloadInfoIndexByFilename(const QString& fileName) con
   }
 }
 
-void DownloadManager::queryInfo(const QString& fileName)
+void DownloadManager::queryInfo(QString fileName)
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
   if (info->m_FileInfo->repository != "Nexus") {
@@ -1092,7 +1096,7 @@ void DownloadManager::queryInfo(const QString& fileName)
   setState(info, STATE_FETCHINGMODINFO);
 }
 
-void DownloadManager::queryInfoMd5(const QString& fileName)
+void DownloadManager::queryInfoMd5(QString fileName)
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
 
@@ -1150,7 +1154,7 @@ void DownloadManager::queryInfoMd5(const QString& fileName)
   setState(info, STATE_FETCHINGMODINFO_MD5);
 }
 
-void DownloadManager::visitOnNexus(const QString& fileName)
+void DownloadManager::visitOnNexus(QString fileName)
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
 
@@ -1173,7 +1177,7 @@ void DownloadManager::visitOnNexus(const QString& fileName)
   }
 }
 
-void DownloadManager::openFile(const QString& fileName)
+void DownloadManager::openFile(QString fileName)
 {
   QDir path = QDir(m_OutputDirectory);
   if (path.exists(fileName)) {
@@ -1185,7 +1189,7 @@ void DownloadManager::openFile(const QString& fileName)
   return;
 }
 
-void DownloadManager::openMetaFile(const QString& fileName)
+void DownloadManager::openMetaFile(QString fileName)
 {
   const auto path     = QDir(m_OutputDirectory);
   const auto filePath = getFilePath(fileName);
@@ -1207,7 +1211,7 @@ void DownloadManager::openMetaFile(const QString& fileName)
   shell::Explore(filePath);
 }
 
-void DownloadManager::openInDownloadsFolder(const QString& fileName)
+void DownloadManager::openInDownloadsFolder(QString fileName)
 {
   const auto path = getFilePath(fileName);
 
@@ -1230,7 +1234,7 @@ int DownloadManager::numTotalDownloads() const
   return m_ActiveDownloads.size();
 }
 
-QString DownloadManager::getFilePath(const QString& fileName) const
+QString DownloadManager::getFilePath(QString fileName) const
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
   if (!info)
@@ -1261,7 +1265,7 @@ QString DownloadManager::getFileTypeString(int fileType)
   }
 }
 
-QString DownloadManager::getDisplayName(const QString& fileName) const
+QString DownloadManager::getDisplayName(QString fileName) const
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
 
@@ -1301,7 +1305,7 @@ QString DownloadManager::getFileName(int downloadId) const
   return info->m_FileName;
 }
 
-QDateTime DownloadManager::getFileTime(const QString& fileName) const
+QDateTime DownloadManager::getFileTime(QString fileName) const
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
 
@@ -1331,27 +1335,27 @@ std::tuple<QString, int, int> DownloadManager::getPendingDownload(int index)
   return m_PendingDownloads.at(index);
 }
 
-qint64 DownloadManager::getFileSize(const QString& fileName) const
+qint64 DownloadManager::getFileSize(QString fileName) const
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
 
   return info->m_TotalSize;
 }
 
-std::pair<int, QString> DownloadManager::getProgress(const QString& fileName) const
+std::pair<int, QString> DownloadManager::getProgress(QString fileName) const
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
 
   return info->m_Progress;
 }
 
-DownloadManager::DownloadState DownloadManager::getState(const QString& fileName) const
+DownloadManager::DownloadState DownloadManager::getState(QString fileName) const
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
   return info->m_State;
 }
 
-bool DownloadManager::isInfoIncomplete(const QString& fileName) const
+bool DownloadManager::isInfoIncomplete(QString fileName) const
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
 
@@ -1362,13 +1366,13 @@ bool DownloadManager::isInfoIncomplete(const QString& fileName) const
   return (info->m_FileInfo->fileID == 0) || (info->m_FileInfo->modID == 0);
 }
 
-int DownloadManager::getModID(const QString& fileName) const
+int DownloadManager::getModID(QString fileName) const
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
   return info->m_FileInfo->modID;
 }
 
-QString DownloadManager::getDisplayGameName(const QString& fileName) const
+QString DownloadManager::getDisplayGameName(QString fileName) const
 {
   DownloadInfo* info      = getDownloadInfoByFilename(fileName);
   QString gameName        = info->m_FileInfo->gameName;
@@ -1379,25 +1383,25 @@ QString DownloadManager::getDisplayGameName(const QString& fileName) const
   return gameName;
 }
 
-QString DownloadManager::getGameName(const QString& fileName) const
+QString DownloadManager::getGameName(QString fileName) const
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
   return info->m_FileInfo->gameName;
 }
 
-bool DownloadManager::isHidden(const QString& fileName) const
+bool DownloadManager::isHidden(QString fileName) const
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
   return info->m_Hidden;
 }
 
-const ModRepositoryFileInfo* DownloadManager::getFileInfo(const QString& fileName) const
+const ModRepositoryFileInfo* DownloadManager::getFileInfo(QString fileName) const
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
   return info->m_FileInfo;
 }
 
-void DownloadManager::markInstalled(const QString& fileName)
+void DownloadManager::markInstalled(QString fileName)
 {
   // Avoid triggering refreshes from DirWatcher
   ScopedDisableDirWatcher scopedDirWatcher(this);
@@ -1415,7 +1419,7 @@ DownloadManager::DownloadInfo* DownloadManager::getDownloadInfo(QString fileName
   return DownloadInfo::createFromMeta(fileName, true, m_OutputDirectory);
 }
 
-void DownloadManager::markUninstalled(const QString& fileName)
+void DownloadManager::markUninstalled(QString fileName)
 {
   // Avoid triggering refreshes from DirWatcher
   ScopedDisableDirWatcher scopedDirWatcher(this);
@@ -1830,36 +1834,36 @@ int DownloadManager::startDownloadNexusFile(int modID, int fileID)
   return newID;
 }
 
-QString DownloadManager::downloadPath(const QString& fileName)
+QString DownloadManager::downloadPath(QString fileName)
 {
   return getFilePath(fileName);
 }
 
 boost::signals2::connection
-DownloadManager::onDownloadComplete(const std::function<void(const QString&)>& callback)
+DownloadManager::onDownloadComplete(const std::function<void(QString)>& callback)
 {
   return m_DownloadComplete.connect(callback);
 }
 
 boost::signals2::connection
-DownloadManager::onDownloadPaused(const std::function<void(const QString&)>& callback)
+DownloadManager::onDownloadPaused(const std::function<void(QString)>& callback)
 {
   return m_DownloadPaused.connect(callback);
 }
 
 boost::signals2::connection
-DownloadManager::onDownloadFailed(const std::function<void(const QString&)>& callback)
+DownloadManager::onDownloadFailed(const std::function<void(QString)>& callback)
 {
   return m_DownloadFailed.connect(callback);
 }
 
 boost::signals2::connection
-DownloadManager::onDownloadRemoved(const std::function<void(const QString&)>& callback)
+DownloadManager::onDownloadRemoved(const std::function<void(QString)>& callback)
 {
   return m_DownloadRemoved.connect(callback);
 }
 
-int DownloadManager::indexByName(const QString& fileName) const
+int DownloadManager::indexByName(QString fileName) const
 {
   for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
     if (m_ActiveDownloads[i]->m_FileName == fileName) {
@@ -2076,7 +2080,7 @@ void DownloadManager::downloadFinished() {
   downloadFinished(info->m_FileName);
 }
 
-void DownloadManager::downloadFinished(const QString& fileName)
+void DownloadManager::downloadFinished(QString fileName)
 {
   DownloadInfo* info = getDownloadInfoByFilename(fileName);
 

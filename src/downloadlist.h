@@ -22,30 +22,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAbstractTableModel>
 #include <QList>
+#include "downloadlistitem.h"
 
 class OrganizerCore;
 class DownloadManager;
 class Settings;
-
-/**
- * @brief model of the list of active, pending, and completed downloads
- **/
-struct Download
-{
-  int pendingIndex{-1};
-  bool isPending{false};
-  bool showInfoIncompleteWarning{false};
-  QString fileName;
-  QString name;
-  QString status;
-  QString size;
-  QDateTime fileTime;
-  QString modName;
-  QString version;
-  QString modId;
-  QString game;
-  QString tooltip;
-};
 
 /**
  * @brief model of the list of active and completed downloads
@@ -66,6 +47,7 @@ public:
     COL_VERSION,
     COL_ID,
     COL_SOURCEGAME,
+    COL_FILENAME,
 
     // number of columns
     COL_COUNT
@@ -84,9 +66,8 @@ public:
   virtual int columnCount(const QModelIndex& parent) const;
   Qt::ItemFlags flags(const QModelIndex& idx) const override;
   QMimeData* mimeData(const QModelIndexList& indexes) const override;
+  virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;  
   virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-
-  const Download& getDownloadByRow(int row);
 
   /**
    * @brief retrieve the data to display in a specific row. Invoked by Qt
@@ -102,35 +83,36 @@ public:
   //
   bool lessThanPredicate(const QModelIndex& left, const QModelIndex& right);
 
-private:
-  void getDownloadInfo(Download& download);
-  Download* getDownload(const QString& fileName);
-  Download* getDownloadByPendingIndex(int index);
-  int getDownloadRow(const QString& fileName);
+  DownloadListItem* getDownloadListItem(QString fileName);
+
+  void getDownloadInfo(DownloadListItem& downloadListItem);
+  
+  DownloadListItem* getDownloadByPendingIndex(int index);
   int getPendingRow(int index);
-  void downloadUpdated(const QString& fileName);
-  void updateData(int row);
+  void downloadUpdated(QString fileName);
+  void updateData();
+  void downloadUpdated(int downloadId);
 
 public slots:
   /**
    * @brief used to inform the model that data has changed
    *
    * @param row the row that changed. This can be negative to update the whole view
-   **/
-  void update(const QString& fileName);
+  void update(QString fileName);
+  void update(int row);
 
-  void aboutToUpdate();
-  void downloadAdded(const QString& fileName);  
-  void downloadRemoved(const QString& fileName);
+  void downloadAdded(QString& fileName);  
+  void downloadRemoved(QString fileName);
+  void downloadRemoved(int downloadId);
   void pendingDownloadAdded(int index);
+  void pendingDownloadFilenameUpdated(int index, QString fileName);
   void pendingDownloadRemoved(int index);
-  void pendingDownloadFilenameUpdated(int index, QString& fileName);
 
 private:
   DownloadManager& m_manager;
   Settings& m_settings;
 
-  QList<Download> m_downloads;
+  QList<DownloadListItem> m_downloads;
 };
 
 #endif  // DOWNLOADLIST_H

@@ -154,7 +154,7 @@ private:
 
   friend class DownloadManagerProxy;
 
-  using SignalDownloadCallback = boost::signals2::signal<void(const QString&)>;
+  using SignalDownloadCallback = boost::signals2::signal<void(QString)>;
 
 public:
   /**
@@ -285,7 +285,7 @@ public:
    * @param fileName the fileName of active or completed download
    * @return absolute path of the file
    **/
-  QString getFilePath(const QString& fileName) const;
+  QString getFilePath(QString fileName) const;
 
   /**
    * @brief retrieve a descriptive name of the download specified by fileName
@@ -293,7 +293,7 @@ public:
    * @param fileName the fileName of active or completed download
    * @return display name of the file
    **/
-  QString getDisplayName(const QString& fileName) const;
+  QString getDisplayName(QString fileName) const;
 
   /**
    * @brief retrieve the filename of the download specified by downloadId
@@ -309,14 +309,14 @@ public:
    * @param fileName the fileName of active or completed download
    * @return size of the file (total size during download)
    */
-  qint64 getFileSize(const QString& fileName) const;
+  qint64 getFileSize(QString fileName) const;
 
   /**
    * @brief retrieve the creation time of the download specified by fileName
    * @param fileName the fileName of active or completed download
    * @return size of the file (total size during download)
    */
-  QDateTime getFileTime(const QString& fileName) const;
+  QDateTime getFileTime(QString fileName) const;
 
   /**
    * @brief retrieve the current progress of the download specified by fileName
@@ -324,7 +324,7 @@ public:
    * @param fileName the fileName of active or completed download
    * @return progress of the download in percent (integer)
    **/
-  std::pair<int, QString> getProgress(const QString& fileName) const;
+  std::pair<int, QString> getProgress(QString fileName) const;
 
   /**
    * @brief retrieve the current state of the download by fileName
@@ -337,13 +337,13 @@ public:
    * @param fileName the fileName of active or completed download
    * @return the download state
    **/
-  DownloadState getState(const QString& fileName) const;
+  DownloadState getState(QString fileName) const;
 
   /**
    * @param fileName the fileName of active or completed download
    * @return true if the nexus information for this download is not complete
    **/
-  bool isInfoIncomplete(const QString& fileName) const;
+  bool isInfoIncomplete(QString fileName) const;
 
   /**
    * @brief retrieve the nexus mod id of the download specified by fileName
@@ -351,7 +351,7 @@ public:
    * @param fileName the fileName of active or completed download
    * @return the nexus mod id
    **/
-  int getModID(const QString& fileName) const;
+  int getModID(QString fileName) const;
 
   /**
    * @brief retrieve the displayable game name of the download specified by the fileName
@@ -359,7 +359,7 @@ public:
    * @param fileName the fileName of active or completed download
    * @return the displayable game name
    **/
-  QString getDisplayGameName(const QString& fileName) const;
+  QString getDisplayGameName(QString fileName) const;
 
   /**
    * @brief retrieve the game name of the downlaod specified by the fileName
@@ -367,14 +367,14 @@ public:
    * @param fileName the fileName of active or completed download
    * @return the game name
    **/
-  QString getGameName(const QString& fileName) const;
+  QString getGameName(QString fileName) const;
 
   /**
    * @brief determine if the specified file is supposed to be hidden
    * @param fileName the fileName of active or completed download
    * @return true if the specified file is supposed to be hidden
    */
-  bool isHidden(const QString& fileName) const;
+  bool isHidden(QString fileName) const;
 
   /**
    * @brief retrieve all nexus info of the download specified by fileName
@@ -382,21 +382,21 @@ public:
    * @param fileName the fileName of active or completed download
    * @return the nexus mod information
    **/
-  const MOBase::ModRepositoryFileInfo* getFileInfo(const QString& fileName) const;
+  const MOBase::ModRepositoryFileInfo* getFileInfo(QString fileName) const;
 
   /**
    * @brief mark a download as installed
    *
    * @param fileName fileName of the download's file to mark installed
    */
-  void markInstalled(const QString& fileName);
+  void markInstalled(QString fileName);
 
   /**
    * @brief mark a download as uninstalled
    *
    * @param fileName fileName of the download's file to mark uninstalled
    */
-  void markUninstalled(const QString& fileName);
+  void markUninstalled(QString fileName);
 
   /**
    * @brief refreshes the list of downloads
@@ -406,26 +406,26 @@ public:
 public:  // IDownloadManager interface:
   int startDownloadURLs(const QStringList& urls);
   int startDownloadNexusFile(int modID, int fileID);
-  QString downloadPath(const QString& fileName);
+  QString downloadPath(QString fileName);
 
   boost::signals2::connection
-  onDownloadComplete(const std::function<void(const QString&)>& callback);
+  onDownloadComplete(const std::function<void(QString)>& callback);
   boost::signals2::connection
-  onDownloadPaused(const std::function<void(const QString&)>& callback);
+  onDownloadPaused(const std::function<void(QString)>& callback);
   boost::signals2::connection
-  onDownloadFailed(const std::function<void(const QString&)>& callback);
+  onDownloadFailed(const std::function<void(QString)>& callback);
   boost::signals2::connection
-  onDownloadRemoved(const std::function<void(const QString&)>& callback);
+  onDownloadRemoved(const std::function<void(QString)>& callback);
 
   /**
    * @brief retrieve a download index from the filename
    * @param fileName file to look up
    * @return index of that download or -1 if it wasn't found
    */
-  int indexByName(const QString& fileName) const;
+  int indexByName(QString fileName) const;
   int indexByInfo(const DownloadInfo* info) const;
 
-  DownloadInfo* getDownloadInfoByFilename(const QString& fileName) const;
+  DownloadInfo* getDownloadInfoByFilename(QString fileName) const;
   DownloadInfo* getDownloadInfoById(int downloadId) const;
   DownloadInfo& getDownloadInfoByIndex(int index) const;
 
@@ -440,7 +440,7 @@ Q_SIGNALS:
    *
    * @param fileName the download that changed
    **/
-  void update(const QString& fileName);
+  void update(QString fileName);
 
   /**
    * @brief signals the ui that a message should be displayed
@@ -454,7 +454,7 @@ Q_SIGNALS:
    * @param fileName the download that changed
    * @param state the new state
    */
-  void stateChanged(const QString& fileName, DownloadManager::DownloadState state);
+  void stateChanged(QString fileName, DownloadManager::DownloadState state);
 
   /**
    * @brief emitted whenever a download completes successfully, reporting the download
@@ -467,11 +467,11 @@ Q_SIGNALS:
    */
   void downloadAdded();
 
-  void downloadAdded(const QString& fileName);
-  void downloadRemoved(const QString& fileName);
+  void downloadAdded(QString& fileName);
+  void downloadRemoved(QString fileName);
   void pendingDownloadAdded(int index);
   void pendingDownloadRemoved(int index);
-  void pendingDownloadFilenameUpdated(int index, QString& fileName);
+  void pendingDownloadFilenameUpdated(int index, QString fileName);
 
 public slots:
 
@@ -482,13 +482,13 @@ public slots:
    * @param deleteFile if true, the file will also be deleted from disc, otherwise it is
    *only marked as hidden.
    **/
-  void removeDownload(const QString& fileName, bool deleteFile, int flag);
+  void removeDownload(QString fileName, bool deleteFile, int flag);
 
   /**
    * @brief restores the specified download to view (which was previously hidden
    * @param fileName fileName of the download to restore
    */
-  void restoreDownload(const QString& fileName);
+  void restoreDownload(QString fileName);
 
   /**
    * @brief cancel the specified download. This will lead to the corresponding file to
@@ -496,23 +496,23 @@ public slots:
    *
    * @param fileName fileName of the download to cancel
    **/
-  void cancelDownload(const QString& fileName);
+  void cancelDownload(QString fileName);
 
-  void pauseDownload(const QString& fileName);
+  void pauseDownload(QString fileName);
 
-  void resumeDownload(const QString& fileName);
+  void resumeDownload(QString fileName);
 
-  void queryInfo(const QString& fileName);
+  void queryInfo(QString fileName);
 
-  void queryInfoMd5(const QString& fileName);
+  void queryInfoMd5(QString fileName);
 
-  void visitOnNexus(const QString& fileName);
+  void visitOnNexus(QString fileName);
 
-  void openFile(const QString& fileName);
+  void openFile(QString fileName);
 
-  void openMetaFile(const QString& fileName);
+  void openMetaFile(QString fileName);
 
-  void openInDownloadsFolder(const QString& fileName);
+  void openInDownloadsFolder(QString fileName);
 
   void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData,
                                QVariant resultData, int requestID);
@@ -539,7 +539,7 @@ private slots:
   void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
   void downloadReadyRead();
   void downloadFinished();
-  void downloadFinished(const QString& fileName);
+  void downloadFinished(QString fileName);
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
   void directoryChanged(const QString& dirctory);
@@ -548,7 +548,6 @@ private slots:
 private:
   void createMetaFile(DownloadInfo* info);
   DownloadManager::DownloadInfo* getDownloadInfo(QString fileName);
-  DownloadManager::DownloadInfo* getDownloadInfo(const QString& fileName);
 
 public:
   /** Get a unique filename for a download.
@@ -564,7 +563,7 @@ public:
 
 private:
   void startDownload(QNetworkReply* reply, DownloadInfo* newDownload, bool resume);
-  void resumeDownloadInt(const QString& fileName);
+  void resumeDownloadInt(QString fileName);
 
   /**
    * @brief start a download from a url
@@ -581,7 +580,7 @@ private:
   // DownloadInfo-pointer might get invalidated at any time
   DownloadInfo* findDownload(QObject* reply, int* index = nullptr) const;
 
-  void removeFile(const QString& fileName, bool deleteFile);
+  void removeFile(QString fileName, bool deleteFile);
 
   void refreshAlphabeticalTranslation();
 
@@ -591,7 +590,7 @@ private:
 
   void setState(DownloadInfo* info, DownloadManager::DownloadState state);  
 
-int getDownloadInfoIndexByFilename(const QString& fileName) const;
+int getDownloadInfoIndexByFilename(QString fileName) const;
 
   void removePending(QString gameName, int modID, int fileID);
 

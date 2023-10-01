@@ -829,7 +829,7 @@ OrganizerCore::doInstall(const QString& archivePath, GuessedValue<QString> modNa
   return {-1, nullptr};
 }
 
-ModInfo::Ptr OrganizerCore::installDownload(const QString& fileName, int priority)
+ModInfo::Ptr OrganizerCore::installDownload(QString fileName, int priority)
 {
   ScopedDisableDirWatcher scopedDirwatcher(&m_DownloadManager);
 
@@ -895,7 +895,7 @@ ModInfo::Ptr OrganizerCore::installArchive(const QString& archivePath, int prior
     if (dlIdx != -1) {
       int modId  = m_DownloadManager.getModID(download.m_FileName);
       int fileId = m_DownloadManager.getFileInfo(download.m_FileName)->fileID;
-      modInfo->addInstalledFile(modId, fileId);
+    modInfo->addInstalledFile(modId, fileId);
     }
     m_DownloadManager.markInstalled(archivePath);
   }
