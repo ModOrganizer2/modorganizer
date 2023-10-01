@@ -235,18 +235,6 @@ void DownloadList::pendingDownloadFilenameUpdated(int index, QString fileName)
   }
 }
 
-void DownloadList::pendingDownloadFilenameUpdated(int index, QString& fileName)
-{
-  if (index < 0 || fileName.isEmpty()) {
-    return;
-  }
-
-  auto* download = getDownloadByPendingIndex(index);
-  if (download->isPending) {
-    download->fileName = fileName;
-  }
-}
-
 bool DownloadList::lessThanPredicate(const QModelIndex& left, const QModelIndex& right)
 {
   int leftIndex   = left.row();
@@ -323,19 +311,6 @@ bool DownloadList::lessThanPredicate(const QModelIndex& left, const QModelIndex&
   } else {
     return leftIndex < rightIndex;
   }
-}
-
-Download* DownloadList::getDownload(const QString& fileName)
-{
-  auto download = std::find_if(m_downloads.begin(), m_downloads.end(),
-                               [fileName](const Download download) {
-                                 return download.fileName == fileName;
-                               });
-  if (download != m_downloads.end()) {
-    return download;
-  }
-
-  return nullptr;
 }
 
 DownloadListItem* DownloadList::getDownloadListItem(QString fileName)

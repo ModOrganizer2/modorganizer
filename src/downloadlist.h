@@ -67,7 +67,6 @@ public:
   Qt::ItemFlags flags(const QModelIndex& idx) const override;
   QMimeData* mimeData(const QModelIndexList& indexes) const override;
   virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;  
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
   /**
    * @brief retrieve the data to display in a specific row. Invoked by Qt
@@ -85,25 +84,25 @@ public:
 
   DownloadListItem* getDownloadListItem(QString fileName);
 
+ private:
   void getDownloadInfo(DownloadListItem& downloadListItem);
   
   DownloadListItem* getDownloadByPendingIndex(int index);
   int getPendingRow(int index);
   void downloadUpdated(QString fileName);
   void updateData();
-  void downloadUpdated(int downloadId);
 
 public slots:
   /**
    * @brief used to inform the model that data has changed
    *
    * @param row the row that changed. This can be negative to update the whole view
+  **/
   void update(QString fileName);
-  void update(int row);
 
+  void aboutToUpdate();
   void downloadAdded(QString& fileName);  
   void downloadRemoved(QString fileName);
-  void downloadRemoved(int downloadId);
   void pendingDownloadAdded(int index);
   void pendingDownloadFilenameUpdated(int index, QString fileName);
   void pendingDownloadRemoved(int index);
