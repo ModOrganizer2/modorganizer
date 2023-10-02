@@ -141,11 +141,11 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
     if (download.isPending) {
       return QColor(Qt::darkBlue);
     } else {
-      if (download.state == DownloadManager::STATE_DOWNLOADING) {
+      if (download.state == DownloadManager::STATE_READY) {
         return QColor(Qt::darkGreen);
-      } else if (download.state == DownloadManager::STATE_PAUSED) {
-        return QColor(Qt::darkYellow);
       } else if (download.state == DownloadManager::STATE_UNINSTALLED) {
+        return QColor(Qt::darkYellow);
+      } else if (download.state == DownloadManager::STATE_PAUSED) {
         return QColor(Qt::darkRed);
       }
     }
