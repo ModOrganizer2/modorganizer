@@ -243,6 +243,8 @@ private:
   void toggleMO2EndorseState();
   void toggleUpdateAction();
 
+  void updateSortButton();
+
   // update info
   struct NxmUpdateInfoData
   {
