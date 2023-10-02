@@ -2764,6 +2764,8 @@ void MainWindow::on_actionSettings_triggered()
   ui->modList->refreshFilters();
   ui->modList->refresh();
 
+  m_OrganizerCore.refreshLists();
+
   if (settings.paths().profiles() != oldProfilesDirectory) {
     refreshProfiles();
   }
