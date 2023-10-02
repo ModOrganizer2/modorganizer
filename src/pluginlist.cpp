@@ -176,6 +176,7 @@ void PluginList::refresh(const QString& profileName,
   ChangeBracket<PluginList> layoutChange(this);
 
   QStringList primaryPlugins = m_GamePlugin->primaryPlugins();
+  QStringList enabledPlugins = m_GamePlugin->enabledPlugins();
   GamePlugins* gamePlugins   = m_GamePlugin->feature<GamePlugins>();
   const bool lightPluginsAreSupported =
       gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
@@ -204,7 +205,8 @@ void PluginList::refresh(const QString& profileName,
       }
 
       bool forceEnabled = Settings::instance().game().forceEnableCoreFiles() &&
-                          primaryPlugins.contains(filename, Qt::CaseInsensitive);
+                          (primaryPlugins.contains(filename, Qt::CaseInsensitive) ||
+                           enabledPlugins.contains(filename, Qt::CaseInsensitive));
       bool forceDisabled =
           m_GamePlugin->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::None &&
           !forceEnabled;
