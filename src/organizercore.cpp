@@ -111,9 +111,9 @@ OrganizerCore::OrganizerCore(Settings& settings)
 
   connect(&m_DownloadManager, SIGNAL(downloadSpeed(QString, int)), this,
           SLOT(downloadSpeed(QString, int)));
-  connect(m_DirectoryRefresher.get(), &DirectoryRefresher::refreshed, [this]() {
-    onDirectoryRefreshed();
-  });
+  connect(m_DirectoryRefresher.get(), &DirectoryRefresher::refreshed, this,
+          &OrganizerCore::onDirectoryRefreshed);
+
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this, SLOT(removeOrigin(QString)));
   connect(&m_ModList, &ModList::modStatesChanged, [=] {
     currentProfile()->writeModlist();
