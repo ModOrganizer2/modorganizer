@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>4</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="generalTab">
       <attribute name="title">
@@ -98,10 +98,10 @@
               <item row="0" column="1">
                <widget class="LinkLabel" name="label_33">
                 <property name="toolTip">
-                 <string>https://discord.gg/NRGqdt5suP</string>
+                 <string notr="true">https://discord.gg/ewUVAqyrQX</string>
                 </property>
                 <property name="text">
-                 <string>&lt;a href=&quot;https://discord.gg/NRGqdt5suP&quot;&gt;Help translate Mod Organizer on Discord&lt;/a&gt;</string>
+                 <string>&lt;a href=&quot;https://discord.gg/ewUVAqyrQX&quot;&gt;Help translate Mod Organizer on Discord&lt;/a&gt;</string>
                 </property>
                 <property name="openExternalLinks">
                  <bool>true</bool>
@@ -1052,8 +1052,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>778</width>
-            <height>497</height>
+            <width>761</width>
+            <height>515</height>
            </rect>
           </property>
           <property name="autoFillBackground">
