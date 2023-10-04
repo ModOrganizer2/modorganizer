@@ -2332,7 +2332,7 @@ void MainWindow::gameSupportTriggered()
 
 void MainWindow::discordTriggered()
 {
-  shell::Open(QUrl("https://discord.gg/6GKR9jZ"));
+  shell::Open(QUrl("https://discord.gg/ewUVAqyrQX"));
 }
 
 void MainWindow::issueTriggered()

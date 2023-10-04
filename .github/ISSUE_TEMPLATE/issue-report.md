@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 ## The problem:
-Briefly describe the issue you are experiencing. Tell us what you were trying to do and what happened instead. Remember, this is _not_ a place to ask questions. For that, go to our [Discord server](https://discord.gg/6GKR9jZ).
+Briefly describe the issue you are experiencing. Tell us what you were trying to do and what happened instead. Remember, this is _not_ a place to ask questions. For that, go to our [Discord server](https://discord.gg/ewUVAqyrQX).
 
 
 ## To Reproduce:
