@@ -1220,6 +1220,8 @@ void OrganizerCore::refresh(bool saveChanges)
   m_ModList.notifyChange(-1);
 
   refreshDirectoryStructure();
+
+  emit refreshTriggered();
 }
 
 void OrganizerCore::refreshESPList(bool force)
