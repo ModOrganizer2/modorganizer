@@ -131,8 +131,6 @@ private:
      **/
     void setName(QString newName, bool renameFile);
 
-    int getDownloadID() { return m_DownloadID; }
-
     bool isPausedState();
 
     QString currentURL();

@@ -549,7 +549,7 @@ void DownloadManager::removePending(QString gameName, int modID, int fileID)
       break;
     }
   }
-  emit aboutToUpdate();
+
   for (auto iter : m_PendingDownloads) {
     if (gameShortName.compare(std::get<0>(iter), Qt::CaseInsensitive) == 0 &&
         (std::get<1>(iter) == modID) && (std::get<2>(iter) == fileID)) {
@@ -559,7 +559,6 @@ void DownloadManager::removePending(QString gameName, int modID, int fileID)
       break;
     }
   }
-  emit update("__endResetModel__");
 }
 
 void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownload,
@@ -601,11 +600,9 @@ void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
     removePending(newDownload->m_FileInfo->gameName, newDownload->m_FileInfo->modID,
                   newDownload->m_FileInfo->fileID);
 
-    emit aboutToUpdate();
     m_ActiveDownloads.append(newDownload);
 
     emit downloadAdded(newDownload->m_FileName);
-    emit update(newDownload->m_FileName);
     emit downloadAdded();
 
     if (QFile::exists(m_OutputDirectory + "/" + newDownload->m_FileName)) {
@@ -755,7 +752,6 @@ void DownloadManager::addNXMDownload(const QString& url)
     }
   }
 
-  emit aboutToUpdate();
 
   m_PendingDownloads.append(
       std::make_tuple(foundGame->gameShortName(), nxmInfo.modId(), nxmInfo.fileId()));
@@ -764,7 +760,6 @@ void DownloadManager::addNXMDownload(const QString& url)
       static_cast<int>(m_PendingDownloads.indexOf(m_PendingDownloads.last()));
   emit pendingDownloadAdded(pendingDownloadIndex);
 
-  emit update("__endResetModel__");
   emit downloadAdded();
   ModRepositoryFileInfo* info = new ModRepositoryFileInfo();
 
@@ -874,7 +869,6 @@ void DownloadManager::removeDownload(QString fileName, bool deleteFile, int flag
     startDisableDirWatcher();
     DownloadInfo* download = getDownloadInfoByFilename(fileName);
 
-    emit aboutToUpdate();
 
     if (flag < 0) {
       bool removeAll            = (flag == -1);
@@ -903,7 +897,6 @@ void DownloadManager::removeDownload(QString fileName, bool deleteFile, int flag
     }
 
     emit downloadRemoved(fileName);
-    emit update("__endResetModel__");
 
   } catch (const std::exception& e) {
     log::error("failed to remove download: {}", e.what());
@@ -1000,7 +993,7 @@ DownloadManager::getDownloadInfoById(int downloadId) const
 {
   auto iter = std::find_if(m_ActiveDownloads.begin(), m_ActiveDownloads.end(),
                            [downloadId](DownloadInfo* info) {
-                             return info->getDownloadID() == downloadId;
+                             return info->m_DownloadID == downloadId;
                            });
   if (iter != m_ActiveDownloads.end()) {
     return *iter;
@@ -1486,18 +1479,18 @@ void DownloadManager::setState(DownloadManager::DownloadInfo* info,
   case STATE_FETCHINGMODINFO: {
     m_RequestIDs.insert(m_NexusInterface->requestDescription(
         info->m_FileInfo->gameName, info->m_FileInfo->modID, this,
-        info->getDownloadID(), QString()));
+        info->m_DownloadID, QString()));
   } break;
   case STATE_FETCHINGFILEINFO: {
     m_RequestIDs.insert(m_NexusInterface->requestFiles(
         info->m_FileInfo->gameName, info->m_FileInfo->modID, this,
-        info->getDownloadID(), QString()));
+        info->m_DownloadID, QString()));
   } break;
   case STATE_FETCHINGMODINFO_MD5: {
     log::debug("Searching {} for MD5 of {}", info->m_GamesToQuery[0],
                QString(info->m_Hash.toHex()));
     m_RequestIDs.insert(m_NexusInterface->requestInfoFromMd5(
-        info->m_GamesToQuery[0], info->m_Hash, this, info->getDownloadID(), QString()));
+        info->m_GamesToQuery[0], info->m_Hash, this, info->m_DownloadID, QString()));
   } break;
   case STATE_READY: {
     createMetaFile(info);
@@ -2133,7 +2126,6 @@ void DownloadManager::downloadFinished(QString fileName)
     }
 
     if (info->m_State == STATE_CANCELED || (info->m_Tries == 0 && error)) {
-      emit aboutToUpdate();
       info->m_Output.remove();
 
       auto downloadIndex = getDownloadInfoIndexByFilename(fileName);
@@ -2146,11 +2138,9 @@ void DownloadManager::downloadFinished(QString fileName)
         emit showMessage(
             tr("We were unable to download the file due to errors after four retries. "
                "There may be an issue with the Nexus servers."));
-      emit update("__endResetModel__");
     } else if (info->isPausedState() || info->m_State == STATE_PAUSING) {
       info->m_Output.close();
       createMetaFile(info);
-      emit update(fileName);
     } else {
       QString url = info->m_Urls[info->m_CurrentUrl];
       if (info->m_FileInfo->userData.contains("downloadMap")) {

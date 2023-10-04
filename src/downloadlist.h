@@ -64,6 +64,9 @@ public:
    **/
   virtual int rowCount(const QModelIndex& parent = QModelIndex()) const;
   virtual int columnCount(const QModelIndex& parent) const;
+
+  QModelIndex index(int row, int column, const QModelIndex& parent) const;
+  QModelIndex parent(const QModelIndex& child) const;
   Qt::ItemFlags flags(const QModelIndex& idx) const override;
   QMimeData* mimeData(const QModelIndexList& indexes) const override;
   virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;

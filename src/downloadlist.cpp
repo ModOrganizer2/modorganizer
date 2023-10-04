@@ -49,6 +49,16 @@ DownloadList::DownloadList(OrganizerCore& core, QObject* parent)
           SLOT(pendingDownloadRemoved(int)));
 }
 
+QModelIndex DownloadList::index(int row, int column, const QModelIndex&) const
+{
+  return createIndex(row, column, row);
+}
+
+QModelIndex DownloadList::parent(const QModelIndex&) const
+{
+  return QModelIndex();
+}
+
 int DownloadList::rowCount(const QModelIndex& parent) const
 {
   return parent.isValid() ? 0 : m_downloads.size();
@@ -196,7 +206,7 @@ void DownloadList::downloadAdded(QString& fileName)
 
 void DownloadList::downloadUpdated(QString fileName)
 {
-  auto download = getDownloadListItem(fileName);
+  auto* download = getDownloadListItem(fileName);
   if (!download)
     return;
 
@@ -274,12 +284,12 @@ bool DownloadList::lessThanPredicate(const QModelIndex& left, const QModelIndex&
       if (!m_manager.isInfoIncomplete(lFilename)) {
         const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(lFilename);
         leftName                                  = info->modName;
-      }
+}
 
       if (!m_manager.isInfoIncomplete(rFilename)) {
         const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(rFilename);
         rightName                                 = info->modName;
-      }
+}
 
       return leftName.compare(rightName, Qt::CaseInsensitive) < 0;
     } else if (left.column() == DownloadList::COL_VERSION) {
@@ -288,7 +298,7 @@ bool DownloadList::lessThanPredicate(const QModelIndex& left, const QModelIndex&
       if (!m_manager.isInfoIncomplete(lFilename)) {
         const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(lFilename);
         versionLeft                               = info->version;
-      }
+}
 
       if (!m_manager.isInfoIncomplete(rFilename)) {
         const MOBase::ModRepositoryFileInfo* info = m_manager.getFileInfo(rFilename);
@@ -463,16 +473,16 @@ void DownloadList::update(QString fileName)
   if (fileName == "__endResetModel__") {
     emit endResetModel();
     return;
-  }
+      }
 
   downloadUpdated(fileName);
   updateData();
-}
+      }
 
 void DownloadList::aboutToUpdate()
 {
   emit beginResetModel();
-}
+      }
 
 void DownloadList::updateData()
 {

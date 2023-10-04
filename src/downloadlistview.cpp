@@ -53,7 +53,7 @@ void DownloadProgressDelegate::paint(QPainter* painter,
   }
 
   auto row           = sourceIndex.row();
-  auto fileNameIndex = m_sourceModel->index(row, DownloadList::COL_FILENAME);
+  auto fileNameIndex = m_sourceModel->index(row, DownloadList::COL_FILENAME, index);
   auto varFileName   = m_sourceModel->data(fileNameIndex, Qt::DisplayRole);
   auto fileName      = varFileName.toString();
 
@@ -176,7 +176,7 @@ void DownloadListView::onDoubleClick(const QModelIndex& index)
       qobject_cast<QSortFilterProxyModel*>(model())->mapToSource(index);
 
   auto row           = sourceIndex.row();
-  auto fileNameIndex = m_SourceModel->index(row, DownloadList::COL_FILENAME);
+  auto fileNameIndex = m_SourceModel->index(row, DownloadList::COL_FILENAME, index);
   auto varFileName   = m_SourceModel->data(fileNameIndex, Qt::DisplayRole);
   auto fileName      = varFileName.toString();
 
@@ -242,7 +242,7 @@ void DownloadListView::onCustomContextMenu(const QPoint& point)
           qobject_cast<QSortFilterProxyModel*>(model())->mapToSource(index);
 
       auto row           = sourceIndex.row();
-      auto fileNameIndex = m_SourceModel->index(row, DownloadList::COL_FILENAME);
+      auto fileNameIndex = m_SourceModel->index(row, DownloadList::COL_FILENAME, index);
       auto varFileName   = m_SourceModel->data(fileNameIndex, Qt::DisplayRole);
       auto fileName      = varFileName.toString();
 
@@ -354,7 +354,7 @@ void DownloadListView::keyPressEvent(QKeyEvent* event)
         qobject_cast<QSortFilterProxyModel*>(model())->mapToSource(currentIndex());
 
     auto row           = sourceIndex.row();
-    auto fileNameIndex = m_SourceModel->index(row, DownloadList::COL_FILENAME);
+    auto fileNameIndex = m_SourceModel->index(row, DownloadList::COL_FILENAME, sourceIndex);
     auto varFileName   = m_SourceModel->data(fileNameIndex, Qt::DisplayRole);
     auto fileName      = varFileName.toString();
 
