@@ -1075,6 +1075,12 @@ void MainWindow::createEndorseMenu()
 
 void MainWindow::createHelpMenu()
 {
+  //: Translation strings for tutorial names
+  static std::map<QString, const char*> translate = {
+      {"First Steps", QT_TR_NOOP("First Steps")},
+      {"Conflict Resolution", QT_TR_NOOP("Conflict Resolution")},
+      {"Overview", QT_TR_NOOP("Overview")}};
+
   auto* menu = ui->actionHelp->menu();
   if (!menu) {
     // this happens on startup because languageChanged() (which calls this) is
@@ -1131,7 +1137,7 @@ void MainWindow::createHelpMenu()
                    fileName);
         continue;
       }
-      QAction* tutAction = new QAction(params.at(0), tutorialMenu);
+      QAction* tutAction = new QAction(tr(translate[params.at(0)]), tutorialMenu);
       tutAction->setData(fileName);
       tutorials.push_back(std::make_pair(params.at(1).toInt(), tutAction));
     }
