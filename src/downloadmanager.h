@@ -79,10 +79,22 @@ public:
     STATE_UNINSTALLED
   };
 
-private:
+public:
   struct DownloadInfo
   {
+  public:
+    DownloadInfo()
+        : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_HasData(false),
+          m_DownloadTimeLast(0), m_DownloadLast(0),
+          m_DownloadAcc(tag::rolling_window::window_size = 200),
+          m_DownloadTimeAcc(tag::rolling_window::window_size = 200)
+    {}
     ~DownloadInfo() { delete m_FileInfo; }
+
+    QString GetFileName() { return m_FileName; }
+    DownloadState GetState() { return m_State; }
+    MOBase::ModRepositoryFileInfo* GetFileInfo() { return m_FileInfo; }
+
     accumulator_set<qint64, stats<tag::rolling_mean>> m_DownloadAcc;
     accumulator_set<qint64, stats<tag::rolling_mean>> m_DownloadTimeAcc;
     qint64 m_DownloadLast;
@@ -105,6 +117,7 @@ private:
     QByteArray m_Hash;
     QStringList m_GamesToQuery;
     QString m_RemoteFileName;
+    QUuid m_moId;
 
     int m_Tries{AUTOMATIC_RETRIES};
     bool m_ReQueried;
@@ -137,14 +150,6 @@ private:
 
   private:
     static int s_NextDownloadID;
-
-  private:
-    DownloadInfo()
-        : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_HasData(false),
-          m_DownloadTimeLast(0), m_DownloadLast(0),
-          m_DownloadAcc(tag::rolling_window::window_size = 200),
-          m_DownloadTimeAcc(tag::rolling_window::window_size = 200)
-    {}
 
   public:
     static void resetNextDownloadID();
@@ -438,7 +443,7 @@ Q_SIGNALS:
    *
    * @param fileName the download that changed
    **/
-  void update(QString fileName);
+  void update(DownloadManager::DownloadInfo* downloadInfo);
 
   /**
    * @brief signals the ui that a message should be displayed
@@ -465,7 +470,7 @@ Q_SIGNALS:
    */
   void downloadAdded();
 
-  void downloadAdded(QString& fileName);
+  void downloadAdded(DownloadManager::DownloadInfo* downloadInfo);
   void downloadRemoved(QString fileName);
   void pendingDownloadAdded(int index);
   void pendingDownloadRemoved(int index);

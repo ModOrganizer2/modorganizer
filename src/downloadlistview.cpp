@@ -56,11 +56,14 @@ void DownloadProgressDelegate::paint(QPainter* painter,
   auto fileNameIndex = m_sourceModel->index(row, DownloadList::COL_FILENAME, index);
   auto varFileName   = m_sourceModel->data(fileNameIndex, Qt::DisplayRole);
   auto fileName      = varFileName.toString();
+  auto* download     = m_sourceModel->getDownloadListItem(fileName);
 
-  auto* download = m_sourceModel->getDownloadListItem(fileName);
+  if (not download) {
+    return;
+  }
 
   if (sourceIndex.column() == DownloadList::COL_STATUS && !download->isPending &&
-      m_Manager->getState(download->fileName) == DownloadManager::STATE_DOWNLOADING) {
+      download->state == DownloadManager::STATE_DOWNLOADING) {
     QProgressBar progressBar;
     progressBar.setProperty("downloadView", option.widget->property("downloadView"));
     progressBar.setProperty("downloadProgress", true);
@@ -247,6 +250,10 @@ void DownloadListView::onCustomContextMenu(const QPoint& point)
       auto fileName      = varFileName.toString();
 
       auto* download = m_SourceModel->getDownloadListItem(fileName);
+      if (not download) {
+        return;
+      }
+
       DownloadManager::DownloadState state = m_Manager->getState(download->fileName);
 
       hidden = m_Manager->isHidden(download->fileName);
@@ -353,10 +360,11 @@ void DownloadListView::keyPressEvent(QKeyEvent* event)
     QModelIndex sourceIndex =
         qobject_cast<QSortFilterProxyModel*>(model())->mapToSource(currentIndex());
 
-    auto row           = sourceIndex.row();
-    auto fileNameIndex = m_SourceModel->index(row, DownloadList::COL_FILENAME, sourceIndex);
-    auto varFileName   = m_SourceModel->data(fileNameIndex, Qt::DisplayRole);
-    auto fileName      = varFileName.toString();
+    auto row = sourceIndex.row();
+    auto fileNameIndex =
+        m_SourceModel->index(row, DownloadList::COL_FILENAME, sourceIndex);
+    auto varFileName = m_SourceModel->data(fileNameIndex, Qt::DisplayRole);
+    auto fileName    = varFileName.toString();
 
     auto* download = m_SourceModel->getDownloadListItem(fileName);
     auto state     = m_Manager->getState(download->fileName);

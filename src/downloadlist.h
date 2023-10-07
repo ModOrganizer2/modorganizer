@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 class OrganizerCore;
 class DownloadManager;
+class DownloadInfo;
 class Settings;
 
 /**
@@ -86,13 +87,15 @@ public:
   bool lessThanPredicate(const QModelIndex& left, const QModelIndex& right);
 
   DownloadListItem* getDownloadListItem(QString fileName);
+  QString getFilenameByRow(int row);
 
 private:
-  void getDownloadInfo(DownloadListItem& downloadListItem);
+  void setDownloadListItem(DownloadManager::DownloadInfo* downloadInfo,
+                           DownloadListItem& downloadListItem);
 
   DownloadListItem* getDownloadByPendingIndex(int index);
   int getPendingRow(int index);
-  void downloadUpdated(QString fileName);
+  void downloadUpdated(DownloadManager::DownloadInfo* downloadInfo);
   void updateData();
 
 public slots:
@@ -101,10 +104,10 @@ public slots:
    *
    * @param row the row that changed. This can be negative to update the whole view
    **/
-  void update(QString fileName);
+  void update(DownloadManager::DownloadInfo* downloadInfo);
 
   void aboutToUpdate();
-  void downloadAdded(QString& fileName);
+  void downloadAdded(DownloadManager::DownloadInfo* downloadInfo);
   void downloadRemoved(QString fileName);
   void pendingDownloadAdded(int index);
   void pendingDownloadFilenameUpdated(int index, QString fileName);
@@ -114,7 +117,8 @@ private:
   DownloadManager& m_manager;
   Settings& m_settings;
 
-  QList<DownloadListItem> m_downloads;
+  QList<DownloadListItem> m_downloadListItems;
+  mutable std::unordered_map<QString, int> m_downloadIndexCache;
 };
 
 #endif  // DOWNLOADLIST_H
