@@ -748,7 +748,7 @@ std::pair<QString, QString> splitExeAndArguments(const QString& cmd)
     }
   } else {
     // no double-quotes, find the first whitespace after .exe
-    exeEnd = cmd.indexOf(QRegularExpression("(?<=\\.exe)\\s"));
+    exeEnd = cmd.indexOf(QRegularExpression("(?<=\\.exe)\\s"), QRegularExpression::CaseInsensitiveOption);
     if (exeEnd == -1) {
       exeEnd = cmd.size();
     }
