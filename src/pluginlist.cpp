@@ -1006,13 +1006,13 @@ bool PluginList::isLightFlagged(const QString& name) const
   }
 }
 
-bool PluginList::isOverrideFlagged(const QString& name) const
+bool PluginList::isOverlayFlagged(const QString& name) const
 {
   auto iter = m_ESPsByName.find(name);
   if (iter == m_ESPsByName.end()) {
     return false;
   } else {
-    return m_ESPs[iter->second].isOverrideFlagged;
+    return m_ESPs[iter->second].isOverlayFlagged;
   }
 }
 
@@ -1093,7 +1093,7 @@ void PluginList::generatePluginIndexes()
                             .arg((numESLs) % 4096, 3, 16, QChar('0'))
                             .toUpper();
       ++numESLs;
-    } else if (overridePluginsSupported && m_ESPs[i].isOverrideFlagged) {
+    } else if (overridePluginsSupported && m_ESPs[i].isOverlayFlagged) {
       m_ESPs[i].index = QString("");
       ++numSkipped;
     } else {
@@ -1233,6 +1233,8 @@ QVariant PluginList::fontData(const QModelIndex& modelIndex) const
     result.setWeight(QFont::Bold);
   } else if (m_ESPs[index].isLightFlagged) {
     result.setItalic(true);
+  } else if (m_ESPs[index].isOverlayFlagged) {
+    result.setUnderline(true);
   }
 
   return result;
@@ -1325,6 +1327,13 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
         "<br><br>" + tr("This %1 is flagged as an ESL. It will adhere to the %1 load "
                         "order but the records will be loaded in ESL space.")
                          .arg(type);
+  }
+
+  if (esp.isOverlayFlagged) {
+    toolTip +=
+        "<br><br>" + tr("This plugin is flagged as an overlay plugin. It contains only "
+                        "modified records and will overlay those changes onto the "
+                        "existing records in memory. It takes no memory space.");
   }
 
   if (esp.forceDisabled) {
@@ -1445,6 +1454,10 @@ QVariant PluginList::iconData(const QModelIndex& modelIndex) const
 
   if (esp.isLightFlagged && !esp.hasLightExtension) {
     result.append(":/MO/gui/awaiting");
+  }
+
+  if (esp.isOverlayFlagged) {
+    result.append(":/MO/gui/instance_switch");
   }
 
   if (info && !info->loot.dirty.empty()) {
@@ -1759,7 +1772,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
                              bool forceDisabled, const QString& originName,
                              const QString& fullPath, bool hasIni,
                              std::set<QString> archives, bool lightSupported,
-                             bool overrideSupported)
+                             bool overlaySupported)
     : name(name), fullPath(fullPath), enabled(forceLoaded), forceLoaded(forceLoaded),
       forceEnabled(forceEnabled), forceDisabled(forceDisabled), priority(0),
       loadOrder(-1), originName(originName), hasIni(hasIni),
@@ -1771,9 +1784,9 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     hasMasterExtension = (extension == "esm");
     hasLightExtension  = lightSupported && (extension == "esl");
     isMasterFlagged    = file.isMaster();
-    isOverrideFlagged  = overrideSupported && file.isOverride();
+    isOverlayFlagged   = overlaySupported && file.isOverlay();
     isLightFlagged =
-        lightSupported && !isOverrideFlagged && file.isLight(overrideSupported);
+        lightSupported && !isOverlayFlagged && file.isLight(overlaySupported);
 
     author      = QString::fromLatin1(file.author().c_str());
     description = QString::fromLatin1(file.description().c_str());
@@ -1786,7 +1799,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     hasMasterExtension = false;
     hasLightExtension  = false;
     isMasterFlagged    = false;
-    isOverrideFlagged  = false;
+    isOverlayFlagged   = false;
     isLightFlagged     = false;
   }
 }

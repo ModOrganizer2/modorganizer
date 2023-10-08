@@ -58,9 +58,11 @@ void PluginListView::updatePluginCount()
 {
   int activeMasterCount      = 0;
   int activeLightMasterCount = 0;
+  int activeOverlayCount     = 0;
   int activeRegularCount     = 0;
   int masterCount            = 0;
   int lightMasterCount       = 0;
+  int overlayCount           = 0;
   int regularCount           = 0;
   int activeVisibleCount     = 0;
 
@@ -78,6 +80,10 @@ void PluginListView::updatePluginCount()
       masterCount++;
       activeMasterCount += active;
       activeVisibleCount += visible && active;
+    } else if (list->isOverlayFlagged(plugin)) {
+      overlayCount++;
+      activeOverlayCount += active;
+      activeVisibleCount += visible && active;
     } else {
       regularCount++;
       activeRegularCount += active;
@@ -85,8 +91,9 @@ void PluginListView::updatePluginCount()
     }
   }
 
-  int activeCount = activeMasterCount + activeLightMasterCount + activeRegularCount;
-  int totalCount  = masterCount + lightMasterCount + regularCount;
+  int activeCount = activeMasterCount + activeLightMasterCount + activeOverlayCount +
+                    activeRegularCount;
+  int totalCount = masterCount + lightMasterCount + overlayCount + regularCount;
 
   ui.counter->display(activeVisibleCount);
   ui.counter->setToolTip(
@@ -99,6 +106,7 @@ void PluginListView::updatePluginCount()
          "<tr><td>ESMs+ESPs:</td><td align=right>%9    </td><td "
          "align=right>%10</td></tr>"
          "<tr><td>ESLs:</td><td align=right>%5    </td><td align=right>%6</td></tr>"
+         "<tr><td>Overlay:</td><td align=right>%11   </td><td align=right>%12</td></tr>"
          "</table>")
           .arg(activeCount)
           .arg(totalCount)
@@ -109,7 +117,9 @@ void PluginListView::updatePluginCount()
           .arg(activeRegularCount)
           .arg(regularCount)
           .arg(activeMasterCount + activeRegularCount)
-          .arg(masterCount + regularCount));
+          .arg(masterCount + regularCount)
+          .arg(activeOverlayCount)
+          .arg(overlayCount));
 }
 
 void PluginListView::onFilterChanged(const QString& filter)
