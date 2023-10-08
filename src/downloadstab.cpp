@@ -27,29 +27,29 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
   connect(ui.refresh, &QPushButton::clicked, [&] {
     refresh();
   });
-  connect(ui.list, SIGNAL(installDownload(QString)), &m_core,
-          SLOT(installDownload(QString)));
-  connect(ui.list, SIGNAL(queryInfo(QString)), m_core.downloadManager(),
-          SLOT(queryInfo(QString)));
-  connect(ui.list, SIGNAL(queryInfoMd5(QString)), m_core.downloadManager(),
-          SLOT(queryInfoMd5(QString)));
-  connect(ui.list, SIGNAL(visitOnNexus(QString)), m_core.downloadManager(),
-          SLOT(visitOnNexus(QString)));
-  connect(ui.list, SIGNAL(openFile(QString)), m_core.downloadManager(),
-          SLOT(openFile(QString)));
-  connect(ui.list, SIGNAL(openMetaFile(QString)), m_core.downloadManager(),
-          SLOT(openMetaFile(QString)));
-  connect(ui.list, SIGNAL(openInDownloadsFolder(QString)), m_core.downloadManager(),
-          SLOT(openInDownloadsFolder(QString)));
-  connect(ui.list, SIGNAL(removeDownload(QString, bool, int)), m_core.downloadManager(),
-          SLOT(removeDownload(QString, bool, int)));
-  connect(ui.list, SIGNAL(restoreDownload(QString)), m_core.downloadManager(),
-          SLOT(restoreDownload(QString)));
-  connect(ui.list, SIGNAL(cancelDownload(QString)), m_core.downloadManager(),
-          SLOT(cancelDownload(QString)));
-  connect(ui.list, SIGNAL(pauseDownload(QString)), m_core.downloadManager(),
-          SLOT(pauseDownload(QString)));
-  connect(ui.list, &DownloadListView::resumeDownload, [&](QString i) {
+  connect(ui.list, SIGNAL(installDownload(QUuid)), &m_core,
+          SLOT(installDownload(QUuid)));
+  connect(ui.list, SIGNAL(queryInfo(QUuid)), m_core.downloadManager(),
+          SLOT(queryInfo(QUuid)));
+  connect(ui.list, SIGNAL(queryInfoMd5(QUuid)), m_core.downloadManager(),
+          SLOT(queryInfoMd5(QUuid)));
+  connect(ui.list, SIGNAL(visitOnNexus(QUuid)), m_core.downloadManager(),
+          SLOT(visitOnNexus(QUuid)));
+  connect(ui.list, SIGNAL(openFile(QUuid)), m_core.downloadManager(),
+          SLOT(openFile(QUuid)));
+  connect(ui.list, SIGNAL(openMetaFile(QUuid)), m_core.downloadManager(),
+          SLOT(openMetaFile(QUuid)));
+  connect(ui.list, SIGNAL(openInDownloadsFolder(QUuid)), m_core.downloadManager(),
+          SLOT(openInDownloadsFolder(QUuid)));
+  connect(ui.list, SIGNAL(removeDownload(QUuid, bool, int)), m_core.downloadManager(),
+          SLOT(removeDownload(QUuid, bool, int)));
+  connect(ui.list, SIGNAL(restoreDownload(QUuid)), m_core.downloadManager(),
+          SLOT(restoreDownload(QUuid)));
+  connect(ui.list, SIGNAL(cancelDownload(QUuid)), m_core.downloadManager(),
+          SLOT(cancelDownload(QUuid)));
+  connect(ui.list, SIGNAL(pauseDownload(QUuid)), m_core.downloadManager(),
+          SLOT(pauseDownload(QUuid)));
+  connect(ui.list, &DownloadListView::resumeDownload, [&](QUuid i) {
     resumeDownload(i);
   });
 }
@@ -82,9 +82,9 @@ void DownloadsTab::refresh()
   m_core.downloadManager()->refreshList();
 }
 
-void DownloadsTab::resumeDownload(QString fileName)
+void DownloadsTab::resumeDownload(QUuid moId)
 {
-  m_core.loggedInAction(ui.list, [this, fileName] {
-    m_core.downloadManager()->resumeDownload(fileName);
+  m_core.loggedInAction(ui.list, [this, moId] {
+    m_core.downloadManager()->resumeDownload(moId);
   });
 }

@@ -46,31 +46,31 @@ int DownloadManagerProxy::startDownloadNexusFile(int modID, int fileID)
   return m_Proxied->startDownloadNexusFile(modID, fileID);
 }
 
-QString DownloadManagerProxy::downloadPath(QString fileName)
+QString DownloadManagerProxy::downloadPath(QString moId)
 {
-  return m_Proxied->downloadPath(fileName);
+  return m_Proxied->downloadPath(moId);
 }
 
 bool DownloadManagerProxy::onDownloadComplete(
-    const std::function<void(QString fileName)>& callback)
+    const std::function<void(QString moId)>& callback)
 {
   return m_DownloadComplete.connect(callback).connected();
 }
 
 bool DownloadManagerProxy::onDownloadPaused(
-    const std::function<void(QString fileName)>& callback)
+    const std::function<void(QString moId)>& callback)
 {
   return m_DownloadPaused.connect(callback).connected();
 }
 
 bool DownloadManagerProxy::onDownloadFailed(
-    const std::function<void(QString fileName)>& callback)
+    const std::function<void(QString moId)>& callback)
 {
   return m_DownloadFailed.connect(callback).connected();
 }
 
 bool DownloadManagerProxy::onDownloadRemoved(
-    const std::function<void(QString fileName)>& callback)
+    const std::function<void(QString moId)>& callback)
 {
   return m_DownloadRemoved.connect(callback).connected();
 }

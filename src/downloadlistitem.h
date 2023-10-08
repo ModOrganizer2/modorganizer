@@ -36,6 +36,7 @@ struct DownloadListItem
   int pendingIndex{-1};
   bool isPending{false};
   bool showInfoIncompleteWarning{false};
+  QUuid moId;
   DownloadManager::DownloadState state;
   QString fileName;
   QString name;

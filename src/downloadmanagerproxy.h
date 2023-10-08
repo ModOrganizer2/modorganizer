@@ -15,7 +15,7 @@ public:
 
   int startDownloadURLs(const QStringList& urls) override;
   int startDownloadNexusFile(int modID, int fileID) override;
-  QString downloadPath(QString fileName) override;
+  QString downloadPath(QString moId) override;
 
   bool onDownloadComplete(const std::function<void(QString)>& callback) override;
   bool onDownloadPaused(const std::function<void(QString)>& callback) override;

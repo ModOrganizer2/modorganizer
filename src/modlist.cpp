@@ -1117,7 +1117,7 @@ bool ModList::dropMimeData(const QMimeData* mimeData, Qt::DropAction action, int
     if (dropInfo.isModDrop()) {
       changeModPriority(dropInfo.rows(), dropPriority);
     } else if (dropInfo.isDownloadDrop()) {
-      emit downloadArchiveDropped(download.m_FileName, dropPriority);
+      emit downloadArchiveDropped(download.m_moId, dropPriority);
     } else if (dropInfo.isExternalArchiveDrop()) {
       emit externalArchiveDropped(dropInfo.externalUrl(), dropPriority);
     } else if (dropInfo.isExternalFolderDrop()) {

@@ -278,9 +278,9 @@ public:
    * numPendingDownloads()[)
    * @return pair of modid, fileid, and fileName
    */
-  std::tuple<QString, int, int> getPendingDownload(int index);
+  std::tuple<QString, int, int, QString> getPendingDownload(QString moId);
 
-  int getPendingDownloadIndex(QString gameName, int modId, int fileId);
+  int getPendingDownloadIndex(QString gameName, int modId, int fileId, QString moId);
 
   /**
    * @brief retrieve the full path to the download specified by fileName
@@ -288,7 +288,7 @@ public:
    * @param fileName the fileName of active or completed download
    * @return absolute path of the file
    **/
-  QString getFilePath(QString fileName) const;
+  QString getFilePath(QUuid moId) const;
 
   /**
    * @brief retrieve a descriptive name of the download specified by fileName
@@ -296,7 +296,7 @@ public:
    * @param fileName the fileName of active or completed download
    * @return display name of the file
    **/
-  QString getDisplayName(QString fileName) const;
+  QString getDisplayName(QUuid moId) const;
 
   /**
    * @brief retrieve the filename of the download specified by downloadId
@@ -312,14 +312,14 @@ public:
    * @param fileName the fileName of active or completed download
    * @return size of the file (total size during download)
    */
-  qint64 getFileSize(QString fileName) const;
+  qint64 getFileSize(QUuid moId) const;
 
   /**
    * @brief retrieve the creation time of the download specified by fileName
    * @param fileName the fileName of active or completed download
    * @return size of the file (total size during download)
    */
-  QDateTime getFileTime(QString fileName) const;
+  QDateTime getFileTime(QUuid moId) const;
 
   /**
    * @brief retrieve the current progress of the download specified by fileName
@@ -327,7 +327,7 @@ public:
    * @param fileName the fileName of active or completed download
    * @return progress of the download in percent (integer)
    **/
-  std::pair<int, QString> getProgress(QString fileName) const;
+  std::pair<int, QString> getProgress(QUuid moId) const;
 
   /**
    * @brief retrieve the current state of the download by fileName
@@ -340,13 +340,13 @@ public:
    * @param fileName the fileName of active or completed download
    * @return the download state
    **/
-  DownloadState getState(QString fileName) const;
+  DownloadState getState(QUuid moId) const;
 
   /**
    * @param fileName the fileName of active or completed download
    * @return true if the nexus information for this download is not complete
    **/
-  bool isInfoIncomplete(QString fileName) const;
+  bool isInfoIncomplete(QUuid moId) const;
 
   /**
    * @brief retrieve the nexus mod id of the download specified by fileName
@@ -354,7 +354,7 @@ public:
    * @param fileName the fileName of active or completed download
    * @return the nexus mod id
    **/
-  int getModID(QString fileName) const;
+  int getModID(QUuid moId) const;
 
   /**
    * @brief retrieve the displayable game name of the download specified by the fileName
@@ -362,7 +362,7 @@ public:
    * @param fileName the fileName of active or completed download
    * @return the displayable game name
    **/
-  QString getDisplayGameName(QString fileName) const;
+  QString getDisplayGameName(QUuid moId) const;
 
   /**
    * @brief retrieve the game name of the downlaod specified by the fileName
@@ -370,14 +370,14 @@ public:
    * @param fileName the fileName of active or completed download
    * @return the game name
    **/
-  QString getGameName(QString fileName) const;
+  QString getGameName(QUuid moId) const;
 
   /**
    * @brief determine if the specified file is supposed to be hidden
    * @param fileName the fileName of active or completed download
    * @return true if the specified file is supposed to be hidden
    */
-  bool isHidden(QString fileName) const;
+  bool isHidden(QUuid moId) const;
 
   /**
    * @brief retrieve all nexus info of the download specified by fileName
@@ -385,14 +385,14 @@ public:
    * @param fileName the fileName of active or completed download
    * @return the nexus mod information
    **/
-  const MOBase::ModRepositoryFileInfo* getFileInfo(QString fileName) const;
+  const MOBase::ModRepositoryFileInfo* getFileInfo(QUuid moId) const;
 
   /**
    * @brief mark a download as installed
    *
    * @param fileName fileName of the download's file to mark installed
    */
-  void markInstalled(QString fileName);
+  void markInstalled(QUuid moId);
 
   /**
    * @brief mark a download as uninstalled
@@ -409,7 +409,7 @@ public:
 public:  // IDownloadManager interface:
   int startDownloadURLs(const QStringList& urls);
   int startDownloadNexusFile(int modID, int fileID);
-  QString downloadPath(QString fileName);
+  QString downloadPath(QString moId);
 
   boost::signals2::connection
   onDownloadComplete(const std::function<void(QString)>& callback);
@@ -428,15 +428,14 @@ public:  // IDownloadManager interface:
   int indexByName(QString fileName) const;
   int indexByInfo(const DownloadInfo* info) const;
 
-  DownloadInfo* getDownloadInfoByFilename(QString fileName) const;
+  DownloadInfo* getDownloadInfoByFileName(QString fileName) const;
+  DownloadInfo* getDownloadInfoByMoId(QUuid moId) const;
   DownloadInfo* getDownloadInfoById(int downloadId) const;
   DownloadInfo& getDownloadInfoByIndex(int index) const;
 
   void pauseAll();
 
 Q_SIGNALS:
-
-  void aboutToUpdate();
 
   /**
    * @brief signals that the specified download has changed
@@ -457,7 +456,7 @@ Q_SIGNALS:
    * @param fileName the download that changed
    * @param state the new state
    */
-  void stateChanged(QString fileName, DownloadManager::DownloadState state);
+  void stateChanged(QUuid moId, DownloadManager::DownloadState state);
 
   /**
    * @brief emitted whenever a download completes successfully, reporting the download
@@ -471,10 +470,9 @@ Q_SIGNALS:
   void downloadAdded();
 
   void downloadAdded(DownloadManager::DownloadInfo* downloadInfo);
-  void downloadRemoved(QString fileName);
-  void pendingDownloadAdded(int index);
-  void pendingDownloadRemoved(int index);
-  void pendingDownloadFilenameUpdated(int index, QString fileName);
+  void downloadRemoved(QUuid moId);
+  void pendingDownloadAdded(QString moId);
+  void pendingDownloadRemoved(QString moId);
 
 public slots:
 
@@ -485,13 +483,13 @@ public slots:
    * @param deleteFile if true, the file will also be deleted from disc, otherwise it is
    *only marked as hidden.
    **/
-  void removeDownload(QString fileName, bool deleteFile, int flag);
+  void removeDownload(QUuid moId, bool deleteFile, int flag);
 
   /**
    * @brief restores the specified download to view (which was previously hidden
    * @param fileName fileName of the download to restore
    */
-  void restoreDownload(QString fileName);
+  void restoreDownload(QUuid moId);
 
   /**
    * @brief cancel the specified download. This will lead to the corresponding file to
@@ -499,23 +497,23 @@ public slots:
    *
    * @param fileName fileName of the download to cancel
    **/
-  void cancelDownload(QString fileName);
+  void cancelDownload(QUuid moId);
 
-  void pauseDownload(QString fileName);
+  void pauseDownload(QUuid moId);
 
-  void resumeDownload(QString fileName);
+  void resumeDownload(QUuid moId);
 
-  void queryInfo(QString fileName);
+  void queryInfo(QUuid moId);
 
-  void queryInfoMd5(QString fileName);
+  void queryInfoMd5(QUuid moId);
 
-  void visitOnNexus(QString fileName);
+  void visitOnNexus(QUuid moId);
 
-  void openFile(QString fileName);
+  void openFile(QUuid moId);
 
-  void openMetaFile(QString fileName);
+  void openMetaFile(QUuid moId);
 
-  void openInDownloadsFolder(QString fileName);
+  void openInDownloadsFolder(QUuid moId);
 
   void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData,
                                QVariant resultData, int requestID);
@@ -542,7 +540,7 @@ private slots:
   void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
   void downloadReadyRead();
   void downloadFinished();
-  void downloadFinished(QString fileName);
+  void downloadFinished(QUuid moId);
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
   void directoryChanged(const QString& dirctory);
@@ -550,7 +548,7 @@ private slots:
 
 private:
   void createMetaFile(DownloadInfo* info);
-  DownloadManager::DownloadInfo* getDownloadInfo(QString fileName);
+  DownloadManager::DownloadInfo* getDownloadInfo(QUuid moId);
 
 public:
   /** Get a unique filename for a download.
@@ -566,7 +564,7 @@ public:
 
 private:
   void startDownload(QNetworkReply* reply, DownloadInfo* newDownload, bool resume);
-  void resumeDownloadInt(QString fileName);
+  void resumeDownloadInt(QUuid moId);
 
   /**
    * @brief start a download from a url
@@ -583,7 +581,7 @@ private:
   // DownloadInfo-pointer might get invalidated at any time
   DownloadInfo* findDownload(QObject* reply, int* index = nullptr) const;
 
-  void removeFile(QString fileName, bool deleteFile);
+  void removeFile(QUuid moId, bool deleteFile);
 
   void refreshAlphabeticalTranslation();
 
@@ -593,7 +591,7 @@ private:
 
   void setState(DownloadInfo* info, DownloadManager::DownloadState state);
 
-  int getDownloadInfoIndexByFilename(QString fileName) const;
+  int getDownloadInfoIndexByMoId(QUuid moId) const;
 
   void removePending(QString gameName, int modID, int fileID);
 
@@ -610,7 +608,7 @@ private:
   OrganizerCore* m_OrganizerCore = nullptr;
   QWidget* m_ParentWidget        = nullptr;
 
-  QVector<std::tuple<QString, int, int>> m_PendingDownloads;
+  QVector<std::tuple<QString, int, int, QString>> m_PendingDownloads;
 
   QVector<DownloadInfo*> m_ActiveDownloads;
 

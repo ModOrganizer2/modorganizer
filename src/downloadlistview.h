@@ -80,18 +80,18 @@ public:
   void setSourceModel(DownloadList* sourceModel);
 
 signals:
-  void installDownload(QString fileName);
-  void queryInfo(QString fileName);
-  void queryInfoMd5(QString fileName);
-  void removeDownload(QString fileName, bool deleteFile, int flag);
-  void restoreDownload(QString fileName);
-  void cancelDownload(QString fileName);
-  void pauseDownload(QString fileName);
-  void resumeDownload(QString fileName);
-  void visitOnNexus(QString fileName);
-  void openFile(QString fileName);
-  void openMetaFile(QString fileName);
-  void openInDownloadsFolder(QString fileName);
+  void installDownload(QUuid moId);
+  void queryInfo(QUuid moId);
+  void queryInfoMd5(QUuid moId);
+  void removeDownload(QUuid moId, bool deleteFile, int flag);
+  void restoreDownload(QUuid moId);
+  void cancelDownload(QUuid moId);
+  void pauseDownload(QUuid moId);
+  void resumeDownload(QUuid moId);
+  void visitOnNexus(QUuid moId);
+  void openFile(QUuid moId);
+  void openMetaFile(QUuid moId);
+  void openInDownloadsFolder(QUuid moId);
 
 protected:
   void keyPressEvent(QKeyEvent* event) override;
@@ -101,26 +101,26 @@ private slots:
   void onCustomContextMenu(const QPoint& point);
   void onHeaderCustomContextMenu(const QPoint& point);
 
-  void issueInstall(QString fileName);
-  void issueDelete(QString fileName);
-  void issueRemoveFromView(QString fileName);
-  void issueRestoreToView(QString fileName);
+  void issueInstall(QUuid moId);
+  void issueDelete(QUuid moId);
+  void issueRemoveFromView(QUuid moId);
+  void issueRestoreToView(QUuid moId);
   void issueRestoreToViewAll();
-  void issueVisitOnNexus(QString fileName);
-  void issueOpenFile(QString fileName);
-  void issueOpenMetaFile(QString fileName);
-  void issueOpenInDownloadsFolder(QString fileName);
-  void issueCancel(QString fileName);
-  void issuePause(QString fileName);
-  void issueResume(QString fileName);
+  void issueVisitOnNexus(QUuid moId);
+  void issueOpenFile(QUuid moId);
+  void issueOpenMetaFile(QUuid moId);
+  void issueOpenInDownloadsFolder(QUuid moId);
+  void issueCancel(QUuid moId);
+  void issuePause(QUuid moId);
+  void issueResume(QUuid moId);
   void issueDeleteAll();
   void issueDeleteCompleted();
   void issueDeleteUninstalled();
   void issueRemoveFromViewAll();
   void issueRemoveFromViewCompleted();
   void issueRemoveFromViewUninstalled();
-  void issueQueryInfo(QString fileName);
-  void issueQueryInfoMd5(QString fileName);
+  void issueQueryInfo(QUuid moId);
+  void issueQueryInfoMd5(QUuid moId);
 
 private:
   DownloadManager* m_Manager;

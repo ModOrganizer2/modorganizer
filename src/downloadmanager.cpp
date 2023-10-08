@@ -129,10 +129,8 @@ DownloadManager::DownloadInfo::createFromMeta(const QString& filePath, bool show
       metaFile.value("moId").toUuid().isNull()) {
     info->m_moId = QUuid::createUuid();
     metaFile.setValue("moId", info->m_moId.toString());
-    log::debug("Created New MO ID: {}", info->m_moId.toString());
   } else {
     info->m_moId       = metaFile.value("moId").toUuid();
-    log::debug("MO ID: {}", info->m_moId.toString());
   }
 
   info->m_DownloadID = s_NextDownloadID++;
@@ -295,7 +293,7 @@ void DownloadManager::pauseAll()
   // first loop: pause all downloads
   for (int i = 0; i < m_ActiveDownloads.count(); ++i) {
     if (m_ActiveDownloads[i]->m_State < STATE_READY) {
-      pauseDownload(m_ActiveDownloads[i]->m_FileName);
+      pauseDownload(m_ActiveDownloads[i]->m_moId);
     }
   }
 
@@ -363,7 +361,7 @@ void DownloadManager::refreshList()
       if (((*iter)->m_State == STATE_READY) || ((*iter)->m_State == STATE_INSTALLED)
       ||
           ((*iter)->m_State == STATE_UNINSTALLED)) {
-        emit downloadRemoved((*iter)->m_FileName);
+        emit downloadRemoved((*iter)->m_moId);
 
         delete *iter;
         iter = m_ActiveDownloads.erase(iter);
@@ -569,7 +567,7 @@ void DownloadManager::removePending(QString gameName, int modID, int fileID)
   for (auto iter : m_PendingDownloads) {
     if (gameShortName.compare(std::get<0>(iter), Qt::CaseInsensitive) == 0 &&
         (std::get<1>(iter) == modID) && (std::get<2>(iter) == fileID)) {
-      emit pendingDownloadRemoved(m_PendingDownloads.indexOf(iter));
+      emit pendingDownloadRemoved(std::get<3>(iter));
 
       m_PendingDownloads.removeAt(m_PendingDownloads.indexOf(iter));
       break;
@@ -640,7 +638,7 @@ void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
         newDownload->setName(getDownloadFileName(newDownload->m_FileName, true), true);
         endDisableDirWatcher();
         if (newDownload->m_State == STATE_PAUSED)
-          resumeDownload(newDownload->m_FileName);
+          resumeDownload(newDownload->m_moId);
         else
           setState(newDownload, STATE_DOWNLOADING);
       }
@@ -652,7 +650,7 @@ void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
     if (newDownload->m_State != STATE_DOWNLOADING &&
         newDownload->m_State != STATE_READY &&
         newDownload->m_State != STATE_FETCHINGMODINFO && reply->isFinished()) {
-      downloadFinished(newDownload->m_FileName);
+      downloadFinished(newDownload->m_moId);
       return;
     }
   } else
@@ -768,13 +766,11 @@ void DownloadManager::addNXMDownload(const QString& url)
     }
   }
 
+  auto moId = QUuid::createUuid().toString();
 
   m_PendingDownloads.append(
-      std::make_tuple(foundGame->gameShortName(), nxmInfo.modId(), nxmInfo.fileId()));
-
-  auto pendingDownloadIndex =
-      static_cast<int>(m_PendingDownloads.indexOf(m_PendingDownloads.last()));
-  emit pendingDownloadAdded(pendingDownloadIndex);
+      std::make_tuple(foundGame->gameShortName(), nxmInfo.modId(), nxmInfo.fileId(), moId));
+  emit pendingDownloadAdded(moId);
 
   emit downloadAdded();
   ModRepositoryFileInfo* info = new ModRepositoryFileInfo();
@@ -789,12 +785,12 @@ void DownloadManager::addNXMDownload(const QString& url)
       QVariant::fromValue(test), ""));
 }
 
-void DownloadManager::removeFile(QString fileName, bool deleteFile)
+void DownloadManager::removeFile(QUuid moId, bool deleteFile)
 {
   // Avoid triggering refreshes from DirWatcher
   ScopedDisableDirWatcher scopedDirWatcher(this);
 
-  DownloadInfo* download = getDownloadInfoByFilename(fileName);
+  DownloadInfo* download = getDownloadInfoByMoId(moId);
 
   QString filePath = m_OutputDirectory + "/" + download->m_FileName;
   if ((download->m_State == STATE_STARTED) ||
@@ -823,7 +819,7 @@ void DownloadManager::removeFile(QString fileName, bool deleteFile)
     if (!download->m_Hidden)
       metaSettings.setValue("removed", true);
   }
-  m_DownloadRemoved(fileName);
+  m_DownloadRemoved(moId.toString());
 }
 
 class LessThanWrapper
@@ -860,30 +856,43 @@ void DownloadManager::refreshAlphabeticalTranslation()
             LessThanWrapper(this));
 }
 
-void DownloadManager::restoreDownload(QString fileName)
+void DownloadManager::restoreDownload(QUuid moId)
 {
-  DownloadInfo* download = getDownloadInfoByFilename(fileName);
+  if (moId.isNull()) {
+    DownloadState minState = STATE_READY;
 
-  if (download->m_Hidden) {
-    download->m_Hidden = false;
+    for (QVector<DownloadInfo*>::const_iterator iter = m_ActiveDownloads.begin();
+         iter != m_ActiveDownloads.end(); ++iter) {
 
-    QString filePath = m_OutputDirectory + "/" + download->m_FileName;
+      if ((*iter)->m_State >= minState) {
+        restoreDownload((*iter)->m_moId);
+      }
+    }
+  } else {
 
-    // avoid dirWatcher triggering refreshes
-    startDisableDirWatcher();
-    QSettings metaSettings(filePath.append(".meta"), QSettings::IniFormat);
-    metaSettings.setValue("removed", false);
+    DownloadInfo* download = getDownloadInfoByMoId(moId);
 
-    endDisableDirWatcher();
+    if (download->m_Hidden) {
+      download->m_Hidden = false;
+
+      QString filePath = m_OutputDirectory + "/" + download->m_FileName;
+
+      // avoid dirWatcher triggering refreshes
+      startDisableDirWatcher();
+      QSettings metaSettings(filePath.append(".meta"), QSettings::IniFormat);
+      metaSettings.setValue("removed", false);
+
+      endDisableDirWatcher();
+    }
   }
 }
 
-void DownloadManager::removeDownload(QString fileName, bool deleteFile, int flag)
+void DownloadManager::removeDownload(QUuid moId, bool deleteFile, int flag)
 {
   try {
     // avoid dirWatcher triggering refreshes
     startDisableDirWatcher();
-    DownloadInfo* download = getDownloadInfoByFilename(fileName);
+    DownloadInfo* download = getDownloadInfoByMoId(moId);
 
 
     if (flag < 0) {
@@ -897,7 +906,7 @@ void DownloadManager::removeDownload(QString fileName, bool deleteFile, int flag
 
         if ((removeAll && (downloadState >= STATE_READY)) ||
             (removeState == downloadState)) {
-          removeFile(fileName, deleteFile);
+          removeFile(moId, deleteFile);
           delete *iter;
           iter = m_ActiveDownloads.erase(iter);
         } else {
@@ -906,13 +915,13 @@ void DownloadManager::removeDownload(QString fileName, bool deleteFile, int flag
       }
     } else {
 
-      removeFile(fileName, deleteFile);
-      auto downloadIndex = getDownloadInfoIndexByFilename(fileName);
+      removeFile(moId, deleteFile);
+      auto downloadIndex = getDownloadInfoIndexByMoId(moId);
       delete m_ActiveDownloads.at(downloadIndex);
       m_ActiveDownloads.erase(m_ActiveDownloads.begin() + downloadIndex);
     }
 
-    emit downloadRemoved(fileName);
+    emit downloadRemoved(moId);
 
   } catch (const std::exception& e) {
     log::error("failed to remove download: {}", e.what());
@@ -920,18 +929,18 @@ void DownloadManager::removeDownload(QString fileName, bool deleteFile, int flag
   refreshList();
 }
 
-void DownloadManager::cancelDownload(QString fileName)
+void DownloadManager::cancelDownload(QUuid moId)
 {
-  auto info = getDownloadInfoByFilename(fileName);
+  auto info = getDownloadInfoByMoId(moId);
 
   if (info->m_State == STATE_DOWNLOADING) {
     setState(info, STATE_CANCELING);
   }
 }
 
-void DownloadManager::pauseDownload(QString fileName)
+void DownloadManager::pauseDownload(QUuid moId)
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
 
   if (info->m_State == STATE_DOWNLOADING) {
     if ((info->m_Reply != nullptr) && (info->m_Reply->isRunning())) {
@@ -946,22 +955,22 @@ void DownloadManager::pauseDownload(QString fileName)
   }
 }
 
-void DownloadManager::resumeDownload(QString fileName)
+void DownloadManager::resumeDownload(QUuid moId)
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
   info->m_Tries      = AUTOMATIC_RETRIES;
-  resumeDownloadInt(fileName);
+  resumeDownloadInt(moId);
 }
 
-void DownloadManager::resumeDownloadInt(QString fileName)
+void DownloadManager::resumeDownloadInt(QUuid moId)
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
 
   // Check for finished download;
   if (info->m_TotalSize <= info->m_Output.size() && info->m_Reply != nullptr &&
       info->m_Reply->isFinished() && info->m_State != STATE_ERROR) {
     setState(info, STATE_DOWNLOADING);
-    downloadFinished(fileName);
+    downloadFinished(moId);
     return;
   }
 
@@ -1019,9 +1028,22 @@ DownloadManager::getDownloadInfoById(int downloadId) const
 }
 
 DownloadManager::DownloadInfo*
-DownloadManager::getDownloadInfoByFilename(QString fileName) const
+DownloadManager::getDownloadInfoByMoId(QUuid moId) const
 {
 
+  auto iter = std::find_if(m_ActiveDownloads.begin(), m_ActiveDownloads.end(),
+                           [moId](DownloadInfo* info) {
+                             return info->m_moId == moId;
+                           });
+  if (iter != m_ActiveDownloads.end()) {
+    return *iter;
+  } else {
+    throw MyException(tr("Query Download: invalid mo id %1").arg(moId.toString()));
+  }
+}
+
+DownloadManager::DownloadInfo* DownloadManager::getDownloadInfoByFileName(QString fileName) const
+{
   auto iter = std::find_if(m_ActiveDownloads.begin(), m_ActiveDownloads.end(),
                            [fileName](DownloadInfo* info) {
                              return info->m_FileName == fileName;
@@ -1029,7 +1051,7 @@ DownloadManager::getDownloadInfoByFilename(QString fileName) const
   if (iter != m_ActiveDownloads.end()) {
     return *iter;
   } else {
-    throw MyException(tr("Query Download: invalid filename %1").arg(fileName));
+    throw MyException(tr("Query Download: invalid file name %1").arg(fileName));
   }
 }
 
@@ -1038,22 +1060,22 @@ DownloadManager::DownloadInfo& DownloadManager::getDownloadInfoByIndex(int index
   return *m_ActiveDownloads[index];
 }
 
-int DownloadManager::getDownloadInfoIndexByFilename(QString fileName) const
+int DownloadManager::getDownloadInfoIndexByMoId(QUuid moId) const
 {
   auto iter = std::find_if(m_ActiveDownloads.begin(), m_ActiveDownloads.end(),
-                           [fileName](DownloadInfo* info) {
-                             return info->m_FileName == fileName;
+                           [moId](DownloadInfo* info) {
+                             return info->m_moId == moId;
                            });
   if (iter != m_ActiveDownloads.end()) {
     return indexByInfo(*iter);
   } else {
-    throw MyException(tr("Query Download: invalid filename %1").arg(fileName));
+    throw MyException(tr("Query Download: invalid mo id %1").arg(moId.toString()));
   }
 }
 
-void DownloadManager::queryInfo(QString fileName)
+void DownloadManager::queryInfo(QUuid moId)
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
   if (info->m_FileInfo->repository != "Nexus") {
     log::warn("re-querying file info is currently only possible with Nexus");
     return;
@@ -1066,7 +1088,7 @@ void DownloadManager::queryInfo(QString fileName)
 
   if (info->m_FileInfo->modID <= 0) {
     QString ignore;
-    NexusInterface::interpretNexusFileName(fileName, ignore, info->m_FileInfo->modID,
+    NexusInterface::interpretNexusFileName(info->m_FileName, ignore, info->m_FileInfo->modID,
                                            true);
     if (info->m_FileInfo->modID < 0) {
       bool ok   = false;
@@ -1085,7 +1107,7 @@ void DownloadManager::queryInfo(QString fileName)
 
   if (info->m_FileInfo->gameName.size() == 0) {
     SelectionDialog selection(
-        tr("Please select the source game code for %1").arg(fileName));
+        tr("Please select the source game code for %1").arg(info->m_FileName));
 
     std::vector<std::pair<QString, QString>> choices =
         m_NexusInterface->getGameChoices(m_ManagedGame);
@@ -1106,9 +1128,9 @@ void DownloadManager::queryInfo(QString fileName)
   setState(info, STATE_FETCHINGMODINFO);
 }
 
-void DownloadManager::queryInfoMd5(QString fileName)
+void DownloadManager::queryInfoMd5(QUuid moId)
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
 
   if (info->m_FileInfo->repository != "Nexus") {
     log::warn("re-querying file info is currently only possible with Nexus");
@@ -1164,9 +1186,9 @@ void DownloadManager::queryInfoMd5(QString fileName)
   setState(info, STATE_FETCHINGMODINFO_MD5);
 }
 
-void DownloadManager::visitOnNexus(QString fileName)
+void DownloadManager::visitOnNexus(QUuid moId)
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
 
   if (info->m_FileInfo->repository != "Nexus") {
     log::warn("Visiting mod page is currently only possible with Nexus");
@@ -1187,11 +1209,12 @@ void DownloadManager::visitOnNexus(QString fileName)
   }
 }
 
-void DownloadManager::openFile(QString fileName)
+void DownloadManager::openFile(QUuid moId)
 {
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
   QDir path = QDir(m_OutputDirectory);
-  if (path.exists(fileName)) {
-    shell::Open(getFilePath(fileName));
+  if (path.exists(info->m_FileName)) {
+    shell::Open(getFilePath(moId));
     return;
   }
 
@@ -1199,10 +1222,10 @@ void DownloadManager::openFile(QString fileName)
   return;
 }
 
-void DownloadManager::openMetaFile(QString fileName)
+void DownloadManager::openMetaFile(QUuid moId)
 {
   const auto path     = QDir(m_OutputDirectory);
-  const auto filePath = getFilePath(fileName);
+  const auto filePath = getFilePath(moId);
   const auto metaPath = filePath + ".meta";
 
   if (path.exists(metaPath)) {
@@ -1221,9 +1244,9 @@ void DownloadManager::openMetaFile(QString fileName)
   shell::Explore(filePath);
 }
 
-void DownloadManager::openInDownloadsFolder(QString fileName)
+void DownloadManager::openInDownloadsFolder(QUuid moId)
 {
-  const auto path = getFilePath(fileName);
+  const auto path = getFilePath(moId);
 
   if (QFile::exists(path)) {
     shell::Explore(path);
@@ -1244,9 +1267,9 @@ int DownloadManager::numTotalDownloads() const
   return m_ActiveDownloads.size();
 }
 
-QString DownloadManager::getFilePath(QString fileName) const
+QString DownloadManager::getFilePath(QUuid moId) const
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
   if (!info)
     return QString();
 
@@ -1275,9 +1298,9 @@ QString DownloadManager::getFileTypeString(int fileType)
   }
 }
 
-QString DownloadManager::getDisplayName(QString fileName) const
+QString DownloadManager::getDisplayName(QUuid moId) const
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
 
   QTextDocument doc;
   if (!info->m_FileInfo->name.isEmpty()) {
@@ -1292,14 +1315,15 @@ QString DownloadManager::getDisplayName(QString fileName) const
   }
 }
 
-int DownloadManager::getPendingDownloadIndex(QString gameName, int modId, int fileId)
+int DownloadManager::getPendingDownloadIndex(QString gameName, int modId, int fileId, QString moId)
 {
   auto iter =
       std::find_if(m_PendingDownloads.begin(), m_PendingDownloads.end(),
-                   [gameName, modId, fileId](std::tuple<QString, int, int> pending) {
+                   [gameName, modId, fileId, moId](std::tuple<QString, int, int, QString> pending) {
                      return std::get<0>(pending) == gameName &&
                             std::get<1>(pending) == modId &&
-                            std::get<2>(pending) == fileId;
+                            std::get<2>(pending) == fileId &&
+                            std::get<3>(pending) == moId;
                    });
 
   if (iter != m_PendingDownloads.end()) {
@@ -1316,9 +1340,9 @@ QString DownloadManager::getFileName(int downloadId) const
   return info->m_FileName;
 }
 
-QDateTime DownloadManager::getFileTime(QString fileName) const
+QDateTime DownloadManager::getFileTime(QUuid moId) const
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
 
   if (!info->m_Created.isValid()) {
     QFileInfo fileInfo(info->m_Output);
@@ -1337,38 +1361,44 @@ int DownloadManager::numPendingDownloads() const
   return m_PendingDownloads.size();
 }
 
-std::tuple<QString, int, int> DownloadManager::getPendingDownload(int index)
+std::tuple<QString, int, int, QString> DownloadManager::getPendingDownload(QString moId)
 {
-  if ((index < 0) || (index >= m_PendingDownloads.size())) {
-    throw MyException(tr("get pending: invalid download index %1").arg(index));
+  auto iter = std::find_if(
+      m_PendingDownloads.begin(), m_PendingDownloads.end(),
+      [moId](std::tuple<QString, int, int, QString> pending) {
+        return std::get<3>(pending) == moId;
+      });
+
+  if (iter != m_PendingDownloads.end()) {
+    return *iter;
   }
 
-  return m_PendingDownloads.at(index);
+  return {};
 }
 
-qint64 DownloadManager::getFileSize(QString fileName) const
+qint64 DownloadManager::getFileSize(QUuid moId) const
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
 
   return info->m_TotalSize;
 }
 
-std::pair<int, QString> DownloadManager::getProgress(QString fileName) const
+std::pair<int, QString> DownloadManager::getProgress(QUuid moId) const
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
 
   return info->m_Progress;
 }
 
-DownloadManager::DownloadState DownloadManager::getState(QString fileName) const
+DownloadManager::DownloadState DownloadManager::getState(QUuid moId) const
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
   return info->m_State;
 }
 
-bool DownloadManager::isInfoIncomplete(QString fileName) const
+bool DownloadManager::isInfoIncomplete(QUuid moId) const
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
 
   if (info->m_FileInfo->repository != "Nexus") {
     // other repositories currently don't support re-querying info anyway
@@ -1377,15 +1407,15 @@ bool DownloadManager::isInfoIncomplete(QString fileName) const
   return (info->m_FileInfo->fileID == 0) || (info->m_FileInfo->modID == 0);
 }
 
-int DownloadManager::getModID(QString fileName) const
+int DownloadManager::getModID(QUuid moId) const
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
   return info->m_FileInfo->modID;
 }
 
-QString DownloadManager::getDisplayGameName(QString fileName) const
+QString DownloadManager::getDisplayGameName(QUuid moId) const
 {
-  DownloadInfo* info      = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info      = getDownloadInfoByMoId(moId);
   QString gameName        = info->m_FileInfo->gameName;
   IPluginGame* gamePlugin = m_OrganizerCore->getGame(gameName);
   if (gamePlugin) {
@@ -1394,30 +1424,30 @@ QString DownloadManager::getDisplayGameName(QString fileName) const
   return gameName;
 }
 
-QString DownloadManager::getGameName(QString fileName) const
+QString DownloadManager::getGameName(QUuid moId) const
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
   return info->m_FileInfo->gameName;
 }
 
-bool DownloadManager::isHidden(QString fileName) const
+bool DownloadManager::isHidden(QUuid moId) const
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
   return info->m_Hidden;
 }
 
-const ModRepositoryFileInfo* DownloadManager::getFileInfo(QString fileName) const
+const ModRepositoryFileInfo* DownloadManager::getFileInfo(QUuid moId) const
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
   return info->m_FileInfo;
 }
 
-void DownloadManager::markInstalled(QString fileName)
+void DownloadManager::markInstalled(QUuid moId)
 {
   // Avoid triggering refreshes from DirWatcher
   ScopedDisableDirWatcher scopedDirWatcher(this);
 
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
   QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
   metaFile.setValue("installed", true);
   metaFile.setValue("uninstalled", false);
@@ -1425,9 +1455,10 @@ void DownloadManager::markInstalled(QString fileName)
   setState(info, STATE_INSTALLED);
 }
 
-DownloadManager::DownloadInfo* DownloadManager::getDownloadInfo(QString fileName)
+DownloadManager::DownloadInfo* DownloadManager::getDownloadInfo(QUuid moId)
 {
-  return DownloadInfo::createFromMeta(fileName, true, m_OutputDirectory);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
+  return DownloadInfo::createFromMeta(info->m_FileName, true, m_OutputDirectory);
 }
 
 void DownloadManager::markUninstalled(QString fileName)
@@ -1435,7 +1466,7 @@ void DownloadManager::markUninstalled(QString fileName)
   // Avoid triggering refreshes from DirWatcher
   ScopedDisableDirWatcher scopedDirWatcher(this);
 
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByFileName(fileName);
   QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
   metaFile.setValue("uninstalled", true);
 
@@ -1515,7 +1546,7 @@ void DownloadManager::setState(DownloadManager::DownloadInfo* info,
   default: /* NOP */
     break;
   }
-  emit stateChanged(fileName, state);
+  emit stateChanged(info->m_moId, state);
   emit update(info);
 }
 
@@ -1785,10 +1816,6 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
   info->modID  = modID;
   info->fileID = fileID;
 
-  auto pendingIndex =
-      getPendingDownloadIndex(info->gameName, info->modID, info->fileID);
-  emit pendingDownloadFilenameUpdated(pendingIndex, info->fileName);
-
   QObject* test = info;
   m_RequestIDs.insert(
       m_NexusInterface->requestDownloadURL(info->gameName, info->modID, info->fileID,
@@ -1844,9 +1871,9 @@ int DownloadManager::startDownloadNexusFile(int modID, int fileID)
   return newID;
 }
 
-QString DownloadManager::downloadPath(QString fileName)
+QString DownloadManager::downloadPath(QString moId)
 {
-  return getFilePath(fileName);
+  return getFilePath(QUuid::fromString(moId));
 }
 
 boost::signals2::connection
@@ -1989,7 +2016,7 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
   if (chosenIdx < 0) {
     // don't use the normal state set function as we don't want to create a meta file
     info->m_State = DownloadManager::STATE_READY;
-    queryInfo(info->m_FileName);
+    queryInfo(info->m_moId);
     return;
   }
 
@@ -2061,7 +2088,7 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID,
         return;
       } else {
         info->m_State = STATE_READY;
-        queryInfo(info->m_FileName);
+        queryInfo(info->m_moId);
         emit update(info);
         return;
       }
@@ -2069,7 +2096,7 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID,
 
     if (info->m_FileInfo->modID == modID) {
       if (info->m_State < STATE_FETCHINGMODINFO) {
-        emit downloadRemoved(info->m_FileName);
+        emit downloadRemoved(info->m_moId);
 
         m_ActiveDownloads.erase(iter);
         delete info;
@@ -2089,12 +2116,12 @@ void DownloadManager::downloadFinished()
 {
   auto index = 0;
   auto info  = findDownload(this->sender(), &index);
-  downloadFinished(info->m_FileName);
+  downloadFinished(info->m_moId);
 }
 
-void DownloadManager::downloadFinished(QString fileName)
+void DownloadManager::downloadFinished(QUuid moId)
 {
-  DownloadInfo* info = getDownloadInfoByFilename(fileName);
+  DownloadInfo* info = getDownloadInfoByMoId(moId);
 
   if (info != nullptr) {
     QNetworkReply* reply = info->m_Reply;
@@ -2145,11 +2172,11 @@ void DownloadManager::downloadFinished(QString fileName)
     if (info->m_State == STATE_CANCELED || (info->m_Tries == 0 && error)) {
       info->m_Output.remove();
 
-      auto downloadIndex = getDownloadInfoIndexByFilename(fileName);
+      auto downloadIndex = getDownloadInfoIndexByMoId(moId);
       delete info;
       m_ActiveDownloads.erase(m_ActiveDownloads.begin() + downloadIndex);
 
-      emit downloadRemoved(fileName);
+      emit downloadRemoved(moId);
 
       if (error)
         emit showMessage(
@@ -2209,10 +2236,10 @@ void DownloadManager::downloadFinished(QString fileName)
 
     if ((info->m_Tries > 0) && error) {
       --info->m_Tries;
-      resumeDownloadInt(fileName);
+      resumeDownloadInt(moId);
     }
   } else {
-    log::warn("no download by filename {}", fileName);
+    log::warn("no download by mo id {}", moId.toString());
   }
 }
 
@@ -2271,7 +2298,7 @@ void DownloadManager::checkDownloadTimeout()
         m_ActiveDownloads[i]->m_Reply->isOpen()) {
       log::info("Lost connectivity to the server, pausing download: {}",
                 m_ActiveDownloads[i]->m_FileName);
-      pauseDownload(m_ActiveDownloads[i]->m_FileName);
+      pauseDownload(m_ActiveDownloads[i]->m_moId);
     }
   }
 }

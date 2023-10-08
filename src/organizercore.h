@@ -429,7 +429,7 @@ public slots:
 
   void refreshLists();
 
-  ModInfo::Ptr installDownload(QString fileName, int priority = -1);
+  ModInfo::Ptr installDownload(QUuid moId, int priority = -1);
   ModInfo::Ptr installArchive(const QString& archivePath, int priority = -1,
                               bool reinstallation     = false,
                               ModInfo::Ptr currentMod = nullptr,

@@ -829,15 +829,15 @@ OrganizerCore::doInstall(const QString& archivePath, GuessedValue<QString> modNa
   return {-1, nullptr};
 }
 
-ModInfo::Ptr OrganizerCore::installDownload(QString fileName, int priority)
+ModInfo::Ptr OrganizerCore::installDownload(QUuid moId, int priority)
 {
   ScopedDisableDirWatcher scopedDirwatcher(&m_DownloadManager);
 
   try {
-    QString filePath        = m_DownloadManager.getFilePath(fileName);
-    QString gameName        = m_DownloadManager.getGameName(fileName);
-    int modID               = m_DownloadManager.getModID(fileName);
-    int fileID              = m_DownloadManager.getFileInfo(fileName)->fileID;
+    QString filePath        = m_DownloadManager.getFilePath(moId);
+    QString gameName        = m_DownloadManager.getGameName(moId);
+    int modID               = m_DownloadManager.getModID(moId);
+    int fileID              = m_DownloadManager.getFileInfo(moId)->fileID;
     ModInfo::Ptr currentMod = nullptr;
     GuessedValue<QString> modName;
 
@@ -860,9 +860,9 @@ ModInfo::Ptr OrganizerCore::installDownload(QString fileName, int priority)
 
     if (modInfo != nullptr) {
       modInfo->addInstalledFile(modID, fileID);
-      m_DownloadManager.markInstalled(fileName);
+      m_DownloadManager.markInstalled(moId);
       if (settings().interface().hideDownloadsAfterInstallation()) {
-        m_DownloadManager.removeDownload(fileName, false, 0);
+        m_DownloadManager.removeDownload(moId, false, 0);
       }
     }
 
@@ -893,11 +893,11 @@ ModInfo::Ptr OrganizerCore::installArchive(const QString& archivePath, int prior
     auto& download = m_DownloadManager.getDownloadInfoByIndex(dlIdx);
 
     if (dlIdx != -1) {
-      int modId  = m_DownloadManager.getModID(download.m_FileName);
-      int fileId = m_DownloadManager.getFileInfo(download.m_FileName)->fileID;
+      int modId  = m_DownloadManager.getModID(download.m_moId);
+      int fileId = m_DownloadManager.getFileInfo(download.m_moId)->fileID;
       modInfo->addInstalledFile(modId, fileId);
     }
-    m_DownloadManager.markInstalled(archivePath);
+    m_DownloadManager.markInstalled(download.m_moId);
   }
   return modInfo;
 }

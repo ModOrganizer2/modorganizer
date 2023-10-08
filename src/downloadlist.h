@@ -48,7 +48,7 @@ public:
     COL_VERSION,
     COL_ID,
     COL_SOURCEGAME,
-    COL_FILENAME,
+    COL_MOID,
 
     // number of columns
     COL_COUNT
@@ -86,15 +86,12 @@ public:
   //
   bool lessThanPredicate(const QModelIndex& left, const QModelIndex& right);
 
-  DownloadListItem* getDownloadListItem(QString fileName);
-  QString getFilenameByRow(int row);
+  DownloadListItem* getDownloadListItem(QUuid moId);
 
 private:
   void setDownloadListItem(DownloadManager::DownloadInfo* downloadInfo,
                            DownloadListItem& downloadListItem);
 
-  DownloadListItem* getDownloadByPendingIndex(int index);
-  int getPendingRow(int index);
   void downloadUpdated(DownloadManager::DownloadInfo* downloadInfo);
   void updateData();
 
@@ -102,16 +99,37 @@ public slots:
   /**
    * @brief used to inform the model that data has changed
    *
-   * @param row the row that changed. This can be negative to update the whole view
+   * @param downloadInfo the downloadInfo that changed.
    **/
   void update(DownloadManager::DownloadInfo* downloadInfo);
 
-  void aboutToUpdate();
+  /**
+   * @brief used to inform the model that data has been added
+   *
+   * @param downloadInfo the downloadInfo that changed.
+   **/
   void downloadAdded(DownloadManager::DownloadInfo* downloadInfo);
-  void downloadRemoved(QString fileName);
-  void pendingDownloadAdded(int index);
-  void pendingDownloadFilenameUpdated(int index, QString fileName);
-  void pendingDownloadRemoved(int index);
+
+  /**
+   * @brief used to inform the model that data has been removed
+   *
+   * @param MO ID the MO ID that changed.
+   **/
+  void downloadRemoved(QUuid moId);
+
+  /**
+   * @brief used to inform the model that pending data has been added
+   *
+   * @param MO ID the MO ID that changed.
+   **/
+  void pendingDownloadAdded(QString moId);
+
+  /**
+   * @brief used to inform the model that pending data has been removed
+   *
+   * @param MO ID the MO ID that changed.
+   **/
+  void pendingDownloadRemoved(QString moId);
 
 private:
   DownloadManager& m_manager;

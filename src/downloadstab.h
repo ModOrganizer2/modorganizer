@@ -33,7 +33,7 @@ private:
   MOBase::FilterWidget m_filter;
 
   void refresh();
-  void resumeDownload(QString fileName);
+  void resumeDownload(QUuid moId);
 };
 
 #endif  // MODORGANIZER_DOWNLOADTAB_INCLUDED
