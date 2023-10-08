@@ -471,6 +471,9 @@ signals:
   // Use queued connections
   void directoryStructureReady();
 
+  // Notify of a general UI refresh
+  void refreshTriggered();
+
 private:
   std::pair<unsigned int, ModInfo::Ptr> doInstall(const QString& archivePath,
                                                   MOBase::GuessedValue<QString> modName,

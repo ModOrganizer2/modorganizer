@@ -38,7 +38,7 @@ Rectangle {
 
     Text {
         id: textBox
-        text: "Exit Tutorial"
+        text: qsTr("Exit Tutorial")
         font.pointSize: 12
         font.bold: false
         width: innerWidth

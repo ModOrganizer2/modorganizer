@@ -371,12 +371,7 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
   ui->groupCombo->installEventFilter(noWheel);
   ui->profileBox->installEventFilter(noWheel);
 
-  if (organizerCore.managedGame()->sortMechanism() ==
-      MOBase::IPluginGame::SortMechanism::NONE) {
-    ui->sortButton->setDisabled(true);
-    ui->sortButton->setToolTip(tr("There is no supported sort mechanism for this game. "
-                                  "You will probably have to use a third-party tool."));
-  }
+  updateSortButton();
 
   connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this,
           SLOT(scheduleCheckForProblems()));
@@ -399,6 +394,9 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
           SLOT(updateAvailable()));
   connect(m_OrganizerCore.updater(), SIGNAL(motdAvailable(QString)), this,
           SLOT(motdReceived(QString)));
+  connect(&m_OrganizerCore, &OrganizerCore::refreshTriggered, this, [this]() {
+    updateSortButton();
+  });
 
   connect(&NexusInterface::instance(), SIGNAL(requestNXMDownload(QString)),
           &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
@@ -1077,6 +1075,12 @@ void MainWindow::createEndorseMenu()
 
 void MainWindow::createHelpMenu()
 {
+  //: Translation strings for tutorial names
+  static std::map<QString, const char*> translate = {
+      {"First Steps", QT_TR_NOOP("First Steps")},
+      {"Conflict Resolution", QT_TR_NOOP("Conflict Resolution")},
+      {"Overview", QT_TR_NOOP("Overview")}};
+
   auto* menu = ui->actionHelp->menu();
   if (!menu) {
     // this happens on startup because languageChanged() (which calls this) is
@@ -1133,7 +1137,7 @@ void MainWindow::createHelpMenu()
                    fileName);
         continue;
       }
-      QAction* tutAction = new QAction(params.at(0), tutorialMenu);
+      QAction* tutAction = new QAction(tr(translate[params.at(0)]), tutorialMenu);
       tutAction->setData(fileName);
       tutorials.push_back(std::make_pair(params.at(1).toInt(), tutAction));
     }
@@ -2334,7 +2338,7 @@ void MainWindow::gameSupportTriggered()
 
 void MainWindow::discordTriggered()
 {
-  shell::Open(QUrl("https://discord.gg/6GKR9jZ"));
+  shell::Open(QUrl("https://discord.gg/ewUVAqyrQX"));
 }
 
 void MainWindow::issueTriggered()
@@ -2766,6 +2770,8 @@ void MainWindow::on_actionSettings_triggered()
 
   m_OrganizerCore.refreshLists();
 
+  updateSortButton();
+
   if (settings.paths().profiles() != oldProfilesDirectory) {
     refreshProfiles();
   }
@@ -3031,6 +3037,19 @@ void MainWindow::toggleUpdateAction()
 {
   const auto& s = m_OrganizerCore.settings();
   ui->actionUpdate->setVisible(s.checkForUpdates());
+}
+
+void MainWindow::updateSortButton()
+{
+  if (m_OrganizerCore.managedGame()->sortMechanism() !=
+      IPluginGame::SortMechanism::NONE) {
+    ui->sortButton->setEnabled(true);
+    ui->sortButton->setToolTip(tr("Sort the plugins using LOOT."));
+  } else {
+    ui->sortButton->setDisabled(true);
+    ui->sortButton->setToolTip(tr("There is no supported sort mechanism for this game. "
+                                  "You will probably have to use a third-party tool."));
+  }
 }
 
 void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int)

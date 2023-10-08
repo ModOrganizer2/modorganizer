@@ -33,6 +33,7 @@ public:
   bool hasLightExtension(const QString& name) const override;
   bool isMasterFlagged(const QString& name) const override;
   bool isLightFlagged(const QString& name) const override;
+  bool isOverlayFlagged(const QString& name) const override;
 
 private:
   friend class OrganizerProxy;

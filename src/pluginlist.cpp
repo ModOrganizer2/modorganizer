@@ -176,6 +176,7 @@ void PluginList::refresh(const QString& profileName,
   ChangeBracket<PluginList> layoutChange(this);
 
   QStringList primaryPlugins = m_GamePlugin->primaryPlugins();
+  QStringList enabledPlugins = m_GamePlugin->enabledPlugins();
   GamePlugins* gamePlugins   = m_GamePlugin->feature<GamePlugins>();
   const bool lightPluginsAreSupported =
       gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
@@ -203,11 +204,12 @@ void PluginList::refresh(const QString& profileName,
         continue;
       }
 
-      bool forceEnabled = Settings::instance().game().forceEnableCoreFiles() &&
-                          primaryPlugins.contains(filename, Qt::CaseInsensitive);
+      bool forceLoaded = Settings::instance().game().forceEnableCoreFiles() &&
+                         primaryPlugins.contains(filename, Qt::CaseInsensitive);
+      bool forceEnabled = enabledPlugins.contains(filename, Qt::CaseInsensitive);
       bool forceDisabled =
           m_GamePlugin->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::None &&
-          !forceEnabled;
+          !forceLoaded && !forceEnabled;
 
       bool archive = false;
       try {
@@ -236,8 +238,8 @@ void PluginList::refresh(const QString& profileName,
           originName           = modInfo->name();
         }
 
-        m_ESPs.push_back(ESPInfo(filename, forceEnabled, forceDisabled, originName,
-                                 ToQString(current->getFullPath()), hasIni,
+        m_ESPs.push_back(ESPInfo(filename, forceLoaded, forceEnabled, forceDisabled,
+                                 originName, ToQString(current->getFullPath()), hasIni,
                                  loadedArchives, lightPluginsAreSupported,
                                  overridePluginsAreSupported));
         m_ESPs.rbegin()->priority = -1;
@@ -395,6 +397,7 @@ void PluginList::enableESP(const QString& name, bool enable)
   if (iter != m_ESPsByName.end()) {
     auto enabled                 = m_ESPs[iter->second].enabled;
     m_ESPs[iter->second].enabled = (enable && !m_ESPs[iter->second].forceDisabled) ||
+                                   m_ESPs[iter->second].forceLoaded ||
                                    m_ESPs[iter->second].forceEnabled;
 
     emit writePluginsList();
@@ -421,7 +424,8 @@ void PluginList::setEnabled(const QModelIndexList& indices, bool enabled)
 {
   QStringList dirty;
   for (auto& idx : indices) {
-    if (m_ESPs[idx.row()].forceEnabled || m_ESPs[idx.row()].forceDisabled)
+    if (m_ESPs[idx.row()].forceLoaded || m_ESPs[idx.row()].forceEnabled ||
+        m_ESPs[idx.row()].forceDisabled)
       continue;
     if (m_ESPs[idx.row()].enabled != enabled) {
       m_ESPs[idx.row()].enabled = enabled;
@@ -439,7 +443,7 @@ void PluginList::setEnabledAll(bool enabled)
 {
   QStringList dirty;
   for (ESPInfo& info : m_ESPs) {
-    if (info.forceEnabled || info.forceDisabled)
+    if (info.forceLoaded || info.forceEnabled || info.forceDisabled)
       continue;
     if (info.enabled != enabled) {
       info.enabled = enabled;
@@ -457,7 +461,7 @@ void PluginList::sendToPriority(const QModelIndexList& indices, int newPriority)
 {
   std::vector<int> pluginsToMove;
   for (auto& idx : indices) {
-    if (!m_ESPs[idx.row()].forceEnabled) {
+    if (!m_ESPs[idx.row()].forceLoaded) {
       pluginsToMove.push_back(idx.row());
     }
   }
@@ -608,7 +612,7 @@ void PluginList::readLockedOrderFrom(const QString& fileName)
     int pluginIndex = it->second;
 
     // Do not allow locking forced plugins
-    if (m_ESPs[pluginIndex].forceEnabled) {
+    if (m_ESPs[pluginIndex].forceLoaded) {
       continue;
     }
 
@@ -628,14 +632,14 @@ void PluginList::readLockedOrderFrom(const QString& fileName)
     };
 
     // See if we can just set the given priority
-    if (!m_ESPs[m_ESPsByPriority.at(priority)].forceEnabled && !alreadyLocked()) {
+    if (!m_ESPs[m_ESPsByPriority.at(priority)].forceLoaded && !alreadyLocked()) {
       m_LockedOrder[pluginName] = priority;
       continue;
     }
 
     // Find the next higher priority we can set the plugin to
     while (++priority < m_ESPs.size()) {
-      if (!m_ESPs[m_ESPsByPriority.at(priority)].forceEnabled && !alreadyLocked()) {
+      if (!m_ESPs[m_ESPsByPriority.at(priority)].forceLoaded && !alreadyLocked()) {
         m_LockedOrder[pluginName] = priority;
         break;
       }
@@ -755,7 +759,7 @@ bool PluginList::isESPLocked(int index) const
 void PluginList::lockESPIndex(int index, bool lock)
 {
   if (lock) {
-    if (!m_ESPs.at(index).forceEnabled)
+    if (!m_ESPs.at(index).forceLoaded)
       m_LockedOrder[getName(index)] = m_ESPs.at(index).loadOrder;
     else
       return;
@@ -866,7 +870,7 @@ void PluginList::setState(const QString& name, PluginStates state)
   if (iter != m_ESPsByName.end()) {
     m_ESPs[iter->second].enabled =
         (state == IPluginList::STATE_ACTIVE && !m_ESPs[iter->second].forceDisabled) ||
-        m_ESPs[iter->second].forceEnabled;
+        m_ESPs[iter->second].forceLoaded || m_ESPs[iter->second].forceEnabled;
   } else {
     log::warn("Plugin not found: {}", name);
   }
@@ -1002,13 +1006,13 @@ bool PluginList::isLightFlagged(const QString& name) const
   }
 }
 
-bool PluginList::isOverrideFlagged(const QString& name) const
+bool PluginList::isOverlayFlagged(const QString& name) const
 {
   auto iter = m_ESPsByName.find(name);
   if (iter == m_ESPsByName.end()) {
     return false;
   } else {
-    return m_ESPs[iter->second].isOverrideFlagged;
+    return m_ESPs[iter->second].isOverlayFlagged;
   }
 }
 
@@ -1089,8 +1093,9 @@ void PluginList::generatePluginIndexes()
                             .arg((numESLs) % 4096, 3, 16, QChar('0'))
                             .toUpper();
       ++numESLs;
-    } else if (overridePluginsSupported && m_ESPs[i].isOverrideFlagged) {
+    } else if (overridePluginsSupported && m_ESPs[i].isOverlayFlagged) {
       m_ESPs[i].index = QString("");
+      ++numSkipped;
     } else {
       m_ESPs[i].index =
           QString("%1").arg(l - numESLs - numSkipped, 2, 16, QChar('0')).toUpper();
@@ -1181,7 +1186,7 @@ QVariant PluginList::checkstateData(const QModelIndex& modelIndex) const
 {
   const int index = modelIndex.row();
 
-  if (m_ESPs[index].forceEnabled) {
+  if (m_ESPs[index].forceLoaded || m_ESPs[index].forceEnabled) {
     return Qt::Checked;
   } else if (m_ESPs[index].forceDisabled) {
     return Qt::Unchecked;
@@ -1194,7 +1199,7 @@ QVariant PluginList::foregroundData(const QModelIndex& modelIndex) const
 {
   const int index = modelIndex.row();
 
-  if ((modelIndex.column() == COL_NAME) && m_ESPs[index].forceEnabled) {
+  if ((modelIndex.column() == COL_NAME) && m_ESPs[index].forceLoaded) {
     return QBrush(Qt::gray);
   }
 
@@ -1228,6 +1233,8 @@ QVariant PluginList::fontData(const QModelIndex& modelIndex) const
     result.setWeight(QFont::Bold);
   } else if (m_ESPs[index].isLightFlagged) {
     result.setItalic(true);
+  } else if (m_ESPs[index].isOverlayFlagged) {
+    result.setUnderline(true);
   }
 
   return result;
@@ -1252,6 +1259,12 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
   QString toolTip;
 
   toolTip += "<b>" + tr("Origin") + "</b>: " + esp.originName;
+
+  if (esp.forceLoaded) {
+    toolTip += "<br><b><i>" +
+               tr("This plugin can't be disabled or moved (enforced by the game).") +
+               "</i></b>";
+  }
 
   if (esp.forceEnabled) {
     toolTip += "<br><b><i>" +
@@ -1314,6 +1327,13 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
         "<br><br>" + tr("This %1 is flagged as an ESL. It will adhere to the %1 load "
                         "order but the records will be loaded in ESL space.")
                          .arg(type);
+  }
+
+  if (esp.isOverlayFlagged) {
+    toolTip +=
+        "<br><br>" + tr("This plugin is flagged as an overlay plugin. It contains only "
+                        "modified records and will overlay those changes onto the "
+                        "existing records in memory. It takes no memory space.");
   }
 
   if (esp.forceDisabled) {
@@ -1436,6 +1456,10 @@ QVariant PluginList::iconData(const QModelIndex& modelIndex) const
     result.append(":/MO/gui/awaiting");
   }
 
+  if (esp.isOverlayFlagged) {
+    result.append(":/MO/gui/instance_switch");
+  }
+
   if (info && !info->loot.dirty.empty()) {
     result.append(":/MO/gui/edit_clear");
   }
@@ -1485,8 +1509,9 @@ bool PluginList::setData(const QModelIndex& modIndex, const QVariant& value, int
   bool result = false;
 
   if (role == Qt::CheckStateRole) {
-    m_ESPs[modIndex.row()].enabled =
-        value.toInt() == Qt::Checked || m_ESPs[modIndex.row()].forceEnabled;
+    m_ESPs[modIndex.row()].enabled = value.toInt() == Qt::Checked ||
+                                     m_ESPs[modIndex.row()].forceLoaded ||
+                                     m_ESPs[modIndex.row()].forceEnabled;
     m_LastCheck.restart();
     emit dataChanged(modIndex, modIndex);
 
@@ -1543,12 +1568,13 @@ Qt::ItemFlags PluginList::flags(const QModelIndex& modelIndex) const
   Qt::ItemFlags result = QAbstractItemModel::flags(modelIndex);
 
   if (modelIndex.isValid()) {
-    if (!m_ESPs[index].forceEnabled && !m_ESPs[index].forceDisabled) {
-      result |= Qt::ItemIsUserCheckable | Qt::ItemIsDragEnabled;
-    }
-    if (modelIndex.column() == COL_PRIORITY) {
+    if (!m_ESPs[index].forceLoaded && !m_ESPs[index].forceDisabled)
+      result |= Qt::ItemIsDragEnabled;
+    if (!m_ESPs[index].forceLoaded && !m_ESPs[index].forceEnabled &&
+        !m_ESPs[index].forceDisabled)
+      result |= Qt::ItemIsUserCheckable;
+    if (modelIndex.column() == COL_PRIORITY)
       result |= Qt::ItemIsEditable;
-    }
     result &= ~Qt::ItemIsDropEnabled;
   } else {
     result |= Qt::ItemIsDropEnabled;
@@ -1586,7 +1612,7 @@ void PluginList::setPluginPriority(int row, int& newPriority, bool isForced)
     }
     // also don't allow "regular" esms to be moved above primary plugins
     while ((newPriorityTemp < static_cast<int>(m_ESPsByPriority.size() - 1)) &&
-           (m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).forceEnabled)) {
+           (m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).forceLoaded)) {
       ++newPriorityTemp;
     }
   }
@@ -1656,7 +1682,7 @@ void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
   // don't try to move plugins before force-enabled plugins
   for (std::vector<ESPInfo>::const_iterator iter = m_ESPs.begin(); iter != m_ESPs.end();
        ++iter) {
-    if (iter->forceEnabled) {
+    if (iter->forceLoaded) {
       newPriority = std::max(newPriority, iter->priority + 1);
     }
     maxPriority = std::max(maxPriority, iter->priority + 1);
@@ -1742,13 +1768,15 @@ QModelIndex PluginList::parent(const QModelIndex&) const
   return QModelIndex();
 }
 
-PluginList::ESPInfo::ESPInfo(const QString& name, bool enabled, bool forceDisabled,
-                             const QString& originName, const QString& fullPath,
-                             bool hasIni, std::set<QString> archives,
-                             bool lightSupported, bool overrideSupported)
-    : name(name), fullPath(fullPath), enabled(enabled), forceEnabled(enabled),
-      forceDisabled(forceDisabled), priority(0), loadOrder(-1), originName(originName),
-      hasIni(hasIni), archives(archives.begin(), archives.end()), modSelected(false)
+PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEnabled,
+                             bool forceDisabled, const QString& originName,
+                             const QString& fullPath, bool hasIni,
+                             std::set<QString> archives, bool lightSupported,
+                             bool overlaySupported)
+    : name(name), fullPath(fullPath), enabled(forceLoaded), forceLoaded(forceLoaded),
+      forceEnabled(forceEnabled), forceDisabled(forceDisabled), priority(0),
+      loadOrder(-1), originName(originName), hasIni(hasIni),
+      archives(archives.begin(), archives.end()), modSelected(false)
 {
   try {
     ESP::File file(ToWString(fullPath));
@@ -1756,9 +1784,9 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool enabled, bool forceDisabl
     hasMasterExtension = (extension == "esm");
     hasLightExtension  = lightSupported && (extension == "esl");
     isMasterFlagged    = file.isMaster();
-    isOverrideFlagged  = overrideSupported && file.isOverride();
+    isOverlayFlagged   = overlaySupported && file.isOverlay();
     isLightFlagged =
-        lightSupported && !isOverrideFlagged && file.isLight(overrideSupported);
+        lightSupported && !isOverlayFlagged && file.isLight(overlaySupported);
 
     author      = QString::fromLatin1(file.author().c_str());
     description = QString::fromLatin1(file.description().c_str());
@@ -1771,7 +1799,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool enabled, bool forceDisabl
     hasMasterExtension = false;
     hasLightExtension  = false;
     isMasterFlagged    = false;
-    isOverrideFlagged  = false;
+    isOverlayFlagged   = false;
     isLightFlagged     = false;
   }
 }
