@@ -241,7 +241,7 @@ public:
   bool hasLightExtension(const QString& name) const;
   bool isMasterFlagged(const QString& name) const;
   bool isLightFlagged(const QString& name) const;
-  bool isOverrideFlagged(const QString& name) const;
+  bool isOverlayFlagged(const QString& name) const;
 
   boost::signals2::connection onRefreshed(const std::function<void()>& callback);
   boost::signals2::connection
@@ -333,7 +333,7 @@ private:
     bool hasLightExtension;
     bool isMasterFlagged;
     bool isLightFlagged;
-    bool isOverrideFlagged;
+    bool isOverlayFlagged;
     bool modSelected;
     QString author;
     QString description;
