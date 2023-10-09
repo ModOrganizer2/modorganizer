@@ -1094,7 +1094,7 @@ void PluginList::generatePluginIndexes()
                             .toUpper();
       ++numESLs;
     } else if (overridePluginsSupported && m_ESPs[i].isOverlayFlagged) {
-      m_ESPs[i].index = QString("");
+      m_ESPs[i].index = QString("XX");
       ++numSkipped;
     } else {
       m_ESPs[i].index =
