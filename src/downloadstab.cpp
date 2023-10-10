@@ -74,7 +74,7 @@ void DownloadsTab::update()
   ui.list->style()->polish(ui.list);
   qobject_cast<DownloadListHeader*>(ui.list->header())->customResizeSections();
 
-  m_core.downloadManager()->refreshList();
+  m_core.downloadManager()->initializeList();
 }
 
 void DownloadsTab::refresh()

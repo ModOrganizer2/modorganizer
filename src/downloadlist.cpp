@@ -192,6 +192,8 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
 
 void DownloadList::downloadAdded(DownloadManager::DownloadInfo* downloadInfo)
 {
+  auto* dliExists = getDownloadListItem(downloadInfo->m_moId);
+
   DownloadListItem downloadListItem;
   downloadListItem.isPending = false;
   downloadListItem.fileName  = downloadInfo->GetFileName();
@@ -200,17 +202,23 @@ void DownloadList::downloadAdded(DownloadManager::DownloadInfo* downloadInfo)
 
   int row = m_downloadListItems.size() == 0 ? 0 : m_downloadListItems.size();
 
+  log::debug("Download List Size (before add): {}", m_downloadListItems.size());
+  log::debug("Row: {}", row);
+
   emit beginInsertRows(QModelIndex(), row, row);
   m_downloadIndexCache.insert({downloadListItem.moId.toString(), row});
   m_downloadListItems.append(downloadListItem);
   emit endInsertRows();
+
+  log::debug("Download List Size (after add): {}", m_downloadListItems.size());
 }
 
 void DownloadList::downloadUpdated(DownloadManager::DownloadInfo* downloadInfo)
 {
   auto* downloadListItem = getDownloadListItem(downloadInfo->m_moId);
-  if (!downloadListItem)
+  if (!downloadListItem) {
     return;
+  }
 
   setDownloadListItem(downloadInfo, *downloadListItem);
   updateData();
@@ -225,11 +233,15 @@ void DownloadList::downloadRemoved(QUuid moId)
                    });
 
   if (downloadListItem != m_downloadListItems.end()) {
+    log::debug("Download List Size (before remove): {}", m_downloadListItems.size());
     auto downloadIndex = m_downloadIndexCache.at(moId.toString());
+    log::debug("Download List - Removing Item: {}", downloadIndex);
     emit beginRemoveRows(QModelIndex(), downloadIndex, downloadIndex);
     m_downloadIndexCache.erase(downloadListItem->moId.toString());
     m_downloadListItems.removeAt(downloadListItem - m_downloadListItems.begin());
     emit endRemoveRows();
+
+    log::debug("Download List Size (after remove): {}", m_downloadListItems.size());
   }
 }
 
@@ -242,10 +254,15 @@ void DownloadList::pendingDownloadAdded(QString moId)
 
   int row = m_downloadListItems.size() == 0 ? 0 : m_downloadListItems.size();
 
+  log::debug("(pending) Download List Size (before add): {}", m_downloadListItems.size());
+  log::debug("Row: {}", row);
+
   emit beginInsertRows(QModelIndex(), row, row);
   m_downloadIndexCache.insert({moId, row});
   m_downloadListItems.append(downloadListItem);
   emit endInsertRows();
+
+  log::debug("(pending) Download List Size (after add): {}", m_downloadListItems.size());
 }
 
 void DownloadList::pendingDownloadRemoved(QString moId)
@@ -359,15 +376,11 @@ void DownloadList::setDownloadListItem(DownloadManager::DownloadInfo* downloadIn
     downloadListItem.modId    = QString::number(std::get<1>(nexusids));
     downloadListItem.status   = tr("Pending");
     downloadListItem.size     = tr("Unknown");
-    downloadListItem.fileName = tr("< game %1 mod %2 file %3 >")
-                                    .arg(std::get<0>(nexusids))
-                                    .arg(std::get<1>(nexusids))
-                                    .arg(std::get<2>(nexusids));
-    downloadListItem.moId = QUuid::fromString(std::get<3>(nexusids));
+    downloadListItem.moId     = QUuid::fromString(std::get<3>(nexusids));
   } else {
     downloadListItem.name = m_settings.interface().metaDownloads()
                                 ? m_manager.getDisplayName(downloadListItem.moId)
-                                : downloadListItem.fileName;
+                                : downloadInfo->m_FileName;
 
     downloadListItem.size     = MOBase::localizedByteSize(downloadInfo->m_TotalSize);
     downloadListItem.fileTime = m_manager.getFileTime(downloadListItem.moId);
@@ -432,6 +445,11 @@ void DownloadList::setDownloadListItem(DownloadManager::DownloadInfo* downloadIn
 void DownloadList::update(DownloadManager::DownloadInfo* downloadInfo)
 {
   if (downloadInfo) {
+    if (downloadInfo->m_Hidden) {
+      downloadAdded(downloadInfo);
+      return;
+    }
+
     downloadUpdated(downloadInfo);
     updateData();
   }

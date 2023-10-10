@@ -406,6 +406,11 @@ public:
    */
   void refreshList();
 
+  /**
+   * @brief initializes the list of downloads
+   */
+  void initializeList();
+
 public:  // IDownloadManager interface:
   int startDownloadURLs(const QStringList& urls);
   int startDownloadNexusFile(int modID, int fileID);
