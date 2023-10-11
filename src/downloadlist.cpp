@@ -193,6 +193,9 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
 void DownloadList::downloadAdded(DownloadManager::DownloadInfo* downloadInfo)
 {
   auto* dliExists = getDownloadListItem(downloadInfo->m_moId);
+  if (dliExists) {
+    return;
+  }
 
   DownloadListItem downloadListItem;
   downloadListItem.isPending = false;
@@ -446,6 +449,13 @@ void DownloadList::update(DownloadManager::DownloadInfo* downloadInfo)
 {
   if (downloadInfo) {
     if (downloadInfo->m_Hidden) {
+      downloadAdded(downloadInfo);
+      return;
+    }
+
+    // This is to show files that were dragged into the DownloadListView
+    if (downloadInfo->m_State == DownloadManager::DownloadState::STATE_READY &&
+        downloadInfo->m_FileInfo->modID == 0) {
       downloadAdded(downloadInfo);
       return;
     }
