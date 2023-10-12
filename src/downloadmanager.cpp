@@ -1470,16 +1470,20 @@ QDateTime DownloadManager::getFileTime(QUuid moId) const
 {
   DownloadInfo* info = getDownloadInfoByMoId(moId);
 
-  if (!info->m_Created.isValid()) {
-    QFileInfo fileInfo(info->m_Output);
-    info->m_Created = fileInfo.birthTime();
-    if (!info->m_Created.isValid())
-      info->m_Created = fileInfo.metadataChangeTime();
-    if (!info->m_Created.isValid())
-      info->m_Created = fileInfo.lastModified();
+  if (info != nullptr) {
+    if (!info->m_Created.isValid()) {
+      QFileInfo fileInfo(info->m_Output);
+      info->m_Created = fileInfo.birthTime();
+      if (!info->m_Created.isValid())
+        info->m_Created = fileInfo.metadataChangeTime();
+      if (!info->m_Created.isValid())
+        info->m_Created = fileInfo.lastModified();
+    }
+
+    return info->m_Created;
   }
 
-  return info->m_Created;
+  return QDateTime::currentDateTime();
 }
 
 int DownloadManager::numPendingDownloads() const
