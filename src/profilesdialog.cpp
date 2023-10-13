@@ -161,8 +161,8 @@ QListWidgetItem* ProfilesDialog::addItem(const QString& name)
 void ProfilesDialog::createProfile(const QString& name, bool useDefaultSettings)
 {
   try {
-    QListWidgetItem* newItem = new QListWidgetItem(name, ui->profilesList);
     auto profile = Profile::Ptr(new Profile(name, m_Game, useDefaultSettings));
+    QListWidgetItem* newItem = new QListWidgetItem(name, ui->profilesList);
     newItem->setData(Qt::UserRole, QVariant::fromValue(profile));
     ui->profilesList->addItem(newItem);
     m_FailState = false;
@@ -177,8 +177,8 @@ void ProfilesDialog::createProfile(const QString& name, bool useDefaultSettings)
 void ProfilesDialog::createProfile(const QString& name, const Profile& reference)
 {
   try {
-    QListWidgetItem* newItem = new QListWidgetItem(name, ui->profilesList);
     auto profile = Profile::Ptr(Profile::createPtrFrom(name, reference, m_Game));
+    QListWidgetItem* newItem = new QListWidgetItem(name, ui->profilesList);
     newItem->setData(Qt::UserRole, QVariant::fromValue(profile));
     ui->profilesList->addItem(newItem);
     m_FailState = false;
@@ -211,9 +211,8 @@ void ProfilesDialog::on_copyProfileButton_clicked()
   QString name = QInputDialog::getText(this, tr("Name"),
                                        tr("Please enter a name for the new profile"),
                                        QLineEdit::Normal, QString(), &okClicked);
-  fixDirectoryName(name);
   if (okClicked) {
-    if (name.size() > 0) {
+    if (fixDirectoryName(name)) {
       try {
         const Profile::Ptr currentProfile =
             ui->profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
