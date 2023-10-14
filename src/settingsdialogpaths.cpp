@@ -199,9 +199,14 @@ void PathsSettingsTab::on_browseGameDirBtn_clicked()
 {
   QFileInfo oldGameExe(ui->managedGameDirEdit->text());
 
-  QString temp =
-      QFileDialog::getOpenFileName(&dialog(), QObject::tr("Select game executable"),
-                                   oldGameExe.absolutePath(), oldGameExe.fileName());
+  // this gets the name of the game executable
+  //
+  // spaces in the name are interpreted as separators ";" in the filter,
+  // so we replace them with the single character matching wildcard "?"
+  //
+  QString temp = QFileDialog::getOpenFileName(
+      &dialog(), QObject::tr("Select game executable"), oldGameExe.absolutePath(),
+      oldGameExe.fileName().replace(QRegularExpression(" "), "?"));
 
   if (temp.isEmpty()) {
     return;
