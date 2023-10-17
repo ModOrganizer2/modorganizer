@@ -242,6 +242,7 @@ public:
   bool isMasterFlagged(const QString& name) const;
   bool isLightFlagged(const QString& name) const;
   bool isOverlayFlagged(const QString& name) const;
+  bool isDummy(const QString& name) const;
 
   boost::signals2::connection onRefreshed(const std::function<void()>& callback);
   boost::signals2::connection
@@ -334,6 +335,7 @@ private:
     bool isMasterFlagged;
     bool isLightFlagged;
     bool isOverlayFlagged;
+    bool isDummy;
     bool modSelected;
     QString author;
     QString description;
