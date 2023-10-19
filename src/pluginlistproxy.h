@@ -34,7 +34,7 @@ public:
   bool isMasterFlagged(const QString& name) const override;
   bool isLightFlagged(const QString& name) const override;
   bool isOverlayFlagged(const QString& name) const override;
-  bool isDummy(const QString& name) const override;
+  bool hasNoRecords(const QString& name) const override;
 
 private:
   friend class OrganizerProxy;

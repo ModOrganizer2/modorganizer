@@ -1016,13 +1016,13 @@ bool PluginList::isOverlayFlagged(const QString& name) const
   }
 }
 
-bool PluginList::isDummy(const QString& name) const
+bool PluginList::hasNoRecords(const QString& name) const
 {
   auto iter = m_ESPsByName.find(name);
   if (iter == m_ESPsByName.end()) {
     return false;
   } else {
-    return m_ESPs[iter->second].isDummy;
+    return m_ESPs[iter->second].hasNoRecords;
   }
 }
 
@@ -1245,7 +1245,7 @@ QVariant PluginList::fontData(const QModelIndex& modelIndex) const
     result.setItalic(true);
   }
 
-  if (m_ESPs[index].isDummy)
+  if (m_ESPs[index].hasNoRecords)
     result.setStrikeOut(true);
 
   return result;
@@ -1348,7 +1348,7 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
   //                       "existing records in memory. It takes no memory space.");
   // }
 
-  if (esp.isDummy) {
+  if (esp.hasNoRecords) {
     toolTip += "<br><br>" + tr("This is a dummy plugin. It contains no records and is "
                                "typically used to load a paired archive file.");
   }
@@ -1804,7 +1804,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     isOverlayFlagged   = overlaySupported && file.isOverlay();
     isLightFlagged =
         lightSupported && !isOverlayFlagged && file.isLight(overlaySupported);
-    isDummy = file.isDummy();
+    hasNoRecords = file.isDummy();
 
     author      = QString::fromLatin1(file.author().c_str());
     description = QString::fromLatin1(file.description().c_str());
@@ -1819,7 +1819,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     isMasterFlagged    = false;
     isOverlayFlagged   = false;
     isLightFlagged     = false;
-    isDummy            = false;
+    hasNoRecords       = false;
   }
 }
 

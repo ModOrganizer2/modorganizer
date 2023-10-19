@@ -124,7 +124,7 @@ bool PluginListProxy::isOverlayFlagged(const QString& name) const
   return m_Proxied->isOverlayFlagged(name);
 }
 
-bool PluginListProxy::isDummy(const QString& name) const
+bool PluginListProxy::hasNoRecords(const QString& name) const
 {
-  return m_Proxied->isDummy(name);
+  return m_Proxied->hasNoRecords(name);
 }
