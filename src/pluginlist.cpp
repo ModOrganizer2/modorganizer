@@ -1103,6 +1103,9 @@ void PluginList::generatePluginIndexes()
                             .arg((numESLs) % 4096, 3, 16, QChar('0'))
                             .toUpper();
       ++numESLs;
+      // This logic may still be used if overlay plugins are fixed to longer consume a
+      // load order slot
+      //
       //} else if (overridePluginsSupported && m_ESPs[i].isOverlayFlagged) {
       //  m_ESPs[i].index = QString("XX");
       //  ++numSkipped;
@@ -1340,6 +1343,9 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
                          .arg(type);
   }
 
+  // This logic may still be used if overlay plugins are fixed to longer consume a load
+  // order slot
+  //
   // if (esp.isOverlayFlagged) {
   //   toolTip +=
   //       "<br><br>" + tr("This plugin is flagged as an overlay plugin. It contains
