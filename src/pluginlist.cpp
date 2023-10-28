@@ -1016,6 +1016,16 @@ bool PluginList::isOverlayFlagged(const QString& name) const
   }
 }
 
+bool PluginList::hasNoRecords(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  } else {
+    return m_ESPs[iter->second].hasNoRecords;
+  }
+}
+
 boost::signals2::connection PluginList::onPluginStateChanged(
     const std::function<void(const std::map<QString, PluginStates>&)>& func)
 {
@@ -1093,9 +1103,12 @@ void PluginList::generatePluginIndexes()
                             .arg((numESLs) % 4096, 3, 16, QChar('0'))
                             .toUpper();
       ++numESLs;
-    } else if (overridePluginsSupported && m_ESPs[i].isOverlayFlagged) {
-      m_ESPs[i].index = QString("XX");
-      ++numSkipped;
+      // This logic may still be used if overlay plugins are fixed to longer consume a
+      // load order slot
+      //
+      //} else if (overridePluginsSupported && m_ESPs[i].isOverlayFlagged) {
+      //  m_ESPs[i].index = QString("XX");
+      //  ++numSkipped;
     } else {
       m_ESPs[i].index =
           QString("%1").arg(l - numESLs - numSkipped, 2, 16, QChar('0')).toUpper();
@@ -1233,9 +1246,10 @@ QVariant PluginList::fontData(const QModelIndex& modelIndex) const
     result.setWeight(QFont::Bold);
   } else if (m_ESPs[index].isLightFlagged) {
     result.setItalic(true);
-  } else if (m_ESPs[index].isOverlayFlagged) {
-    result.setUnderline(true);
   }
+
+  if (m_ESPs[index].hasNoRecords)
+    result.setStrikeOut(true);
 
   return result;
 }
@@ -1329,11 +1343,20 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
                          .arg(type);
   }
 
-  if (esp.isOverlayFlagged) {
-    toolTip +=
-        "<br><br>" + tr("This plugin is flagged as an overlay plugin. It contains only "
-                        "modified records and will overlay those changes onto the "
-                        "existing records in memory. It takes no memory space.");
+  // This logic may still be used if overlay plugins are fixed to longer consume a load
+  // order slot
+  //
+  // if (esp.isOverlayFlagged) {
+  //   toolTip +=
+  //       "<br><br>" + tr("This plugin is flagged as an overlay plugin. It contains
+  //       only "
+  //                       "modified records and will overlay those changes onto the "
+  //                       "existing records in memory. It takes no memory space.");
+  // }
+
+  if (esp.hasNoRecords) {
+    toolTip += "<br><br>" + tr("This is a dummy plugin. It contains no records and is "
+                               "typically used to load a paired archive file.");
   }
 
   if (esp.forceDisabled) {
@@ -1787,6 +1810,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     isOverlayFlagged   = overlaySupported && file.isOverlay();
     isLightFlagged =
         lightSupported && !isOverlayFlagged && file.isLight(overlaySupported);
+    hasNoRecords = file.isDummy();
 
     author      = QString::fromLatin1(file.author().c_str());
     description = QString::fromLatin1(file.description().c_str());
@@ -1801,6 +1825,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     isMasterFlagged    = false;
     isOverlayFlagged   = false;
     isLightFlagged     = false;
+    hasNoRecords       = false;
   }
 }
 
