@@ -1241,13 +1241,10 @@ QVariant PluginList::fontData(const QModelIndex& modelIndex) const
   QFont result;
 
   if (m_ESPs[index].hasMasterExtension || m_ESPs[index].isMasterFlagged ||
-      m_ESPs[index].hasLightExtension) {
-    result.setItalic(true);
+      m_ESPs[index].hasLightExtension)
     result.setWeight(QFont::Bold);
-  } else if (m_ESPs[index].isLightFlagged) {
+  if (m_ESPs[index].isLightFlagged || m_ESPs[index].hasLightExtension)
     result.setItalic(true);
-  }
-
   if (m_ESPs[index].hasNoRecords)
     result.setStrikeOut(true);
 
