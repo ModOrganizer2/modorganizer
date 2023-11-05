@@ -626,4 +626,14 @@ private:
   QTimer m_TimeoutTimer;
 };
 
+class ScopedDisableDirWatcher
+{
+public:
+  ScopedDisableDirWatcher(DownloadManager* downloadManager);
+  ~ScopedDisableDirWatcher();
+
+private:
+  DownloadManager* m_downloadManager;
+};
+
 #endif  // DOWNLOADMANAGER_H
