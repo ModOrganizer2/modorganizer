@@ -271,10 +271,18 @@ p, li { white-space: pre-wrap; }
                 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
                 p, li { white-space: pre-wrap; }
                 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;You can match one or multiple nexus categories to a internal ID. Whenever you download a mod from a Nexus Page, Mod Organizer will try to resolve the category defined on the Nexus to one available in MO.&lt;/span&gt;&lt;/p&gt;
+                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;You can match one or multiple nexus categories to an internal ID. Whenever you download a mod from a Nexus Page, Mod Organizer will try to resolve the category defined on the Nexus to one available in MO.&lt;/span&gt;&lt;/p&gt;
                 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
                 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To find out a category id used by the nexus, visit the categories list of the nexus page and hover over the links there.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
               </source>
+        <oldsource>
+                &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+                &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+                p, li { white-space: pre-wrap; }
+                &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;You can match one or multiple nexus categories to an internal ID. Whenever you download a mod from a Nexus Page, Mod Organizer will try to resolve the category defined on the Nexus to one available in MO.&lt;/span&gt;&lt;/p&gt;
+                &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
+                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To find out a category id used by the nexus, visit the categories list of the nexus page and hover over the links there.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+              </oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1160,37 +1168,37 @@ Are you absolutely sure you want to proceed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="438"/>
+        <location filename="downloadmanager.cpp" line="439"/>
         <source>Memory allocation error (in refreshing directory).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="574"/>
+        <location filename="downloadmanager.cpp" line="575"/>
         <source>failed to download %1: could not open output file: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="603"/>
+        <location filename="downloadmanager.cpp" line="604"/>
         <source>Download again?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="604"/>
+        <location filename="downloadmanager.cpp" line="605"/>
         <source>A file with the same name &quot;%1&quot; has already been downloaded. Do you want to download it again? The new file will receive a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="671"/>
+        <location filename="downloadmanager.cpp" line="672"/>
         <source>Wrong Game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="672"/>
+        <location filename="downloadmanager.cpp" line="673"/>
         <source>The download link is for a mod for &quot;%1&quot; but this instance of MO has been set up for &quot;%2&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="686"/>
+        <location filename="downloadmanager.cpp" line="687"/>
         <source>There is already a download queued for this file.
 
 Mod %1
@@ -1198,12 +1206,12 @@ File %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="693"/>
+        <location filename="downloadmanager.cpp" line="694"/>
         <source>Already Queued</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="706"/>
+        <location filename="downloadmanager.cpp" line="707"/>
         <source>There is already a download started for this file.
 
 Mod %1:	%2
@@ -1211,287 +1219,287 @@ File %3:	%4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="742"/>
+        <location filename="downloadmanager.cpp" line="743"/>
         <source>Already Started</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="774"/>
-        <location filename="downloadmanager.cpp" line="904"/>
+        <location filename="downloadmanager.cpp" line="775"/>
+        <location filename="downloadmanager.cpp" line="905"/>
         <source>remove: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="792"/>
+        <location filename="downloadmanager.cpp" line="793"/>
         <source>failed to delete %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="798"/>
+        <location filename="downloadmanager.cpp" line="799"/>
         <source>failed to delete meta file for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="857"/>
+        <location filename="downloadmanager.cpp" line="858"/>
         <source>restore: invalid download index: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="925"/>
+        <location filename="downloadmanager.cpp" line="924"/>
         <source>cancel: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="937"/>
+        <location filename="downloadmanager.cpp" line="936"/>
         <source>pause: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="959"/>
+        <location filename="downloadmanager.cpp" line="958"/>
         <source>resume: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="970"/>
+        <location filename="downloadmanager.cpp" line="969"/>
         <source>resume (int): invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="995"/>
+        <location filename="downloadmanager.cpp" line="994"/>
         <source>No known download urls. Sorry, this download can&apos;t be resumed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1038"/>
-        <location filename="downloadmanager.cpp" line="1097"/>
+        <location filename="downloadmanager.cpp" line="1037"/>
+        <location filename="downloadmanager.cpp" line="1096"/>
         <source>query: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1060"/>
-        <source>Please enter the nexus mod id</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1061"/>
-        <source>Mod ID:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1073"/>
-        <source>Please select the source game code for %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1131"/>
-        <source>Hashing download file &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1132"/>
-        <source>Cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1159"/>
-        <source>VisitNexus: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1179"/>
-        <source>Nexus ID for this Mod is unknown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1186"/>
-        <source>OpenFile: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1230"/>
-        <source>OpenFileInDownloadsFolder: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1263"/>
-        <source>get pending: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1272"/>
-        <source>get path: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1282"/>
-        <source>Main</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1284"/>
-        <source>Update</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1286"/>
-        <source>Optional</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1288"/>
-        <source>Old</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1290"/>
-        <source>Miscellaneous</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1292"/>
-        <source>Deleted</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1294"/>
-        <source>Archived</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1296"/>
-        <source>Unknown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1303"/>
+        <location filename="downloadmanager.cpp" line="1302"/>
         <source>display name: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1324"/>
+        <location filename="downloadmanager.cpp" line="1323"/>
         <source>file name: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1333"/>
+        <location filename="downloadmanager.cpp" line="1332"/>
         <source>file time: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1352"/>
+        <location filename="downloadmanager.cpp" line="1351"/>
         <source>file size: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1361"/>
+        <location filename="downloadmanager.cpp" line="1360"/>
         <source>progress: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1370"/>
+        <location filename="downloadmanager.cpp" line="1369"/>
         <source>state: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1379"/>
+        <location filename="downloadmanager.cpp" line="1378"/>
         <source>infocomplete: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1393"/>
-        <location filename="downloadmanager.cpp" line="1401"/>
-        <location filename="downloadmanager.cpp" line="1414"/>
+        <location filename="downloadmanager.cpp" line="1392"/>
+        <location filename="downloadmanager.cpp" line="1400"/>
+        <location filename="downloadmanager.cpp" line="1413"/>
         <source>mod id: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1422"/>
+        <location filename="downloadmanager.cpp" line="1421"/>
         <source>ishidden: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1430"/>
+        <location filename="downloadmanager.cpp" line="1429"/>
         <source>file info: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1439"/>
+        <location filename="downloadmanager.cpp" line="1438"/>
         <source>mark installed: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1482"/>
+        <location filename="downloadmanager.cpp" line="1479"/>
         <source>mark uninstalled: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1647"/>
+        <location filename="downloadmanager.cpp" line="1059"/>
+        <source>Please enter the nexus mod id</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1060"/>
+        <source>Mod ID:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1072"/>
+        <source>Please select the source game code for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1130"/>
+        <source>Hashing download file &apos;%1&apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1131"/>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1158"/>
+        <source>VisitNexus: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1178"/>
+        <source>Nexus ID for this Mod is unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1185"/>
+        <source>OpenFile: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1229"/>
+        <source>OpenFileInDownloadsFolder: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1262"/>
+        <source>get pending: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1271"/>
+        <source>get path: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1281"/>
+        <source>Main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1283"/>
+        <source>Update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1285"/>
+        <source>Optional</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1287"/>
+        <source>Old</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1289"/>
+        <source>Miscellaneous</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1291"/>
+        <source>Deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1293"/>
+        <source>Archived</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1295"/>
+        <source>Unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1644"/>
         <source>%1% - %2 - ~%3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1658"/>
+        <location filename="downloadmanager.cpp" line="1655"/>
         <source>Memory allocation error (in processing progress event).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1667"/>
+        <location filename="downloadmanager.cpp" line="1664"/>
         <source>Memory allocation error (in processing downloaded data).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1788"/>
+        <location filename="downloadmanager.cpp" line="1785"/>
         <source>Information updated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1790"/>
-        <location filename="downloadmanager.cpp" line="1813"/>
+        <location filename="downloadmanager.cpp" line="1787"/>
+        <location filename="downloadmanager.cpp" line="1810"/>
         <source>No matching file found on Nexus! Maybe this file is no longer available or it was renamed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1793"/>
+        <location filename="downloadmanager.cpp" line="1790"/>
         <source>No file on Nexus matches the selected file by name. Please manually choose the correct one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1990"/>
+        <location filename="downloadmanager.cpp" line="1987"/>
         <source>No download server available. Please try again later.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2160"/>
+        <location filename="downloadmanager.cpp" line="2157"/>
         <source>Failed to request file info from nexus: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2192"/>
+        <location filename="downloadmanager.cpp" line="2189"/>
         <source>Warning: Content type is: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2199"/>
+        <location filename="downloadmanager.cpp" line="2196"/>
         <source>Download header content length: %1 downloaded file size: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2203"/>
+        <location filename="downloadmanager.cpp" line="2200"/>
         <source>Download failed: %1 (%2)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2228"/>
+        <location filename="downloadmanager.cpp" line="2225"/>
         <source>We were unable to download the file due to errors after four retries. There may be an issue with the Nexus servers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2317"/>
+        <location filename="downloadmanager.cpp" line="2314"/>
         <source>failed to re-open %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2365"/>
+        <location filename="downloadmanager.cpp" line="2362"/>
         <source>Unable to write download to drive (return %1).
 Check the drive&apos;s available storage.
 
@@ -2979,27 +2987,27 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
 <context>
     <name>MOBase::TextViewer</name>
     <message>
-        <location filename="../../uibase/src/textviewer.cpp" line="58"/>
+        <location filename="../../uibase/src/textviewer.cpp" line="60"/>
         <source>Save changes?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/textviewer.cpp" line="59"/>
+        <location filename="../../uibase/src/textviewer.cpp" line="61"/>
         <source>Do you want to save changes to %1?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/textviewer.cpp" line="171"/>
+        <location filename="../../uibase/src/textviewer.cpp" line="192"/>
         <source>failed to write to %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/textviewer.cpp" line="208"/>
+        <location filename="../../uibase/src/textviewer.cpp" line="229"/>
         <source>file not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/textviewer.cpp" line="247"/>
+        <location filename="../../uibase/src/textviewer.cpp" line="270"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3038,7 +3046,7 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="multiprocess.cpp" line="95"/>
+        <location filename="multiprocess.cpp" line="96"/>
         <source>failed to receive data from secondary process: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6314,97 +6322,97 @@ Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1261"/>
+        <location filename="pluginlist.cpp" line="1272"/>
         <source>Origin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1265"/>
+        <location filename="pluginlist.cpp" line="1276"/>
         <source>This plugin can&apos;t be disabled or moved (enforced by the game).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1271"/>
+        <location filename="pluginlist.cpp" line="1282"/>
         <source>This plugin can&apos;t be disabled (enforced by the game).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1275"/>
+        <location filename="pluginlist.cpp" line="1286"/>
         <source>Author</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1280"/>
+        <location filename="pluginlist.cpp" line="1291"/>
         <source>Description</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1285"/>
+        <location filename="pluginlist.cpp" line="1296"/>
         <source>Missing Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1297"/>
+        <location filename="pluginlist.cpp" line="1308"/>
         <source>Enabled Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1308"/>
+        <location filename="pluginlist.cpp" line="1319"/>
         <source>Loads Archives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1309"/>
+        <location filename="pluginlist.cpp" line="1320"/>
         <source>There are Archives connected to this plugin. Their assets will be added to your game, overwriting in case of conflicts following the plugin order. Loose files will always overwrite assets from Archives. (This flag only checks for Archives from the same mod as the plugin)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1317"/>
+        <location filename="pluginlist.cpp" line="1328"/>
         <source>Loads INI settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1320"/>
+        <location filename="pluginlist.cpp" line="1331"/>
         <source>There is an ini file connected to this plugin. Its settings will be added to your game settings, overwriting in case of conflicts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1327"/>
+        <location filename="pluginlist.cpp" line="1338"/>
         <source>This %1 is flagged as an ESL. It will adhere to the %1 load order but the records will be loaded in ESL space.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1334"/>
-        <source>This plugin is flagged as an overlay plugin. It contains only modified records and will overlay those changes onto the existing records in memory. It takes no memory space.</source>
+        <location filename="pluginlist.cpp" line="1355"/>
+        <source>This is a dummy plugin. It contains no records and is typically used to load a paired archive file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1340"/>
+        <location filename="pluginlist.cpp" line="1360"/>
         <source>This game does not currently permit custom plugin loading. There may be manual workarounds.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1371"/>
+        <location filename="pluginlist.cpp" line="1391"/>
         <source>Incompatible with %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1377"/>
+        <location filename="pluginlist.cpp" line="1397"/>
         <source>Depends on missing %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1385"/>
+        <location filename="pluginlist.cpp" line="1405"/>
         <source>Warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1389"/>
+        <location filename="pluginlist.cpp" line="1409"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1668"/>
+        <location filename="pluginlist.cpp" line="1688"/>
         <source>failed to restore load order for %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6911,77 +6919,77 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="222"/>
+        <location filename="profilesdialog.cpp" line="221"/>
         <source>failed to copy profile: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="225"/>
+        <location filename="profilesdialog.cpp" line="224"/>
         <source>Invalid name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="225"/>
+        <location filename="profilesdialog.cpp" line="224"/>
         <source>Invalid profile name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="235"/>
+        <location filename="profilesdialog.cpp" line="234"/>
         <source>Deleting active profile</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="236"/>
+        <location filename="profilesdialog.cpp" line="235"/>
         <source>Unable to delete active profile.  Please change to a different profile first.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="241"/>
+        <location filename="profilesdialog.cpp" line="240"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="242"/>
+        <location filename="profilesdialog.cpp" line="241"/>
         <source>Are you sure you want to remove this profile (including profile-specific save games, if any)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="252"/>
+        <location filename="profilesdialog.cpp" line="251"/>
         <source>Profile broken</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="253"/>
+        <location filename="profilesdialog.cpp" line="252"/>
         <source>This profile you&apos;re about to delete seems to be broken or the path is invalid. I&apos;m about to delete the following folder: &quot;%1&quot;. Proceed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="287"/>
+        <location filename="profilesdialog.cpp" line="286"/>
         <source>Renaming active profile</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="288"/>
+        <location filename="profilesdialog.cpp" line="287"/>
         <source>The active profile cannot be renamed. Please change to a different profile first.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="298"/>
+        <location filename="profilesdialog.cpp" line="297"/>
         <source>Rename Profile</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="298"/>
+        <location filename="profilesdialog.cpp" line="297"/>
         <source>New Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="336"/>
+        <location filename="profilesdialog.cpp" line="335"/>
         <source>failed to change archive invalidation state: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="374"/>
+        <location filename="profilesdialog.cpp" line="373"/>
         <source>failed to determine if invalidation is active: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7480,7 +7488,7 @@ Destination:<byte value="xd"/>
         <location filename="settingsdialogdiagnostics.cpp" line="37"/>
         <location filename="settingsdialogdiagnostics.cpp" line="63"/>
         <location filename="settingsdialogpaths.cpp" line="100"/>
-        <location filename="settingsdialogpaths.cpp" line="231"/>
+        <location filename="settingsdialogpaths.cpp" line="236"/>
         <location filename="../../uibase/src/report.cpp" line="65"/>
         <location filename="../../uibase/src/report.cpp" line="71"/>
         <source>Error</source>
@@ -7949,12 +7957,12 @@ This program is known to cause issues with Mod Organizer, such as freezing or bl
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialogpaths.cpp" line="203"/>
+        <location filename="settingsdialogpaths.cpp" line="208"/>
         <source>Select game executable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialogpaths.cpp" line="232"/>
+        <location filename="settingsdialogpaths.cpp" line="237"/>
         <source>The given path was not recognized as a valid game installation. The current game plugin requires the executable to be in a &quot;%1&quot; subfolder of the game directory.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8347,38 +8355,38 @@ You can restart Mod Organizer as administrator and try launching the program aga
     <message>
         <location filename="../../uibase/src/registry.cpp" line="43"/>
         <location filename="../../uibase/src/registry.cpp" line="44"/>
-        <location filename="../../uibase/src/textviewer.cpp" line="152"/>
-        <location filename="../../uibase/src/textviewer.cpp" line="153"/>
+        <location filename="../../uibase/src/textviewer.cpp" line="173"/>
+        <location filename="../../uibase/src/textviewer.cpp" line="174"/>
         <source>INI file is read-only</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../uibase/src/registry.cpp" line="45"/>
-        <location filename="../../uibase/src/textviewer.cpp" line="154"/>
+        <location filename="../../uibase/src/textviewer.cpp" line="175"/>
         <source>Mod Organizer is attempting to write to &quot;%1&quot; which is currently set to read-only.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../uibase/src/registry.cpp" line="49"/>
-        <location filename="../../uibase/src/textviewer.cpp" line="158"/>
+        <location filename="../../uibase/src/textviewer.cpp" line="179"/>
         <source>Clear the read-only flag</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../uibase/src/registry.cpp" line="50"/>
-        <location filename="../../uibase/src/textviewer.cpp" line="159"/>
+        <location filename="../../uibase/src/textviewer.cpp" line="180"/>
         <source>Allow the write once</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../uibase/src/registry.cpp" line="51"/>
-        <location filename="../../uibase/src/textviewer.cpp" line="160"/>
+        <location filename="../../uibase/src/textviewer.cpp" line="181"/>
         <source>The file will be set to read-only again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../uibase/src/registry.cpp" line="53"/>
-        <location filename="../../uibase/src/textviewer.cpp" line="162"/>
+        <location filename="../../uibase/src/textviewer.cpp" line="183"/>
         <source>Skip this file</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9693,8 +9701,13 @@ For the other games this is not a sufficient replacement for AI!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/textviewer.ui" line="20"/>
+        <location filename="../../uibase/src/textviewer.ui" line="22"/>
         <source>Placeholder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/textviewer.ui" line="29"/>
+        <source>Show Whitespace</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
