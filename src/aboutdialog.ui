@@ -442,6 +442,16 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">Dmytro &laquo;Gaea&raquo; Kiriienko (Ukrainian)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Inna &laquo;msEmi&raquo; Radchenko (Ukrainian)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string>...and all other contributors!</string>
                </property>
                <property name="toolTip">
