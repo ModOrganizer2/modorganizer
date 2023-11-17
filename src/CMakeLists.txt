@@ -4,7 +4,7 @@ add_executable(organizer)
 set_target_properties(organizer PROPERTIES OUTPUT_NAME "ModOrganizer")
 mo2_configure_executable(organizer
 	WARNINGS OFF
-	EXTRA_TRANSLATIONS ${MO2_SUPER_PATH}/game_gamebryo/src ${MO2_UIBASE_PATH}/src
+	TRANSLATIONS ON
 	PRIVATE_DEPENDS
 		uibase githubpp bsatk esptk archive usvfs lootcli boost::program_options
 		Qt::WebEngineWidgets Qt::WebSockets)
@@ -16,7 +16,6 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5"
 		RENAME dlls.manifest)
 
 install(DIRECTORY
-	"${CMAKE_CURRENT_SOURCE_DIR}/stylesheets"
 	"${CMAKE_CURRENT_SOURCE_DIR}/tutorials"
 	DESTINATION bin)
 
@@ -51,16 +50,25 @@ mo2_add_filter(NAME src/categories GROUPS
 
 mo2_add_filter(NAME src/core GROUPS
 	archivefiletree
+	inibakery
 	installationmanager
 	nexusinterface
 	nxmaccessmanager
 	organizercore
-	plugincontainer
 	apiuseraccount
 	processrunner
 	qdirfiletree
 	virtualfiletree
 	uilocker
+)
+
+mo2_add_filter(NAME src/extensions GROUPS
+	thememanager
+	translationmanager
+	extensionmanager
+	extensionwatcher
+	pluginmanager
+	proxyqt
 )
 
 mo2_add_filter(NAME src/dialogs GROUPS
@@ -197,6 +205,7 @@ mo2_add_filter(NAME src/profiles GROUPS
 mo2_add_filter(NAME src/proxies GROUPS
 	downloadmanagerproxy
 	modlistproxy
+	extensionlistproxy
 	organizerproxy
 	pluginlistproxy
 	proxyutils
@@ -223,7 +232,8 @@ mo2_add_filter(NAME src/settingsdialog GROUPS
 	settingsdialoggeneral
 	settingsdialognexus
 	settingsdialogpaths
-	settingsdialogplugins
+	settingsdialogextensions
+	settingsdialogextensionrow
 	settingsdialogworkarounds
 	settingsdialogmodlist
 	settingsdialogtheme

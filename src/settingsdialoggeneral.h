@@ -4,16 +4,18 @@
 #include "plugincontainer.h"
 #include "settings.h"
 #include "settingsdialog.h"
+#include "translationmanager.h"
 
 class GeneralSettingsTab : public SettingsTab
 {
 public:
-  GeneralSettingsTab(Settings& settings, SettingsDialog& dialog);
+  GeneralSettingsTab(Settings& settings, TranslationManager const& translationManager,
+                     SettingsDialog& dialog);
 
   void update();
 
 private:
-  void addLanguages();
+  void addLanguages(TranslationManager const& translationManager);
   void selectLanguage();
 
   void resetDialogs();

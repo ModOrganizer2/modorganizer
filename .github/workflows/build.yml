@@ -17,4 +17,4 @@ jobs:
           mo2-third-parties:
             7z zlib fmt gtest libbsarch libloot openssl libffi bzip2 python lz4 spdlog
             boost boost-di sip pyqt pybind11 ss licenses explorerpp usvfs
-          mo2-dependencies: cmake_common uibase githubpp bsatk esptk archive lootcli game_gamebryo
+          mo2-dependencies: cmake_common uibase githubpp bsatk esptk archive lootcli

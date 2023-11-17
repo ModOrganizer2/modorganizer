@@ -41,7 +41,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 
 class QSortFilterProxyModel;
-class PluginContainer;
+class PluginManager;
 class OrganizerCore;
 class ModListDropInfo;
 
@@ -106,7 +106,7 @@ public:
    * @todo ensure this view works without a profile set, otherwise there are
    *intransparent dependencies on the initialisation order
    **/
-  ModList(PluginContainer* pluginContainer, OrganizerCore* parent);
+  ModList(PluginManager* pluginManager, OrganizerCore* parent);
 
   ~ModList();
 
@@ -136,7 +136,7 @@ public:
   void changeModPriority(int sourceIndex, int newPriority);
   void changeModPriority(std::vector<int> sourceIndices, int newPriority);
 
-  void setPluginContainer(PluginContainer* pluginContainer);
+  void setPluginManager(PluginManager* pluginContainer);
 
   bool modInfoAboutToChange(ModInfo::Ptr info);
   void modInfoChanged(ModInfo::Ptr info);
@@ -414,7 +414,7 @@ private:
 
   QElapsedTimer m_LastCheck;
 
-  PluginContainer* m_PluginContainer;
+  PluginManager* m_PluginManager;
 };
 
 #endif  // MODLIST_H

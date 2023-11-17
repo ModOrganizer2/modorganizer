@@ -24,12 +24,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QFileSystemWatcher>
 
-class Settings;
-class MOMultiProcess;
+#include "extensionmanager.h"
+#include "thememanager.h"
+#include "translationmanager.h"
+
 class Instance;
-class PluginContainer;
-class OrganizerCore;
+class MOMultiProcess;
 class NexusInterface;
+class OrganizerCore;
+class PluginManager;
+class Settings;
 
 namespace MOBase
 {
@@ -70,26 +74,21 @@ public:
   //
   bool notify(QObject* receiver, QEvent* event) override;
 
-public slots:
-  bool setStyleFile(const QString& style);
-
-private slots:
-  void updateStyle(const QString& fileName);
-
 private:
-  QFileSystemWatcher m_styleWatcher;
-  QString m_defaultStyle;
   std::unique_ptr<env::ModuleNotification> m_modules;
 
   std::unique_ptr<Instance> m_instance;
   std::unique_ptr<Settings> m_settings;
   std::unique_ptr<NexusInterface> m_nexus;
-  std::unique_ptr<PluginContainer> m_plugins;
+  std::unique_ptr<ExtensionManager> m_extensions;
+  std::unique_ptr<PluginManager> m_plugins;
+  std::unique_ptr<ThemeManager> m_themes;
+  std::unique_ptr<TranslationManager> m_translations;
   std::unique_ptr<OrganizerCore> m_core;
 
   void externalMessage(const QString& message);
   std::unique_ptr<Instance> getCurrentInstance(bool forceSelect);
-  std::optional<int> setupInstanceLoop(Instance& currentInstance, PluginContainer& pc);
+  std::optional<int> setupInstanceLoop(Instance& currentInstance, PluginManager& pc);
   void purgeOldFiles();
 };
 

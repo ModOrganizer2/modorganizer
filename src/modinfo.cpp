@@ -94,7 +94,7 @@ ModInfo::Ptr ModInfo::createFrom(const QDir& dir, OrganizerCore& core)
   } else {
     result = ModInfo::Ptr(new ModInfoRegular(dir, core));
   }
-  result->m_Index = s_Collection.size();
+  result->m_Index = static_cast<int>(s_Collection.size());
   s_Collection.push_back(result);
   return result;
 }
@@ -106,7 +106,7 @@ ModInfo::Ptr ModInfo::createFromPlugin(const QString& modName, const QString& es
   QMutexLocker locker(&s_Mutex);
   ModInfo::Ptr result =
       ModInfo::Ptr(new ModInfoForeign(modName, espName, bsaNames, modType, core));
-  result->m_Index = s_Collection.size();
+  result->m_Index = static_cast<int>(s_Collection.size());
   s_Collection.push_back(result);
   return result;
 }
@@ -115,7 +115,7 @@ ModInfo::Ptr ModInfo::createFromOverwrite(OrganizerCore& core)
 {
   QMutexLocker locker(&s_Mutex);
   ModInfo::Ptr overwrite = ModInfo::Ptr(new ModInfoOverwrite(core));
-  overwrite->m_Index     = s_Collection.size();
+  overwrite->m_Index     = static_cast<int>(s_Collection.size());
   s_Collection.push_back(overwrite);
   return overwrite;
 }
@@ -295,7 +295,7 @@ void ModInfo::updateIndices()
 
 ModInfo::ModInfo(OrganizerCore& core) : m_PrimaryCategory(-1), m_Core(core) {}
 
-bool ModInfo::checkAllForUpdate(PluginContainer* pluginContainer, QObject* receiver)
+bool ModInfo::checkAllForUpdate(PluginManager* pluginManager, QObject* receiver)
 {
   bool updatesAvailable = true;
 
@@ -314,7 +314,7 @@ bool ModInfo::checkAllForUpdate(PluginContainer* pluginContainer, QObject* recei
 
   // Detect invalid source games
   for (auto itr = games.begin(); itr != games.end();) {
-    auto gamePlugins        = pluginContainer->plugins<IPluginGame>();
+    auto gamePlugins        = pluginManager->plugins<IPluginGame>();
     IPluginGame* gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
     for (auto plugin : gamePlugins) {
       if (plugin != nullptr &&

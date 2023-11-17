@@ -1136,7 +1136,7 @@ void ModListView::setHighlightedMods(const std::vector<unsigned int>& pluginIndi
 QColor ModListView::markerColor(const QModelIndex& index) const
 {
   unsigned int modIndex = index.data(ModList::IndexRole).toInt();
-  bool highligth = m_markers.highlight.find(modIndex) != m_markers.highlight.end();
+  bool highlight = m_markers.highlight.find(modIndex) != m_markers.highlight.end();
   bool overwrite = m_markers.overwrite.find(modIndex) != m_markers.overwrite.end();
   bool archiveOverwrite =
       m_markers.archiveOverwrite.find(modIndex) != m_markers.archiveOverwrite.end();
@@ -1149,7 +1149,7 @@ QColor ModListView::markerColor(const QModelIndex& index) const
   bool archiveLooseOverwritten = m_markers.archiveLooseOverwritten.find(modIndex) !=
                                  m_markers.archiveLooseOverwritten.end();
 
-  if (highligth) {
+  if (highlight) {
     return Settings::instance().colors().modlistContainsPlugin();
   } else if (overwritten || archiveLooseOverwritten) {
     return Settings::instance().colors().modlistOverwritingLoose();
@@ -1187,8 +1187,8 @@ QColor ModListView::markerColor(const QModelIndex& index) const
       a += color.alpha();
     }
 
-    return QColor(r / colors.size(), g / colors.size(), b / colors.size(),
-                  a / colors.size());
+    const int ncolors = static_cast<int>(colors.size());
+    return QColor(r / ncolors, g / ncolors, b / ncolors, a / ncolors);
   }
 
   return QColor();
@@ -1391,9 +1391,10 @@ void ModListView::dropEvent(QDropEvent* event)
 {
   // from Qt source
   QModelIndex index;
-  if (viewport()->rect().contains(event->pos())) {
-    index = indexAt(event->pos());
-    if (!index.isValid() || !visualRect(index).contains(event->pos()))
+  const auto position = event->position().toPoint();
+  if (viewport()->rect().contains(position)) {
+    index = indexAt(position);
+    if (!index.isValid() || !visualRect(index).contains(position))
       index = QModelIndex();
   }
 

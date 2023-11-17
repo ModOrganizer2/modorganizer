@@ -10,7 +10,7 @@ class FileEntry;
 }
 
 class OrganizerCore;
-class PluginContainer;
+class PluginManager;
 class FileTreeModel;
 class FileTreeItem;
 
@@ -19,7 +19,7 @@ class FileTree : public QObject
   Q_OBJECT;
 
 public:
-  FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree);
+  FileTree(OrganizerCore& core, PluginManager& pc, QTreeView* tree);
 
   FileTreeModel* model();
   void refresh();
@@ -52,7 +52,7 @@ signals:
 
 private:
   OrganizerCore& m_core;
-  PluginContainer& m_plugins;
+  PluginManager& m_plugins;
   QTreeView* m_tree;
   FileTreeModel* m_model;
 

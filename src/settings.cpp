@@ -2098,12 +2098,12 @@ void InterfaceSettings::setLockGUI(bool b)
   set(m_Settings, "Settings", "lock_gui", b);
 }
 
-std::optional<QString> InterfaceSettings::styleName() const
+std::optional<QString> InterfaceSettings::themeName() const
 {
   return getOptional<QString>(m_Settings, "Settings", "style");
 }
 
-void InterfaceSettings::setStyleName(const QString& name)
+void InterfaceSettings::setThemeName(const QString& name)
 {
   set(m_Settings, "Settings", "style", name);
 }

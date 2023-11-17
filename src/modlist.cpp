@@ -60,10 +60,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-ModList::ModList(PluginContainer* pluginContainer, OrganizerCore* organizer)
+ModList::ModList(PluginManager* pluginManager, OrganizerCore* organizer)
     : QAbstractItemModel(organizer), m_Organizer(organizer), m_Profile(nullptr),
       m_NexusInterface(nullptr), m_Modified(false), m_InNotifyChange(false),
-      m_FontMetrics(QFont()), m_PluginContainer(pluginContainer)
+      m_FontMetrics(QFont()), m_PluginManager(pluginManager)
 {
   m_LastCheck.start();
 }
@@ -218,8 +218,8 @@ QVariant ModList::data(const QModelIndex& modelIndex, int role) const
         return QVariant();
       }
     } else if (column == COL_GAME) {
-      if (m_PluginContainer != nullptr) {
-        for (auto game : m_PluginContainer->plugins<IPluginGame>()) {
+      if (m_PluginManager != nullptr) {
+        for (auto game : m_PluginManager->plugins<IPluginGame>()) {
           if (game->gameShortName().compare(modInfo->gameName(), Qt::CaseInsensitive) ==
               0)
             return game->gameName();
@@ -726,9 +726,9 @@ void ModList::changeModPriority(int sourceIndex, int newPriority)
   emit modPrioritiesChanged({index(sourceIndex, 0)});
 }
 
-void ModList::setPluginContainer(PluginContainer* pluginContianer)
+void ModList::setPluginManager(PluginManager* pluginContianer)
 {
-  m_PluginContainer = pluginContianer;
+  m_PluginManager = pluginContianer;
 }
 
 bool ModList::modInfoAboutToChange(ModInfo::Ptr info)

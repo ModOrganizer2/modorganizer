@@ -322,9 +322,9 @@ void DownloadManager::setShowHidden(bool showHidden)
   refreshList();
 }
 
-void DownloadManager::setPluginContainer(PluginContainer* pluginContainer)
+void DownloadManager::setPluginManager(PluginManager* pluginManager)
 {
-  m_NexusInterface->setPluginContainer(pluginContainer);
+  m_NexusInterface->setPluginManager(pluginManager);
 }
 
 void DownloadManager::refreshList()

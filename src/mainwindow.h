@@ -23,14 +23,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "bsafolder.h"
 #include "delayedfilewriter.h"
 #include "errorcodes.h"
+#include "extensionmanager.h"
 #include "imoinfo.h"
-#include "iplugingame.h"  //namespace MOBase { class IPluginGame; }
+#include "iplugingame.h"
 #include "iuserinterface.h"
 #include "modinfo.h"
 #include "modlistbypriorityproxy.h"
 #include "modlistsortproxy.h"
-#include "plugincontainer.h"  //class PluginContainer;
 #include "shared/fileregisterfwd.h"
+#include "thememanager.h"
+#include "translationmanager.h"
 #include "tutorialcontrol.h"
 #include <log.h>
 
@@ -125,7 +127,9 @@ class MainWindow : public QMainWindow, public IUserInterface
 
 public:
   explicit MainWindow(Settings& settings, OrganizerCore& organizerCore,
-                      PluginContainer& pluginContainer, QWidget* parent = 0);
+                      ExtensionManager& extensionManager, PluginManager& pluginManager,
+                      ThemeManager& themeManager,
+                      TranslationManager& translationManager, QWidget* parent = 0);
   ~MainWindow();
 
   void processUpdates();
@@ -137,8 +141,6 @@ public:
                      const QStringList& activeArchives);
 
   void saveArchiveList();
-
-  void installTranslator(const QString& name);
 
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int modIndex,
                              ModInfoTabIDs tabID) override;
@@ -165,7 +167,7 @@ signals:
   /**
    * @brief emitted when the selected style changes
    */
-  void styleChanged(const QString& styleFile);
+  void themeChanged(const QString& themeIdentifier);
 
   void checkForProblemsDone();
 
@@ -296,10 +298,10 @@ private:
   QTime m_StartTime;
 
   OrganizerCore& m_OrganizerCore;
-  PluginContainer& m_PluginContainer;
-
-  QString m_CurrentLanguage;
-  std::vector<QTranslator*> m_Translators;
+  ExtensionManager& m_ExtensionManager;
+  PluginManager& m_PluginManager;
+  ThemeManager& m_ThemeManager;
+  TranslationManager& m_TranslationManager;
 
   std::unique_ptr<BrowserDialog> m_IntegratedBrowser;
 
@@ -343,7 +345,7 @@ private slots:
   void linkDesktop();
   void linkMenu();
 
-  void languageChange(const QString& newLanguage);
+  void onLanguageChanged(const QString& newLanguage);
 
   void windowTutorialFinished(const QString& windowName);
 
