@@ -279,7 +279,9 @@ void ModListViewActions::assignCategories() const
   }
   for (auto mod : m_core.modList()->allMods()) {
     ModInfo::Ptr modInfo = ModInfo::getByName(mod);
-    int nexusCategory    = modInfo->getNexusCategory();
+    if (modInfo->isSeparator())
+      continue;
+    int nexusCategory = modInfo->getNexusCategory();
     if (!nexusCategory) {
       QSettings downloadMeta(m_core.downloadsPath() + "/" +
                                  modInfo->installationFile() + ".meta",
@@ -1125,6 +1127,8 @@ void ModListViewActions::remapCategory(const QModelIndexList& indices) const
 {
   for (auto& idx : indices) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    if (modInfo->isSeparator())
+      continue;
 
     int categoryID = modInfo->getNexusCategory();
     if (!categoryID) {

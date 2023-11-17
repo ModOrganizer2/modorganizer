@@ -1185,7 +1185,7 @@ QVariant PluginList::displayData(const QModelIndex& modelIndex) const
     return m_ESPs[index].name;
 
   case COL_PRIORITY:
-    return m_ESPs[index].priority;
+    return QString::number(m_ESPs[index].priority);
 
   case COL_MODINDEX:
     return m_ESPs[index].index;
