@@ -208,7 +208,7 @@ QVariant ModList::data(const QModelIndex& modelIndex, int role) const
       if (modInfo->hasAutomaticPriority()) {
         return QVariant();  // hide priority for mods where it's fixed
       } else {
-        return m_Profile->getModPriority(modIndex);
+        return QString::number(m_Profile->getModPriority(modIndex));
       }
     } else if (column == COL_MODID) {
       int modID = modInfo->nexusId();

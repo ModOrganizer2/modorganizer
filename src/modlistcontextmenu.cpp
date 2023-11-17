@@ -561,7 +561,9 @@ void ModListContextMenu::addRegularActions(ModInfo::Ptr mod)
     }
   }
 
-  if (mod->nexusId() > 0 && !mod->installationFile().isEmpty()) {
+  if (mod->nexusId() > 0 &&
+      (mod->getNexusCategory() > 0 || !mod->installationFile().isEmpty()) &&
+      !mod->isSeparator()) {
     addAction(tr("Remap Category (From Nexus)"), [=]() {
       m_actions.remapCategory(m_selected);
     });
