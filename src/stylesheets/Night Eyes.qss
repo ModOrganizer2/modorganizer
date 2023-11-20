@@ -1,4 +1,4 @@
-/* Night Eyes theme v1.0.1 for Mod Organizer 2 by Ciathyza */
+/* Night Eyes theme v1.2.0 for Mod Organizer 2 by Ciathyza */
 /* https://github.com/ciathyza/mo2-themes */
 
 /* Main Window ---------------------------------------------------------------- */
@@ -23,22 +23,21 @@ QMainWindow::separator
 QAbstractItemView
 {
 	background: #141414;
-	alternate-background-color: #1A1A1A;
+	alternate-background-color: #141414;
 	show-decoration-selected: 1;
-	selection-background-color: #251100;
-	selection-color: #AAAAAA;
+	selection-background-color: #001133;
+	selection-color: #0099EE;
 }
 
 QAbstractItemView::item:hover
 {
-	background: #242424;
-	color: #FFCC88;
+	color: #FFFFFF;
 }
 
 QAbstractItemView::item:selected
 {
-	background: #251100;
-	color: #FFCC88;
+	background: #001133;
+	color: #0099EE;
 }
 
 QAbstractScrollArea::corner
@@ -53,6 +52,7 @@ LinkLabel
 {
   qproperty-linkColor: #3399FF;
 }
+
 
 /* Toolbar -------------------------------------------------------------------- */
 
@@ -99,20 +99,20 @@ QTreeView
 
 QTreeView::branch:hover
 {
-	background: #242424;
-	color: #FFCC88;
+	background: #181818;
+	color: #FFFFFF;
 }
 
 QTreeView::branch:selected
 {
-	background: #251100;
-	color: #FFCC88;
+	background: #001133;
+	color: #0099EE;
 }
 
 QTreeView::item:selected
 {
-	background: #251100;
-	color: #FFCC88;
+	background: #001133;
+	color: #0099EE;
 }
 
 QTreeView::branch:has-children:!has-siblings:closed,
@@ -142,8 +142,8 @@ QListView::item:hover
 
 QListView::item:selected
 {
-	background: #251100;
-	color: #FFCC88;
+	background: #001133;
+	color: #0099EE;
 }
 
 QTextEdit
@@ -397,6 +397,7 @@ QHeaderView
 	background: #181818;
 }
 
+/* Table View Tab Headers */
 QHeaderView::section
 {
     background: #141414;
@@ -435,12 +436,14 @@ QHeaderView::down-arrow
 
 /* Context Menus, Toolbar Dropdowns, & Tooltips ------------------------------- */
 
-QMenuBar {
+QMenuBar
+{
 	background: #181818;
 	border: 1px solid #181818;
 }
 
-QMenuBar::item:selected {
+QMenuBar::item:selected
+{
 	background: #242424;
 	color: #FFCC88;
 }
@@ -491,6 +494,7 @@ QToolTip
 }
 
 QStatusBar::item {border: None;}
+
 
 /* Progress Bars (Downloads) -------------------------------------------------- */
 
@@ -632,13 +636,13 @@ QListWidget::item#executablesListBox
 QWidget#downloadTab QAbstractScrollArea
 {
 	/* background of the entire downloads tab */
-	background: #242424;
+	background: #141414;
 }
 
 DownloadListView QFrame
 {
 	/* an entry on the Downloads tab */
-	background: #141414;
+	background: #181818;
 }
 
 DownloadListView QFrame#frame
@@ -659,19 +663,23 @@ DownloadListView QFrame:clicked
 
 /* compact downloads view */
 
-DownloadListView[downloadView=standard]::item {
+DownloadListView[downloadView=standard]::item
+{
 	padding: 16px;
 }
 
-DownloadListView[downloadView=compact]::item {
+DownloadListView[downloadView=compact]::item
+{
 	padding: 4px;
 }
 
-DownloadListView::item:hover {
+DownloadListView::item:hover
+{
     padding: 0px;
 }
 
-DownloadListView::item:selected {
+DownloadListView::item:selected
+{
     padding: 0px;
 }
 
@@ -683,10 +691,12 @@ QProgressBar
 	margin: 0px;
 }
 
-QAbstractItemView[filtered=true] {
+QAbstractItemView[filtered=true]
+{
 	border: 2px solid #f00 !important;
 }
 
-QLineEdit[valid-filter=false] {
+QLineEdit[valid-filter=false]
+{
 	background-color: #661111 !important;
 }
