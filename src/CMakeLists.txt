@@ -8,7 +8,7 @@ mo2_configure_executable(organizer
 	PRIVATE_DEPENDS
 		uibase githubpp bsatk esptk archive usvfs lootcli boost::program_options
 		Qt::WebEngineWidgets Qt::WebSockets)
-target_link_libraries(organizer PUBLIC Shlwapi)
+target_link_libraries(organizer PUBLIC Shlwapi Dwmapi)
 mo2_install_target(organizer)
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5"

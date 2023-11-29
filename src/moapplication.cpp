@@ -41,6 +41,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStringList>
 #include <QStyleFactory>
 #include <QStyleOption>
+#include <dwmapi.h>
 #include <iplugingame.h>
 #include <log.h>
 #include <report.h>
@@ -354,6 +355,16 @@ int MOApplication::run(MOMultiProcess& multiProcess)
     log::debug("displaying main window");
     mainWindow.show();
     mainWindow.activateWindow();
+
+    BOOL USE_DARK_MODE = true;
+    if (!SUCCEEDED(DwmSetWindowAttribute(
+            (HWND)mainWindow.winId(), DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE,
+            &USE_DARK_MODE, sizeof(USE_DARK_MODE)))) {
+      // Support Windows 10
+      DwmSetWindowAttribute((HWND)mainWindow.winId(), 19, &USE_DARK_MODE,
+                            sizeof(USE_DARK_MODE));
+    }
+
     splash.close();
 
     tt.stop();
