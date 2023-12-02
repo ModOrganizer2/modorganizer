@@ -104,7 +104,7 @@ function setupTooptips() {
   switch (tutorialControl.getTabName("tabWidget")) {
     case "espTab":
       tooltipWidget("espList", qsTr("Plugins (esp/esm/esl files) of the mods in the current profile. They need to be checked to be loaded."))
-      tooltipWidget("bossButton", qsTr("Automatically sort plugins using the bundled LOOT application."))
+      tooltipWidget("sortButton", qsTr("Automatically sort plugins using the bundled LOOT application."))
       tooltipWidget("restoreButton", qsTr("Restore a backup of your plugin list order."))
       tooltipWidget("saveButton", qsTr("Save a backup of your plugin list order."))
       tooltipWidget("activePluginsCounter", qsTr("Counter of your total active plugins. Hover to see a breakdown of plugin types."))
