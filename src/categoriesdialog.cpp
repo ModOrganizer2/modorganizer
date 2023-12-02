@@ -148,8 +148,9 @@ void CategoriesDialog::commitChanges()
 
   for (int i = 0; i < ui->categoriesTable->rowCount(); ++i) {
     int index = ui->categoriesTable->verticalHeader()->logicalIndex(i);
-    QVariantList nexusData =
-        ui->categoriesTable->item(index, 3)->data(Qt::UserRole).toList();
+    QVariantList nexusData;
+    if (ui->categoriesTable->item(index, 3) != nullptr)
+      nexusData = ui->categoriesTable->item(index, 3)->data(Qt::UserRole).toList();
     std::vector<CategoryFactory::NexusCategory> nexusCats;
     for (auto nexusCat : nexusData) {
       nexusCats.push_back(CategoryFactory::NexusCategory(
