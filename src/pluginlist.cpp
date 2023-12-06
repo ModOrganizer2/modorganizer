@@ -1245,8 +1245,6 @@ QVariant PluginList::fontData(const QModelIndex& modelIndex) const
     result.setWeight(QFont::Bold);
   if (m_ESPs[index].isLightFlagged || m_ESPs[index].hasLightExtension)
     result.setItalic(true);
-  if (m_ESPs[index].hasNoRecords)
-    result.setStrikeOut(true);
 
   return result;
 }
@@ -1474,6 +1472,10 @@ QVariant PluginList::iconData(const QModelIndex& modelIndex) const
 
   if (esp.isLightFlagged && !esp.hasLightExtension) {
     result.append(":/MO/gui/awaiting");
+  }
+
+  if (esp.hasNoRecords) {
+    result.append(":/MO/gui/unchecked-checkbox");
   }
 
   if (esp.isOverlayFlagged) {
