@@ -2842,8 +2842,14 @@ void MainWindow::refreshNexusCategories(CategoriesDialog* dialog)
 {
   NexusInterface& nexus = NexusInterface::instance();
   nexus.setPluginContainer(&m_PluginContainer);
-  nexus.requestGameInfo(Settings::instance().game().plugin()->gameShortName(), dialog,
-                        QVariant(), QString());
+  if (!Settings::instance().game().plugin()->primarySources().isEmpty()) {
+    nexus.requestGameInfo(
+        Settings::instance().game().plugin()->primarySources().first(), dialog,
+        QVariant(), QString());
+  } else {
+    nexus.requestGameInfo(Settings::instance().game().plugin()->gameShortName(), dialog,
+                          QVariant(), QString());
+  }
 }
 
 void MainWindow::categoriesSaved()
