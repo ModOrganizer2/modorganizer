@@ -154,6 +154,7 @@ MOApplication::MOApplication(int& argc, char** argv) : QApplication(argc, argv)
     updateStyle(file);
   });
 
+  setStyle("fusion");
   m_defaultStyle = style()->objectName();
   setStyle(new ProxyStyle(style()));
   addDllsToPath();
@@ -354,6 +355,7 @@ int MOApplication::run(MOMultiProcess& multiProcess)
     log::debug("displaying main window");
     mainWindow.show();
     mainWindow.activateWindow();
+
     splash.close();
 
     tt.stop();
