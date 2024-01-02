@@ -565,15 +565,17 @@ QString InstanceManager::iniPath(const QString& instanceDir) const
 
 std::vector<QString> InstanceManager::globalInstancePaths() const
 {
-  const std::set<QString> ignore = {"cache", "qtwebengine"};
-
   const QDir root(globalInstancesRootPath());
   const auto dirs = root.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
 
   std::vector<QString> list;
 
   for (auto&& d : dirs) {
-    if (!ignore.contains(QFileInfo(d).fileName().toLower())) {
+    const QFileInfo iniFile(QDir(root.filePath(d)), "ModOrganizer.ini");
+    log::debug("Checking for INI at path '{}'", iniFile.absoluteFilePath());
+
+    if (iniFile.exists()) {
+      log::debug("Found INI at path '{}'", iniFile.absoluteFilePath());
       list.push_back(root.filePath(d));
     }
   }
