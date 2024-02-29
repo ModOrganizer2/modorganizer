@@ -217,7 +217,8 @@ void ESPsTab::clear()
 
 bool ESPsTab::feedFile(const QString& rootPath, const QString& fullPath)
 {
-  static const QString extensions[] = {".esp", ".esm", ".esl"};
+  static const QString extensions[] = {".esp", ".esm", ".esl", ".omwaddon",
+                                       ".omwscripts"};
 
   for (const auto& e : extensions) {
     if (fullPath.endsWith(e, Qt::CaseInsensitive)) {
