@@ -1346,6 +1346,41 @@ void OrganizerCore::updateModsActiveState(const QList<unsigned int>& modIndices,
         ++enabled;
       }
     }
+
+    QStringList omwaddons = dir.entryList(QStringList() << "*.omwaddon", QDir::Files);
+    for (const QString& omwaddon : omwaddons) {
+      const FileEntryPtr file = m_DirectoryStructure->findFile(ToWString(omwaddon));
+      if (file.get() == nullptr) {
+        log::warn("failed to activate {}", omwaddon);
+        continue;
+      }
+
+      if (active != m_PluginList.isEnabled(omwaddon) &&
+          file->getAlternatives().empty()) {
+        m_PluginList.blockSignals(true);
+        m_PluginList.enableESP(omwaddon, active);
+        m_PluginList.blockSignals(false);
+        ++enabled;
+      }
+    }
+
+    QStringList omwscripts =
+        dir.entryList(QStringList() << "*.omwscripts", QDir::Files);
+    for (const QString& omwscript : omwscripts) {
+      const FileEntryPtr file = m_DirectoryStructure->findFile(ToWString(omwscript));
+      if (file.get() == nullptr) {
+        log::warn("failed to activate {}", omwscript);
+        continue;
+      }
+
+      if (active != m_PluginList.isEnabled(omwscript) &&
+          file->getAlternatives().empty()) {
+        m_PluginList.blockSignals(true);
+        m_PluginList.enableESP(omwscript, active);
+        m_PluginList.blockSignals(false);
+        ++enabled;
+      }
+    }
   }
   if (active && (enabled > 1)) {
     MessageDialog::showMessage(
