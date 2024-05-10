@@ -282,6 +282,12 @@ void forEachEntryImpl(void* cx, HandleCloserThread& hc,
       ObjectName.Buffer = DirInfo->FileName;
       ObjectName.Length = (USHORT)DirInfo->FileNameLength;
 
+      if (std::wstring_view(ObjectName.Buffer, ObjectName.Length / sizeof(wchar_t)) ==
+          L".git") {
+        NextEntryOffset = DirInfo->NextEntryOffset;
+        continue;
+      }
+      
       if (!isDotDir(&ObjectName)) {
         ObjectName.MaximumLength = ObjectName.Length;
 
