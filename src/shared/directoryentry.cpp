@@ -167,34 +167,67 @@ void DirectoryEntry::addFromAllBSAs(const std::wstring& originName,
                                     const std::vector<std::wstring>& loadOrder,
                                     DirectoryStats& stats)
 {
-  for (const auto& archive : archives) {
-    const std::filesystem::path archivePath(archive);
-    const auto filename = archivePath.filename().native();
+  bool hasOverride;
+  bool hasTTWBSA = false;
 
-    if (!enabledArchives.contains(filename)) {
-      continue;
+  for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+    if (entry.is_regular_file() && entry.path().extension() == ".override") {
+      hasOverride = true;
+    } else {
+      hasOverride = false;
     }
+    if (entry.is_regular_file() &&
+        entry.path().filename() == "TaleOfTwoWastelands - Main.bsa") {
+      hasTTWBSA = true;
+    }
+  }
 
-    const auto filenameLc = ToLowerCopy(filename);
+  for (auto rit = loadOrder.rbegin(); rit != loadOrder.rend(); ++rit) {
+    const auto& plugin = *rit;
+    const auto pluginNameLc =
+        ToLowerCopy(std::filesystem::path(plugin).stem().native());
 
-    int order = -1;
+    for (const auto& archive : archives) {
+      const std::filesystem::path archivePath(archive);
+      const auto filename = archivePath.filename().native();
 
-    for (auto plugin : loadOrder) {
-      const auto pluginNameLc =
-          ToLowerCopy(std::filesystem::path(plugin).stem().native());
+      if (!enabledArchives.contains(filename)) {
+        continue;
+      }
+
+      const auto filenameLc = ToLowerCopy(filename);
 
       if (filenameLc.starts_with(pluginNameLc + L" - ") ||
           filenameLc.starts_with(pluginNameLc + L".")) {
         auto itor = std::find(loadOrder.begin(), loadOrder.end(), plugin);
         if (itor != loadOrder.end()) {
+
+          int order = -1;
+          if (!hasOverride && !hasTTWBSA) 
+          {
+            std::wstring workingDir = directory + L"\\" + filename;
+            std::wstring workingDirWithoutExt;
+            std::wstring::size_type extensionPos = workingDir.find_last_of(L'.');
+            if (extensionPos != std::wstring::npos) {
+              workingDirWithoutExt = workingDir.substr(0, extensionPos);
+            }
+            std::wofstream createOverrideFileFromBSA(workingDirWithoutExt + L".override");
+            if (createOverrideFileFromBSA.is_open())
+            {
+              log::warn("Automatically made .override file for {}", filename);
+              createOverrideFileFromBSA.close();
+            }
+          } 
           order = std::distance(loadOrder.begin(), itor);
+          //log::warn("ttw bsa is ({}), for {}, the order is {}, PluginNameLc is {}", hasTTWBSA, filename, order, pluginNameLc);
+          addFromBSA(originName, directory, archivePath.native(), priority, order,
+                     stats);
         }
       }
     }
-
-    addFromBSA(originName, directory, archivePath.native(), priority, order, stats);
   }
 }
+
 
 void DirectoryEntry::addFromBSA(const std::wstring& originName,
                                 const std::wstring& directory,
