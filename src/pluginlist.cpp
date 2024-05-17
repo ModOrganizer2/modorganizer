@@ -132,12 +132,9 @@ void PluginList::highlightPlugins(const std::vector<unsigned int>& modIndices,
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(modIndex);
     if (!selectedMod.isNull() && profile->modEnabled(modIndex)) {
       QDir dir(selectedMod->absolutePath());
-      QStringList extensions = QStringList() << "*.esp"
-                                             << "*.esm";
-      if (m_GamePlugin->feature<GamePlugins>()->lightPluginsAreSupported()) {
-        extensions << "*.esl";
-      }
-      QStringList plugins = dir.entryList(extensions);
+      QStringList plugins = dir.entryList(QStringList() << "*.esp"
+                                                        << "*.esm"
+                                                        << "*.esl");
       const MOShared::FilesOrigin& origin =
           directoryEntry.getOriginByName(selectedMod->internalName().toStdWString());
       if (plugins.size() > 0) {
@@ -199,7 +196,7 @@ void PluginList::refresh(const QString& profileName,
 
     if (filename.endsWith(".esp", Qt::CaseInsensitive) ||
         filename.endsWith(".esm", Qt::CaseInsensitive) ||
-        (lightPluginsAreSupported && filename.endsWith(".esl", Qt::CaseInsensitive))) {
+        filename.endsWith(".esl", Qt::CaseInsensitive)) {
 
       availablePlugins.append(filename);
 
@@ -213,6 +210,9 @@ void PluginList::refresh(const QString& profileName,
       bool forceDisabled =
           m_GamePlugin->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::None &&
           !forceLoaded && !forceEnabled;
+      if (!lightPluginsAreSupported && filename.endsWith(".esl")) {
+        forceDisabled = true;
+      }
 
       bool archive = false;
       try {
@@ -1358,8 +1358,13 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
   }
 
   if (esp.forceDisabled) {
-    toolTip += "<br><br>" + tr("This game does not currently permit custom plugin "
-                               "loading. There may be manual workarounds.");
+    if (m_GamePlugin->feature<GamePlugins>() && esp.hasLightExtension &&
+        !m_GamePlugin->feature<GamePlugins>()->lightPluginsAreSupported()) {
+      toolTip += "<br><br>" + tr("Light plugins (ESL) are not supported by this game.");
+    } else {
+      toolTip += "<br><br>" + tr("This game does not currently permit custom plugin "
+                                 "loading. There may be manual workarounds.");
+    }
   }
 
   // additional info
@@ -1807,7 +1812,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     ESP::File file(ToWString(fullPath));
     auto extension     = name.right(3).toLower();
     hasMasterExtension = (extension == "esm");
-    hasLightExtension  = lightSupported && (extension == "esl");
+    hasLightExtension  = (extension == "esl");
     isMasterFlagged    = file.isMaster();
     isOverlayFlagged   = overlaySupported && file.isOverlay();
     isLightFlagged =

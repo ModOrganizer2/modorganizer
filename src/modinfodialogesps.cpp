@@ -5,8 +5,6 @@
 #include <log.h>
 #include <report.h>
 
-#include "gameplugins.h"
-
 using namespace MOBase;
 
 class ESPItem
@@ -219,12 +217,7 @@ void ESPsTab::clear()
 
 bool ESPsTab::feedFile(const QString& rootPath, const QString& fullPath)
 {
-  QStringList extensions = QStringList() << ".esp"
-                                         << ".esm";
-  GamePlugins* gamePlugins = core().managedGame()->feature<GamePlugins>();
-  if (gamePlugins && gamePlugins->lightPluginsAreSupported()) {
-    extensions << ".esl";
-  }
+  static const QString extensions[] = {".esp", ".esm", ".esl"};
 
   for (const auto& e : extensions) {
     if (fullPath.endsWith(e, Qt::CaseInsensitive)) {

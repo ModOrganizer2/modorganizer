@@ -1926,16 +1926,11 @@ void MainWindow::updateBSAList(const QStringList& defaultArchives,
       m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
   std::vector<FileEntryPtr> files = m_OrganizerCore.directoryStructure()->getFiles();
 
-  GamePlugins* gamePlugins = m_OrganizerCore.managedGame()->feature<GamePlugins>();
-  bool supportsLight       = false;
-  if (gamePlugins) {
-    supportsLight = gamePlugins->lightPluginsAreSupported();
-  }
   QStringList plugins =
-      m_OrganizerCore.findFiles("", [supportsLight](const QString& fileName) -> bool {
+      m_OrganizerCore.findFiles("", [](const QString& fileName) -> bool {
         return fileName.endsWith(".esp", Qt::CaseInsensitive) ||
                fileName.endsWith(".esm", Qt::CaseInsensitive) ||
-               (supportsLight && fileName.endsWith(".esl", Qt::CaseInsensitive));
+               fileName.endsWith(".esl", Qt::CaseInsensitive);
       });
 
   auto hasAssociatedPlugin = [&](const QString& bsaName) -> bool {
