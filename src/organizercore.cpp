@@ -71,6 +71,7 @@
 #include <tuple>
 #include <utility>
 
+#include "gameplugins.h"
 #include "organizerproxy.h"
 
 using namespace MOShared;
@@ -1317,18 +1318,21 @@ void OrganizerCore::updateModsActiveState(const QList<unsigned int>& modIndices,
       }
     }
 
-    for (const QString& esl : dir.entryList(QStringList() << "*.esl", QDir::Files)) {
-      const FileEntryPtr file = m_DirectoryStructure->findFile(ToWString(esl));
-      if (file.get() == nullptr) {
-        log::warn("failed to activate {}", esl);
-        continue;
-      }
+    GamePlugins* gamePlugins = managedGame()->feature<GamePlugins>();
+    if (gamePlugins && gamePlugins->lightPluginsAreSupported()) {
+      for (const QString& esl : dir.entryList(QStringList() << "*.esl", QDir::Files)) {
+        const FileEntryPtr file = m_DirectoryStructure->findFile(ToWString(esl));
+        if (file.get() == nullptr) {
+          log::warn("failed to activate {}", esl);
+          continue;
+        }
 
-      if (active != m_PluginList.isEnabled(esl) && file->getAlternatives().empty()) {
-        m_PluginList.blockSignals(true);
-        m_PluginList.enableESP(esl, active);
-        m_PluginList.blockSignals(false);
-        ++enabled;
+        if (active != m_PluginList.isEnabled(esl) && file->getAlternatives().empty()) {
+          m_PluginList.blockSignals(true);
+          m_PluginList.enableESP(esl, active);
+          m_PluginList.blockSignals(false);
+          ++enabled;
+        }
       }
     }
     QStringList esps = dir.entryList(QStringList() << "*.esp", QDir::Files);

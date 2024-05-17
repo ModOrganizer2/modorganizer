@@ -132,9 +132,12 @@ void PluginList::highlightPlugins(const std::vector<unsigned int>& modIndices,
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(modIndex);
     if (!selectedMod.isNull() && profile->modEnabled(modIndex)) {
       QDir dir(selectedMod->absolutePath());
-      QStringList plugins = dir.entryList(QStringList() << "*.esp"
-                                                        << "*.esm"
-                                                        << "*.esl");
+      QStringList extensions = QStringList() << "*.esp"
+                                             << "*.esm";
+      if (m_GamePlugin->feature<GamePlugins>()->lightPluginsAreSupported()) {
+        extensions << "*.esl";
+      }
+      QStringList plugins = dir.entryList(extensions);
       const MOShared::FilesOrigin& origin =
           directoryEntry.getOriginByName(selectedMod->internalName().toStdWString());
       if (plugins.size() > 0) {
@@ -196,7 +199,7 @@ void PluginList::refresh(const QString& profileName,
 
     if (filename.endsWith(".esp", Qt::CaseInsensitive) ||
         filename.endsWith(".esm", Qt::CaseInsensitive) ||
-        filename.endsWith(".esl", Qt::CaseInsensitive)) {
+        (lightPluginsAreSupported && filename.endsWith(".esl", Qt::CaseInsensitive))) {
 
       availablePlugins.append(filename);
 
