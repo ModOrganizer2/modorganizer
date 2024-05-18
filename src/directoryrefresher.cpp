@@ -138,7 +138,7 @@ void dumpStats(std::vector<DirectoryStats>& stats)
 
   if (run == 0) {
     std::ofstream out(file, std::ios::out | std::ios::trunc);
-    out << fmt::format("what,run,{}", DirectoryStats::csvHeader()) << "\n";
+    out << std::format("what,run,{}", DirectoryStats::csvHeader()) << "\n";
   }
 
   std::sort(stats.begin(), stats.end(), [](auto&& a, auto&& b) {
@@ -150,11 +150,11 @@ void dumpStats(std::vector<DirectoryStats>& stats)
 
   DirectoryStats total;
   for (const auto& s : stats) {
-    out << fmt::format("{},{},{}", s.mod, run, s.toCsv()) << "\n";
+    out << std::format("{},{},{}", s.mod, run, s.toCsv()) << "\n";
     total += s;
   }
 
-  out << fmt::format("total,{},{}", run, total.toCsv()) << "\n";
+  out << std::format("total,{},{}", run, total.toCsv()) << "\n";
 
   ++run;
 }

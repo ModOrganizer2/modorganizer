@@ -245,7 +245,7 @@ bool TransferSavesDialog::transferCharacters(
     QString const& character, char const* message, QDir const& sourceDirectory,
     SaveList& saves, QDir const& destination,
     const std::function<bool(const QString&, const QString&)>& method,
-    char const* errmsg)
+    std::format_string<QString, QString> errmsg)
 {
   if (QMessageBox::question(this, tr("Confirm"), tr(message).arg(character),
                             QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
@@ -270,7 +270,7 @@ bool TransferSavesDialog::transferCharacters(
       }
 
       if (!method(sourceFile.absoluteFilePath(), destinationFile)) {
-        log::error(errmsg, sourceFile.absoluteFilePath(), destinationFile);
+        log::error(errmsg, sourceFile.absoluteFilePath(), std::move(destinationFile));
       }
     }
   }
