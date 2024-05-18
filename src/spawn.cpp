@@ -125,8 +125,8 @@ QString makeDetails(const SpawnParameters& sp, DWORD code, const QString& more =
   const std::wstring wmore = (more.isEmpty() ? L"" : (", " + more).toStdWString());
 
   const auto s = fmt::format(
-      f, fmt::arg(L"code", code), fmt::arg(L"codename", errorCodeName(code)),
-      fmt::arg(L"more", wmore),
+      fmt::runtime(f), fmt::arg(L"code", code),
+      fmt::arg(L"codename", errorCodeName(code)), fmt::arg(L"more", wmore),
       fmt::arg(L"bin",
                QDir::toNativeSeparators(sp.binary.absoluteFilePath()).toStdWString()),
       fmt::arg(L"owner", owner), fmt::arg(L"rights", rights),
