@@ -2208,7 +2208,7 @@ For the other games this is not a sufficient replacement for AI!</string>
        <item>
         <widget class="LinkLabel" name="diagnosticsExplainedLabel">
          <property name="toolTip">
-          <string>Hint: right click link and copy link location</string>
+          <string>Click a link to open the location</string>
          </property>
          <property name="text">
           <string>
