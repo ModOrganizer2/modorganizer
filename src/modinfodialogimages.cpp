@@ -76,7 +76,10 @@ ImagesTab::ImagesTab(ModInfoDialogTabContext cx)
   ui->imagesShowDDS->setEnabled(m_ddsAvailable);
 
   ui->imagesThumbnails->setAutoFillBackground(false);
-  ui->imagesThumbnails->setAttribute(Qt::WA_OpaquePaintEvent, true);
+
+  if (ui->imagesThumbnails->palette().color(QPalette::Base) != Qt::transparent) {
+    ui->imagesThumbnails->setAttribute(Qt::WA_OpaquePaintEvent, true);
+  }
 
   {
     auto list = std::make_unique<QListWidget>();
