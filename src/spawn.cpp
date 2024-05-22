@@ -34,8 +34,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtDebug>
 #include <Shellapi.h>
 #include <errorcodes.h>
-#include <fmt/format.h>
-#include <fmt/xchar.h>
 #include <log.h>
 #include <report.h>
 #include <usvfs.h>
