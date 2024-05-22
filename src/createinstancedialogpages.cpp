@@ -296,7 +296,8 @@ void GamePage::select(IPluginGame* game, const QString& dir)
         // ask the user
 
         const auto path = QFileDialog::getExistingDirectory(
-            &m_dlg, QObject::tr("Find game installation for %1").arg(game->displayGameName()));
+            &m_dlg,
+            QObject::tr("Find game installation for %1").arg(game->displayGameName()));
 
         if (path.isEmpty()) {
           // cancelled
@@ -570,7 +571,8 @@ void GamePage::fillList()
       continue;
     }
 
-    if (!m_filter.matches(g->game->gameName()) && !m_filter.matches(g->game->displayGameName())) {
+    if (!m_filter.matches(g->game->gameName()) &&
+        !m_filter.matches(g->game->displayGameName())) {
       // filtered out
       continue;
     }
@@ -667,9 +669,10 @@ bool GamePage::confirmMicrosoftStore(const QString& path, IPluginGame* game)
                   "Organizer"
                   " and will not work properly.")
                   .arg(path))
-          .button({game ? QObject::tr("Use this folder for %1").arg(game->displayGameName())
-                        : QObject::tr("Use this folder"),
-                   QObject::tr("I know what I'm doing"), QMessageBox::Ignore})
+          .button(
+              {game ? QObject::tr("Use this folder for %1").arg(game->displayGameName())
+                    : QObject::tr("Use this folder"),
+               QObject::tr("I know what I'm doing"), QMessageBox::Ignore})
           .button({QObject::tr("Cancel"), QMessageBox::Cancel})
           .exec();
 
@@ -715,7 +718,8 @@ IPluginGame* GamePage::confirmOtherGame(const QString& path, IPluginGame* select
                   .arg(selectedGame->displayGameName()))
           .button({QObject::tr("Manage %1 instead").arg(guessedGame->displayGameName()),
                    QMessageBox::Ok})
-          .button({QObject::tr("Use this folder for %1").arg(selectedGame->displayGameName()),
+          .button({QObject::tr("Use this folder for %1")
+                       .arg(selectedGame->displayGameName()),
                    QObject::tr("I know what I'm doing"), QMessageBox::Ignore})
           .button({QObject::tr("Cancel"), QMessageBox::Cancel})
           .exec();
