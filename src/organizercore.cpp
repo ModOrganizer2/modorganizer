@@ -1564,7 +1564,7 @@ void OrganizerCore::onDirectoryRefreshed()
   // needs to be done before post refresh tasks
   m_DirectoryUpdate = false;
 
-  log::debug("running {} post refresh tasks");
+  log::debug("running post refresh tasks");
   m_OnNextRefreshCallbacks();
   m_OnNextRefreshCallbacks.disconnect_all_slots();
 
@@ -1947,7 +1947,7 @@ bool OrganizerCore::beforeRun(
     m_USVFS.updateMapping(fileMapping(profileName, customOverwrite));
     m_USVFS.updateForcedLibraries(forcedLibraries);
   } catch (const UsvfsConnectorException& e) {
-    log::debug(e.what());
+    log::debug("{}", e.what());
     return false;
   } catch (const std::exception& e) {
     QWidget* w = nullptr;

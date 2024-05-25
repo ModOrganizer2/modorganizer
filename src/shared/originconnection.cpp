@@ -98,8 +98,8 @@ void OriginConnection::changeNameLookup(const std::wstring& oldName,
     m_OriginsNameMap.erase(iter);
     m_OriginsNameMap[newName] = idx;
   } else {
-    log::error(QObject::tr("failed to change name lookup from {} to {}").toStdString(),
-               oldName, newName);
+    log::error(QObject::tr("failed to change name lookup from {0} to {1}"), oldName,
+               newName);
   }
 }
 

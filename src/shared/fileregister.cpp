@@ -74,7 +74,7 @@ bool FileRegister::removeFile(FileIndex index)
     }
   }
 
-  log::error(QObject::tr("invalid file index for remove: {}").toStdString(), index);
+  log::error("{}: {}", QObject::tr("invalid file index for remove"), index);
   return false;
 }
 
@@ -95,9 +95,8 @@ void FileRegister::removeOrigin(FileIndex index, OriginID originID)
     }
   }
 
-  log::error(
-      QObject::tr("invalid file index for remove (for origin): {}").toStdString(),
-      index);
+  log::error("{}: {}", QObject::tr("invalid file index for remove (for origin)"),
+             index);
 }
 
 void FileRegister::removeOriginMulti(std::set<FileIndex> indices, OriginID originID)

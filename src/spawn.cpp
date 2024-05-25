@@ -34,8 +34,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtDebug>
 #include <Shellapi.h>
 #include <errorcodes.h>
-#include <fmt/format.h>
-#include <fmt/xchar.h>
 #include <log.h>
 #include <report.h>
 #include <usvfs.h>
@@ -108,40 +106,28 @@ QString makeDetails(const SpawnParameters& sp, DWORD code, const QString& more =
     elevated = L"(not available)";
   }
 
-  std::wstring f = L"Error {code} {codename}{more}: {error}\n"
-                   L" . binary: '{bin}'\n"
-                   L" . owner: {owner}\n"
-                   L" . rights: {rights}\n"
-                   L" . arguments: '{args}'\n"
-                   L" . cwd: '{cwd}'{cwdexists}\n"
-                   L" . stdout: {stdout}, stderr: {stderr}, hooked: {hooked}\n"
-                   L" . MO elevated: {elevated}";
+  auto s = std::format(L"Error {} {}{}: {}\n"
+                       L" . binary: '{}'\n"
+                       L" . owner: {}\n"
+                       L" . rights: {}\n"
+                       L" . arguments: '{}'\n"
+                       L" . cwd: '{}'{}\n"
+                       L" . stdout: {}, stderr: {}, hooked: {}\n"
+                       L" . MO elevated: {}",
+                       code, errorCodeName(code), (more.isEmpty() ? more : ", " + more),
+                       formatSystemMessage(code),
+                       QDir::toNativeSeparators(sp.binary.absoluteFilePath()), owner,
+                       rights, sp.arguments,
+                       QDir::toNativeSeparators(sp.currentDirectory.absolutePath()),
+                       (cwdExists ? L"" : L" (not found)"),
+                       (sp.stdOut == INVALID_HANDLE_VALUE ? L"no" : L"yes"),
+                       (sp.stdErr == INVALID_HANDLE_VALUE ? L"no" : L"yes"),
+                       (sp.hooked ? L"yes" : L"no"), elevated);
 
   if (sp.hooked) {
-    f += L"\n . usvfs x86:{x86_dll} x64:{x64_dll} proxy_x86:{x86_proxy} "
-         L"proxy_x64:{x64_proxy}";
+    s += std::format(L"\n . usvfs x86:{} x64:{} proxy_x86:{} proxy_x64:{}",
+                     usvfs_x86_dll, usvfs_x64_dll, usvfs_x86_proxy, usvfs_x64_proxy);
   }
-
-  const std::wstring wmore = (more.isEmpty() ? L"" : (", " + more).toStdWString());
-
-  const auto s = fmt::format(
-      f, fmt::arg(L"code", code), fmt::arg(L"codename", errorCodeName(code)),
-      fmt::arg(L"more", wmore),
-      fmt::arg(L"bin",
-               QDir::toNativeSeparators(sp.binary.absoluteFilePath()).toStdWString()),
-      fmt::arg(L"owner", owner), fmt::arg(L"rights", rights),
-      fmt::arg(L"error", formatSystemMessage(code)),
-      fmt::arg(L"args", sp.arguments.toStdWString()),
-      fmt::arg(
-          L"cwd",
-          QDir::toNativeSeparators(sp.currentDirectory.absolutePath()).toStdWString()),
-      fmt::arg(L"cwdexists", (cwdExists ? L"" : L" (not found)")),
-      fmt::arg(L"stdout", (sp.stdOut == INVALID_HANDLE_VALUE ? L"no" : L"yes")),
-      fmt::arg(L"stderr", (sp.stdErr == INVALID_HANDLE_VALUE ? L"no" : L"yes")),
-      fmt::arg(L"hooked", (sp.hooked ? L"yes" : L"no")),
-      fmt::arg(L"x86_dll", usvfs_x86_dll), fmt::arg(L"x64_dll", usvfs_x64_dll),
-      fmt::arg(L"x86_proxy", usvfs_x86_proxy), fmt::arg(L"x64_proxy", usvfs_x64_proxy),
-      fmt::arg(L"elevated", elevated));
 
   return QString::fromStdWString(s);
 }
@@ -993,7 +979,7 @@ bool helperExec(QWidget* parent, const std::wstring& moDirectory,
 bool backdateBSAs(QWidget* parent, const std::wstring& moPath,
                   const std::wstring& dataPath)
 {
-  const std::wstring commandLine = fmt::format(L"backdateBSA \"{}\"", dataPath);
+  const std::wstring commandLine = std::format(L"backdateBSA \"{}\"", dataPath);
 
   return helperExec(parent, moPath, commandLine, FALSE);
 }
@@ -1001,7 +987,7 @@ bool backdateBSAs(QWidget* parent, const std::wstring& moPath,
 bool adminLaunch(QWidget* parent, const std::wstring& moPath,
                  const std::wstring& moFile, const std::wstring& workingDir)
 {
-  const std::wstring commandLine = fmt::format(
+  const std::wstring commandLine = std::format(
       L"adminLaunch {} \"{}\" \"{}\"", ::GetCurrentProcessId(), moFile, workingDir);
 
   return helperExec(parent, moPath, commandLine, true);

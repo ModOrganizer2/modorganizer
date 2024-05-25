@@ -109,7 +109,7 @@ private:
   transferCharacters(QString const& character, char const* message,
                      QDir const& sourceDirectory, SaveList& saves, QDir const& dest,
                      const std::function<bool(const QString&, const QString&)>& method,
-                     char const* errmsg);
+                     std::format_string<QString, QString> errmsg);
 };
 
 #endif  // TRANSFERSAVESDIALOG_H

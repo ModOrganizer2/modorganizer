@@ -74,7 +74,7 @@ void CategoryFactory::loadCategories()
             bool ok  = false;
             int temp = iter->toInt(&ok);
             if (!ok) {
-              log::error(tr("invalid category id {}").toStdString(), iter->constData());
+              log::error(tr("invalid category id {0}"), iter->constData());
             }
             nexusCats.push_back(NexusCategory("Unknown", temp));
           }
@@ -84,8 +84,7 @@ void CategoryFactory::loadCategories()
         int id       = cells[0].toInt(&cell0Ok);
         int parentID = cells[3].trimmed().toInt(&cell3Ok);
         if (!cell0Ok || !cell3Ok) {
-          log::error(tr("invalid category line {}: {}").toStdString(), lineNum,
-                     line.constData());
+          log::error(tr("invalid category line {0}: {1}"), lineNum, line.constData());
         }
         addCategory(id, QString::fromUtf8(cells[1].constData()), nexusCats, parentID);
       } else if (cells.count() == 3) {
@@ -94,14 +93,13 @@ void CategoryFactory::loadCategories()
         int id       = cells[0].toInt(&cell0Ok);
         int parentID = cells[2].trimmed().toInt(&cell3Ok);
         if (!cell0Ok || !cell3Ok) {
-          log::error(tr("invalid category line {}: {}").toStdString(), lineNum,
-                     line.constData());
+          log::error(tr("invalid category line {0}: {1}"), lineNum, line.constData());
         }
 
         addCategory(id, QString::fromUtf8(cells[1].constData()),
                     std::vector<NexusCategory>(), parentID);
       } else {
-        log::error(tr("invalid category line {}: {} ({} cells)").toStdString(), lineNum,
+        log::error(tr("invalid category line {0}: {1} ({2} cells)"), lineNum,
                    line.constData(), cells.count());
       }
     }
@@ -122,19 +120,17 @@ void CategoryFactory::loadCategories()
           bool ok         = false;
           int nexID       = nexCells[2].toInt(&ok);
           if (!ok) {
-            log::error(tr("invalid nexus ID {}").toStdString(),
-                       nexCells[2].constData());
+            log::error(tr("invalid nexus ID {}"), nexCells[2].constData());
           }
           int catID = nexCells[0].toInt(&ok);
           if (!ok) {
-            log::error(tr("invalid category id {}").toStdString(),
-                       nexCells[0].constData());
+            log::error(tr("invalid category id {}"), nexCells[0].constData());
           }
           m_NexusMap.insert_or_assign(nexID, NexusCategory(nexName, nexID));
           m_NexusMap.at(nexID).setCategoryID(catID);
         } else {
-          log::error(tr("invalid nexus category line {}: {} ({} cells)").toStdString(),
-                     lineNum, nexLine.constData(), nexCells.count());
+          log::error(tr("invalid nexus category line {0}: {1} ({2} cells)"), lineNum,
+                     nexLine.constData(), nexCells.count());
         }
       }
     }
@@ -394,7 +390,7 @@ bool CategoryFactory::isDescendantOfImpl(int id, int parentID,
       return isDescendantOfImpl(m_Categories[index].parentID(), parentID, seen);
     }
   } else {
-    log::warn(tr("{} is no valid category id").toStdString(), id);
+    log::warn(tr("{} is no valid category id"), id);
     return false;
   }
 }
@@ -513,11 +509,11 @@ unsigned int CategoryFactory::resolveNexusID(int nexusID) const
   auto result = m_NexusMap.find(nexusID);
   if (result != m_NexusMap.end()) {
     if (m_IDMap.count(result->second.categoryID())) {
-      log::debug(tr("nexus category id {} maps to internal {}").toStdString(), nexusID,
+      log::debug(tr("nexus category id {0} maps to internal {1}"), nexusID,
                  m_IDMap.at(result->second.categoryID()));
       return m_IDMap.at(result->second.categoryID());
     }
   }
-  log::debug(tr("nexus category id {} not mapped").toStdString(), nexusID);
+  log::debug(tr("nexus category id {} not mapped"), nexusID);
   return 0U;
 }
