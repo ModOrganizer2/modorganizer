@@ -146,7 +146,7 @@ void StatusBar::updateNormalMessage(OrganizerCore& core)
   QString game;
 
   if (core.managedGame()) {
-    game = core.managedGame()->gameName();
+    game = core.managedGame()->displayGameName();
   } else {
     game = tr("Unknown game");
   }

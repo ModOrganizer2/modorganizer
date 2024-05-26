@@ -296,7 +296,8 @@ void GamePage::select(IPluginGame* game, const QString& dir)
         // ask the user
 
         const auto path = QFileDialog::getExistingDirectory(
-            &m_dlg, QObject::tr("Find game installation for %1").arg(game->gameName()));
+            &m_dlg,
+            QObject::tr("Find game installation for %1").arg(game->displayGameName()));
 
         if (path.isEmpty()) {
           // cancelled
@@ -388,7 +389,7 @@ void GamePage::warnUnrecognized(const QString& path)
   // put the list of supported games in the details textbox
   QString supportedGames;
   for (auto* game : sortedGamePlugins()) {
-    supportedGames += game->gameName() + "\n";
+    supportedGames += game->displayGameName() + "\n";
   }
 
   QMessageBox dlg(&m_dlg);
@@ -417,7 +418,7 @@ std::vector<IPluginGame*> GamePage::sortedGamePlugins() const
 
   // natsort
   std::sort(v.begin(), v.end(), [](auto* a, auto* b) {
-    return (naturalCompare(a->gameName(), b->gameName()) < 0);
+    return (naturalCompare(a->displayGameName(), b->displayGameName()) < 0);
   });
 
   return v;
@@ -469,7 +470,7 @@ void GamePage::updateButton(Game* g)
     return;
   }
 
-  g->button->setText(g->game->gameName().replace("&", "&&"));
+  g->button->setText(g->game->displayGameName().replace("&", "&&"));
   g->button->setIcon(g->game->gameIcon());
 
   if (g->installed) {
@@ -570,7 +571,8 @@ void GamePage::fillList()
       continue;
     }
 
-    if (!m_filter.matches(g->game->gameName())) {
+    if (!m_filter.matches(g->game->gameName()) &&
+        !m_filter.matches(g->game->displayGameName())) {
       // filtered out
       continue;
     }
@@ -667,9 +669,10 @@ bool GamePage::confirmMicrosoftStore(const QString& path, IPluginGame* game)
                   "Organizer"
                   " and will not work properly.")
                   .arg(path))
-          .button({game ? QObject::tr("Use this folder for %1").arg(game->gameName())
-                        : QObject::tr("Use this folder"),
-                   QObject::tr("I know what I'm doing"), QMessageBox::Ignore})
+          .button(
+              {game ? QObject::tr("Use this folder for %1").arg(game->displayGameName())
+                    : QObject::tr("Use this folder"),
+               QObject::tr("I know what I'm doing"), QMessageBox::Ignore})
           .button({QObject::tr("Cancel"), QMessageBox::Cancel})
           .exec();
 
@@ -688,8 +691,8 @@ bool GamePage::confirmUnknown(const QString& path, IPluginGame* game)
                           "bold;\">%2</span> or "
                           "for any other game Mod Organizer can manage.")
                   .arg(path)
-                  .arg(game->gameName()))
-          .button({QObject::tr("Use this folder for %1").arg(game->gameName()),
+                  .arg(game->displayGameName()))
+          .button({QObject::tr("Use this folder for %1").arg(game->displayGameName()),
                    QObject::tr("I know what I'm doing"), QMessageBox::Ignore})
           .button({QObject::tr("Cancel"), QMessageBox::Cancel})
           .exec();
@@ -711,11 +714,12 @@ IPluginGame* GamePage::confirmOtherGame(const QString& path, IPluginGame* select
                   "not "
                   "<span style=\"white-space: nowrap; font-weight: bold;\">%3</span>.")
                   .arg(path)
-                  .arg(guessedGame->gameName())
-                  .arg(selectedGame->gameName()))
-          .button({QObject::tr("Manage %1 instead").arg(guessedGame->gameName()),
+                  .arg(guessedGame->displayGameName())
+                  .arg(selectedGame->displayGameName()))
+          .button({QObject::tr("Manage %1 instead").arg(guessedGame->displayGameName()),
                    QMessageBox::Ok})
-          .button({QObject::tr("Use this folder for %1").arg(selectedGame->gameName()),
+          .button({QObject::tr("Use this folder for %1")
+                       .arg(selectedGame->displayGameName()),
                    QObject::tr("I know what I'm doing"), QMessageBox::Ignore})
           .button({QObject::tr("Cancel"), QMessageBox::Cancel})
           .exec();

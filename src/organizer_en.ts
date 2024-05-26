@@ -260,8 +260,23 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="categoriesdialog.ui" line="130"/>
+        <source>Parent ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="categoriesdialog.ui" line="133"/>
+        <source>If set, the category is defined as a sub-category of another one. Parent ID needs to be a valid category ID.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="categoriesdialog.ui" line="138"/>
         <source>Nexus Categories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="categoriesdialog.ui" line="141"/>
+        <source>Comma-Separated list of Nexus IDs to be matched to the internal ID.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -275,14 +290,6 @@ p, li { white-space: pre-wrap; }
                 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
                 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To find out a category id used by the nexus, visit the categories list of the nexus page and hover over the links there.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
               </source>
-        <oldsource>
-                &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-                &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-                p, li { white-space: pre-wrap; }
-                &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;You can match one or multiple nexus categories to an internal ID. Whenever you download a mod from a Nexus Page, Mod Organizer will try to resolve the category defined on the Nexus to one available in MO.&lt;/span&gt;&lt;/p&gt;
-                &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
-                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To find out a category id used by the nexus, visit the categories list of the nexus page and hover over the links there.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
-              </oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -293,21 +300,6 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="categoriesdialog.ui" line="178"/>
         <source>Nexus Categories (Drag &amp;&amp; Drop to Assign)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="categoriesdialog.ui" line="141"/>
-        <source>Comma-Separated list of Nexus IDs to be matched to the internal ID.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="categoriesdialog.ui" line="130"/>
-        <source>Parent ID</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="categoriesdialog.ui" line="133"/>
-        <source>If set, the category is defined as a sub-category of another one. Parent ID needs to be a valid category ID.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -334,26 +326,19 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>CategoryFactory</name>
     <message>
-        <location filename="categories.cpp" line="127"/>
-        <source>invalid category id {}</source>
+        <location filename="categories.cpp" line="77"/>
+        <source>invalid category id {0}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categories.cpp" line="87"/>
         <location filename="categories.cpp" line="96"/>
         <source>invalid category line {0}: {1}</source>
-        <oldsource>invalid category line {}: {}</oldsource>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="categories.cpp" line="77"/>
-        <source>invalid category id {0}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categories.cpp" line="102"/>
         <source>invalid category line {0}: {1} ({2} cells)</source>
-        <oldsource>invalid category line {}: {} ({} cells)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -362,9 +347,13 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="categories.cpp" line="127"/>
+        <source>invalid category id {}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="categories.cpp" line="132"/>
         <source>invalid nexus category line {0}: {1} ({2} cells)</source>
-        <oldsource>invalid nexus category line {}: {} ({} cells)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1283,68 +1272,6 @@ File %3:	%4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1302"/>
-        <source>display name: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1323"/>
-        <source>file name: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1332"/>
-        <source>file time: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1351"/>
-        <source>file size: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1360"/>
-        <source>progress: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1369"/>
-        <source>state: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1378"/>
-        <source>infocomplete: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1392"/>
-        <location filename="downloadmanager.cpp" line="1400"/>
-        <location filename="downloadmanager.cpp" line="1413"/>
-        <source>mod id: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1421"/>
-        <source>ishidden: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1429"/>
-        <source>file info: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1438"/>
-        <source>mark installed: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="1479"/>
-        <source>mark uninstalled: invalid download index %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="downloadmanager.cpp" line="1059"/>
         <source>Please enter the nexus mod id</source>
         <translation type="unfinished"></translation>
@@ -1437,6 +1364,68 @@ File %3:	%4</source>
     <message>
         <location filename="downloadmanager.cpp" line="1295"/>
         <source>Unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1302"/>
+        <source>display name: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1323"/>
+        <source>file name: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1332"/>
+        <source>file time: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1351"/>
+        <source>file size: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1360"/>
+        <source>progress: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1369"/>
+        <source>state: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1378"/>
+        <source>infocomplete: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1392"/>
+        <location filename="downloadmanager.cpp" line="1400"/>
+        <location filename="downloadmanager.cpp" line="1413"/>
+        <source>mod id: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1421"/>
+        <source>ishidden: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1429"/>
+        <source>file info: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1438"/>
+        <source>mark installed: invalid download index %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1479"/>
+        <source>mark uninstalled: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3030,7 +3019,7 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
 <context>
     <name>MOBase::TutorialManager</name>
     <message>
-        <location filename="../../uibase/src/tutorialmanager.cpp" line="49"/>
+        <location filename="../../uibase/src/tutorialmanager.cpp" line="50"/>
         <source>tutorial manager not set up yet</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3112,9 +3101,6 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
                               Show: always show separators
                               Hide: never show separators
                             </source>
-        <oldsource>Filter: only show the separators that match the current filters
-Show: always show separators
-Hide: never show separators</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3125,6 +3111,18 @@ Hide: never show separators</oldsource>
     <message>
         <location filename="mainwindow.ui" line="255"/>
         <source>Pick a module collection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="258"/>
+        <source>
+                              &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+                              &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+                              p, li { white-space: pre-wrap; }
+                              &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+                              &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Create profiles here. Each profile contains its own list of active mods and esps. This way you can quickly switch between setups for different playthroughs.&lt;/span&gt;&lt;/p&gt;
+                              &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Please note that right now your esp load order is not kept separate for different profiles.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+                            </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3202,8 +3200,31 @@ Hide: never show separators</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="mainwindow.ui" line="628"/>
+        <source>
+                                &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+                                &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+                                p, li { white-space: pre-wrap; }
+                                &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+                                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Choose the program to run. Once you start using ModOrganizer, you should always run your game and tools from here or through shortcuts created here, otherwise mods installed through MO will not be visible.&lt;/span&gt;&lt;/p&gt;
+                                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;You can add new Tools to this list, but I can&apos;t promise tools I haven&apos;t tested will work.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+                              </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="mainwindow.ui" line="677"/>
         <source>Run program</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="680"/>
+        <source>
+                                    &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+                                    &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+                                    p, li { white-space: pre-wrap; }
+                                    &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+                                    &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Run the selected program with ModOrganizer enabled.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+                                  </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3214,6 +3235,17 @@ Hide: never show separators</oldsource>
     <message>
         <location filename="mainwindow.ui" line="733"/>
         <source>Create a shortcut in your start menu or on the desktop to the specified program</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="736"/>
+        <source>
+                                    &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+                                    &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+                                    p, li { white-space: pre-wrap; }
+                                    &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+                                    &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This creates a start menu shortcut that directly starts the selected program with the MO active.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+                                  </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3289,6 +3321,16 @@ Hide: never show separators</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="mainwindow.ui" line="1049"/>
+        <source>
+                                  BSA files are archives (comparable to .zip files) that contain data assets (meshes, textures, ...) to be used by the game. As such they &quot;compete&quot; with loose files in your data directory over which is loaded.
+                                  By default, BSAs that share their base name with an enabled ESP (i.e. plugin.esp and plugin.bsa) are automatically loaded and will have precedence over all loose files, the installation order you set up to the left is then ignored!
+
+                                  BSAs checked here are loaded in such a way that your installation order is obeyed properly.
+                                </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="mainwindow.ui" line="1080"/>
         <source>Data</source>
         <translation type="unfinished"></translation>
@@ -3336,62 +3378,6 @@ Hide: never show separators</oldsource>
     <message>
         <location filename="mainwindow.ui" line="1199"/>
         <source>Saves</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="258"/>
-        <source>
-                              &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-                              &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-                              p, li { white-space: pre-wrap; }
-                              &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-                              &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Create profiles here. Each profile contains its own list of active mods and esps. This way you can quickly switch between setups for different playthroughs.&lt;/span&gt;&lt;/p&gt;
-                              &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Please note that right now your esp load order is not kept separate for different profiles.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
-                            </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="628"/>
-        <source>
-                                &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-                                &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-                                p, li { white-space: pre-wrap; }
-                                &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-                                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Choose the program to run. Once you start using ModOrganizer, you should always run your game and tools from here or through shortcuts created here, otherwise mods installed through MO will not be visible.&lt;/span&gt;&lt;/p&gt;
-                                &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;You can add new Tools to this list, but I can&apos;t promise tools I haven&apos;t tested will work.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
-                              </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="680"/>
-        <source>
-                                    &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-                                    &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-                                    p, li { white-space: pre-wrap; }
-                                    &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-                                    &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Run the selected program with ModOrganizer enabled.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
-                                  </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="736"/>
-        <source>
-                                    &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-                                    &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-                                    p, li { white-space: pre-wrap; }
-                                    &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-                                    &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This creates a start menu shortcut that directly starts the selected program with the MO active.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
-                                  </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="1049"/>
-        <source>
-                                  BSA files are archives (comparable to .zip files) that contain data assets (meshes, textures, ...) to be used by the game. As such they &quot;compete&quot; with loose files in your data directory over which is loaded.
-                                  By default, BSAs that share their base name with an enabled ESP (i.e. plugin.esp and plugin.bsa) are automatically loaded and will have precedence over all loose files, the installation order you set up to the left is then ignored!
-
-                                  BSAs checked here are loaded in such a way that your installation order is obeyed properly.
-                                </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3766,11 +3752,6 @@ Hide: never show separators</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3056"/>
-        <source>There is no supported sort mechanism for this game. You will probably have to use a third-party tool.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="mainwindow.cpp" line="639"/>
         <source>Crash on exit</source>
         <translation type="unfinished"></translation>
@@ -4117,6 +4098,11 @@ You will have to visit the mod page on the %1 Nexus site to change your mind.</s
     <message>
         <location filename="mainwindow.cpp" line="3027"/>
         <source>Please reconsider endorsing MO2 on Nexus!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3056"/>
+        <source>There is no supported sort mechanism for this game. You will probably have to use a third-party tool.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5467,6 +5453,13 @@ Please enter a name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="modlistviewactions.cpp" line="267"/>
+        <location filename="modlistviewactions.cpp" line="1076"/>
+        <location filename="modlistviewactions.cpp" line="1395"/>
+        <source>Are you sure?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="modlistviewactions.cpp" line="269"/>
         <source>This action will remove any existing categories on any mod with a valid Nexus category mapping. Are you certain you want to proceed?</source>
         <translation type="unfinished"></translation>
@@ -5665,13 +5658,6 @@ This function will guess the versioning scheme under the assumption that the ins
     <message>
         <location filename="modlistviewactions.cpp" line="1043"/>
         <source>Restore all hidden files in the following mods?&lt;br&gt;&lt;ul&gt;%1&lt;/ul&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlistviewactions.cpp" line="267"/>
-        <location filename="modlistviewactions.cpp" line="1076"/>
-        <location filename="modlistviewactions.cpp" line="1395"/>
-        <source>Are you sure?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7157,7 +7143,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="createinstancedialogpages.cpp" line="37"/>
-        <location filename="createinstancedialogpages.cpp" line="1232"/>
+        <location filename="createinstancedialogpages.cpp" line="1236"/>
         <source>Instance type: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7167,81 +7153,81 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="299"/>
+        <location filename="createinstancedialogpages.cpp" line="300"/>
         <source>Find game installation for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="347"/>
+        <location filename="createinstancedialogpages.cpp" line="348"/>
         <source>Find game installation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="396"/>
-        <location filename="createinstancedialogpages.cpp" line="683"/>
-        <location filename="createinstancedialogpages.cpp" line="684"/>
+        <location filename="createinstancedialogpages.cpp" line="397"/>
+        <location filename="createinstancedialogpages.cpp" line="686"/>
+        <location filename="createinstancedialogpages.cpp" line="687"/>
         <source>Unrecognized game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="398"/>
+        <location filename="createinstancedialogpages.cpp" line="399"/>
         <source>The folder %1 does not seem to contain a game Mod Organizer can manage.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="401"/>
+        <location filename="createinstancedialogpages.cpp" line="402"/>
         <source>See details for the list of supported games.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="478"/>
+        <location filename="createinstancedialogpages.cpp" line="479"/>
         <source>No installation found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="549"/>
+        <location filename="createinstancedialogpages.cpp" line="550"/>
         <source>Browse...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="550"/>
+        <location filename="createinstancedialogpages.cpp" line="551"/>
         <source>The folder must contain a valid game installation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="661"/>
-        <location filename="createinstancedialogpages.cpp" line="662"/>
+        <location filename="createinstancedialogpages.cpp" line="663"/>
+        <location filename="createinstancedialogpages.cpp" line="664"/>
         <source>Microsoft Store game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="664"/>
+        <location filename="createinstancedialogpages.cpp" line="666"/>
         <source>The folder %1 seems to be a Microsoft Store game install.  Games installed through the Microsoft Store are not supported by Mod Organizer and will not work properly.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="670"/>
-        <location filename="createinstancedialogpages.cpp" line="692"/>
-        <location filename="createinstancedialogpages.cpp" line="718"/>
+        <location filename="createinstancedialogpages.cpp" line="673"/>
+        <location filename="createinstancedialogpages.cpp" line="695"/>
+        <location filename="createinstancedialogpages.cpp" line="721"/>
         <source>Use this folder for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="671"/>
+        <location filename="createinstancedialogpages.cpp" line="674"/>
         <source>Use this folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="672"/>
-        <location filename="createinstancedialogpages.cpp" line="693"/>
-        <location filename="createinstancedialogpages.cpp" line="719"/>
+        <location filename="createinstancedialogpages.cpp" line="675"/>
+        <location filename="createinstancedialogpages.cpp" line="696"/>
+        <location filename="createinstancedialogpages.cpp" line="723"/>
         <source>I know what I&apos;m doing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="673"/>
-        <location filename="createinstancedialogpages.cpp" line="694"/>
-        <location filename="createinstancedialogpages.cpp" line="720"/>
+        <location filename="createinstancedialogpages.cpp" line="676"/>
+        <location filename="createinstancedialogpages.cpp" line="697"/>
+        <location filename="createinstancedialogpages.cpp" line="724"/>
         <location filename="settingsdialognexus.cpp" line="270"/>
         <location filename="settingsdialognexus.cpp" line="277"/>
         <location filename="settingsdialogworkarounds.cpp" line="142"/>
@@ -7257,103 +7243,103 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="686"/>
+        <location filename="createinstancedialogpages.cpp" line="689"/>
         <source>The folder %1 does not seem to contain an installation for &lt;span style=&quot;white-space: nowrap; font-weight: bold;&quot;&gt;%2&lt;/span&gt; or for any other game Mod Organizer can manage.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="705"/>
-        <location filename="createinstancedialogpages.cpp" line="706"/>
+        <location filename="createinstancedialogpages.cpp" line="708"/>
+        <location filename="createinstancedialogpages.cpp" line="709"/>
         <source>Incorrect game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="708"/>
+        <location filename="createinstancedialogpages.cpp" line="711"/>
         <source>The folder %1 seems to contain an installation for &lt;span style=&quot;white-space: nowrap; font-weight: bold;&quot;&gt;%2&lt;/span&gt;, not &lt;span style=&quot;white-space: nowrap; font-weight: bold;&quot;&gt;%3&lt;/span&gt;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="716"/>
+        <location filename="createinstancedialogpages.cpp" line="719"/>
         <source>Manage %1 instead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1234"/>
+        <location filename="createinstancedialogpages.cpp" line="1238"/>
         <source>Instance location: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1237"/>
+        <location filename="createinstancedialogpages.cpp" line="1241"/>
         <source>Instance name: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1240"/>
+        <location filename="createinstancedialogpages.cpp" line="1244"/>
         <source>Profile settings:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1242"/>
+        <location filename="createinstancedialogpages.cpp" line="1246"/>
         <source>  Local INIs: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1243"/>
-        <location filename="createinstancedialogpages.cpp" line="1246"/>
-        <location filename="createinstancedialogpages.cpp" line="1248"/>
+        <location filename="createinstancedialogpages.cpp" line="1247"/>
+        <location filename="createinstancedialogpages.cpp" line="1250"/>
+        <location filename="createinstancedialogpages.cpp" line="1252"/>
         <source>yes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1243"/>
-        <location filename="createinstancedialogpages.cpp" line="1246"/>
-        <location filename="createinstancedialogpages.cpp" line="1249"/>
+        <location filename="createinstancedialogpages.cpp" line="1247"/>
+        <location filename="createinstancedialogpages.cpp" line="1250"/>
+        <location filename="createinstancedialogpages.cpp" line="1253"/>
         <source>no</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1245"/>
+        <location filename="createinstancedialogpages.cpp" line="1249"/>
         <source>  Local Saves: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1247"/>
+        <location filename="createinstancedialogpages.cpp" line="1251"/>
         <source>  Automatic Archive Invalidation: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1254"/>
         <location filename="createinstancedialogpages.cpp" line="1258"/>
+        <location filename="createinstancedialogpages.cpp" line="1262"/>
         <source>Base directory: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1259"/>
+        <location filename="createinstancedialogpages.cpp" line="1263"/>
         <source>Downloads</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1260"/>
+        <location filename="createinstancedialogpages.cpp" line="1264"/>
         <source>Mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1261"/>
+        <location filename="createinstancedialogpages.cpp" line="1265"/>
         <source>Profiles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1262"/>
+        <location filename="createinstancedialogpages.cpp" line="1266"/>
         <source>Overwrite</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1271"/>
+        <location filename="createinstancedialogpages.cpp" line="1275"/>
         <source>Game: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="createinstancedialogpages.cpp" line="1272"/>
+        <location filename="createinstancedialogpages.cpp" line="1276"/>
         <source>Game location: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8038,7 +8024,6 @@ Example:
     <message>
         <location filename="shared/fileregister.cpp" line="77"/>
         <source>invalid file index for remove</source>
-        <oldsource>invalid file index for remove: {}</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8054,7 +8039,6 @@ Example:
     <message>
         <location filename="shared/originconnection.cpp" line="101"/>
         <source>failed to change name lookup from {0} to {1}</source>
-        <oldsource>failed to change name lookup from {} to {}</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8734,7 +8718,6 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="settingsdialog.ui" line="104"/>
         <source>&lt;a href=&quot;https://discord.gg/ewUVAqyrQX&quot;&gt;Help translate Mod Organizer on Discord&lt;/a&gt;</source>
-        <oldsource>&lt;a href=&quot;https://discord.gg/NRGqdt5suP&quot;&gt;Help translate Mod Organizer on Discord&lt;/a&gt;</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9596,7 +9579,6 @@ For the other games this is not a sufficient replacement for AI!</source>
     <message>
         <location filename="settingsdialog.ui" line="2211"/>
         <source>Click a link to open the location</source>
-        <oldsource>Hint: right click link and copy link location</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9896,12 +9878,16 @@ On Windows XP:
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="5"/>
         <source>Welcome to the conflict resolution tutorial. This tutorial is very dense with information, so take it slow and feel free to revisit as needed - until you have a solid grasp of the types of conflicts and tools to manage them.</source>
-        <oldsource>There are multiple types of conflicts you may encounter when dealing with Mods. This tutorial will try to cover and explain how to deal with all of them.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="11"/>
         <source>Some info primarily applies to Bethesda Game Studios games. If this does not apply to you, you can exit the tutorial when you reach the section about &quot;record conflicts&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_conflictresolution_main.js" line="16"/>
+        <source>There are multiple types of conflicts you may encounter when dealing with mods. This tutorial will try to cover and explain how to deal with all of them.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9932,6 +9918,31 @@ On Windows XP:
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="54"/>
         <source>If the &quot;Flags&quot; column is enabled in the mod list, it will show you which mods are involved in a conflict.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_conflictresolution_main.js" line="59"/>
+        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_overwrite&quot; /&gt; indicates that the mod overwrites files that are also available in another mod.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_conflictresolution_main.js" line="63"/>
+        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_overwritten&quot; /&gt; indicates that the mod is &lt;b&gt;partially&lt;/b&gt; overwritten by another.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_conflictresolution_main.js" line="67"/>
+        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_mixed&quot; /&gt; indicates that both of the these are true.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_conflictresolution_main.js" line="71"/>
+        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_redundant&quot; /&gt; indicates that the mod is completely overwritten. It provides no active files and is essentially disabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_conflictresolution_main.js" line="75"/>
+        <source>There are two ways to see the individual files involved in a conflict:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10019,37 +10030,6 @@ On Windows XP:
         <source>This completes the tutorial. Hopefully you have a better grasp on the intricacies of conflict resolution. Good luck, and happy modding!</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <location filename="tutorials/tutorial_conflictresolution_main.js" line="16"/>
-        <source>There are multiple types of conflicts you may encounter when dealing with mods. This tutorial will try to cover and explain how to deal with all of them.</source>
-        <oldsource>As an example, say you install &quot;ModA&quot; which contains stylish new iron and leather armor. Then you install &quot;ModB&quot; which contains sexy ebony and leather armor. Obviously there is a conflict now: which leather armor to use?</oldsource>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="tutorials/tutorial_conflictresolution_main.js" line="59"/>
-        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_overwrite&quot; /&gt; indicates that the mod overwrites files that are also available in another mod.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="tutorials/tutorial_conflictresolution_main.js" line="63"/>
-        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_overwritten&quot; /&gt; indicates that the mod is &lt;b&gt;partially&lt;/b&gt; overwritten by another.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="tutorials/tutorial_conflictresolution_main.js" line="67"/>
-        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_mixed&quot; /&gt; indicates that both of the these are true.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="tutorials/tutorial_conflictresolution_main.js" line="71"/>
-        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_redundant&quot; /&gt; indicates that the mod is completely overwritten. It provides no active files and is essentially disabled.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="tutorials/tutorial_conflictresolution_main.js" line="75"/>
-        <source>There are two ways to see the individual files involved in a conflict:</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>tutorial_conflictresolution_modinfo</name>
@@ -10084,8 +10064,6 @@ On Windows XP:
         <source>Welcome to the Mod Organizer Tutorial! This will guide you through the most common features of MO2.
 
 It is highly recommended for first-time users to complete the tutorial from beginning to end to properly demonstrate key components of the tool.</source>
-        <oldsource>Welcome to the ModOrganizer Tutorial! This will guide you through the most common features of MO.
-Please go along with the tutorial because some things can&apos;t be demonstrated if you skip something.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10138,8 +10116,18 @@ It appears you have one now, however you can hold off on clearing it until after
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="tutorials/tutorial_firststeps_main.js" line="94"/>
+        <source>You can also install mods from disk using the &quot;Install Mod&quot; button.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="tutorials/tutorial_firststeps_main.js" line="100"/>
         <source>Downloads will appear on the &quot;Downloads&quot; tab here. You have to download and install at least one mod to proceed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_firststeps_main.js" line="109"/>
+        <source>Great, you just installed your first mod. Please note that the installation procedure may differ based on how a mod was packaged.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10150,6 +10138,11 @@ It appears you have one now, however you can hold off on clearing it until after
     <message>
         <location filename="tutorials/tutorial_firststeps_main.js" line="121"/>
         <source>Install a few more mods if you want, then enable them by checking them in the left pane. Mods that aren&apos;t enabled have no effect on the game whatsoever. </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_firststeps_main.js" line="130"/>
+        <source>For some mods, enabling it on the left pane is all you have to do...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10184,21 +10177,6 @@ It&apos;s important you always start the game from inside MO, otherwise the mods
     <message>
         <location filename="tutorials/tutorial_firststeps_main.js" line="177"/>
         <source>This completes the basic tutorial. Feel free to play the game and try out your new mods! Once you have installed a larger number, you may want to continue with the tutorial on conflict resolution.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="tutorials/tutorial_firststeps_main.js" line="94"/>
-        <source>You can also install mods from disk using the &quot;Install Mod&quot; button.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="tutorials/tutorial_firststeps_main.js" line="109"/>
-        <source>Great, you just installed your first mod. Please note that the installation procedure may differ based on how a mod was packaged.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="tutorials/tutorial_firststeps_main.js" line="130"/>
-        <source>For some mods, enabling it on the left pane is all you have to do...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

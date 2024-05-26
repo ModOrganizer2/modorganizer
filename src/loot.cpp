@@ -462,7 +462,7 @@ bool Loot::spawnLootcli(QWidget* parent, bool didUpdateMasterList,
   const auto logLevel = m_core.settings().diagnostics().lootLogLevel();
 
   QStringList parameters;
-  parameters << "--game" << m_core.managedGame()->gameShortName()
+  parameters << "--game" << m_core.managedGame()->lootGameName()
 
              << "--gamePath"
              << QString("\"%1\"").arg(
