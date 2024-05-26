@@ -137,8 +137,8 @@ public:
 
 ModListView::ModListView(QWidget* parent)
     : QTreeView(parent), m_core(nullptr), m_sortProxy(nullptr),
-      m_byPriorityProxy(nullptr), m_byCategoryProxy(nullptr),
-      m_byNexusIdProxy(nullptr), m_markers{{}, {}, {}, {}, {}, {}},
+      m_byPriorityProxy(nullptr), m_byCategoryProxy(nullptr), m_byNexusIdProxy(nullptr),
+      m_markers{{}, {}, {}, {}, {}, {}},
       m_scrollbar(new ModListViewMarkingScrollBar(this))
 {
   setVerticalScrollBar(m_scrollbar);

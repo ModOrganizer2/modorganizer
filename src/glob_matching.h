@@ -178,7 +178,7 @@ GlobPattern(std::basic_string<CharT, Traits, Allocator> const&)
 template <class CharT>
 GlobPattern(CharT const*) -> GlobPattern<CharT>;
 
-GlobPattern(QString const&)->GlobPattern<QChar>;
+GlobPattern(QString const&) -> GlobPattern<QChar>;
 
 }  // namespace MOShared
 
