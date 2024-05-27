@@ -469,12 +469,14 @@ void OrganizerCore::updateVFSParams(log::Levels logLevel,
                                     env::CoreDumpTypes coreDumpType,
                                     const QString& crashDumpsPath,
                                     std::chrono::seconds spawnDelay,
-                                    QString executableBlacklist)
+                                    QString executableBlacklist,
+                                    const QString& skipFileSuffixes,
+                                    const QString& skipDirectories)
 {
   setGlobalCoreDumpType(coreDumpType);
 
   m_USVFS.updateParams(logLevel, coreDumpType, crashDumpsPath, spawnDelay,
-                       executableBlacklist);
+                       executableBlacklist, skipFileSuffixes, skipDirectories);
 }
 
 void OrganizerCore::setLogLevel(log::Levels level)
@@ -484,7 +486,7 @@ void OrganizerCore::setLogLevel(log::Levels level)
   updateVFSParams(
       m_Settings.diagnostics().logLevel(), m_Settings.diagnostics().coreDumpType(),
       QString::fromStdWString(getGlobalCoreDumpPath()),
-      m_Settings.diagnostics().spawnDelay(), m_Settings.executablesBlacklist());
+      m_Settings.diagnostics().spawnDelay(), m_Settings.executablesBlacklist(), m_Settings.skipFileSuffixes(), m_Settings.skipDirectories());
 
   log::getDefault().setLevel(m_Settings.diagnostics().logLevel());
 }

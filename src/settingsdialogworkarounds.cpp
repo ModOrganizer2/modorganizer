@@ -34,12 +34,20 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
 
   // buttons
   m_ExecutableBlacklist = settings().executablesBlacklist();
+  m_SkipFileSuffixes    = settings().skipFileSuffixes();
+  m_SkipDirectories     = settings().skipDirectories();
 
   QObject::connect(ui->bsaDateBtn, &QPushButton::clicked, [&] {
     on_bsaDateBtn_clicked();
   });
   QObject::connect(ui->execBlacklistBtn, &QPushButton::clicked, [&] {
     on_execBlacklistBtn_clicked();
+  });
+  QObject::connect(ui->skipFileSuffixBtn, &QPushButton::clicked, [&] {
+    on_skipFileSuffixBtn_clicked();
+  });
+  QObject::connect(ui->skipDirectoriesBtn, &QPushButton::clicked, [&] {
+    on_skipDirectoriesBtn_clicked();
   });
   QObject::connect(ui->resetGeometryBtn, &QPushButton::clicked, [&] {
     on_resetGeometryBtn_clicked();
@@ -69,6 +77,8 @@ void WorkaroundsSettingsTab::update()
 
   // buttons
   settings().setExecutablesBlacklist(m_ExecutableBlacklist);
+  settings().setSkipFileSuffixes(m_SkipFileSuffixes);
+  settings().setSkipDirectories(m_SkipDirectories);
 }
 
 bool WorkaroundsSettingsTab::changeBlacklistNow(QWidget* parent, Settings& settings)
@@ -114,10 +124,80 @@ WorkaroundsSettingsTab::changeBlacklistLater(QWidget* parent, const QString& cur
   return blacklist.join(";");
 }
 
+std::optional<QString>
+WorkaroundsSettingsTab::changeSkipFileSuffixes(QWidget* parent, const QString& current)
+{
+  bool ok = false;
+
+  QString result = QInputDialog::getMultiLineText(
+      parent, QObject::tr("Skip File Suffixes"),
+      QObject::tr(
+          "Enter one file suffix per line to be skipped / ignored from the virtual "
+          "file system.\n"
+          "Not to be confused with file extensions, file suffixes are simply how the "
+          "filename ends.\n\n"
+          "Example:\n"
+          "  .txt - Would skip all files that end with .txt, <any text>.txt\n"
+          "  some_file.txt - Would skip all files that end with some_file.txt, <any text>some_file.txt"),
+      current.split(";").join("\n"), &ok);
+
+  if (!ok) {
+    return {};
+  }
+
+  QStringList fileSuffixes;
+  for (auto& suffix : result.split("\n")) {
+    fileSuffixes << suffix.trimmed();
+  }
+
+  return fileSuffixes.join(";");
+}
+
+std::optional<QString>
+WorkaroundsSettingsTab::changeSkipDirectories(QWidget* parent, const QString& current)
+{
+  bool ok = false;
+
+  QString result = QInputDialog::getMultiLineText(
+      parent, QObject::tr("Skip Directories"),
+      QObject::tr(
+          "Enter one directory per line to be skipped / ignored from the virtual "
+          "file system.\n\n"
+          "Example:\n"
+          "  .git\n"
+          "  instructions"),
+      current.split(";").join("\n"), &ok);
+
+  if (!ok) {
+    return {};
+  }
+
+  QStringList directories;
+  for (auto& dir : result.split("\n")) {
+    directories << dir.trimmed();
+  }
+
+  return directories.join(";");
+}
+
 void WorkaroundsSettingsTab::on_execBlacklistBtn_clicked()
 {
   if (auto s = changeBlacklistLater(parentWidget(), m_ExecutableBlacklist)) {
     m_ExecutableBlacklist = *s;
+  }
+}
+
+void WorkaroundsSettingsTab::on_skipFileSuffixBtn_clicked() 
+{
+  if (auto s = changeSkipFileSuffixes(parentWidget(), m_SkipFileSuffixes)) {
+    m_SkipFileSuffixes = *s;
+  }
+}
+
+void WorkaroundsSettingsTab::on_skipDirectoriesBtn_clicked() 
+{
+  if (auto s = changeSkipDirectories(parentWidget(), m_SkipDirectories)) {
+    m_SkipDirectories = *s;
   }
 }
 

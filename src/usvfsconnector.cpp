@@ -160,6 +160,21 @@ UsvfsConnector::UsvfsConnector()
     BlacklistExecutable(buf.data());
   }
 
+  ClearSkipFileSuffixes();
+  for (auto& suffix : s.skipFileSuffixes().split(";")) {
+    if (suffix.isEmpty()) {
+      continue;
+    }
+    std::wstring buf = suffix.toStdWString();
+    AddSkipFileSuffix(buf.data());
+  }
+
+  ClearSkipDirectories();
+  for (auto& dir : s.skipDirectories().split(";")) {
+    std::wstring buf = dir.toStdWString();
+    AddSkipDirectory(buf.data());
+  }
+
   ClearLibraryForceLoads();
 
   m_LogWorker.moveToThread(&m_WorkerThread);
@@ -228,7 +243,9 @@ void UsvfsConnector::updateParams(MOBase::log::Levels logLevel,
                                   env::CoreDumpTypes coreDumpType,
                                   const QString& crashDumpsPath,
                                   std::chrono::seconds spawnDelay,
-                                  QString executableBlacklist)
+                                  QString executableBlacklist,
+                                  const QString& skipFileSuffixes,
+                                  const QString& skipDirectories)
 {
   using namespace std::chrono;
 
@@ -247,6 +264,21 @@ void UsvfsConnector::updateParams(MOBase::log::Levels logLevel,
   for (auto exec : executableBlacklist.split(";")) {
     std::wstring buf = exec.toStdWString();
     BlacklistExecutable(buf.data());
+  }
+
+  ClearSkipFileSuffixes();
+  for (auto& suffix : skipFileSuffixes.split(";")) {
+    if (suffix.isEmpty()) {
+      continue;
+    }
+    std::wstring buf = suffix.toStdWString();
+    AddSkipFileSuffix(buf.data());
+  }
+
+  ClearSkipDirectories();
+  for (auto& dir : skipDirectories.split(";")) {
+    std::wstring buf = dir.toStdWString();
+    AddSkipDirectory(buf.data());
   }
 }
 

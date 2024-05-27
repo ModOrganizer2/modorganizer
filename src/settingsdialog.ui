@@ -2017,6 +2017,60 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
+               <widget class="QPushButton" name="bsaDateBtn">
+                <property name="toolTip">
+                 <string>
+                          For Skyrim, this can be used instead of Archive Invalidation. It should make AI redundant for all Profiles.
+                          For the other games this is not a sufficient replacement for AI!
+                        </string>
+                </property>
+                <property name="whatsThis">
+                 <string>
+                          For Skyrim, this can be used instead of Archive Invalidation. It should make AI redundant for all Profiles.
+                          For the other games this is not a sufficient replacement for AI!
+                        </string>
+                </property>
+                <property name="text">
+                 <string>Back-date BSAs</string>
+                </property>
+                <property name="icon">
+                 <iconset>
+                  <normaloff>:/MO/gui/resources/emblem-readonly.png</normaloff>:/MO/gui/resources/emblem-readonly.png</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="widget_usvfs" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
                <widget class="QPushButton" name="execBlacklistBtn">
                 <property name="toolTip">
                  <string>Add executables to the blacklist to prevent them from
@@ -2037,21 +2091,34 @@ programs you are intentionally running.</string>
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="bsaDateBtn">
+               <widget class="QPushButton" name="skipFileSuffixBtn">
                 <property name="toolTip">
-                 <string>For Skyrim, this can be used instead of Archive Invalidation. It should make AI redundant for all Profiles.
-For the other games this is not a sufficient replacement for AI!</string>
+                 <string>Files to skip or ignore from the virtual file system.</string>
                 </property>
                 <property name="whatsThis">
-                 <string>For Skyrim, this can be used instead of Archive Invalidation. It should make AI redundant for all Profiles.
-For the other games this is not a sufficient replacement for AI!</string>
+                 <string>Files to skip or ignore from the virtual file system.</string>
                 </property>
                 <property name="text">
-                 <string>Back-date BSAs</string>
+                 <string>Skip File Suffixes</string>
                 </property>
-                <property name="icon">
-                 <iconset>
-                  <normaloff>:/MO/gui/resources/emblem-readonly.png</normaloff>:/MO/gui/resources/emblem-readonly.png</iconset>
+                <property name="autoDefault">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="skipDirectoriesBtn">
+                <property name="toolTip">
+                 <string>Directories to skip or ignore from the virtual file system.</string>
+                </property>
+                <property name="whatsThis">
+                 <string>Directories to skip or ignore from the virtual file system.</string>
+                </property>
+                <property name="text">
+                 <string>Skip Directories</string>
+                </property>
+                <property name="autoDefault">
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>

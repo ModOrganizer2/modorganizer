@@ -20,13 +20,29 @@ public:
   static std::optional<QString> changeBlacklistLater(QWidget* parent,
                                                      const QString& current);
 
+  // shows the blacklist dialog from the given string and returns the new
+  // blacklist if the user accepted it
+  //
+  static std::optional<QString> changeSkipFileSuffixes(QWidget* parent,
+                                                     const QString& current);
+
+  // shows the blacklist dialog from the given string and returns the new
+  // blacklist if the user accepted it
+  //
+  static std::optional<QString> changeSkipDirectories(QWidget* parent,
+                                                     const QString& current);
+
   void update();
 
 private:
   QString m_ExecutableBlacklist;
+  QString m_SkipFileSuffixes;
+  QString m_SkipDirectories;
 
   void on_bsaDateBtn_clicked();
   void on_execBlacklistBtn_clicked();
+  void on_skipFileSuffixBtn_clicked();
+  void on_skipDirectoriesBtn_clicked();
   void on_resetGeometryBtn_clicked();
 };
 
