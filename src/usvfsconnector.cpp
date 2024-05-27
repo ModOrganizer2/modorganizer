@@ -160,19 +160,19 @@ UsvfsConnector::UsvfsConnector()
     BlacklistExecutable(buf.data());
   }
 
-  ClearSkipFileSuffixes();
+  usvfsClearSkipFileSuffixes();
   for (auto& suffix : s.skipFileSuffixes().split(";")) {
     if (suffix.isEmpty()) {
       continue;
     }
     std::wstring buf = suffix.toStdWString();
-    AddSkipFileSuffix(buf.data());
+    usvfsAddSkipFileSuffix(buf.data());
   }
 
-  ClearSkipDirectories();
+  usvfsClearSkipDirectories();
   for (auto& dir : s.skipDirectories().split(";")) {
     std::wstring buf = dir.toStdWString();
-    AddSkipDirectory(buf.data());
+    usvfsAddSkipDirectory(buf.data());
   }
 
   ClearLibraryForceLoads();
@@ -266,19 +266,19 @@ void UsvfsConnector::updateParams(MOBase::log::Levels logLevel,
     BlacklistExecutable(buf.data());
   }
 
-  ClearSkipFileSuffixes();
+  usvfsClearSkipFileSuffixes();
   for (auto& suffix : skipFileSuffixes.split(";")) {
     if (suffix.isEmpty()) {
       continue;
     }
     std::wstring buf = suffix.toStdWString();
-    AddSkipFileSuffix(buf.data());
+    usvfsAddSkipFileSuffix(buf.data());
   }
 
-  ClearSkipDirectories();
+  usvfsClearSkipDirectories();
   for (auto& dir : skipDirectories.split(";")) {
     std::wstring buf = dir.toStdWString();
-    AddSkipDirectory(buf.data());
+    usvfsAddSkipDirectory(buf.data());
   }
 }
 
