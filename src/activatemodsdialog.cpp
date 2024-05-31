@@ -28,6 +28,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QtGlobal>
 
+using namespace MOBase;
+
 ActivateModsDialog::ActivateModsDialog(SaveGameInfo::MissingAssets const& missingAssets,
                                        QWidget* parent)
     : TutorableDialog("ActivateMods", parent), ui(new Ui::ActivateModsDialog)

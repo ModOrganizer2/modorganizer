@@ -58,7 +58,7 @@ private:
   void onContextMenu(const QPoint& pos);
   void deleteSavegame();
   void saveSelectionChanged(QTreeWidgetItem* newItem);
-  void fixMods(SaveGameInfo::MissingAssets const& missingAssets);
+  void fixMods(MOBase::SaveGameInfo::MissingAssets const& missingAssets);
   void refreshSavesIfOpen();
   void openInExplorer();
 };

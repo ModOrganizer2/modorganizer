@@ -177,7 +177,7 @@ void PluginList::refresh(const QString& profileName,
 
   QStringList primaryPlugins = m_GamePlugin->primaryPlugins();
   QStringList enabledPlugins = m_GamePlugin->enabledPlugins();
-  GamePlugins* gamePlugins   = m_GamePlugin->feature<GamePlugins>();
+  GamePlugins* gamePlugins   = m_Organizer.gameFeatures().gameFeature<GamePlugins>();
   const bool lightPluginsAreSupported =
       gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
   const bool overridePluginsAreSupported =
@@ -673,7 +673,7 @@ void PluginList::writeLockedOrder(const QString& fileName) const
 
 void PluginList::saveTo(const QString& lockedOrderFileName) const
 {
-  GamePlugins* gamePlugins = m_GamePlugin->feature<GamePlugins>();
+  GamePlugins* gamePlugins = m_Organizer.gameFeatures().gameFeature<GamePlugins>();
   if (gamePlugins) {
     gamePlugins->writePluginLists(m_Organizer.managedGameOrganizer()->pluginList());
   }
@@ -1085,7 +1085,7 @@ void PluginList::generatePluginIndexes()
   int numESLs    = 0;
   int numSkipped = 0;
 
-  GamePlugins* gamePlugins = m_GamePlugin->feature<GamePlugins>();
+  GamePlugins* gamePlugins = m_Organizer.gameFeatures().gameFeature<GamePlugins>();
   const bool lightPluginsSupported =
       gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
   const bool overridePluginsSupported =
@@ -1358,8 +1358,8 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
   }
 
   if (esp.forceDisabled) {
-    if (m_GamePlugin->feature<GamePlugins>() && esp.hasLightExtension &&
-        !m_GamePlugin->feature<GamePlugins>()->lightPluginsAreSupported()) {
+    auto* feature = m_Organizer.gameFeatures().gameFeature<GamePlugins>();
+    if (feature && esp.hasLightExtension && feature->lightPluginsAreSupported()) {
       toolTip += "<br><br>" + tr("Light plugins (ESL) are not supported by this game.");
     } else {
       toolTip += "<br><br>" + tr("This game does not currently permit custom plugin "

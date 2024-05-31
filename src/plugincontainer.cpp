@@ -320,7 +320,9 @@ void PluginRequirements::requiredFor(std::vector<MOBase::IPlugin*>& required,
 // PluginContainer
 
 PluginContainer::PluginContainer(OrganizerCore* organizer)
-    : m_Organizer(organizer), m_UserInterface(nullptr), m_PreviewGenerator(*this)
+    : m_Organizer(organizer), m_UserInterface(nullptr),
+      m_GameFeatures(std::make_unique<GameFeatures>(organizer, this)),
+      m_PreviewGenerator(*this)
 {}
 
 PluginContainer::~PluginContainer()
@@ -625,7 +627,7 @@ IPlugin* PluginContainer::registerPlugin(QObject* plugin, const QString& filepat
   return nullptr;
 }
 
-IPlugin* PluginContainer::managedGame() const
+IPluginGame* PluginContainer::managedGame() const
 {
   // TODO: This const_cast is safe but ugly. Most methods require a IPlugin*, so
   // returning a const-version if painful. This should be fixed by making methods accept
@@ -663,9 +665,8 @@ void PluginContainer::setEnabled(MOBase::IPlugin* plugin, bool enable,
   // If required, disable dependencies:
   if (!enable && dependencies) {
     for (auto* p : requirements(plugin).requiredFor()) {
-      setEnabled(
-          p, false,
-          false);  // No need to "recurse" here since requiredFor already does it.
+      // No need to "recurse" here since requiredFor already does it.
+      setEnabled(p, false, false);
     }
   }
 
@@ -758,11 +759,6 @@ IPluginGame* PluginContainer::game(const QString& name) const
   } else {
     return nullptr;
   }
-}
-
-const PreviewGenerator& PluginContainer::previewGenerator() const
-{
-  return m_PreviewGenerator;
 }
 
 void PluginContainer::startPluginsImpl(const std::vector<QObject*>& plugins) const

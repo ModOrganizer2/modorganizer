@@ -8,6 +8,7 @@
 
 #include "organizercore.h"
 
+class GameFeaturesProxy;
 class PluginContainer;
 class DownloadManagerProxy;
 class ModListProxy;
@@ -59,10 +60,12 @@ public:  // IOrganizer interface
                 const std::function<bool(const FileInfo&)>& filter) const override;
   virtual std::shared_ptr<const MOBase::IFileTree> virtualFileTree() const override;
 
-  virtual MOBase::IDownloadManager* downloadManager() const;
-  virtual MOBase::IPluginList* pluginList() const;
-  virtual MOBase::IModList* modList() const;
+  virtual MOBase::IDownloadManager* downloadManager() const override;
+  virtual MOBase::IPluginList* pluginList() const override;
+  virtual MOBase::IModList* modList() const override;
   virtual MOBase::IProfile* profile() const override;
+  virtual MOBase::IGameFeatures* gameFeatures() const override;
+
   virtual HANDLE startApplication(const QString& executable,
                                   const QStringList& args = QStringList(),
                                   const QString& cwd = "", const QString& profile = "",
@@ -151,6 +154,7 @@ private:
   std::unique_ptr<DownloadManagerProxy> m_DownloadManagerProxy;
   std::unique_ptr<ModListProxy> m_ModListProxy;
   std::unique_ptr<PluginListProxy> m_PluginListProxy;
+  std::unique_ptr<GameFeaturesProxy> m_GameFeaturesProxy;
 };
 
 #endif  // ORGANIZERPROXY_H

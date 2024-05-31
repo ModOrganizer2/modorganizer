@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "bsainvalidation.h"
 #include "filesystemutilities.h"
+#include "game_features.h"
 #include "iplugingame.h"
 #include "localsavegames.h"
 #include "organizercore.h"
@@ -52,7 +53,8 @@ Q_DECLARE_METATYPE(Profile::Ptr)
 ProfilesDialog::ProfilesDialog(const QString& profileName, OrganizerCore& organizer,
                                QWidget* parent)
     : TutorableDialog("Profiles", parent), ui(new Ui::ProfilesDialog),
-      m_FailState(false), m_Game(organizer.managedGame()), m_ActiveProfileName("")
+      m_GameFeatures(organizer.gameFeatures()), m_FailState(false),
+      m_Game(organizer.managedGame()), m_ActiveProfileName("")
 {
   ui->setupUi(this);
 
@@ -70,15 +72,14 @@ ProfilesDialog::ProfilesDialog(const QString& profileName, OrganizerCore& organi
     }
   }
 
-  BSAInvalidation* invalidation = m_Game->feature<BSAInvalidation>();
-
+  auto* invalidation = m_GameFeatures.gameFeature<BSAInvalidation>();
   if (invalidation == nullptr) {
     ui->invalidationBox->setToolTip(
         tr("Archive invalidation isn't required for this game."));
     ui->invalidationBox->setEnabled(false);
   }
 
-  if (!m_Game->feature<LocalSavegames>()) {
+  if (!m_GameFeatures.gameFeature<LocalSavegames>()) {
     ui->localSavesBox->setToolTip(
         tr("This game does not support profile-specific game saves."));
     ui->localSavesBox->setEnabled(false);
@@ -149,8 +150,8 @@ QListWidgetItem* ProfilesDialog::addItem(const QString& name)
   QListWidgetItem* newItem =
       new QListWidgetItem(profileDir.dirName(), ui->profilesList);
   try {
-    newItem->setData(Qt::UserRole, QVariant::fromValue(
-                                       Profile::Ptr(new Profile(profileDir, m_Game))));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(
+                                       profileDir, m_Game, m_GameFeatures))));
     m_FailState = false;
   } catch (const std::exception& e) {
     reportError(tr("failed to create profile: %1").arg(e.what()));
@@ -161,7 +162,8 @@ QListWidgetItem* ProfilesDialog::addItem(const QString& name)
 void ProfilesDialog::createProfile(const QString& name, bool useDefaultSettings)
 {
   try {
-    auto profile = Profile::Ptr(new Profile(name, m_Game, useDefaultSettings));
+    auto profile =
+        Profile::Ptr(new Profile(name, m_Game, m_GameFeatures, useDefaultSettings));
     QListWidgetItem* newItem = new QListWidgetItem(name, ui->profilesList);
     newItem->setData(Qt::UserRole, QVariant::fromValue(profile));
     ui->profilesList->addItem(newItem);

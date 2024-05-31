@@ -55,6 +55,7 @@ mo2_add_filter(NAME src/core GROUPS
 	nexusinterface
 	nxmaccessmanager
 	organizercore
+	game_features
 	plugincontainer
 	apiuseraccount
 	processrunner
@@ -196,6 +197,7 @@ mo2_add_filter(NAME src/profiles GROUPS
 
 mo2_add_filter(NAME src/proxies GROUPS
 	downloadmanagerproxy
+	gamefeaturesproxy
 	modlistproxy
 	organizerproxy
 	pluginlistproxy
