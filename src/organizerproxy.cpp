@@ -27,8 +27,8 @@ OrganizerProxy::OrganizerProxy(OrganizerCore* organizer,
       m_ModListProxy(std::make_unique<ModListProxy>(this, organizer->modList())),
       m_PluginListProxy(
           std::make_unique<PluginListProxy>(this, organizer->pluginList())),
-      m_GameFeaturesProxy(std::make_unique<GameFeaturesProxy>(
-          this, organizer->pluginContainer().gameFeatures()))
+      m_GameFeaturesProxy(
+          std::make_unique<GameFeaturesProxy>(this, pluginContainer->gameFeatures()))
 {}
 
 OrganizerProxy::~OrganizerProxy()

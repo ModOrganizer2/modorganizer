@@ -28,24 +28,24 @@ const std::type_index ModDataContentIndex{typeid(ModDataContent)};
 
 class GameFeatures::CombinedModDataChecker : public ModDataChecker
 {
-  std::vector<std::shared_ptr<ModDataChecker>> m_checkers;
+  std::vector<std::shared_ptr<ModDataChecker>> m_modDataCheckers;
   mutable std::shared_ptr<ModDataChecker> m_fixer = nullptr;
 
 public:
   void setCheckers(std::vector<std::shared_ptr<ModDataChecker>> checkers)
   {
-    m_checkers = std::move(checkers);
-    m_fixer    = nullptr;
+    m_modDataCheckers = std::move(checkers);
+    m_fixer           = nullptr;
   }
 
-  bool isValid() const { return m_checkers.empty(); }
+  bool isValid() const { return !m_modDataCheckers.empty(); }
 
   CheckReturn
   dataLooksValid(std::shared_ptr<const MOBase::IFileTree> fileTree) const override
   {
     m_fixer = nullptr;
 
-    for (auto& modDataChecker : m_checkers) {
+    for (auto& modDataChecker : m_modDataCheckers) {
       auto check = modDataChecker->dataLooksValid(fileTree);
 
       switch (check) {
@@ -78,6 +78,8 @@ class GameFeatures::CombinedModDataContent : public ModDataContent
   std::vector<Content> m_allContents;
 
 public:
+  bool isValid() const { return !m_modDataContents.empty(); }
+
   void setContents(std::vector<std::shared_ptr<ModDataContent>> modDataContents)
   {
     m_modDataContents.clear();
@@ -102,8 +104,6 @@ public:
       offset += contents.size();
     }
   }
-
-  bool isValid() const { return !m_modDataContents.empty(); }
 
   std::vector<Content> getAllContents() const override { return m_allContents; }
 
