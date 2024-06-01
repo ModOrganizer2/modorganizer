@@ -36,7 +36,7 @@ bool GameFeaturesProxy::unregisterFeature(std::shared_ptr<MOBase::GameFeature> f
   return m_Features.unregisterGameFeature(feature);
 }
 
-MOBase::GameFeature*
+std::shared_ptr<MOBase::GameFeature>
 GameFeaturesProxy::gameFeatureImpl(std::type_info const& info) const
 {
   return m_Features.gameFeature(info);

@@ -162,6 +162,8 @@ GameFeatures::GameFeatures(OrganizerCore* core, PluginContainer* plugins)
           });
 }
 
+GameFeatures::~GameFeatures() {}
+
 GameFeatures::CombinedModDataChecker& GameFeatures::modDataChecker() const
 {
   return dynamic_cast<CombinedModDataChecker&>(*m_modDataChecker);
@@ -176,6 +178,12 @@ void GameFeatures::updateCurrentFeatures(std::type_index const& index)
   auto& features = m_allFeatures[index];
 
   m_currentFeatures[index].clear();
+
+  // this can occur when starting MO2, just wait for the next update
+  if (!m_pluginContainer.managedGame()) {
+    return;
+  }
+
   for (const auto& dataFeature : features) {
 
     // registering plugin is disabled
@@ -202,7 +210,7 @@ void GameFeatures::updateCurrentFeatures(std::type_index const& index)
                      return std::dynamic_pointer_cast<ModDataChecker>(checker);
                    });
     modDataChecker().setCheckers(std::move(checkers));
-    emit modDataCheckerUpdated(gameFeature<ModDataChecker>());
+    emit modDataCheckerUpdated(gameFeature<ModDataChecker>().get());
   }
 
   // update mod data content
@@ -215,7 +223,7 @@ void GameFeatures::updateCurrentFeatures(std::type_index const& index)
                      return std::dynamic_pointer_cast<ModDataContent>(checker);
                    });
     modDataContent().setContents(std::move(contents));
-    emit modDataContentUpdated(gameFeature<ModDataContent>());
+    emit modDataContentUpdated(gameFeature<ModDataContent>().get());
   }
 }
 
@@ -313,14 +321,14 @@ int GameFeatures::unregisterGameFeatures(MOBase::IPlugin* plugin,
   return removed;
 }
 
-GameFeature* GameFeatures::gameFeature(std::type_info const& info) const
+std::shared_ptr<GameFeature> GameFeatures::gameFeature(std::type_info const& info) const
 {
   if (info == ModDataCheckerIndex) {
-    return modDataChecker().isValid() ? m_modDataChecker.get() : nullptr;
+    return modDataChecker().isValid() ? m_modDataChecker : nullptr;
   }
 
   if (info == ModDataContentIndex) {
-    return modDataContent().isValid() ? m_modDataContent.get() : nullptr;
+    return modDataContent().isValid() ? m_modDataContent : nullptr;
   }
 
   auto it = m_currentFeatures.find(info);
@@ -328,5 +336,5 @@ GameFeature* GameFeatures::gameFeature(std::type_info const& info) const
     return nullptr;
   }
 
-  return it->second.front().get();
+  return it->second.front();
 }

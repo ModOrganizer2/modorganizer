@@ -35,6 +35,8 @@ public:
    */
   GameFeatures(OrganizerCore* core, PluginContainer* plugins);
 
+  ~GameFeatures();
+
   // register game features
   //
   bool registerGameFeature(MOBase::IPlugin* plugin, QStringList const& games,
@@ -48,9 +50,9 @@ public:
   // retrieve a game feature
   //
   template <class T>
-  T* gameFeature() const
+  std::shared_ptr<T> gameFeature() const
   {
-    return dynamic_cast<T*>(gameFeature(typeid(T)));
+    return std::dynamic_pointer_cast<T>(gameFeature(typeid(T)));
   }
 
 signals:
@@ -88,7 +90,7 @@ private:
 
   // retrieve a game feature from info
   //
-  MOBase::GameFeature* gameFeature(std::type_info const& index) const;
+  std::shared_ptr<MOBase::GameFeature> gameFeature(std::type_info const& index) const;
 
   // update current features by filtering
   //
@@ -108,8 +110,8 @@ private:
   std::unordered_map<std::type_index, std::vector<std::shared_ptr<MOBase::GameFeature>>>
       m_currentFeatures;
 
-  std::unique_ptr<MOBase::ModDataChecker> m_modDataChecker;
-  std::unique_ptr<MOBase::ModDataContent> m_modDataContent;
+  std::shared_ptr<CombinedModDataChecker> m_modDataChecker;
+  std::shared_ptr<CombinedModDataContent> m_modDataContent;
 };
 
 #endif

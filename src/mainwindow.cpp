@@ -1796,16 +1796,14 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
   activateSelectedProfile();
 
-  LocalSavegames* saveGames =
-      m_OrganizerCore.gameFeatures().gameFeature<LocalSavegames>();
+  auto saveGames = m_OrganizerCore.gameFeatures().gameFeature<LocalSavegames>();
   if (saveGames != nullptr) {
     if (saveGames->prepareProfile(m_OrganizerCore.currentProfile())) {
       m_SavesTab->refreshSaveList();
     }
   }
 
-  BSAInvalidation* invalidation =
-      m_OrganizerCore.gameFeatures().gameFeature<BSAInvalidation>();
+  auto invalidation = m_OrganizerCore.gameFeatures().gameFeature<BSAInvalidation>();
   if (invalidation != nullptr) {
     if (invalidation->prepareProfile(m_OrganizerCore.currentProfile())) {
       QTimer::singleShot(5, [this] {
@@ -1923,8 +1921,7 @@ void MainWindow::updateBSAList(const QStringList& defaultArchives,
   ui->bsaList->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
   std::vector<std::pair<UINT32, QTreeWidgetItem*>> items;
 
-  BSAInvalidation* invalidation =
-      m_OrganizerCore.gameFeatures().gameFeature<BSAInvalidation>();
+  auto invalidation = m_OrganizerCore.gameFeatures().gameFeature<BSAInvalidation>();
   std::vector<FileEntryPtr> files = m_OrganizerCore.directoryStructure()->getFiles();
 
   QStringList plugins =
@@ -2033,7 +2030,7 @@ void MainWindow::updateBSAList(const QStringList& defaultArchives,
 
 void MainWindow::checkBSAList()
 {
-  DataArchives* archives = m_OrganizerCore.gameFeatures().gameFeature<DataArchives>();
+  auto archives = m_OrganizerCore.gameFeatures().gameFeature<DataArchives>();
 
   if (archives != nullptr) {
     ui->bsaList->blockSignals(true);
@@ -2385,16 +2382,14 @@ void MainWindow::on_actionAdd_Profile_triggered()
     }
   }
 
-  LocalSavegames* saveGames =
-      m_OrganizerCore.gameFeatures().gameFeature<LocalSavegames>();
+  auto saveGames = m_OrganizerCore.gameFeatures().gameFeature<LocalSavegames>();
   if (saveGames != nullptr) {
     if (saveGames->prepareProfile(m_OrganizerCore.currentProfile())) {
       m_SavesTab->refreshSaveList();
     }
   }
 
-  BSAInvalidation* invalidation =
-      m_OrganizerCore.gameFeatures().gameFeature<BSAInvalidation>();
+  auto invalidation = m_OrganizerCore.gameFeatures().gameFeature<BSAInvalidation>();
   if (invalidation != nullptr) {
     if (invalidation->prepareProfile(m_OrganizerCore.currentProfile())) {
       QTimer::singleShot(5, [this] {

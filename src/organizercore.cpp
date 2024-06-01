@@ -1249,7 +1249,7 @@ void OrganizerCore::refreshBSAList()
 {
   TimeThis tt("OrganizerCore::refreshBSAList()");
 
-  auto* archives = gameFeatures().gameFeature<DataArchives>();
+  auto archives = gameFeatures().gameFeature<DataArchives>();
 
   if (archives != nullptr) {
     m_ArchivesInit = false;
@@ -2044,7 +2044,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
   }
 
   if (m_CurrentProfile->localSavesEnabled()) {
-    LocalSavegames* localSaves = gameFeatures().gameFeature<LocalSavegames>();
+    auto localSaves = gameFeatures().gameFeature<LocalSavegames>();
     if (localSaves != nullptr) {
       MappingType saveMap =
           localSaves->mappings(currentProfile()->absolutePath() + "/saves");

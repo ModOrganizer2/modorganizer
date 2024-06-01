@@ -249,9 +249,9 @@ void ModInfo::updateFromDisc(const QString& modsDirectory, OrganizerCore& core,
     }
   }
 
-  auto* game      = core.managedGame();
-  auto& features  = core.pluginContainer().gameFeatures();
-  auto* unmanaged = features.gameFeature<UnmanagedMods>();
+  auto* game     = core.managedGame();
+  auto& features = core.pluginContainer().gameFeatures();
+  auto unmanaged = features.gameFeature<UnmanagedMods>();
   if (unmanaged != nullptr) {
     for (const QString& modName : unmanaged->mods(!displayForeign)) {
       ModInfo::EModType modType =

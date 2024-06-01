@@ -208,7 +208,7 @@ void DirectoryRefresher::addModBSAToStructure(DirectoryEntry* root,
 {
   QStringList loadOrder;
 
-  auto* gamePlugins = m_Core.gameFeatures().gameFeature<GamePlugins>();
+  auto gamePlugins = m_Core.gameFeatures().gameFeature<GamePlugins>();
   if (gamePlugins) {
     loadOrder = gamePlugins->getLoadOrder();
   }
@@ -357,7 +357,7 @@ struct ModThread
 
     if (Settings::instance().archiveParsing()) {
       QStringList loadOrder;
-      GamePlugins* gamePlugins = gameFeatures->gameFeature<GamePlugins>();
+      auto gamePlugins = gameFeatures->gameFeature<GamePlugins>();
       if (gamePlugins) {
         loadOrder = gamePlugins->getLoadOrder();
       }

@@ -72,7 +72,7 @@ ProfilesDialog::ProfilesDialog(const QString& profileName, OrganizerCore& organi
     }
   }
 
-  auto* invalidation = m_GameFeatures.gameFeature<BSAInvalidation>();
+  auto invalidation = m_GameFeatures.gameFeature<BSAInvalidation>();
   if (invalidation == nullptr) {
     ui->invalidationBox->setToolTip(
         tr("Archive invalidation isn't required for this game."));

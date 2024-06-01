@@ -193,9 +193,9 @@ void Profile::findProfileSettings()
   }
 
   if (setting("", "AutomaticArchiveInvalidation") == QVariant()) {
-    auto* invalidation         = m_GameFeatures.gameFeature<BSAInvalidation>();
-    DataArchives* dataArchives = m_GameFeatures.gameFeature<DataArchives>();
-    bool found                 = false;
+    auto invalidation = m_GameFeatures.gameFeature<BSAInvalidation>();
+    auto dataArchives = m_GameFeatures.gameFeature<DataArchives>();
+    bool found        = false;
     if ((invalidation != nullptr) && (dataArchives != nullptr)) {
       for (const QString& archive : dataArchives->archives(this)) {
         if (invalidation->isInvalidationBSA(archive)) {
@@ -813,8 +813,8 @@ void Profile::mergeTweaks(ModInfo::Ptr modInfo, const QString& tweakedIni) const
 
 bool Profile::invalidationActive(bool* supported) const
 {
-  auto* invalidation = m_GameFeatures.gameFeature<BSAInvalidation>();
-  auto* dataArchives = m_GameFeatures.gameFeature<DataArchives>();
+  auto invalidation = m_GameFeatures.gameFeature<BSAInvalidation>();
+  auto dataArchives = m_GameFeatures.gameFeature<DataArchives>();
 
   if (supported != nullptr) {
     *supported = ((invalidation != nullptr) && (dataArchives != nullptr));
@@ -827,7 +827,7 @@ bool Profile::invalidationActive(bool* supported) const
 
 void Profile::deactivateInvalidation()
 {
-  auto* invalidation = m_GameFeatures.gameFeature<BSAInvalidation>();
+  auto invalidation = m_GameFeatures.gameFeature<BSAInvalidation>();
 
   if (invalidation != nullptr) {
     invalidation->deactivate(this);
@@ -838,7 +838,7 @@ void Profile::deactivateInvalidation()
 
 void Profile::activateInvalidation()
 {
-  auto* invalidation = m_GameFeatures.gameFeature<BSAInvalidation>();
+  auto invalidation = m_GameFeatures.gameFeature<BSAInvalidation>();
 
   if (invalidation != nullptr) {
     invalidation->activate(this);

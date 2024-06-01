@@ -703,7 +703,7 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 
 std::set<int> ModInfoRegular::doGetContents() const
 {
-  ModDataContent* contentFeature =
+  auto contentFeature =
       m_Core.pluginContainer().gameFeatures().gameFeature<ModDataContent>();
 
   if (contentFeature) {

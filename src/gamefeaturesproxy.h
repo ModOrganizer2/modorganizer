@@ -3,7 +3,6 @@
 
 #include "igamefeatures.h"
 
-
 class GameFeatures;
 class OrganizerProxy;
 
@@ -23,7 +22,8 @@ public:
   bool unregisterFeature(std::shared_ptr<MOBase::GameFeature> feature) override;
 
 protected:
-  MOBase::GameFeature* gameFeatureImpl(std::type_info const& info) const override;
+  std::shared_ptr<MOBase::GameFeature>
+  gameFeatureImpl(std::type_info const& info) const override;
   int unregisterFeaturesImpl(std::type_info const& info) override;
 
 private:
