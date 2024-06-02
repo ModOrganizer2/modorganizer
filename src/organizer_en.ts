@@ -5884,207 +5884,207 @@ Please enter a name:</source>
 <context>
     <name>OrganizerCore</name>
     <message>
-        <location filename="organizercore.cpp" line="188"/>
+        <location filename="organizercore.cpp" line="189"/>
         <source>File is write protected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="190"/>
+        <location filename="organizercore.cpp" line="191"/>
         <source>Invalid file format (probably a bug)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="192"/>
+        <location filename="organizercore.cpp" line="193"/>
         <source>Unknown error %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="196"/>
+        <location filename="organizercore.cpp" line="197"/>
         <source>Failed to write settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="197"/>
+        <location filename="organizercore.cpp" line="198"/>
         <source>An error occurred trying to write back MO settings to %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="360"/>
+        <location filename="organizercore.cpp" line="361"/>
         <source>Download started</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="363"/>
+        <location filename="organizercore.cpp" line="364"/>
         <source>Download failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="562"/>
+        <location filename="organizercore.cpp" line="563"/>
         <source>The selected profile &apos;%1&apos; does not exist. The profile &apos;%2&apos; will be used instead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="743"/>
+        <location filename="organizercore.cpp" line="744"/>
         <source>Installation cancelled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="744"/>
+        <location filename="organizercore.cpp" line="745"/>
         <source>Another installation is currently in progress.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="757"/>
+        <location filename="organizercore.cpp" line="758"/>
         <source>Installation successful</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="790"/>
+        <location filename="organizercore.cpp" line="791"/>
         <source>Configure Mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="791"/>
+        <location filename="organizercore.cpp" line="792"/>
         <source>This mod contains ini tweaks. Do you want to configure them now?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="801"/>
+        <location filename="organizercore.cpp" line="802"/>
         <source>mod not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="817"/>
+        <location filename="organizercore.cpp" line="818"/>
         <source>Extraction cancelled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="818"/>
+        <location filename="organizercore.cpp" line="819"/>
         <source>The installation was cancelled while extracting files. If this was prior to a FOMOD setup, this warning may be ignored. However, if this was during installation, the mod will likely be missing files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1045"/>
+        <location filename="organizercore.cpp" line="1046"/>
         <source>file not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1061"/>
+        <location filename="organizercore.cpp" line="1062"/>
         <source>failed to generate preview for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1109"/>
+        <location filename="organizercore.cpp" line="1110"/>
         <source>Sorry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1110"/>
+        <location filename="organizercore.cpp" line="1111"/>
         <source>Sorry, can&apos;t preview anything. This function currently does not support extracting from bsas.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1121"/>
+        <location filename="organizercore.cpp" line="1122"/>
         <source>File &apos;%1&apos; not found.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1129"/>
+        <location filename="organizercore.cpp" line="1130"/>
         <source>Failed to generate preview for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1242"/>
+        <location filename="organizercore.cpp" line="1243"/>
         <source>Failed to refresh list of esps: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1352"/>
+        <location filename="organizercore.cpp" line="1353"/>
         <source>Multiple esps/esls activated, please check that they don&apos;t conflict.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1423"/>
+        <location filename="organizercore.cpp" line="1424"/>
         <source>You need to be logged in with Nexus</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1467"/>
+        <location filename="organizercore.cpp" line="1468"/>
         <source>Download?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1468"/>
+        <location filename="organizercore.cpp" line="1469"/>
         <source>A download has been started but no installed page plugin recognizes it.
 If you download anyway no information (i.e. version) will be associated with the download.
 Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1684"/>
-        <location filename="organizercore.cpp" line="1736"/>
+        <location filename="organizercore.cpp" line="1685"/>
+        <location filename="organizercore.cpp" line="1737"/>
         <source>failed to update mod list: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1743"/>
-        <location filename="organizercore.cpp" line="1760"/>
+        <location filename="organizercore.cpp" line="1744"/>
+        <location filename="organizercore.cpp" line="1761"/>
         <source>login successful</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1769"/>
+        <location filename="organizercore.cpp" line="1770"/>
         <source>Login failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1770"/>
+        <location filename="organizercore.cpp" line="1771"/>
         <source>Login failed, try again?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1778"/>
+        <location filename="organizercore.cpp" line="1779"/>
         <source>login failed: %1. Download will not be associated with an account</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1786"/>
+        <location filename="organizercore.cpp" line="1787"/>
         <source>login failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1796"/>
+        <location filename="organizercore.cpp" line="1797"/>
         <source>login failed: %1. You need to log-in with Nexus to update MO.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1843"/>
+        <location filename="organizercore.cpp" line="1844"/>
         <source>MO1 &quot;Script Extender&quot; load mechanism has left hook.dll in your game folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1847"/>
-        <location filename="organizercore.cpp" line="1868"/>
+        <location filename="organizercore.cpp" line="1848"/>
+        <location filename="organizercore.cpp" line="1869"/>
         <source>Description missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1856"/>
+        <location filename="organizercore.cpp" line="1857"/>
         <source>&lt;a href=&quot;%1&quot;&gt;hook.dll&lt;/a&gt; has been found in your game folder (right click to copy the full path). This is most likely a leftover of setting the ModOrganizer 1 load mechanism to &quot;Script Extender&quot;, in which case you must remove this file either by changing the load mechanism in ModOrganizer 1 or manually removing the file, otherwise the game is likely to crash and burn.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1893"/>
+        <location filename="organizercore.cpp" line="1894"/>
         <source>failed to save load order: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1962"/>
+        <location filename="organizercore.cpp" line="1963"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2043"/>
+        <location filename="organizercore.cpp" line="2044"/>
         <source>The designated write target &quot;%1&quot; is not enabled.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7481,7 +7481,7 @@ Destination:<byte value="xd"/>
     <message>
         <location filename="loglist.cpp" line="384"/>
         <location filename="loot.cpp" line="396"/>
-        <location filename="organizercore.cpp" line="388"/>
+        <location filename="organizercore.cpp" line="389"/>
         <location filename="settingsdialogdiagnostics.cpp" line="40"/>
         <location filename="settingsdialogdiagnostics.cpp" line="66"/>
         <location filename="settingsdialogpaths.cpp" line="100"/>
@@ -7493,7 +7493,7 @@ Destination:<byte value="xd"/>
     </message>
     <message>
         <location filename="loglist.cpp" line="385"/>
-        <location filename="organizercore.cpp" line="389"/>
+        <location filename="organizercore.cpp" line="390"/>
         <source>Failed to create &quot;%1&quot;. Your user account probably lacks permission.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7754,7 +7754,7 @@ Destination:<byte value="xd"/>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="407"/>
+        <location filename="organizercore.cpp" line="408"/>
         <source>One of the configured MO2 directories (profiles, mods, or overwrite) is on a path containing a symbolic (or other) link. This is likely to be incompatible with MO2&apos;s virtual filesystem.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8302,12 +8302,12 @@ You can restart Mod Organizer as administrator and try launching the program aga
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../game_gamebryo/src/gamebryo/gamebryosavegame.cpp" line="102"/>
+        <location filename="../../game_gamebryo/src/gamebryo/gamebryosavegame.cpp" line="101"/>
         <source>failed to open %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../game_gamebryo/src/gamebryo/gamebryosavegame.cpp" line="112"/>
+        <location filename="../../game_gamebryo/src/gamebryo/gamebryosavegame.cpp" line="111"/>
         <source>wrong file format - expected %1 got &apos;%2&apos; for %3</source>
         <translation type="unfinished"></translation>
     </message>

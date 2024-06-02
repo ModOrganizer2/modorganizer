@@ -632,7 +632,7 @@ IPluginGame* PluginContainer::managedGame() const
   // TODO: This const_cast is safe but ugly. Most methods require a IPlugin*, so
   // returning a const-version if painful. This should be fixed by making methods accept
   // a const IPlugin* instead, but there are a few tricks with qobject_cast and const.
-  return const_cast<IPluginGame*>(m_Organizer->managedGame());
+  return m_Organizer ? const_cast<IPluginGame*>(m_Organizer->managedGame()) : nullptr;
 }
 
 bool PluginContainer::isEnabled(IPlugin* plugin) const

@@ -89,9 +89,10 @@ QStringList toStringList(InputIterator current, InputIterator end)
 }
 
 OrganizerCore::OrganizerCore(Settings& settings)
-    : m_UserInterface(nullptr), m_PluginContainer(nullptr), m_CurrentProfile(nullptr),
-      m_Settings(settings), m_Updater(&NexusInterface::instance()),
-      m_ModList(m_PluginContainer, this), m_PluginList(*this),
+    : m_UserInterface(nullptr), m_PluginContainer(nullptr), m_GamePlugin(nullptr),
+      m_CurrentProfile(nullptr), m_Settings(settings),
+      m_Updater(&NexusInterface::instance()), m_ModList(m_PluginContainer, this),
+      m_PluginList(*this),
       m_DirectoryRefresher(new DirectoryRefresher(this, settings.refreshThreadCount())),
       m_DirectoryStructure(new DirectoryEntry(L"data", nullptr, 0)),
       m_VirtualFileTree([this]() {
