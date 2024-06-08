@@ -457,7 +457,8 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle)
   const DWORD flags = CREATE_BREAKAWAY_FROM_JOB;
 
   if (sp.hooked) {
-    success = ::CreateProcessHooked(nullptr, const_cast<wchar_t*>(wcommandLine.c_str()),
+    success = ::usvfsCreateProcessHooked(
+        nullptr, const_cast<wchar_t*>(wcommandLine.c_str()),
                                     nullptr, nullptr, inheritHandles, flags, nullptr,
                                     wcwd.c_str(), &si, &pi);
   } else {
