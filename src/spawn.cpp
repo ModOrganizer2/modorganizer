@@ -458,9 +458,8 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle)
 
   if (sp.hooked) {
     success = ::usvfsCreateProcessHooked(
-        nullptr, const_cast<wchar_t*>(wcommandLine.c_str()),
-                                    nullptr, nullptr, inheritHandles, flags, nullptr,
-                                    wcwd.c_str(), &si, &pi);
+        nullptr, const_cast<wchar_t*>(wcommandLine.c_str()), nullptr, nullptr,
+        inheritHandles, flags, nullptr, wcwd.c_str(), &si, &pi);
   } else {
     success = ::CreateProcess(nullptr, const_cast<wchar_t*>(wcommandLine.c_str()),
                               nullptr, nullptr, inheritHandles, flags, nullptr,

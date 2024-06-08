@@ -212,7 +212,7 @@ void UsvfsConnector::updateMapping(const MappingType& mapping)
       ++dirs;
     } else {
       usvfsVirtualLinkFile(map.source.toStdWString().c_str(),
-                      map.destination.toStdWString().c_str(), 0);
+                           map.destination.toStdWString().c_str(), 0);
       ++files;
     }
   }
@@ -257,7 +257,7 @@ void UsvfsConnector::updateForcedLibraries(
   for (auto setting : forcedLibraries) {
     if (setting.enabled()) {
       usvfsForceLoadLibrary(setting.process().toStdWString().data(),
-                       setting.library().toStdWString().data());
+                            setting.library().toStdWString().data());
     }
   }
 }
