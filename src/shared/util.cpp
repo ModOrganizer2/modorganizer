@@ -246,31 +246,10 @@ VersionInfo createVersionInfo()
 
 QString getUsvfsDLLVersion()
 {
-  // once 2.2.2 is released, this can be changed to call USVFSVersionString()
-  // directly; until then, using GetProcAddress() allows for mixing up devbuilds
-  // and usvfs dlls
-
-  using USVFSVersionStringType = const char* WINAPI();
-
-  QString s;
-
-  const auto m = ::LoadLibraryW(L"usvfs_x64.dll");
-
-  if (m) {
-    auto* f = reinterpret_cast<USVFSVersionStringType*>(
-        ::GetProcAddress(m, "USVFSVersionString"));
-
-    if (f) {
-      s = f();
-    }
-
-    ::FreeLibrary(m);
-  }
-
+  QString s = usvfsVersionString();
   if (s.isEmpty()) {
     s = "?";
   }
-
   return s;
 }
 
