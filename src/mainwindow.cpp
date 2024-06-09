@@ -332,11 +332,11 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
   m_SavesTab.reset(new SavesTab(this, m_OrganizerCore, ui));
 
   // Hide stuff we do not need:
-  IPluginGame const* game = m_OrganizerCore.managedGame();
-  if (!game->feature<GamePlugins>()) {
+  auto& features = m_OrganizerCore.gameFeatures();
+  if (!features.gameFeature<GamePlugins>()) {
     ui->tabWidget->removeTab(ui->tabWidget->indexOf(ui->espTab));
   }
-  if (!game->feature<DataArchives>()) {
+  if (!features.gameFeature<DataArchives>()) {
     ui->tabWidget->removeTab(ui->tabWidget->indexOf(ui->bsaTab));
   }
 
@@ -1796,15 +1796,14 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
   activateSelectedProfile();
 
-  LocalSavegames* saveGames = m_OrganizerCore.managedGame()->feature<LocalSavegames>();
+  auto saveGames = m_OrganizerCore.gameFeatures().gameFeature<LocalSavegames>();
   if (saveGames != nullptr) {
     if (saveGames->prepareProfile(m_OrganizerCore.currentProfile())) {
       m_SavesTab->refreshSaveList();
     }
   }
 
-  BSAInvalidation* invalidation =
-      m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
+  auto invalidation = m_OrganizerCore.gameFeatures().gameFeature<BSAInvalidation>();
   if (invalidation != nullptr) {
     if (invalidation->prepareProfile(m_OrganizerCore.currentProfile())) {
       QTimer::singleShot(5, [this] {
@@ -1922,8 +1921,7 @@ void MainWindow::updateBSAList(const QStringList& defaultArchives,
   ui->bsaList->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
   std::vector<std::pair<UINT32, QTreeWidgetItem*>> items;
 
-  BSAInvalidation* invalidation =
-      m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
+  auto invalidation = m_OrganizerCore.gameFeatures().gameFeature<BSAInvalidation>();
   std::vector<FileEntryPtr> files = m_OrganizerCore.directoryStructure()->getFiles();
 
   QStringList plugins =
@@ -2032,7 +2030,7 @@ void MainWindow::updateBSAList(const QStringList& defaultArchives,
 
 void MainWindow::checkBSAList()
 {
-  DataArchives* archives = m_OrganizerCore.managedGame()->feature<DataArchives>();
+  auto archives = m_OrganizerCore.gameFeatures().gameFeature<DataArchives>();
 
   if (archives != nullptr) {
     ui->bsaList->blockSignals(true);
@@ -2384,15 +2382,14 @@ void MainWindow::on_actionAdd_Profile_triggered()
     }
   }
 
-  LocalSavegames* saveGames = m_OrganizerCore.managedGame()->feature<LocalSavegames>();
+  auto saveGames = m_OrganizerCore.gameFeatures().gameFeature<LocalSavegames>();
   if (saveGames != nullptr) {
     if (saveGames->prepareProfile(m_OrganizerCore.currentProfile())) {
       m_SavesTab->refreshSaveList();
     }
   }
 
-  BSAInvalidation* invalidation =
-      m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
+  auto invalidation = m_OrganizerCore.gameFeatures().gameFeature<BSAInvalidation>();
   if (invalidation != nullptr) {
     if (invalidation->prepareProfile(m_OrganizerCore.currentProfile())) {
       QTimer::singleShot(5, [this] {
