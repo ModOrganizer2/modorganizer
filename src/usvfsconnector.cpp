@@ -70,7 +70,7 @@ void LogWorker::process()
 
   int noLogCycles = 0;
   while (!m_QuitRequested) {
-    if (GetLogMessages(&m_Buffer[0], m_Buffer.size(), false)) {
+    if (usvfsGetLogMessages(&m_Buffer[0], m_Buffer.size(), false)) {
       m_LogFile.write(m_Buffer.c_str());
       m_LogFile.write("\n");
       m_LogFile.flush();
@@ -142,7 +142,7 @@ UsvfsConnector::UsvfsConnector()
   usvfsSetCrashDumpPath(params, dumpPath.c_str());
   usvfsSetProcessDelay(params, delay.count());
 
-  InitLogging(false);
+  usvfsInitLogging(false);
 
   log::debug("initializing usvfs:\n"
              " . instance: {}\n"
@@ -154,10 +154,10 @@ UsvfsConnector::UsvfsConnector()
   usvfsCreateVFS(params);
   usvfsFreeParameters(params);
 
-  ClearExecutableBlacklist();
+  usvfsClearExecutableBlacklist();
   for (auto exec : s.executablesBlacklist().split(";")) {
     std::wstring buf = exec.toStdWString();
-    BlacklistExecutable(buf.data());
+    usvfsBlacklistExecutable(buf.data());
   }
 
   usvfsClearSkipFileSuffixes();
@@ -174,8 +174,8 @@ UsvfsConnector::UsvfsConnector()
     std::wstring buf = dir.toStdWString();
     usvfsAddSkipDirectory(buf.data());
   }
-
-  ClearLibraryForceLoads();
+  
+  usvfsClearLibraryForceLoads();
 
   m_LogWorker.moveToThread(&m_WorkerThread);
 
@@ -187,7 +187,7 @@ UsvfsConnector::UsvfsConnector()
 
 UsvfsConnector::~UsvfsConnector()
 {
-  DisconnectVFS();
+  usvfsDisconnectVFS();
   m_LogWorker.exit();
   m_WorkerThread.quit();
   m_WorkerThread.wait();
@@ -208,11 +208,11 @@ void UsvfsConnector::updateMapping(const MappingType& mapping)
 
   log::debug("Updating VFS mappings...");
 
-  ClearVirtualMappings();
+  usvfsClearVirtualMappings();
 
   for (auto map : mapping) {
     if (progress.wasCanceled()) {
-      ClearVirtualMappings();
+      usvfsClearVirtualMappings();
       throw UsvfsConnectorException("VFS mapping canceled by user");
     }
     progress.setValue(value++);
@@ -221,13 +221,13 @@ void UsvfsConnector::updateMapping(const MappingType& mapping)
     }
 
     if (map.isDirectory) {
-      VirtualLinkDirectoryStatic(
+      usvfsVirtualLinkDirectoryStatic(
           map.source.toStdWString().c_str(), map.destination.toStdWString().c_str(),
           (map.createTarget ? LINKFLAG_CREATETARGET : 0) | LINKFLAG_RECURSIVE);
       ++dirs;
     } else {
-      VirtualLinkFile(map.source.toStdWString().c_str(),
-                      map.destination.toStdWString().c_str(), 0);
+      usvfsVirtualLinkFile(map.source.toStdWString().c_str(),
+                           map.destination.toStdWString().c_str(), 0);
       ++files;
     }
   }
@@ -260,10 +260,10 @@ void UsvfsConnector::updateParams(MOBase::log::Levels logLevel,
   usvfsUpdateParameters(p);
   usvfsFreeParameters(p);
 
-  ClearExecutableBlacklist();
+  usvfsClearExecutableBlacklist();
   for (auto exec : executableBlacklist.split(";")) {
     std::wstring buf = exec.toStdWString();
-    BlacklistExecutable(buf.data());
+    usvfsBlacklistExecutable(buf.data());
   }
 
   usvfsClearSkipFileSuffixes();
@@ -285,11 +285,11 @@ void UsvfsConnector::updateParams(MOBase::log::Levels logLevel,
 void UsvfsConnector::updateForcedLibraries(
     const QList<MOBase::ExecutableForcedLoadSetting>& forcedLibraries)
 {
-  ClearLibraryForceLoads();
+  usvfsClearLibraryForceLoads();
   for (auto setting : forcedLibraries) {
     if (setting.enabled()) {
-      ForceLoadLibrary(setting.process().toStdWString().data(),
-                       setting.library().toStdWString().data());
+      usvfsForceLoadLibrary(setting.process().toStdWString().data(),
+                            setting.library().toStdWString().data());
     }
   }
 }
@@ -301,7 +301,7 @@ std::vector<HANDLE> getRunningUSVFSProcesses()
   {
     size_t count  = 0;
     DWORD* buffer = nullptr;
-    if (!::GetVFSProcessList2(&count, &buffer)) {
+    if (!::usvfsGetVFSProcessList2(&count, &buffer)) {
       log::error("failed to get usvfs process list");
       return {};
     }

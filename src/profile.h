@@ -43,6 +43,8 @@ namespace MOBase
 class IPluginGame;
 }
 
+class GameFeatures;
+
 /**
  * @brief represents a profile
  **/
@@ -70,7 +72,7 @@ public:
    * @param filter save game filter. Defaults to &lt;no filter&gt;.
    **/
   Profile(const QString& name, MOBase::IPluginGame const* gamePlugin,
-          bool useDefaultSettings);
+          GameFeatures const& features, bool useDefaultSettings);
 
   /**
    * @brief constructor
@@ -80,7 +82,8 @@ public:
    *so technically, invoking this should always produce a working profile
    * @param directory directory to read the profile from
    **/
-  Profile(const QDir& directory, MOBase::IPluginGame const* gamePlugin);
+  Profile(const QDir& directory, MOBase::IPluginGame const* gamePlugin,
+          GameFeatures const& features);
 
   Profile(const Profile& reference);
 
@@ -398,6 +401,7 @@ private:
 
   QSettings* m_Settings;
 
+  const GameFeatures& m_GameFeatures;
   const MOBase::IPluginGame* m_GamePlugin;
 
   std::vector<ModStatus> m_ModStatus;

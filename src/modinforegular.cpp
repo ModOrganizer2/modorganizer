@@ -703,7 +703,8 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 
 std::set<int> ModInfoRegular::doGetContents() const
 {
-  ModDataContent* contentFeature = m_Core.managedGame()->feature<ModDataContent>();
+  auto contentFeature =
+      m_Core.pluginContainer().gameFeatures().gameFeature<ModDataContent>();
 
   if (contentFeature) {
     auto result = contentFeature->getContentsFor(fileTree());
