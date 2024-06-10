@@ -182,6 +182,8 @@ void PluginList::refresh(const QString& profileName,
       gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
   const bool overridePluginsAreSupported =
       gamePlugins ? gamePlugins->overridePluginsAreSupported() : false;
+  const bool loadOrderMechanismNone =
+      m_GamePlugin->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::None;
 
   m_CurrentProfile = profileName;
 
@@ -206,10 +208,8 @@ void PluginList::refresh(const QString& profileName,
 
       bool forceLoaded = Settings::instance().game().forceEnableCoreFiles() &&
                          primaryPlugins.contains(filename, Qt::CaseInsensitive);
-      bool forceEnabled = enabledPlugins.contains(filename, Qt::CaseInsensitive);
-      bool forceDisabled =
-          m_GamePlugin->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::None &&
-          !forceLoaded && !forceEnabled;
+      bool forceEnabled  = enabledPlugins.contains(filename, Qt::CaseInsensitive);
+      bool forceDisabled = loadOrderMechanismNone && !forceLoaded && !forceEnabled;
       if (!lightPluginsAreSupported && filename.endsWith(".esl")) {
         forceDisabled = true;
       }
