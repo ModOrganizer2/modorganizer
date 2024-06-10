@@ -114,14 +114,14 @@ bool PluginListProxy::isMasterFlagged(const QString& name) const
   return m_Proxied->isMasterFlagged(name);
 }
 
+bool PluginListProxy::isMediumFlagged(const QString& name) const
+{
+  return m_Proxied->isMediumFlagged(name);
+}
+
 bool PluginListProxy::isLightFlagged(const QString& name) const
 {
   return m_Proxied->isLightFlagged(name);
-}
-
-bool PluginListProxy::isOverlayFlagged(const QString& name) const
-{
-  return m_Proxied->isOverlayFlagged(name);
 }
 
 bool PluginListProxy::hasNoRecords(const QString& name) const
