@@ -11,8 +11,13 @@ mo2_configure_executable(organizer
 target_link_libraries(organizer PUBLIC Shlwapi)
 mo2_install_target(organizer)
 
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5"
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt6"
 		DESTINATION bin/dlls
+		CONFIGURATIONS Release RelWithDebInfo
+		RENAME dlls.manifest)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.debug.qt6"
+		DESTINATION bin/dlls
+		CONFIGURATIONS Debug
 		RENAME dlls.manifest)
 
 install(DIRECTORY
