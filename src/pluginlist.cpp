@@ -187,7 +187,7 @@ void PluginList::refresh(const QString& profileName,
 
   m_CurrentProfile = profileName;
 
-  std::vector<std::pair<QString, FileEntryPtr>> availablePlugins;
+  std::unordered_map<QString, FileEntryPtr> availablePlugins;
   QStringList archiveCandidates;
 
   for (FileEntryPtr current : baseDirectory.getFiles()) {
@@ -199,7 +199,7 @@ void PluginList::refresh(const QString& profileName,
     if (filename.endsWith(".esp", Qt::CaseInsensitive) ||
         filename.endsWith(".esm", Qt::CaseInsensitive) ||
         filename.endsWith(".esl", Qt::CaseInsensitive)) {
-      availablePlugins.emplace_back(filename, current);
+      availablePlugins.insert(std::make_pair(filename, current));
     } else if (filename.endsWith(".bsa", Qt::CaseInsensitive) ||
                filename.endsWith("ba2", Qt::CaseInsensitive)) {
       archiveCandidates.append(filename);
@@ -242,10 +242,10 @@ void PluginList::refresh(const QString& profileName,
         originName           = modInfo->name();
       }
 
-      m_ESPs.emplace_back(ESPInfo(filename, forceLoaded, forceEnabled, forceDisabled,
-                                  originName, ToQString(current->getFullPath()), hasIni,
-                                  loadedArchives, lightPluginsAreSupported,
-                                  overridePluginsAreSupported));
+      m_ESPs.emplace_back(filename, forceLoaded, forceEnabled, forceDisabled,
+                          originName, ToQString(current->getFullPath()), hasIni,
+                          loadedArchives, lightPluginsAreSupported,
+                          overridePluginsAreSupported);
       m_ESPs.rbegin()->priority = -1;
     } catch (const std::exception& e) {
       reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3")
@@ -256,11 +256,7 @@ void PluginList::refresh(const QString& profileName,
   }
 
   for (const auto& espName : m_ESPsByName) {
-    auto it = std::ranges::find_if(
-        availablePlugins, [&espName](const std::pair<QString, FileEntryPtr>& ele) {
-          return ele.first.compare(espName.first, Qt::CaseInsensitive) == 0;
-        });
-    if (it == availablePlugins.end()) {
+    if (!availablePlugins.contains(espName.first)) {
       m_ESPs[espName.second].name = "";
     }
   }
