@@ -182,82 +182,81 @@ void PluginList::refresh(const QString& profileName,
       gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
   const bool overridePluginsAreSupported =
       gamePlugins ? gamePlugins->overridePluginsAreSupported() : false;
+  const bool loadOrderMechanismNone =
+      m_GamePlugin->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::None;
 
   m_CurrentProfile = profileName;
 
-  QStringList availablePlugins;
+  std::unordered_map<QString, FileEntryPtr> availablePlugins;
+  QStringList archiveCandidates;
 
-  std::vector<FileEntryPtr> files = baseDirectory.getFiles();
-  for (FileEntryPtr current : files) {
+  for (FileEntryPtr current : baseDirectory.getFiles()) {
     if (current.get() == nullptr) {
       continue;
     }
-    QString filename = ToQString(current->getName());
+    const QString& filename = ToQString(current->getName());
 
     if (filename.endsWith(".esp", Qt::CaseInsensitive) ||
         filename.endsWith(".esm", Qt::CaseInsensitive) ||
         filename.endsWith(".esl", Qt::CaseInsensitive)) {
+      availablePlugins.insert(std::make_pair(filename, current));
+    } else if (filename.endsWith(".bsa", Qt::CaseInsensitive) ||
+               filename.endsWith("ba2", Qt::CaseInsensitive)) {
+      archiveCandidates.append(filename);
+    }
+  }
 
-      availablePlugins.append(filename);
+  for (const auto& [filename, current] : availablePlugins) {
+    if (m_ESPsByName.contains(filename)) {
+      continue;
+    }
 
-      if (m_ESPsByName.find(filename) != m_ESPsByName.end()) {
-        continue;
-      }
+    bool forceLoaded = Settings::instance().game().forceEnableCoreFiles() &&
+                       primaryPlugins.contains(filename, Qt::CaseInsensitive);
+    bool forceEnabled  = enabledPlugins.contains(filename, Qt::CaseInsensitive);
+    bool forceDisabled = loadOrderMechanismNone && !forceLoaded && !forceEnabled;
+    if (!lightPluginsAreSupported && filename.endsWith(".esl")) {
+      forceDisabled = true;
+    }
 
-      bool forceLoaded = Settings::instance().game().forceEnableCoreFiles() &&
-                         primaryPlugins.contains(filename, Qt::CaseInsensitive);
-      bool forceEnabled = enabledPlugins.contains(filename, Qt::CaseInsensitive);
-      bool forceDisabled =
-          m_GamePlugin->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::None &&
-          !forceLoaded && !forceEnabled;
-      if (!lightPluginsAreSupported && filename.endsWith(".esl")) {
-        forceDisabled = true;
-      }
+    bool archive = false;
+    try {
+      FilesOrigin& origin = baseDirectory.getOriginByID(current->getOrigin(archive));
 
-      bool archive = false;
-      try {
-        FilesOrigin& origin = baseDirectory.getOriginByID(current->getOrigin(archive));
+      // name without extension
+      QString baseName = QFileInfo(filename).completeBaseName();
 
-        // name without extension
-        QString baseName = QFileInfo(filename).completeBaseName();
-
-        QString iniPath = baseName + ".ini";
-        bool hasIni     = baseDirectory.findFile(ToWString(iniPath)).get() != nullptr;
-        std::set<QString> loadedArchives;
-        QString candidateName;
-        for (FileEntryPtr archiveCandidate : files) {
-          candidateName = ToQString(archiveCandidate->getName());
-          if (candidateName.startsWith(baseName, Qt::CaseInsensitive) &&
-              (candidateName.endsWith(".bsa", Qt::CaseInsensitive) ||
-               candidateName.endsWith(".ba2", Qt::CaseInsensitive))) {
-            loadedArchives.insert(candidateName);
-          }
+      QString iniPath = baseName + ".ini";
+      bool hasIni     = baseDirectory.findFile(ToWString(iniPath)).get() != nullptr;
+      std::set<QString> loadedArchives;
+      for (const auto& archiveName : archiveCandidates) {
+        if (archiveName.startsWith(baseName, Qt::CaseInsensitive)) {
+          loadedArchives.insert(archiveName);
         }
-
-        QString originName    = ToQString(origin.getName());
-        unsigned int modIndex = ModInfo::getIndex(originName);
-        if (modIndex != UINT_MAX) {
-          ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-          originName           = modInfo->name();
-        }
-
-        m_ESPs.push_back(ESPInfo(filename, forceLoaded, forceEnabled, forceDisabled,
-                                 originName, ToQString(current->getFullPath()), hasIni,
-                                 loadedArchives, lightPluginsAreSupported,
-                                 overridePluginsAreSupported));
-        m_ESPs.rbegin()->priority = -1;
-      } catch (const std::exception& e) {
-        reportError(
-            tr("failed to update esp info for file %1 (source id: %2), error: %3")
-                .arg(filename)
-                .arg(current->getOrigin(archive))
-                .arg(e.what()));
       }
+
+      QString originName    = ToQString(origin.getName());
+      unsigned int modIndex = ModInfo::getIndex(originName);
+      if (modIndex != UINT_MAX) {
+        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+        originName           = modInfo->name();
+      }
+
+      m_ESPs.emplace_back(filename, forceLoaded, forceEnabled, forceDisabled,
+                          originName, ToQString(current->getFullPath()), hasIni,
+                          loadedArchives, lightPluginsAreSupported,
+                          overridePluginsAreSupported);
+      m_ESPs.rbegin()->priority = -1;
+    } catch (const std::exception& e) {
+      reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3")
+                      .arg(filename)
+                      .arg(current->getOrigin(archive))
+                      .arg(e.what()));
     }
   }
 
   for (const auto& espName : m_ESPsByName) {
-    if (!availablePlugins.contains(espName.first, Qt::CaseInsensitive)) {
+    if (!availablePlugins.contains(espName.first)) {
       m_ESPs[espName.second].name = "";
     }
   }

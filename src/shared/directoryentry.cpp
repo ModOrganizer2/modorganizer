@@ -299,6 +299,7 @@ int DirectoryEntry::anyOrigin() const
 std::vector<FileEntryPtr> DirectoryEntry::getFiles() const
 {
   std::vector<FileEntryPtr> result;
+  result.reserve(m_Files.size());
 
   for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
     result.push_back(m_FileRegister->getFile(iter->second));
