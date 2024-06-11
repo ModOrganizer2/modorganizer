@@ -124,8 +124,9 @@ WorkaroundsSettingsTab::changeBlacklistLater(QWidget* parent, const QString& cur
   return blacklist.join(";");
 }
 
-std::optional<QString>
-WorkaroundsSettingsTab::changeSkipFileSuffixes(QWidget* parent, const QString& current)
+std::optional<QStringList>
+WorkaroundsSettingsTab::changeSkipFileSuffixes(QWidget* parent,
+                                               const QStringList& current)
 {
   bool ok = false;
 
@@ -138,8 +139,9 @@ WorkaroundsSettingsTab::changeSkipFileSuffixes(QWidget* parent, const QString& c
           "filename ends.\n\n"
           "Example:\n"
           "  .txt - Would skip all files that end with .txt, <any text>.txt\n"
-          "  some_file.txt - Would skip all files that end with some_file.txt, <any text>some_file.txt"),
-      current.split(";").join("\n"), &ok);
+          "  some_file.txt - Would skip all files that end with some_file.txt, <any "
+          "text>some_file.txt"),
+      current.join("\n"), &ok);
 
   if (!ok) {
     return {};
@@ -147,14 +149,18 @@ WorkaroundsSettingsTab::changeSkipFileSuffixes(QWidget* parent, const QString& c
 
   QStringList fileSuffixes;
   for (auto& suffix : result.split("\n")) {
-    fileSuffixes << suffix.trimmed();
+    auto trimmed = suffix.trimmed();
+    if (!trimmed.isEmpty()) {
+      fileSuffixes << trimmed;
+    }
   }
 
-  return fileSuffixes.join(";");
+  return fileSuffixes;
 }
 
-std::optional<QString>
-WorkaroundsSettingsTab::changeSkipDirectories(QWidget* parent, const QString& current)
+std::optional<QStringList>
+WorkaroundsSettingsTab::changeSkipDirectories(QWidget* parent,
+                                              const QStringList& current)
 {
   bool ok = false;
 
@@ -166,7 +172,7 @@ WorkaroundsSettingsTab::changeSkipDirectories(QWidget* parent, const QString& cu
           "Example:\n"
           "  .git\n"
           "  instructions"),
-      current.split(";").join("\n"), &ok);
+      current.join("\n"), &ok);
 
   if (!ok) {
     return {};
@@ -174,10 +180,13 @@ WorkaroundsSettingsTab::changeSkipDirectories(QWidget* parent, const QString& cu
 
   QStringList directories;
   for (auto& dir : result.split("\n")) {
-    directories << dir.trimmed();
+    auto trimmed = dir.trimmed();
+    if (!trimmed.isEmpty()) {
+      directories << trimmed;
+    }
   }
 
-  return directories.join(";");
+  return directories;
 }
 
 void WorkaroundsSettingsTab::on_execBlacklistBtn_clicked()
@@ -187,14 +196,14 @@ void WorkaroundsSettingsTab::on_execBlacklistBtn_clicked()
   }
 }
 
-void WorkaroundsSettingsTab::on_skipFileSuffixBtn_clicked() 
+void WorkaroundsSettingsTab::on_skipFileSuffixBtn_clicked()
 {
   if (auto s = changeSkipFileSuffixes(parentWidget(), m_SkipFileSuffixes)) {
     m_SkipFileSuffixes = *s;
   }
 }
 
-void WorkaroundsSettingsTab::on_skipDirectoriesBtn_clicked() 
+void WorkaroundsSettingsTab::on_skipDirectoriesBtn_clicked()
 {
   if (auto s = changeSkipDirectories(parentWidget(), m_SkipDirectories)) {
     m_SkipDirectories = *s;

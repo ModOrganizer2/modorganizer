@@ -84,8 +84,8 @@ public:
 
   void updateParams(MOBase::log::Levels logLevel, env::CoreDumpTypes coreDumpType,
                     const QString& crashDumpsPath, std::chrono::seconds spawnDelay,
-                    QString executableBlacklist, const QString& skipFileSuffixes,
-                    const QString& skipDirectories);
+                    QString executableBlacklist, const QStringList& skipFileSuffixes,
+                    const QStringList& skipDirectories);
 
   void updateForcedLibraries(
       const QList<MOBase::ExecutableForcedLoadSetting>& forcedLibraries);

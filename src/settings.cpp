@@ -316,28 +316,32 @@ void Settings::setExecutablesBlacklist(const QString& s)
   set(m_Settings, "Settings", "executable_blacklist", s);
 }
 
-QString Settings::skipFileSuffixes() const
+QStringList Settings::skipFileSuffixes() const
 {
   static const QString def = (QStringList() << ".mohidden").join(";");
 
-  return get<QString>(m_Settings, "Settings", "skip_file_suffixes", def);
+  auto setting = get<QString>(m_Settings, "Settings", "skip_file_suffixes", def);
+
+  return setting.split(";");
 }
 
-void Settings::setSkipFileSuffixes(const QString& s) 
+void Settings::setSkipFileSuffixes(const QStringList& s)
 {
-  set(m_Settings, "Settings", "skip_file_suffixes", s);
+  set(m_Settings, "Settings", "skip_file_suffixes", s.join(";"));
 }
 
-QString Settings::skipDirectories() const
+QStringList Settings::skipDirectories() const
 {
   static const QString def = (QStringList() << ".git").join(";");
 
-  return get<QString>(m_Settings, "Settings", "skip_directories", def);
+  auto setting = get<QString>(m_Settings, "Settings", "skip_directories", def);
+
+  return setting.split(";");
 }
 
-void Settings::setSkipDirectories(const QString& s) 
+void Settings::setSkipDirectories(const QStringList& s)
 {
-  set(m_Settings, "Settings", "skip_directories", s);
+  set(m_Settings, "Settings", "skip_directories", s.join(";"));
 }
 
 void Settings::setMotdHash(uint hash)

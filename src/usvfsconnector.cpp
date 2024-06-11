@@ -161,7 +161,7 @@ UsvfsConnector::UsvfsConnector()
   }
 
   usvfsClearSkipFileSuffixes();
-  for (auto& suffix : s.skipFileSuffixes().split(";")) {
+  for (auto& suffix : s.skipFileSuffixes()) {
     if (suffix.isEmpty()) {
       continue;
     }
@@ -170,11 +170,11 @@ UsvfsConnector::UsvfsConnector()
   }
 
   usvfsClearSkipDirectories();
-  for (auto& dir : s.skipDirectories().split(";")) {
+  for (auto& dir : s.skipDirectories()) {
     std::wstring buf = dir.toStdWString();
     usvfsAddSkipDirectory(buf.data());
   }
-  
+
   usvfsClearLibraryForceLoads();
 
   m_LogWorker.moveToThread(&m_WorkerThread);
@@ -244,8 +244,8 @@ void UsvfsConnector::updateParams(MOBase::log::Levels logLevel,
                                   const QString& crashDumpsPath,
                                   std::chrono::seconds spawnDelay,
                                   QString executableBlacklist,
-                                  const QString& skipFileSuffixes,
-                                  const QString& skipDirectories)
+                                  const QStringList& skipFileSuffixes,
+                                  const QStringList& skipDirectories)
 {
   using namespace std::chrono;
 
@@ -267,7 +267,7 @@ void UsvfsConnector::updateParams(MOBase::log::Levels logLevel,
   }
 
   usvfsClearSkipFileSuffixes();
-  for (auto& suffix : skipFileSuffixes.split(";")) {
+  for (auto& suffix : skipFileSuffixes) {
     if (suffix.isEmpty()) {
       continue;
     }
@@ -276,7 +276,7 @@ void UsvfsConnector::updateParams(MOBase::log::Levels logLevel,
   }
 
   usvfsClearSkipDirectories();
-  for (auto& dir : skipDirectories.split(";")) {
+  for (auto& dir : skipDirectories) {
     std::wstring buf = dir.toStdWString();
     usvfsAddSkipDirectory(buf.data());
   }
