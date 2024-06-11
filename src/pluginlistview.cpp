@@ -56,15 +56,15 @@ QModelIndexList PluginListView::indexViewToModel(const QModelIndexList& index) c
 
 void PluginListView::updatePluginCount()
 {
-  int activeMasterCount      = 0;
-  int activeMediumCount      = 0;
-  int activeLightMasterCount = 0;
-  int activeRegularCount     = 0;
-  int masterCount            = 0;
-  int lightMasterCount       = 0;
-  int mediumCount            = 0;
-  int regularCount           = 0;
-  int activeVisibleCount     = 0;
+  int activeMasterCount       = 0;
+  int activeMediumMasterCount = 0;
+  int activeLightMasterCount  = 0;
+  int activeRegularCount      = 0;
+  int masterCount             = 0;
+  int mediumMasterCount       = 0;
+  int lightMasterCount        = 0;
+  int regularCount            = 0;
+  int activeVisibleCount      = 0;
 
   PluginList* list = m_core->pluginList();
   QString filter   = ui.filter->text();
@@ -72,17 +72,17 @@ void PluginListView::updatePluginCount()
   for (QString plugin : list->pluginNames()) {
     bool active  = list->isEnabled(plugin);
     bool visible = m_sortProxy->filterMatchesPlugin(plugin);
-    if (list->hasLightExtension(plugin) || list->isLightFlagged(plugin)) {
+    if (list->isMediumFlagged(plugin)) {
+      mediumMasterCount++;
+      activeMediumMasterCount += active;
+      activeVisibleCount += visible && active;
+    } else if (list->hasLightExtension(plugin) || list->isLightFlagged(plugin)) {
       lightMasterCount++;
       activeLightMasterCount += active;
       activeVisibleCount += visible && active;
     } else if (list->hasMasterExtension(plugin) || list->isMasterFlagged(plugin)) {
       masterCount++;
       activeMasterCount += active;
-      activeVisibleCount += visible && active;
-    } else if (list->isMediumFlagged(plugin)) {
-      mediumCount++;
-      activeMediumCount += active;
       activeVisibleCount += visible && active;
     } else {
       regularCount++;
@@ -91,9 +91,9 @@ void PluginListView::updatePluginCount()
     }
   }
 
-  int activeCount = activeMasterCount + activeMediumCount + activeLightMasterCount +
-                    activeRegularCount;
-  int totalCount = masterCount + mediumCount + lightMasterCount + regularCount;
+  int activeCount = activeMasterCount + activeMediumMasterCount +
+                    activeLightMasterCount + activeRegularCount;
+  int totalCount = masterCount + mediumMasterCount + lightMasterCount + regularCount;
 
   ui.counter->display(activeVisibleCount);
   ui.counter->setToolTip(
@@ -118,8 +118,8 @@ void PluginListView::updatePluginCount()
           .arg(regularCount)
           .arg(activeMasterCount + activeRegularCount)
           .arg(masterCount + regularCount)
-          .arg(activeMediumCount)
-          .arg(mediumCount));
+          .arg(activeMediumMasterCount)
+          .arg(mediumMasterCount));
 }
 
 void PluginListView::onFilterChanged(const QString& filter)
