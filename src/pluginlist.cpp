@@ -1099,7 +1099,7 @@ void PluginList::generatePluginIndexes()
       continue;
     }
     if (mediumPluginsSupported && m_ESPs[i].isMediumFlagged) {
-      int ESHpos = 253 + ((numESHs + 1) / 256);
+      int ESHpos      = 253 + ((numESHs + 1) / 256);
       m_ESPs[i].index = QString("%1:%2")
                             .arg(ESHpos, 2, 16, QChar('0'))
                             .arg(numESHs % 256, 2, 16, QChar('0'))
@@ -1107,7 +1107,7 @@ void PluginList::generatePluginIndexes()
       ++numESHs;
 
     } else if (lightPluginsSupported &&
-        (m_ESPs[i].hasLightExtension || m_ESPs[i].isLightFlagged)) {
+               (m_ESPs[i].hasLightExtension || m_ESPs[i].isLightFlagged)) {
       int ESLpos      = 254 + ((numESLs + 1) / 4096);
       m_ESPs[i].index = QString("%1:%2")
                             .arg(ESLpos, 2, 16, QChar('0'))

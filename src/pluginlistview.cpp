@@ -62,7 +62,7 @@ void PluginListView::updatePluginCount()
   int activeRegularCount     = 0;
   int masterCount            = 0;
   int lightMasterCount       = 0;
-  int mediumCount           = 0;
+  int mediumCount            = 0;
   int regularCount           = 0;
   int activeVisibleCount     = 0;
 
