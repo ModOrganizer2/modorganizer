@@ -1091,6 +1091,9 @@ void PluginList::generatePluginIndexes()
   const bool mediumPluginsSupported =
       gamePlugins ? gamePlugins->mediumPluginsAreSupported() : false;
 
+  std::vector<int> coreLightPlugins;
+  std::vector<int> coreMediumPlugins;
+
   for (int l = 0; l < m_ESPs.size(); ++l) {
     int i = m_ESPsByPriority.at(l);
     if (!m_ESPs[i].enabled) {
@@ -1099,6 +1102,13 @@ void PluginList::generatePluginIndexes()
       continue;
     }
     if (mediumPluginsSupported && m_ESPs[i].isMediumFlagged) {
+      if (mediumPluginsSupported && m_ESPs[i].forceLoaded) {
+        // Starfield core medium plugins are loaded in memory addresses after custom
+        // medium plugins
+        coreMediumPlugins.push_back(i);
+        ++numSkipped;
+        continue;
+      }
       int ESHpos      = 253 + ((numESHs + 1) / 256);
       m_ESPs[i].index = QString("%1:%2")
                             .arg(ESHpos, 2, 16, QChar('0'))
@@ -1108,6 +1118,14 @@ void PluginList::generatePluginIndexes()
 
     } else if (lightPluginsSupported &&
                (m_ESPs[i].hasLightExtension || m_ESPs[i].isLightFlagged)) {
+      // Starfield core light plugins are loaded in memory addresses after custom light
+      // plugins
+      if (mediumPluginsSupported && m_ESPs[i].forceLoaded) {
+        coreLightPlugins.push_back(i);
+        ++numSkipped;
+        continue;
+      }
+
       int ESLpos      = 254 + ((numESLs + 1) / 4096);
       m_ESPs[i].index = QString("%1:%2")
                             .arg(ESLpos, 2, 16, QChar('0'))
@@ -1115,9 +1133,26 @@ void PluginList::generatePluginIndexes()
                             .toUpper();
       ++numESLs;
     } else {
-      m_ESPs[i].index =
-          QString("%1").arg(l - numESLs - numSkipped, 2, 16, QChar('0')).toUpper();
+      m_ESPs[i].index = QString("%1")
+                            .arg(l - numESHs - numESLs - numSkipped, 2, 16, QChar('0'))
+                            .toUpper();
     }
+  }
+  for (auto pluginIndex : coreMediumPlugins) {
+    int ESHpos                = 254 + ((numESHs + 1) / 4096);
+    m_ESPs[pluginIndex].index = QString("%1:%2")
+                                    .arg(ESHpos, 2, 16, QChar('0'))
+                                    .arg(numESHs % 4096, 3, 16, QChar('0'))
+                                    .toUpper();
+    ++numESHs;
+  }
+  for (auto pluginIndex : coreLightPlugins) {
+    int ESLpos                = 254 + ((numESLs + 1) / 4096);
+    m_ESPs[pluginIndex].index = QString("%1:%2")
+                                    .arg(ESLpos, 2, 16, QChar('0'))
+                                    .arg(numESLs % 4096, 3, 16, QChar('0'))
+                                    .toUpper();
+    ++numESLs;
   }
   emit esplist_changed();
 }
