@@ -1139,10 +1139,10 @@ void PluginList::generatePluginIndexes()
     }
   }
   for (auto pluginIndex : coreMediumPlugins) {
-    int ESHpos                = 254 + ((numESHs + 1) / 4096);
+    int ESHpos                = 253 + ((numESHs + 1) / 4096);
     m_ESPs[pluginIndex].index = QString("%1:%2")
                                     .arg(ESHpos, 2, 16, QChar('0'))
-                                    .arg(numESHs % 4096, 3, 16, QChar('0'))
+                                    .arg(numESHs % 256, 2, 16, QChar('0'))
                                     .toUpper();
     ++numESHs;
   }
