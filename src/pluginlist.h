@@ -240,8 +240,8 @@ public:
   bool hasMasterExtension(const QString& name) const;
   bool hasLightExtension(const QString& name) const;
   bool isMasterFlagged(const QString& name) const;
+  bool isMediumFlagged(const QString& name) const;
   bool isLightFlagged(const QString& name) const;
-  bool isOverlayFlagged(const QString& name) const;
   bool hasNoRecords(const QString& name) const;
 
   boost::signals2::connection onRefreshed(const std::function<void()>& callback);
@@ -317,7 +317,7 @@ private:
     ESPInfo(const QString& name, bool forceLoaded, bool forceEnabled,
             bool forceDisabled, const QString& originName, const QString& fullPath,
             bool hasIni, std::set<QString> archives, bool lightSupported,
-            bool overrideSupported);
+            bool mediumSupported);
 
     QString name;
     QString fullPath;
@@ -333,8 +333,8 @@ private:
     bool hasMasterExtension;
     bool hasLightExtension;
     bool isMasterFlagged;
+    bool isMediumFlagged;
     bool isLightFlagged;
-    bool isOverlayFlagged;
     bool hasNoRecords;
     bool modSelected;
     QString author;
