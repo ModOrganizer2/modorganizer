@@ -32,8 +32,8 @@ public:
   bool hasMasterExtension(const QString& name) const override;
   bool hasLightExtension(const QString& name) const override;
   bool isMasterFlagged(const QString& name) const override;
+  bool isMediumFlagged(const QString& name) const override;
   bool isLightFlagged(const QString& name) const override;
-  bool isOverlayFlagged(const QString& name) const override;
   bool hasNoRecords(const QString& name) const override;
 
 private:
