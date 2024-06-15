@@ -32,6 +32,12 @@ struct ValueConverter<QVariantList>
   }
 };
 
+template <>
+struct ValueConverter<QStringList>
+{
+  static QString convert(const QStringList& t) { return t.join(", "); }
+};
+
 bool shouldLogSetting(const QString& displayName);
 
 template <class T>
