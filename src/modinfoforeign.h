@@ -39,7 +39,7 @@ public:
   virtual QString comments() const override { return ""; }
   virtual QString notes() const override { return ""; }
   virtual QDateTime creationTime() const override;
-  virtual QString absolutePath() const override;
+  virtual QString absolutePath() const override { return m_BaseDirectory; }
   virtual MOBase::VersionInfo newestVersion() const override { return QString(); }
   virtual MOBase::VersionInfo ignoredVersion() const override { return QString(); }
   virtual QString installationFile() const override { return ""; }
@@ -108,6 +108,7 @@ private:
   QString m_Name;
   QString m_InternalName;
   QString m_ReferenceFile;
+  QString m_BaseDirectory;
   QStringList m_Archives;
   QDateTime m_CreationTime;
   int m_Priority;
