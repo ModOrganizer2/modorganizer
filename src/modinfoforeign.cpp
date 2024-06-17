@@ -1,6 +1,7 @@
 #include "modinfoforeign.h"
 
 #include "iplugingame.h"
+#include "organizercore.h"
 #include "utility.h"
 
 #include <QApplication>
@@ -43,9 +44,9 @@ ModInfoForeign::ModInfoForeign(const QString& modName, const QString& referenceF
       m_Archives(archives), m_ModType(modType)
 {
   m_CreationTime          = QFileInfo(referenceFile).birthTime();
-  IPluginGame const* game = qApp->property("managed_game").value<IPluginGame*>();
-  QMap<QString, QDir> directories = {{"data", game->dataDirectory()}};
-  directories.insert(game->secondaryDataDirectories());
+  IPluginGame const* game = core.managedGame();
+  QList<QDir> directories = {game->dataDirectory()};
+  directories.append(game->secondaryDataDirectories().values());
   for (QDir directory : directories) {
     if (referenceFile.startsWith(directory.absolutePath(), Qt::CaseInsensitive)) {
       m_BaseDirectory = directory.absolutePath();
