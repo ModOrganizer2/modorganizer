@@ -99,9 +99,15 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
   bool providesAnything = false;
   bool hasHiddenFiles   = false;
 
-  int dataID = 0;
+  QList<int> dataIDs;
   if (m_Core.directoryStructure()->originExists(L"data")) {
-    dataID = m_Core.directoryStructure()->getOriginByName(L"data").getID();
+    dataIDs.append(m_Core.directoryStructure()->getOriginByName(L"data").getID());
+  }
+  for (auto origin : m_Core.managedGame()->secondaryDataDirectories().keys()) {
+    if (m_Core.directoryStructure()->originExists(origin.toStdWString())) {
+      dataIDs.append(
+          m_Core.directoryStructure()->getOriginByName(origin.toStdWString()).getID());
+    }
   }
 
   std::wstring name          = ToWString(this->name());
@@ -145,7 +151,8 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
       }
 
       auto alternatives = file->getAlternatives();
-      if ((alternatives.size() == 0) || (alternatives.back().originID() == dataID)) {
+      if ((alternatives.size() == 0) ||
+          dataIDs.contains(alternatives.back().originID())) {
         // no alternatives -> no conflict
         providesAnything = true;
       } else {
@@ -181,7 +188,7 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
 
         // Sort out the alternatives
         for (const auto& altInfo : alternatives) {
-          if ((altInfo.originID() != dataID) &&
+          if ((!dataIDs.contains(altInfo.originID())) &&
               (altInfo.originID() != origin.getID())) {
             FilesOrigin& altOrigin =
                 m_Core.directoryStructure()->getOriginByID(altInfo.originID());
