@@ -795,6 +795,12 @@ public:
   bool isExecutableBlacklisted(const QString& s) const;
   void setExecutablesBlacklist(const QString& s);
 
+  QStringList skipFileSuffixes() const;
+  void setSkipFileSuffixes(const QStringList& s);
+
+  QStringList skipDirectories() const;
+  void setSkipDirectories(const QStringList& s);
+
   // ? looks obsolete, only used by dead code
   //
   unsigned int motdHash() const;

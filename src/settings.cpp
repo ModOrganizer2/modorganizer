@@ -316,6 +316,34 @@ void Settings::setExecutablesBlacklist(const QString& s)
   set(m_Settings, "Settings", "executable_blacklist", s);
 }
 
+QStringList Settings::skipFileSuffixes() const
+{
+  static const QStringList def = QStringList() << ".mohidden";
+
+  auto setting = get<QStringList>(m_Settings, "Settings", "skip_file_suffixes", def);
+
+  return setting;
+}
+
+void Settings::setSkipFileSuffixes(const QStringList& s)
+{
+  set(m_Settings, "Settings", "skip_file_suffixes", s);
+}
+
+QStringList Settings::skipDirectories() const
+{
+  static const QStringList def = QStringList() << ".git";
+
+  auto setting = get<QStringList>(m_Settings, "Settings", "skip_directories", def);
+
+  return setting;
+}
+
+void Settings::setSkipDirectories(const QStringList& s)
+{
+  set(m_Settings, "Settings", "skip_directories", s);
+}
+
 void Settings::setMotdHash(uint hash)
 {
   set(m_Settings, "General", "motd_hash", hash);
