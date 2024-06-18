@@ -99,13 +99,13 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
   bool providesAnything = false;
   bool hasHiddenFiles   = false;
 
-  QList<int> dataIDs;
+  std::unordered_set<int> dataIDs;
   if (m_Core.directoryStructure()->originExists(L"data")) {
-    dataIDs.append(m_Core.directoryStructure()->getOriginByName(L"data").getID());
+    dataIDs.insert(m_Core.directoryStructure()->getOriginByName(L"data").getID());
   }
-  for (auto origin : m_Core.managedGame()->secondaryDataDirectories().keys()) {
+  for (const auto& origin : m_Core.managedGame()->secondaryDataDirectories().keys()) {
     if (m_Core.directoryStructure()->originExists(origin.toStdWString())) {
-      dataIDs.append(
+      dataIDs.insert(
           m_Core.directoryStructure()->getOriginByName(origin.toStdWString()).getID());
     }
   }
