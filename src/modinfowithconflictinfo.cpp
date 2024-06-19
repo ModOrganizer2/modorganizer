@@ -99,13 +99,13 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
   bool providesAnything = false;
   bool hasHiddenFiles   = false;
 
-  std::unordered_set<int> dataIDs;
+  std::vector<int> dataIDs;
   if (m_Core.directoryStructure()->originExists(L"data")) {
-    dataIDs.insert(m_Core.directoryStructure()->getOriginByName(L"data").getID());
+    dataIDs.push_back(m_Core.directoryStructure()->getOriginByName(L"data").getID());
   }
   for (const auto& origin : m_Core.managedGame()->secondaryDataDirectories().keys()) {
     if (m_Core.directoryStructure()->originExists(origin.toStdWString())) {
-      dataIDs.insert(
+      dataIDs.push_back(
           m_Core.directoryStructure()->getOriginByName(origin.toStdWString()).getID());
     }
   }
@@ -152,7 +152,8 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
 
       auto alternatives = file->getAlternatives();
       if ((alternatives.size() == 0) ||
-          dataIDs.contains(alternatives.back().originID())) {
+          std::find(dataIDs.begin(), dataIDs.end(), alternatives.back().originID()) !=
+              dataIDs.end()) {
         // no alternatives -> no conflict
         providesAnything = true;
       } else {
@@ -188,7 +189,8 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
 
         // Sort out the alternatives
         for (const auto& altInfo : alternatives) {
-          if ((!dataIDs.contains(altInfo.originID())) &&
+          if (!(std::find(dataIDs.begin(), dataIDs.end(),
+                          alternatives.back().originID()) != dataIDs.end()) &&
               (altInfo.originID() != origin.getID())) {
             FilesOrigin& altOrigin =
                 m_Core.directoryStructure()->getOriginByID(altInfo.originID());
