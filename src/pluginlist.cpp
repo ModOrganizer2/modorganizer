@@ -1356,6 +1356,14 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
                   "medium plugins in addition to other plugin types.");
   }
 
+  if (esp.isLightFlagged && esp.isMediumFlagged) {
+    toolTip +=
+        "<br><br>" +
+        tr("WARNING: This plugin is both light and medium flagged. "
+           "This could indicate that the file was saved improperly "
+           "and may have mismatched record references. Use it at your own risk.");
+  }
+
   if (esp.hasNoRecords) {
     toolTip += "<br><br>" + tr("This is a dummy plugin. It contains no records and is "
                                "typically used to load a paired archive file.");
@@ -1484,8 +1492,13 @@ QVariant PluginList::iconData(const QModelIndex& modelIndex) const
 
   if (esp.isLightFlagged && !esp.hasLightExtension) {
     result.append(":/MO/gui/awaiting");
-  } else if (esp.isMediumFlagged) {
+  }
+
+  if (esp.isMediumFlagged) {
     result.append(":/MO/gui/run");
+    if (esp.isLightFlagged) {
+      result.append(":/MO/gui/warning");
+    }
   }
 
   if (esp.hasNoRecords) {
@@ -1817,8 +1830,8 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     hasLightExtension  = (extension == "esl");
     isMasterFlagged    = file.isMaster();
     isLightFlagged     = lightSupported && file.isLight(mediumSupported);
-    isMediumFlagged    = mediumSupported && !isLightFlagged && file.isMedium();
-    hasNoRecords = file.isDummy();
+    isMediumFlagged    = mediumSupported && file.isMedium();
+    hasNoRecords       = file.isDummy();
 
     author      = QString::fromLatin1(file.author().c_str());
     description = QString::fromLatin1(file.description().c_str());
