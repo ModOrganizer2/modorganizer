@@ -1102,7 +1102,7 @@ void PluginList::generatePluginIndexes()
       continue;
     }
     if (mediumPluginsSupported && m_ESPs[i].isMediumFlagged) {
-      int ESHpos      = 253 + ((numESHs + 1) / 256);
+      int ESHpos      = 253 + (numESHs / 256);
       m_ESPs[i].index = QString("%1:%2")
                             .arg(ESHpos, 2, 16, QChar('0'))
                             .arg(numESHs % 256, 2, 16, QChar('0'))
@@ -1111,7 +1111,7 @@ void PluginList::generatePluginIndexes()
 
     } else if (lightPluginsSupported &&
                (m_ESPs[i].hasLightExtension || m_ESPs[i].isLightFlagged)) {
-      int ESLpos      = 254 + ((numESLs + 1) / 4096);
+      int ESLpos      = 254 + (numESLs / 4096);
       m_ESPs[i].index = QString("%1:%2")
                             .arg(ESLpos, 2, 16, QChar('0'))
                             .arg(numESLs % 4096, 3, 16, QChar('0'))
@@ -1252,10 +1252,10 @@ QVariant PluginList::fontData(const QModelIndex& modelIndex) const
   if (m_ESPs[index].hasMasterExtension || m_ESPs[index].isMasterFlagged ||
       m_ESPs[index].hasLightExtension)
     result.setWeight(QFont::Bold);
-  if (m_ESPs[index].isMediumFlagged)
-    result.setUnderline(true);
   if (m_ESPs[index].isLightFlagged || m_ESPs[index].hasLightExtension)
     result.setItalic(true);
+  else if (m_ESPs[index].isMediumFlagged)
+    result.setUnderline(true);
 
   return result;
 }
@@ -1341,13 +1341,6 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
                   "be added to your game settings, overwriting in case of conflicts.");
   }
 
-  if (esp.isMediumFlagged && esp.hasMasterExtension) {
-    toolTip += "<br><br>" +
-               tr("This ESM is flagged as a medium plugin (ESH). It adheres to the ESM "
-                  "load order but loads records in ESH space (FD). You can have 256 "
-                  "medium plugins in addition to other plugin types.");
-  }
-
   if (esp.isLightFlagged && !esp.hasLightExtension) {
     QString type = esp.hasMasterExtension ? "ESM" : "ESP";
     toolTip +=
@@ -1356,6 +1349,11 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
            "order but the records will be loaded in ESL space (FE/FF). You can have up "
            "to 4096 light plugins in addition to other plugin types.")
             .arg(type);
+  } else if (esp.isMediumFlagged && esp.hasMasterExtension) {
+    toolTip += "<br><br>" +
+               tr("This ESM is flagged as a medium plugin (ESH). It adheres to the ESM "
+                  "load order but loads records in ESH space (FD). You can have 256 "
+                  "medium plugins in addition to other plugin types.");
   }
 
   if (esp.hasNoRecords) {
@@ -1484,12 +1482,10 @@ QVariant PluginList::iconData(const QModelIndex& modelIndex) const
     result.append(":/MO/gui/archive_conflict_neutral");
   }
 
-  if (esp.isMediumFlagged) {
-    result.append(":/MO/gui/run");
-  }
-
   if (esp.isLightFlagged && !esp.hasLightExtension) {
     result.append(":/MO/gui/awaiting");
+  } else if (esp.isMediumFlagged) {
+    result.append(":/MO/gui/run");
   }
 
   if (esp.hasNoRecords) {
@@ -1820,9 +1816,8 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     hasMasterExtension = (extension == "esm");
     hasLightExtension  = (extension == "esl");
     isMasterFlagged    = file.isMaster();
-    isMediumFlagged    = mediumSupported && file.isMedium();
-    isLightFlagged =
-        lightSupported && !isMediumFlagged && file.isLight(mediumSupported);
+    isLightFlagged     = lightSupported && file.isLight(mediumSupported);
+    isMediumFlagged    = mediumSupported && !isLightFlagged && file.isMedium();
     hasNoRecords = file.isDummy();
 
     author      = QString::fromLatin1(file.author().c_str());
