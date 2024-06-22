@@ -1,6 +1,7 @@
 #include "modinfoforeign.h"
 
 #include "iplugingame.h"
+#include "organizercore.h"
 #include "utility.h"
 
 #include <QApplication>
@@ -11,13 +12,6 @@ using namespace MOShared;
 QDateTime ModInfoForeign::creationTime() const
 {
   return m_CreationTime;
-}
-
-QString ModInfoForeign::absolutePath() const
-{
-  // I ought to store this, it's used elsewhere
-  IPluginGame const* game = qApp->property("managed_game").value<IPluginGame*>();
-  return game->dataDirectory().absolutePath();
 }
 
 std::vector<ModInfo::EFlag> ModInfoForeign::getFlags() const
@@ -49,7 +43,15 @@ ModInfoForeign::ModInfoForeign(const QString& modName, const QString& referenceF
     : ModInfoWithConflictInfo(core), m_ReferenceFile(referenceFile),
       m_Archives(archives), m_ModType(modType)
 {
-  m_CreationTime = QFileInfo(referenceFile).birthTime();
+  m_CreationTime          = QFileInfo(referenceFile).birthTime();
+  IPluginGame const* game = core.managedGame();
+  QList<QDir> directories = {game->dataDirectory()};
+  directories.append(game->secondaryDataDirectories().values());
+  for (QDir directory : directories) {
+    if (referenceFile.startsWith(directory.absolutePath(), Qt::CaseInsensitive)) {
+      m_BaseDirectory = directory.absolutePath();
+    }
+  }
   switch (modType) {
   case ModInfo::EModType::MOD_DLC:
     m_Name         = tr("DLC: ") + modName;
