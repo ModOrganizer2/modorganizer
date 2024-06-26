@@ -246,16 +246,12 @@ void FileTree::activate(FileTreeItem* item)
     return;
   }
 
-  if (item->isFromArchive()) {
-    log::warn("cannot activate file from archive '{}'", item->filename());
-    return;
-  }
-
   const auto tryPreview = m_core.settings().interface().doubleClicksOpenPreviews();
 
   if (tryPreview) {
     const QFileInfo fi(item->realPath());
-    if (m_plugins.previewGenerator().previewSupported(fi.suffix().toLower())) {
+    if (m_plugins.previewGenerator().previewSupported(fi.suffix().toLower(),
+                                                      item->isFromArchive())) {
       preview(item);
       return;
     }

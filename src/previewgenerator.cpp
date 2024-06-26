@@ -35,12 +35,16 @@ PreviewGenerator::PreviewGenerator(const PluginContainer& pluginContainer)
   m_MaxSize = QGuiApplication::primaryScreen()->size() * 0.8;
 }
 
-bool PreviewGenerator::previewSupported(const QString& fileExtension) const
+bool PreviewGenerator::previewSupported(const QString& fileExtension,
+                                        const bool& isArchive) const
 {
   auto& previews = m_PluginContainer.plugins<IPluginPreview>();
   for (auto* preview : previews) {
     if (preview->supportedExtensions().contains(fileExtension)) {
-      return true;
+      if (!isArchive)
+        return true;
+      if (preview->supportsArchives())
+        return true;
     }
   }
   return false;
@@ -54,6 +58,20 @@ QWidget* PreviewGenerator::genPreview(const QString& fileName) const
     if (m_PluginContainer.isEnabled(preview) &&
         preview->supportedExtensions().contains(ext)) {
       return preview->genFilePreview(fileName, m_MaxSize);
+    }
+  }
+  return nullptr;
+}
+
+QWidget* PreviewGenerator::genArchivePreview(const QByteArray& fileData,
+                                             const QString& fileName) const
+{
+  const QString ext = QFileInfo(fileName).suffix().toLower();
+  auto& previews    = m_PluginContainer.plugins<IPluginPreview>();
+  for (auto* preview : previews) {
+    if (m_PluginContainer.isEnabled(preview) &&
+        preview->supportedExtensions().contains(ext) && preview->supportsArchives()) {
+      return preview->genDataPreview(fileData, fileName, m_MaxSize);
     }
   }
   return nullptr;
