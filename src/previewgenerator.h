@@ -33,9 +33,11 @@ class PreviewGenerator
 public:
   PreviewGenerator(const PluginContainer& pluginContainer);
 
-  bool previewSupported(const QString& fileExtension) const;
+  bool previewSupported(const QString& fileExtension, const bool& isArchive) const;
 
   QWidget* genPreview(const QString& fileName) const;
+
+  QWidget* genArchivePreview(const QByteArray& fileData, const QString& fileName) const;
 
 private:
   const PluginContainer& m_PluginContainer;

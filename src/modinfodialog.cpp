@@ -42,12 +42,8 @@ const int max_scan_for_context_menu = 50;
 bool canPreviewFile(const PluginContainer& pluginContainer, bool isArchive,
                     const QString& filename)
 {
-  if (isArchive) {
-    return false;
-  }
-
   const auto ext = QFileInfo(filename).suffix().toLower();
-  return pluginContainer.previewGenerator().previewSupported(ext);
+  return pluginContainer.previewGenerator().previewSupported(ext, isArchive);
 }
 
 bool isExecutableFilename(const QString& filename)

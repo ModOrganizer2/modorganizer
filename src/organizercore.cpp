@@ -71,6 +71,8 @@
 #include <tuple>
 #include <utility>
 
+#include "bs_archive.h"
+
 #include "organizerproxy.h"
 
 using namespace MOShared;
@@ -1053,7 +1055,7 @@ bool OrganizerCore::previewFileWithAlternatives(QWidget* parent, QString fileNam
   // set up preview dialog
   PreviewDialog preview(fileName, parent);
 
-  auto addFunc = [&](int originId) {
+  auto addFunc = [&](int originId, std::wstring archiveName = L"") {
     FilesOrigin& origin = directoryStructure()->getOriginByID(originId);
     QString filePath =
         QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
@@ -1066,14 +1068,32 @@ bool OrganizerCore::previewFileWithAlternatives(QWidget* parent, QString fileNam
       } else {
         preview.addVariant(ToQString(origin.getName()), wid);
       }
+    } else if (archiveName != L"") {
+      auto archiveFile = directoryStructure()->searchFile(archiveName);
+      if (archiveFile.get() != nullptr) {
+        try {
+          libbsarch::bs_archive archiveLoader;
+          archiveLoader.load_from_disk(archiveFile->getFullPath());
+          libbsarch::memory_blob fileData = archiveLoader.extract_to_memory(fileName.toStdWString());
+          QByteArray convertedFileData((char*)(fileData.data), fileData.size);
+          QWidget* wid = m_PluginContainer->previewGenerator().genArchivePreview(
+              convertedFileData, filePath);
+          if (wid == nullptr) {
+            reportError(tr("failed to generate preview for %1").arg(filePath));
+          } else {
+            preview.addVariant(ToQString(origin.getName()), wid);
+          }
+        } catch (std::exception& e) {
+        }
+      }
     }
   };
 
   if (selectedOrigin == -1) {
     // don't bother with the vector of origins, just add them as they come
-    addFunc(file->getOrigin());
+    addFunc(file->getOrigin(), file->isFromArchive() ? file->getArchive().name() : L"");
     for (const auto& alt : file->getAlternatives()) {
-      addFunc(alt.originID());
+      addFunc(alt.originID(), alt.isFromArchive() ? alt.archive().name() : L"");
     }
   } else {
     std::vector<int> origins;
@@ -1121,20 +1141,42 @@ bool OrganizerCore::previewFileWithAlternatives(QWidget* parent, QString fileNam
 bool OrganizerCore::previewFile(QWidget* parent, const QString& originName,
                                 const QString& path)
 {
-  if (!QFile::exists(path)) {
-    reportError(tr("File '%1' not found.").arg(path));
-    return false;
-  }
-
   PreviewDialog preview(path, parent);
+  auto fileIndex = directoryStructure()->searchFile(path.toStdWString())->getIndex();
+  auto file      = directoryStructure()
+                  ->getOriginByName(originName.toStdWString())
+                  .findFile(fileIndex);
 
-  QWidget* wid = m_PluginContainer->previewGenerator().genPreview(path);
-  if (wid == nullptr) {
-    reportError(tr("Failed to generate preview for %1").arg(path));
+  if (QFile::exists(path)) {
+    QWidget* wid = m_PluginContainer->previewGenerator().genPreview(path);
+    if (wid == nullptr) {
+      reportError(tr("Failed to generate preview for %1").arg(path));
+      return false;
+    }
+
+    preview.addVariant(originName, wid);
+  } else if (file->isFromArchive()) {
+    auto archive = directoryStructure()->searchFile(file->getArchive().name());
+    if (archive.get() != nullptr) {
+      try {
+        libbsarch::bs_archive archiveLoader;
+        archiveLoader.load_from_disk(archive->getFullPath());
+        auto fileData = archiveLoader.extract_to_memory(path.toStdWString());
+        QByteArray convertedFileData((char*)(fileData.data), fileData.size);
+        QWidget* wid = m_PluginContainer->previewGenerator().genArchivePreview(
+            convertedFileData, path);
+        if (wid == nullptr) {
+          reportError(tr("failed to generate preview for %1").arg(path));
+        } else {
+          preview.addVariant(originName, wid);
+        }
+      } catch (std::exception& e) {
+      }
+    }
+  } else {
     return false;
   }
 
-  preview.addVariant(originName, wid);
   preview.exec();
 
   return true;
