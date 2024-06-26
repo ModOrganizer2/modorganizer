@@ -1074,7 +1074,8 @@ bool OrganizerCore::previewFileWithAlternatives(QWidget* parent, QString fileNam
         try {
           libbsarch::bs_archive archiveLoader;
           archiveLoader.load_from_disk(archiveFile->getFullPath());
-          libbsarch::memory_blob fileData = archiveLoader.extract_to_memory(fileName.toStdWString());
+          libbsarch::memory_blob fileData =
+              archiveLoader.extract_to_memory(fileName.toStdWString());
           QByteArray convertedFileData((char*)(fileData.data), fileData.size);
           QWidget* wid = m_PluginContainer->previewGenerator().genArchivePreview(
               convertedFileData, filePath);
