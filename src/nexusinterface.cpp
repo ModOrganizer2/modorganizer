@@ -274,9 +274,8 @@ NexusInterface::NexusInterface(Settings* s) : m_PluginContainer(nullptr)
   g_instance = this;
 
   m_User.limits(defaultAPILimits());
-  m_MOVersion = createVersionInfo();
 
-  m_AccessManager = new NXMAccessManager(this, s, m_MOVersion.displayString(3));
+  m_AccessManager = new NXMAccessManager(this, s, createVersionInfo().string());
 
   m_DiskCache = new QNetworkDiskCache(this);
 
