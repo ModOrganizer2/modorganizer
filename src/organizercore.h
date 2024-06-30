@@ -23,7 +23,7 @@
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
 #include <log.h>
-#include <versioninfo.h>
+#include <version.h>
 
 #include <QDir>
 #include <QFileInfo>
@@ -270,7 +270,7 @@ public:
 
   std::vector<QString> enabledArchives();
 
-  MOBase::VersionInfo getVersion() const { return m_Updater.getVersion(); }
+  MOBase::Version getVersion() const { return m_Updater.getVersion(); }
 
   // return the plugin container
   //
@@ -358,7 +358,7 @@ public:
   QString overwritePath() const;
   QString basePath() const;
   QString modsPath() const;
-  MOBase::VersionInfo appVersion() const;
+  MOBase::Version version() const;
   MOBase::IPluginGame* getGame(const QString& gameName) const;
   MOBase::IModInterface* createMod(MOBase::GuessedValue<QString>& name);
   void modDataChanged(MOBase::IModInterface* mod);
