@@ -8,11 +8,13 @@
 
 using namespace MOBase;
 
-GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
+GeneralSettingsTab::GeneralSettingsTab(Settings& s,
+                                       TranslationManager const& translationManager,
+                                       SettingsDialog& d)
     : SettingsTab(s, d)
 {
   // language
-  addLanguages();
+  addLanguages(translationManager);
   selectLanguage();
 
   // download list
@@ -84,54 +86,18 @@ void GeneralSettingsTab::update()
       ui->doubleClickPreviews->isChecked());
 }
 
-void GeneralSettingsTab::addLanguages()
+void GeneralSettingsTab::addLanguages(TranslationManager const& manager)
 {
-  // matches the end of filenames for something like "_en.qm" or "_zh_CN.qm"
-  const QString pattern = QString::fromStdWString(AppConfig::translationPrefix()) +
-                          "_([a-z]{2,3}(_[A-Z]{2,2})?).qm";
+  auto translations = manager.translations();
 
-  const QRegularExpression exp(QRegularExpression::anchoredPattern(pattern));
+  std::sort(translations.begin(), translations.end(), [](auto&& lhs, auto&& rhs) {
+    return std::forward_as_tuple(lhs->language(), lhs->identifier()) <
+           std::forward_as_tuple(rhs->language(), rhs->identifier());
+  });
 
-  QDirIterator iter(QCoreApplication::applicationDirPath() + "/translations",
-                    QDir::Files);
-
-  std::vector<std::pair<QString, QString>> languages;
-
-  while (iter.hasNext()) {
-    iter.next();
-
-    const QString file = iter.fileName();
-    auto match         = exp.match(file);
-    if (!match.hasMatch()) {
-      continue;
-    }
-
-    const QString languageCode = match.captured(1);
-    const QLocale locale(languageCode);
-
-    QString languageString = QString("%1 (%2)")
-                                 .arg(locale.nativeLanguageName())
-                                 .arg(locale.nativeCountryName());
-
-    if (locale.language() == QLocale::Chinese) {
-      if (languageCode == "zh_TW") {
-        languageString = "Chinese (Traditional)";
-      } else {
-        languageString = "Chinese (Simplified)";
-      }
-    }
-
-    languages.push_back({languageString, match.captured(1)});
-  }
-
-  if (!ui->languageBox->findText("English")) {
-    languages.push_back({QString("English"), QString("en_US")});
-  }
-
-  std::sort(languages.begin(), languages.end());
-
-  for (const auto& lang : languages) {
-    ui->languageBox->addItem(lang.first, lang.second);
+  for (const auto& translation : translations) {
+    ui->languageBox->addItem(ToQString(translation->language()),
+                             ToQString(translation->identifier()));
   }
 }
 

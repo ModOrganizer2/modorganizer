@@ -12,5 +12,6 @@ endif()
 
 project(organizer)
 add_subdirectory(src)
+add_subdirectory(themes)
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dump_running_process.bat DESTINATION bin)

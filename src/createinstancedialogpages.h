@@ -117,7 +117,7 @@ public:
 protected:
   Ui::CreateInstanceDialog* ui;
   CreateInstanceDialog& m_dlg;
-  const PluginContainer& m_pc;
+  const PluginManager& m_pc;
   bool m_skip;
   bool m_firstActivation;
 

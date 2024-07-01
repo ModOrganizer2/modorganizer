@@ -5,7 +5,7 @@
 #include "ui_modinfodialog.h"
 
 ModInfoDialogTab::ModInfoDialogTab(ModInfoDialogTabContext cx)
-    : ui(cx.ui), m_core(cx.core), m_plugin(cx.plugin), m_parent(cx.parent),
+    : ui(cx.ui), m_core(cx.core), m_plugins(cx.plugins), m_parent(cx.parent),
       m_origin(cx.origin), m_tabID(cx.id), m_hasData(false), m_firstActivation(true)
 {}
 
@@ -112,9 +112,9 @@ OrganizerCore& ModInfoDialogTab::core()
   return m_core;
 }
 
-PluginContainer& ModInfoDialogTab::plugin()
+PluginManager& ModInfoDialogTab::plugins()
 {
-  return m_plugin;
+  return m_plugins;
 }
 
 QWidget* ModInfoDialogTab::parentWidget()

@@ -23,7 +23,7 @@
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
 #include <log.h>
-#include <versioninfo.h>
+#include <version.h>
 
 #include <QDir>
 #include <QFileInfo>
@@ -35,12 +35,13 @@
 #include <QThread>
 #include <QVariant>
 
+class IniBakery;
 class ModListSortProxy;
 class PluginListSortProxy;
 class Profile;
 class IUserInterface;
 class GameFeatures;
-class PluginContainer;
+class PluginManager;
 class DirectoryRefresher;
 
 namespace MOBase
@@ -244,7 +245,7 @@ public:
   ~OrganizerCore();
 
   void setUserInterface(IUserInterface* ui);
-  void connectPlugins(PluginContainer* container);
+  void connectPlugins(PluginManager* manager);
 
   void setManagedGame(MOBase::IPluginGame* game);
 
@@ -270,11 +271,11 @@ public:
 
   std::vector<QString> enabledArchives();
 
-  MOBase::VersionInfo getVersion() const { return m_Updater.getVersion(); }
+  MOBase::Version getVersion() const { return m_Updater.getVersion(); }
 
-  // return the plugin container
+  // return the plugin manager
   //
-  PluginContainer& pluginContainer() const;
+  PluginManager& pluginManager() const;
 
   // return the game features
   GameFeatures& gameFeatures() const;
@@ -358,7 +359,7 @@ public:
   QString overwritePath() const;
   QString basePath() const;
   QString modsPath() const;
-  MOBase::VersionInfo appVersion() const;
+  MOBase::Version version() const;
   MOBase::IPluginGame* getGame(const QString& gameName) const;
   MOBase::IModInterface* createMod(MOBase::GuessedValue<QString>& name);
   void modDataChanged(MOBase::IModInterface* mod);
@@ -506,11 +507,6 @@ private:
   std::vector<Mapping> fileMapping(const QString& profile,
                                    const QString& customOverwrite);
 
-  std::vector<Mapping> fileMapping(const QString& dataPath, const QString& relPath,
-                                   const MOShared::DirectoryEntry* base,
-                                   const MOShared::DirectoryEntry* directoryEntry,
-                                   int createDestination);
-
 private slots:
 
   void onDirectoryRefreshed();
@@ -526,7 +522,8 @@ private:
 
 private:
   IUserInterface* m_UserInterface;
-  PluginContainer* m_PluginContainer;
+  PluginManager* m_PluginManager;
+  std::unique_ptr<IniBakery> m_IniBakery;
   QString m_GameName;
   MOBase::IPluginGame* m_GamePlugin;
   ModDataContentHolder m_Contents;

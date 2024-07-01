@@ -23,7 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <filesystem>
 #include <log.h>
 #include <string>
-#include <versioninfo.h>
+#include <version.h>
 
 class Executable;
 
@@ -48,7 +48,7 @@ std::wstring ToLowerCopy(std::wstring_view text);
 
 bool CaseInsensitiveEqual(const std::wstring& lhs, const std::wstring& rhs);
 
-MOBase::VersionInfo createVersionInfo();
+MOBase::Version createVersionInfo();
 QString getUsvfsVersionString();
 
 void SetThisThreadName(const QString& s);

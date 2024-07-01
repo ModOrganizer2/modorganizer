@@ -23,11 +23,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 
 #include <github.h>
-#include <versioninfo.h>
+#include <version.h>
 
 class Archive;
 class NexusInterface;
-class PluginContainer;
+class PluginManager;
 namespace MOBase
 {
 class IPluginGame;
@@ -82,7 +82,7 @@ public:
 
   void setUserInterface(QWidget* widget);
 
-  void setPluginContainer(PluginContainer* pluginContainer);
+  void setPluginManager(PluginManager* pluginManager);
 
   /**
    * @brief request information about the current version
@@ -98,7 +98,7 @@ public:
   /**
    * @return current version of Mod Organizer
    **/
-  MOBase::VersionInfo getVersion() const { return m_MOVersion; }
+  MOBase::Version getVersion() const { return m_MOVersion; }
 
 signals:
 
@@ -134,7 +134,7 @@ private slots:
 
 private:
   QWidget* m_Parent;
-  MOBase::VersionInfo m_MOVersion;
+  MOBase::Version m_MOVersion;
   NexusInterface* m_Interface;
   QFile m_UpdateFile;
   QNetworkReply* m_Reply;
@@ -146,7 +146,7 @@ private:
 
   // Map from version to release, in decreasing order (first element is the latest
   // release):
-  using CandidatesMap = std::map<MOBase::VersionInfo, QJsonObject, std::greater<>>;
+  using CandidatesMap = std::map<MOBase::Version, QJsonObject, std::greater<>>;
   CandidatesMap m_UpdateCandidates;
 };
 
