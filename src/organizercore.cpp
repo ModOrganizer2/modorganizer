@@ -1142,42 +1142,20 @@ bool OrganizerCore::previewFileWithAlternatives(QWidget* parent, QString fileNam
 bool OrganizerCore::previewFile(QWidget* parent, const QString& originName,
                                 const QString& path)
 {
-  PreviewDialog preview(path, parent);
-  auto fileIndex = directoryStructure()->searchFile(path.toStdWString())->getIndex();
-  auto file      = directoryStructure()
-                  ->getOriginByName(originName.toStdWString())
-                  .findFile(fileIndex);
-
-  if (QFile::exists(path)) {
-    QWidget* wid = m_PluginContainer->previewGenerator().genPreview(path);
-    if (wid == nullptr) {
-      reportError(tr("Failed to generate preview for %1").arg(path));
-      return false;
-    }
-
-    preview.addVariant(originName, wid);
-  } else if (file->isFromArchive()) {
-    auto archive = directoryStructure()->searchFile(file->getArchive().name());
-    if (archive.get() != nullptr) {
-      try {
-        libbsarch::bs_archive archiveLoader;
-        archiveLoader.load_from_disk(archive->getFullPath());
-        auto fileData = archiveLoader.extract_to_memory(path.toStdWString());
-        QByteArray convertedFileData((char*)(fileData.data), fileData.size);
-        QWidget* wid = m_PluginContainer->previewGenerator().genArchivePreview(
-            convertedFileData, path);
-        if (wid == nullptr) {
-          reportError(tr("failed to generate preview for %1").arg(path));
-        } else {
-          preview.addVariant(originName, wid);
-        }
-      } catch (std::exception& e) {
-      }
-    }
-  } else {
+  if (!QFile::exists(path)) {
+    reportError(tr("File '%1' not found.").arg(path));
     return false;
   }
 
+  PreviewDialog preview(path, parent);
+
+  QWidget* wid = m_PluginContainer->previewGenerator().genPreview(path);
+  if (wid == nullptr) {
+    reportError(tr("Failed to generate preview for %1").arg(path));
+    return false;
+  }
+
+  preview.addVariant(originName, wid);
   preview.exec();
 
   return true;
