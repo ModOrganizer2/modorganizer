@@ -23,20 +23,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "envmodule.h"
 #include "envsecurity.h"
 #include "envwindows.h"
-#include "report.h"
 #include "settings.h"
 #include "settingsdialogworkarounds.h"
 #include "shared/appconfig.h"
 #include "shared/windows_error.h"
-#include "utility.h"
 #include <QApplication>
 #include <QMessageBox>
 #include <QtDebug>
 #include <Shellapi.h>
-#include <errorcodes.h>
-#include <log.h>
-#include <report.h>
-#include <usvfs.h>
+#include <uibase/errorcodes.h>
+#include <uibase/log.h>
+#include <uibase/report.h>
+#include <uibase/utility.h>
+#include <usvfs/usvfs.h>
 
 using namespace MOBase;
 using namespace MOShared;

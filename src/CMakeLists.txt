@@ -1,15 +1,17 @@
 cmake_minimum_required(VERSION 3.16)
 
+find_package(usvfs CONFIG REQUIRED)
+find_package(mo2-uibase CONFIG REQUIRED)
+
 add_executable(organizer)
 set_target_properties(organizer PROPERTIES OUTPUT_NAME "ModOrganizer")
 mo2_configure_executable(organizer
 	WARNINGS OFF
 	EXTRA_TRANSLATIONS ${MO2_SUPER_PATH}/game_gamebryo/src ${MO2_UIBASE_PATH}/src
 	PRIVATE_DEPENDS
-		uibase githubpp bsatk esptk archive usvfs lootcli boost::program_options
-		DirectXTex libbsarch Qt::WebEngineWidgets Qt::WebSockets)
-target_link_libraries(organizer PUBLIC Shlwapi)
-target_include_directories(organizer PUBLIC ${DDS_ROOT})
+		githubpp bsatk esptk archive lootcli boost::program_options
+		Qt::WebEngineWidgets Qt::WebSockets)
+target_link_libraries(organizer PRIVATE Shlwapi usvfs::usvfs mo2::uibase)
 mo2_install_target(organizer)
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt6"
