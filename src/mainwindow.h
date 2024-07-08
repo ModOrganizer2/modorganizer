@@ -20,19 +20,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "bsafolder.h"
+#include <bsatk/bsafolder.h>
+#include <uibase/errorcodes.h>
+#include <uibase/imoinfo.h>
+#include <uibase/iplugingame.h>
+#include <uibase/log.h>
+#include <uibase/tutorialcontrol.h>
+
 #include "delayedfilewriter.h"
-#include "errorcodes.h"
-#include "imoinfo.h"
-#include "iplugingame.h"  //namespace MOBase { class IPluginGame; }
 #include "iuserinterface.h"
 #include "modinfo.h"
 #include "modlistbypriorityproxy.h"
 #include "modlistsortproxy.h"
-#include "plugincontainer.h"  //class PluginContainer;
+#include "plugincontainer.h"
 #include "shared/fileregisterfwd.h"
-#include "tutorialcontrol.h"
-#include <log.h>
 
 class Executable;
 class CategoryFactory;

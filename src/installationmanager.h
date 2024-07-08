@@ -20,17 +20,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef INSTALLATIONMANAGER_H
 #define INSTALLATIONMANAGER_H
 
-#include <guessedvalue.h>
-#include <ifiletree.h>
-#include <iinstallationmanager.h>
-#include <iplugininstaller.h>
+#include <archive/archive.h>
+#include <uibase/errorcodes.h>
+#include <uibase/guessedvalue.h>
+#include <uibase/ifiletree.h>
+#include <uibase/iinstallationmanager.h>
+#include <uibase/iplugininstaller.h>
 
 #include <QObject>
 #define WIN32_LEAN_AND_MEAN
 #include <QProgressDialog>
 #include <Windows.h>
-#include <archive.h>
-#include <errorcodes.h>
 #include <map>
 #include <set>
 

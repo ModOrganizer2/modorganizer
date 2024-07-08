@@ -1,0 +1,32 @@
+{
+  "dependencies": [
+    "7zip",
+    "boost-accumulators",
+    "boost-assign",
+    "boost-date-time",
+    "boost-graph",
+    "boost-headers",
+    "boost-interprocess",
+    "boost-program-options",
+    "boost-signals2",
+    "boost-thread",
+    "boost-uuid",
+    "lz4",
+    "mo2-cmake",
+    "mo2-libbsarch",
+    "zlib"
+  ],
+  "features": {
+    "standalone": {
+      "description": "Build Standalone.",
+      "dependencies": [
+        "mo2-archive",
+        "mo2-bsatk",
+        "mo2-esptk",
+        "mo2-lootcli-header",
+        "mo2-uibase",
+        "usvfs"
+      ]
+    }
+  }
+}

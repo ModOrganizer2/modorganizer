@@ -22,8 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <map>
 
-#include <github.h>
-#include <versioninfo.h>
+#include <uibase/versioninfo.h>
 
 class Archive;
 class NexusInterface;
@@ -42,6 +41,8 @@ class IPluginGame;
 class QNetworkReply;
 class QProgressDialog;
 class Settings;
+
+#include "github.h"
 
 /**
  * @brief manages updates for Mod Organizer itself

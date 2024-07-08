@@ -21,16 +21,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define USVFSCONNECTOR_H
 
 #include "envdump.h"
-#include "executableinfo.h"
 #include <QDebug>
 #include <QFile>
 #include <QList>
 #include <QString>
 #include <QThread>
 #include <exception>
-#include <filemapping.h>
-#include <log.h>
-#include <usvfsparameters.h>
+#include <uibase/executableinfo.h>
+#include <uibase/filemapping.h>
+#include <uibase/log.h>
+#include <usvfs/usvfsparameters.h>
 
 class LogWorker : public QThread
 {
