@@ -30,7 +30,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include <qstandardpaths.h>
 #include <sstream>
-#include <usvfs.h>
+#include <usvfs/usvfs.h>
 
 static const char SHMID[] = "mod_organizer_instance";
 using namespace MOBase;

@@ -6,15 +6,47 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+env:
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+
 jobs:
   build:
     runs-on: windows-2022
     steps:
-      - name: Build ModOrganizer 2
-        uses: ModOrganizer2/build-with-mob-action@master
+      # https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
         with:
-          qt-modules: qtpositioning qtwebchannel qtwebengine qtwebsockets
-          mo2-third-parties:
-            7z zlib gtest libbsarch libloot openssl bzip2 python lz4 spdlog
-            boost boost-di sip pyqt pybind11 ss licenses explorerpp DirectXTex
-          mo2-dependencies: usvfs cmake_common uibase githubpp bsatk esptk archive lootcli game_gamebryo
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: 6.7.0
+          modules:
+          cache: true
+
+      - uses: actions/checkout@v4
+
+      - name: "Set environmental variables"
+        shell: bash
+        run: |
+          echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
+
+      - name: Configure ModOrganizer
+        shell: pwsh
+        run: |
+          cmake --preset vs2022-windows-standalone `
+            "-DCMAKE_PREFIX_PATH=${env:QT_ROOT_DIR}\msvc2019_64" `
+            "-DCMAKE_INSTALL_PREFIX=install"
+
+      - name: Build ModOrganizer
+        run: cmake --build vsbuild --config RelWithDebInfo --target INSTALL
+
+      - name: Package ModOrganizer
+        uses: actions/upload-artifact@master
+        with:
+          name: modorganizer
+          path: ./install

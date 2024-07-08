@@ -60,8 +60,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "problemsdialog.h"
 #include "profile.h"
 #include "profilesdialog.h"
-#include "report.h"
-#include "savegameinfo.h"
 #include "savestab.h"
 #include "selectiondialog.h"
 #include "serverinfo.h"
@@ -69,15 +67,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "shared/appconfig.h"
 #include "spawn.h"
 #include "statusbar.h"
-#include "tutorialmanager.h"
-#include "versioninfo.h"
 #include <bsainvalidation.h>
 #include <dataarchives.h>
 #include <safewritefile.h>
 #include <scopeguard.h>
 #include <taskprogressmanager.h>
-#include <usvfs.h>
-#include <utility.h>
+#include <uibase/game_features/savegameinfo.h>
+#include <uibase/report.h>
+#include <uibase/tutorialmanager.h>
+#include <uibase/utility.h>
+#include <uibase/versioninfo.h>
+#include <usvfs/usvfs.h>
 
 #include "directoryrefresher.h"
 #include "shared/directoryentry.h"
@@ -2884,6 +2884,12 @@ void MainWindow::languageChange(const QString& newLanguage)
   installTranslator("qt");
   installTranslator("qtbase");
   installTranslator(ToQString(AppConfig::translationPrefix()));
+  installTranslator("uibase");
+
+  // TODO: this will probably be changed once extension come out
+  installTranslator("game_gamebryo");
+  installTranslator("game_creation");
+
   for (const QString& fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
   }
