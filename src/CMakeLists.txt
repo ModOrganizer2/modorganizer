@@ -1,17 +1,32 @@
 cmake_minimum_required(VERSION 3.16)
 
+find_package(mo2-cmake CONFIG REQUIRED)
+
 find_package(usvfs CONFIG REQUIRED)
+
 find_package(mo2-uibase CONFIG REQUIRED)
+find_package(mo2-archive CONFIG REQUIRED)
+find_package(mo2-lootcli-header CONFIG REQUIRED)
+find_package(mo2-githubpp CONFIG REQUIRED)
+find_package(mo2-bsatk CONFIG REQUIRED)
+find_package(mo2-esptk CONFIG REQUIRED)
+find_package(mo2-dds-header CONFIG REQUIRED)
+
+find_package(Qt6 REQUIRED COMPONENTS WebEngineWidgets WebSockets)
+find_package(Boost CONFIG REQUIRED COMPONENTS program_options thread interprocess signals2 uuid accumulators)
+find_package(7zip CONFIG REQUIRED)
+find_package(lz4 CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
 
 add_executable(organizer)
 set_target_properties(organizer PROPERTIES OUTPUT_NAME "ModOrganizer")
-mo2_configure_executable(organizer
-	WARNINGS OFF
-	EXTRA_TRANSLATIONS ${MO2_SUPER_PATH}/game_gamebryo/src ${MO2_UIBASE_PATH}/src
-	PRIVATE_DEPENDS
-		githubpp bsatk esptk archive lootcli boost::program_options
-		Qt::WebEngineWidgets Qt::WebSockets)
-target_link_libraries(organizer PRIVATE Shlwapi usvfs::usvfs mo2::uibase)
+mo2_configure_executable(organizer WARNINGS OFF)
+target_link_libraries(organizer PRIVATE
+	Shlwapi Bcrypt
+	usvfs::usvfs mo2::uibase mo2::archive mo2::githubpp
+	mo2::bsatk mo2::esptk mo2::lootcli-header
+	Boost::program_options Boost::signals2 Boost::uuid Boost::accumulators
+	Qt6::WebEngineWidgets Qt6::WebSockets)
 mo2_install_target(organizer)
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt6"
@@ -31,7 +46,7 @@ install(DIRECTORY
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html"
 	DESTINATION bin/resources)
 
-mo2_deploy_qt(BINARIES ModOrganizer.exe uibase.dll plugins/bsa_packer.dll)
+mo2_deploy_qt(BINARIES ModOrganizer.exe uibase.dll)
 
 mo2_add_filter(NAME src/application GROUPS
 	iuserinterface

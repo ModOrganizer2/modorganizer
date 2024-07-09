@@ -22,8 +22,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <map>
 
-#include <github.h>
-#include <versioninfo.h>
+#include <githubpp/github.h>
+#include <uibase/versioninfo.h>
 
 class Archive;
 class NexusInterface;

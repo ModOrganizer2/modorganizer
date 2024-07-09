@@ -20,8 +20,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MO_REGISTER_DIRECTORYENTRY_INCLUDED
 #define MO_REGISTER_DIRECTORYENTRY_INCLUDED
 
+#include <bsatk/bsatk.h>
+
 #include "fileregister.h"
-#include <bsatk.h>
 
 namespace env
 {

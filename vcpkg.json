@@ -1,0 +1,19 @@
+{
+  "dependencies": [
+    "mo2-cmake",
+    "mo2-dds-header",
+    "boost-accumulators",
+    "boost-assign",
+    "boost-date-time",
+    "boost-graph",
+    "boost-headers",
+    "boost-interprocess",
+    "boost-program-options",
+    "boost-signals2",
+    "boost-thread",
+    "boost-uuid",
+    "7zip",
+    "zlib",
+    "lz4"
+  ]
+}
