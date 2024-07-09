@@ -66,9 +66,9 @@ mo2_add_filter(NAME src/browser GROUPS
 )
 
 mo2_add_filter(NAME src/categories GROUPS
-        categories
+	categories
 	categoriestable
-        categoriesdialog
+	categoriesdialog
 	categoryimportdialog
 )
 
