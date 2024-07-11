@@ -71,7 +71,7 @@
 #include <tuple>
 #include <utility>
 
-#include "bs_archive.h"
+#include <libbsarch/bs_archive.h>
 
 #include "organizerproxy.h"
 

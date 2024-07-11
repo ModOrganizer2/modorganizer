@@ -1,7 +1,7 @@
 {
   "dependencies": [
     "mo2-cmake",
-    "mo2-dds-header",
+    "mo2-libbsarch",
     "boost-accumulators",
     "boost-assign",
     "boost-date-time",

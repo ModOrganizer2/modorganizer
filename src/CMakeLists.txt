@@ -11,6 +11,7 @@ find_package(mo2-githubpp CONFIG REQUIRED)
 find_package(mo2-bsatk CONFIG REQUIRED)
 find_package(mo2-esptk CONFIG REQUIRED)
 find_package(mo2-dds-header CONFIG REQUIRED)
+find_package(mo2-libbsarch CONFIG REQUIRED)
 
 find_package(Qt6 REQUIRED COMPONENTS WebEngineWidgets WebSockets)
 find_package(Boost CONFIG REQUIRED COMPONENTS program_options thread interprocess signals2 uuid accumulators)
@@ -23,7 +24,7 @@ set_target_properties(organizer PROPERTIES OUTPUT_NAME "ModOrganizer")
 mo2_configure_executable(organizer WARNINGS OFF)
 target_link_libraries(organizer PRIVATE
 	Shlwapi Bcrypt
-	usvfs::usvfs mo2::uibase mo2::archive mo2::githubpp
+	usvfs::usvfs mo2::uibase mo2::archive mo2::githubpp mo2::libbsarch
 	mo2::bsatk mo2::esptk mo2::lootcli-header
 	Boost::program_options Boost::signals2 Boost::uuid Boost::accumulators
 	Qt6::WebEngineWidgets Qt6::WebSockets)

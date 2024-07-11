@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-# remove MinSizeRel otherwise CMP0111 breaks everything
-set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "" FORCE)
-
 project(organizer)
 
 add_subdirectory(src)

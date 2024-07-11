@@ -15,7 +15,7 @@
       "kind": "git",
       "repository": "https://github.com/ModOrganizer2/vcpkg-registry",
       "baseline": "a07812dd075d7ce5586e5cc9052050f229e6ecb0",
-      "packages": ["mo2-cmake", "mo2-dds-header"]
+      "packages": ["mo2-*"]
     }
   ]
 }
