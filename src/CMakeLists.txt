@@ -21,14 +21,16 @@ find_package(ZLIB REQUIRED)
 
 add_executable(organizer)
 set_target_properties(organizer PROPERTIES OUTPUT_NAME "ModOrganizer")
-mo2_configure_executable(organizer WARNINGS OFF)
+mo2_configure_target(organizer WARNINGS OFF)
+mo2_set_project_to_run_from_install(
+	organizer EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
+
 target_link_libraries(organizer PRIVATE
 	Shlwapi Bcrypt
 	usvfs::usvfs mo2::uibase mo2::archive mo2::githubpp mo2::libbsarch
 	mo2::bsatk mo2::esptk mo2::lootcli-header
 	Boost::program_options Boost::signals2 Boost::uuid Boost::accumulators
-	Qt6::WebEngineWidgets Qt6::WebSockets)
-mo2_install_target(organizer)
+	Qt6::WebEngineWidgets Qt6::WebSockets Version Dbghelp)
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt6"
 		DESTINATION bin/dlls
@@ -46,6 +48,9 @@ install(DIRECTORY
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html"
 	DESTINATION bin/resources)
+
+install(FILES $<TARGET_FILE:organizer> DESTINATION bin)
+install(FILES $<TARGET_FILE:mo2::libbsarch> DESTINATION bin/dlls)
 
 mo2_deploy_qt(BINARIES ModOrganizer.exe uibase.dll)
 
