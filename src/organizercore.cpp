@@ -71,6 +71,8 @@
 #include <tuple>
 #include <utility>
 
+#include "bs_archive.h"
+
 #include "organizerproxy.h"
 
 using namespace MOShared;
@@ -1053,7 +1055,7 @@ bool OrganizerCore::previewFileWithAlternatives(QWidget* parent, QString fileNam
   // set up preview dialog
   PreviewDialog preview(fileName, parent);
 
-  auto addFunc = [&](int originId) {
+  auto addFunc = [&](int originId, std::wstring archiveName = L"") {
     FilesOrigin& origin = directoryStructure()->getOriginByID(originId);
     QString filePath =
         QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
@@ -1066,14 +1068,33 @@ bool OrganizerCore::previewFileWithAlternatives(QWidget* parent, QString fileNam
       } else {
         preview.addVariant(ToQString(origin.getName()), wid);
       }
+    } else if (archiveName != L"") {
+      auto archiveFile = directoryStructure()->searchFile(archiveName);
+      if (archiveFile.get() != nullptr) {
+        try {
+          libbsarch::bs_archive archiveLoader;
+          archiveLoader.load_from_disk(archiveFile->getFullPath());
+          libbsarch::memory_blob fileData =
+              archiveLoader.extract_to_memory(fileName.toStdWString());
+          QByteArray convertedFileData((char*)(fileData.data), fileData.size);
+          QWidget* wid = m_PluginContainer->previewGenerator().genArchivePreview(
+              convertedFileData, filePath);
+          if (wid == nullptr) {
+            reportError(tr("failed to generate preview for %1").arg(filePath));
+          } else {
+            preview.addVariant(ToQString(origin.getName()), wid);
+          }
+        } catch (std::exception& e) {
+        }
+      }
     }
   };
 
   if (selectedOrigin == -1) {
     // don't bother with the vector of origins, just add them as they come
-    addFunc(file->getOrigin());
+    addFunc(file->getOrigin(), file->isFromArchive() ? file->getArchive().name() : L"");
     for (const auto& alt : file->getAlternatives()) {
-      addFunc(alt.originID());
+      addFunc(alt.originID(), alt.isFromArchive() ? alt.archive().name() : L"");
     }
   } else {
     std::vector<int> origins;

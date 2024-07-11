@@ -16,5 +16,5 @@ jobs:
           qt-modules: qtpositioning qtwebchannel qtwebengine qtwebsockets
           mo2-third-parties:
             7z zlib gtest libbsarch libloot openssl bzip2 python lz4 spdlog
-            boost boost-di sip pyqt pybind11 ss licenses explorerpp
+            boost boost-di sip pyqt pybind11 ss licenses explorerpp DirectXTex
           mo2-dependencies: usvfs cmake_common uibase githubpp bsatk esptk archive lootcli game_gamebryo
