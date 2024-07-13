@@ -50,6 +50,7 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html"
 	DESTINATION bin/resources)
 
 install(FILES $<TARGET_FILE:organizer> DESTINATION bin)
+install(FILES $<TARGET_PDB_FILE:organizer> DESTINATION pdb)
 install(FILES $<TARGET_FILE:mo2::libbsarch> DESTINATION bin/dlls)
 install(FILES $<TARGET_FILE:mo2::archive> DESTINATION bin/dlls)
 install(FILES $<TARGET_FILE:7zip::7zip> DESTINATION bin/dlls)
