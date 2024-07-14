@@ -21,11 +21,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define MAINWINDOW_H
 
 #include <bsatk/bsafolder.h>
-#include <uibase/log.h>
-#include <uibase/tutorialcontrol.h>
 #include <uibase/errorcodes.h>
 #include <uibase/imoinfo.h>
 #include <uibase/iplugingame.h>
+#include <uibase/log.h>
+#include <uibase/tutorialcontrol.h>
 
 #include "delayedfilewriter.h"
 #include "iuserinterface.h"
