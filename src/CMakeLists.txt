@@ -7,7 +7,6 @@ find_package(usvfs CONFIG REQUIRED)
 find_package(mo2-uibase CONFIG REQUIRED)
 find_package(mo2-archive CONFIG REQUIRED)
 find_package(mo2-lootcli-header CONFIG REQUIRED)
-find_package(mo2-githubpp CONFIG REQUIRED)
 find_package(mo2-bsatk CONFIG REQUIRED)
 find_package(mo2-esptk CONFIG REQUIRED)
 find_package(mo2-dds-header CONFIG REQUIRED)
@@ -20,14 +19,16 @@ find_package(lz4 CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 
 add_executable(organizer)
-set_target_properties(organizer PROPERTIES OUTPUT_NAME "ModOrganizer")
+set_target_properties(organizer PROPERTIES
+	OUTPUT_NAME "ModOrganizer"
+	WIN32_EXECUTABLE TRUE)
 mo2_configure_target(organizer WARNINGS OFF)
 mo2_set_project_to_run_from_install(
 	organizer EXECUTABLE ${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe)
 
 target_link_libraries(organizer PRIVATE
 	Shlwapi Bcrypt
-	usvfs::usvfs mo2::uibase mo2::archive mo2::githubpp mo2::libbsarch
+	usvfs::usvfs mo2::uibase mo2::archive mo2::libbsarch
 	mo2::bsatk mo2::esptk mo2::lootcli-header
 	Boost::program_options Boost::signals2 Boost::uuid Boost::accumulators
 	Qt6::WebEngineWidgets Qt6::WebSockets Version Dbghelp)
@@ -55,7 +56,7 @@ install(FILES $<TARGET_FILE:mo2::libbsarch> DESTINATION bin/dlls)
 install(FILES $<TARGET_FILE:mo2::archive> DESTINATION bin/dlls)
 install(FILES $<TARGET_FILE:7zip::7zip> DESTINATION bin/dlls)
 
-mo2_deploy_qt(BINARIES ModOrganizer.exe uibase.dll)
+mo2_deploy_qt(BINARIES ModOrganizer.exe $<TARGET_FILE_NAME:mo2::uibase>)
 
 mo2_add_filter(NAME src/application GROUPS
 	iuserinterface
@@ -83,6 +84,7 @@ mo2_add_filter(NAME src/categories GROUPS
 
 mo2_add_filter(NAME src/core GROUPS
 	archivefiletree
+	githubpp
 	installationmanager
 	nexusinterface
 	nxmaccessmanager

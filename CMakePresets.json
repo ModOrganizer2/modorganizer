@@ -39,13 +39,16 @@
       "inherits": ["cmake-dev", "vcpkg"],
       "name": "vs2022-windows",
       "toolset": "v143"
-    }
-  ],
-  "buildPresets": [
+    },
     {
-      "name": "vs2022-windows",
-      "resolvePackageReferences": "on",
-      "configurePreset": "vs2022-windows"
+      "cacheVariables": {
+        "VCPKG_MANIFEST_FEATURES": {
+          "type": "STRING",
+          "value": "standalone"
+        }
+      },
+      "inherits": "vs2022-windows",
+      "name": "vs2022-windows-standalone"
     }
   ],
   "version": 4

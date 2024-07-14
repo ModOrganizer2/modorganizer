@@ -22,7 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <map>
 
-#include <githubpp/github.h>
+#include <github.h>
 #include <uibase/versioninfo.h>
 
 class Archive;
