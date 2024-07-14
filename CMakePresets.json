@@ -45,6 +45,10 @@
         "VCPKG_MANIFEST_FEATURES": {
           "type": "STRING",
           "value": "standalone"
+        },
+        "MO2_INSTALL_IS_BIN": {
+          "type": "BOOL",
+          "value": "ON"
         }
       },
       "inherits": "vs2022-windows",
