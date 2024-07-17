@@ -154,8 +154,8 @@ MOApplication::MOApplication(int& argc, char** argv) : QApplication(argc, argv)
     updateStyle(file);
   });
 
-  m_defaultStyle = style()->objectName();
-  setStyle(new ProxyStyle(style()));
+  m_defaultStyle = "windowsvista";
+  updateStyle(m_defaultStyle);
   addDllsToPath();
 }
 
