@@ -603,6 +603,8 @@ QString extractBaseStyleFromStyleSheet(QFile& stylesheet, const QString& default
   //
   const auto topLines = extractTopStyleSheetComments(stylesheet);
 
+  const auto factoryStyles = QStyleFactory::keys();
+
   QString style = defaultStyle;
 
   for (const auto& line : topLines) {
@@ -618,14 +620,15 @@ QString extractBaseStyleFromStyleSheet(QFile& stylesheet, const QString& default
     }
 
     const auto tmpStyle = parts[1].trimmed();
-    if (QStyleFactory::keys().count(tmpStyle) == 0) {
+    const auto index    = factoryStyles.indexOf(tmpStyle, 0, Qt::CaseInsensitive);
+    if (index == -1) {
       log::warn("base style '{}' from style '{}' not found", tmpStyle,
                 stylesheet.fileName(), line);
       continue;
     }
 
-    log::info("found base style '{}' for style '{}'", tmpStyle, stylesheet.fileName());
-    style = tmpStyle;
+    style = factoryStyles[index];
+    log::info("found base style '{}' for style '{}'", style, stylesheet.fileName());
     break;
   }
 
