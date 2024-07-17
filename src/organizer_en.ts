@@ -2901,37 +2901,37 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
 <context>
     <name>MOApplication</name>
     <message>
-        <location filename="moapplication.cpp" line="197"/>
+        <location filename="moapplication.cpp" line="198"/>
         <source>Failed to create log folder.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="moapplication.cpp" line="261"/>
+        <location filename="moapplication.cpp" line="262"/>
         <source>Failed to set up data paths.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="moapplication.cpp" line="392"/>
+        <location filename="moapplication.cpp" line="393"/>
         <source>Download started</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="moapplication.cpp" line="409"/>
+        <location filename="moapplication.cpp" line="410"/>
         <source>This shortcut or command line is for instance &apos;%1&apos;, but the current instance is &apos;%2&apos;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="moapplication.cpp" line="421"/>
+        <location filename="moapplication.cpp" line="422"/>
         <source>This shortcut or command line is for profile &apos;%1&apos;, but the current profile is &apos;%2&apos;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="moapplication.cpp" line="551"/>
+        <location filename="moapplication.cpp" line="552"/>
         <source>an error occurred: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="moapplication.cpp" line="556"/>
+        <location filename="moapplication.cpp" line="557"/>
         <source>an error occurred</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7639,12 +7639,12 @@ Destination:<byte value="xd"/>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="moapplication.cpp" line="451"/>
+        <location filename="moapplication.cpp" line="452"/>
         <source>Instance at &apos;%1&apos; not found. Select another instance.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="moapplication.cpp" line="455"/>
+        <location filename="moapplication.cpp" line="456"/>
         <source>Instance at &apos;%1&apos; not found. You must create a new instance</source>
         <translation type="unfinished"></translation>
     </message>
