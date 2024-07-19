@@ -44,6 +44,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <iplugingame.h>
 #include <log.h>
 #include <report.h>
+#include <scopeguard.h>
 #include <utility.h>
 
 // see addDllsToPath() below
@@ -154,8 +155,8 @@ MOApplication::MOApplication(int& argc, char** argv) : QApplication(argc, argv)
     updateStyle(file);
   });
 
-  m_defaultStyle = style()->objectName();
-  setStyle(new ProxyStyle(style()));
+  m_defaultStyle = "windowsvista";
+  updateStyle(m_defaultStyle);
   addDllsToPath();
 }
 
@@ -558,14 +559,94 @@ bool MOApplication::notify(QObject* receiver, QEvent* event)
   }
 }
 
+namespace
+{
+QStringList extractTopStyleSheetComments(QFile& stylesheet)
+{
+  if (!stylesheet.open(QFile::ReadOnly)) {
+    log::error("failed to open stylesheet file {}", stylesheet.fileName());
+    return {};
+  }
+  ON_BLOCK_EXIT([&stylesheet]() {
+    stylesheet.close();
+  });
+
+  QStringList topComments;
+
+  while (true) {
+    const auto byteLine = stylesheet.readLine();
+    if (byteLine.isNull()) {
+      break;
+    }
+
+    const auto line = QString(byteLine).trimmed();
+
+    // skip empty lines
+    if (line.isEmpty()) {
+      continue;
+    }
+
+    // only handle single line comments
+    if (!line.startsWith("/*")) {
+      break;
+    }
+
+    topComments.push_back(line.mid(2, line.size() - 4).trimmed());
+  }
+
+  return topComments;
+}
+
+QString extractBaseStyleFromStyleSheet(QFile& stylesheet, const QString& defaultStyle)
+{
+  // read the first line of the files that are either empty or comments
+  //
+  const auto topLines = extractTopStyleSheetComments(stylesheet);
+
+  const auto factoryStyles = QStyleFactory::keys();
+
+  QString style = defaultStyle;
+
+  for (const auto& line : topLines) {
+    if (!line.startsWith("mo2-base-style")) {
+      continue;
+    }
+
+    const auto parts = line.split(":");
+    if (parts.size() != 2) {
+      log::warn("found invalid top-comment for mo2 in {}: {}", stylesheet.fileName(),
+                line);
+      continue;
+    }
+
+    const auto tmpStyle = parts[1].trimmed();
+    const auto index    = factoryStyles.indexOf(tmpStyle, 0, Qt::CaseInsensitive);
+    if (index == -1) {
+      log::warn("base style '{}' from style '{}' not found", tmpStyle,
+                stylesheet.fileName(), line);
+      continue;
+    }
+
+    style = factoryStyles[index];
+    log::info("found base style '{}' for style '{}'", style, stylesheet.fileName());
+    break;
+  }
+
+  return style;
+}
+
+}  // namespace
+
 void MOApplication::updateStyle(const QString& fileName)
 {
   if (QStyleFactory::keys().contains(fileName)) {
     setStyleSheet("");
     setStyle(new ProxyStyle(QStyleFactory::create(fileName)));
   } else {
-    setStyle(new ProxyStyle(QStyleFactory::create(m_defaultStyle)));
-    if (QFile::exists(fileName)) {
+    QFile stylesheet(fileName);
+    if (stylesheet.exists()) {
+      setStyle(new ProxyStyle(QStyleFactory::create(
+          extractBaseStyleFromStyleSheet(stylesheet, m_defaultStyle))));
       setStyleSheet(QString("file:///%1").arg(fileName));
     } else {
       log::warn("invalid stylesheet: {}", fileName);
