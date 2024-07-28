@@ -28,7 +28,7 @@ bool GameFeaturesProxy::registerFeature(MOBase::IPluginGame* game,
 bool GameFeaturesProxy::registerFeature(std::shared_ptr<MOBase::GameFeature> feature,
                                         int priority, bool replace)
 {
-  return registerFeature({}, feature, priority, replace);
+  return registerFeature(QStringList(), feature, priority, replace);
 }
 
 bool GameFeaturesProxy::unregisterFeature(std::shared_ptr<MOBase::GameFeature> feature)
