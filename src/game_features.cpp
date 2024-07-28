@@ -45,20 +45,29 @@ public:
   {
     m_fixer = nullptr;
 
-    for (auto& modDataChecker : m_modDataCheckers) {
+    // go through the available mod-data checker, if any returns valid, we also
+    // return valid, otherwise, return the first one that is fixable
+    for (const auto& modDataChecker : m_modDataCheckers) {
       auto check = modDataChecker->dataLooksValid(fileTree);
 
       switch (check) {
       case CheckReturn::FIXABLE:
-        m_fixer = modDataChecker;
-        [[fallthrough]];
+        // only update fixer if there is not one with higher priority
+        if (!m_fixer) {
+          m_fixer = modDataChecker;
+        }
+        break;
       case CheckReturn::VALID:
+        // clear fixer if one were found before and return VALID, not mandatory
+        // but cleaner
+        m_fixer = nullptr;
         return CheckReturn::VALID;
       case CheckReturn::INVALID:
         break;
       }
     }
-    return CheckReturn::INVALID;
+
+    return m_fixer ? CheckReturn::FIXABLE : CheckReturn::INVALID;
   }
 
   std::shared_ptr<MOBase::IFileTree>
@@ -100,7 +109,6 @@ public:
                            std::make_move_iterator(contents.end()));
 
       // increase offset for next mod data content
-
       offset += contents.size();
     }
   }
