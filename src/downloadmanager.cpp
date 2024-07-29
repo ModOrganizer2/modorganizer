@@ -455,8 +455,18 @@ void DownloadManager::queryDownloadListInfo()
     }
   }
 
-  // Warn the user if the number of incomplete infos is over 5
-  if (incompleteInfos > 5) {
+  if (incompleteInfos <= 5) {
+    // Fetch metadata for incomplete download infos
+    startDisableDirWatcher();
+    for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
+      if (isInfoIncomplete(i)) {
+        queryInfoMd5(i);
+      }
+    }
+    endDisableDirWatcher();
+  } else {
+
+    // Warn the user if the number of incomplete infos is over 5
     QString message = tr("There %1 incomplete download meta files.\n\n"
                          "Do you want to fetch metadata for all incomplete downloads?\n"
                          "API uses will be consumed, and Mod Organizer may stutter.");
