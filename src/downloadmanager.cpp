@@ -444,7 +444,7 @@ void DownloadManager::queryDownloadListInfo()
 {
   TimeThis tt("DownloadManager::queryDownloadListInfos()");
 
-  log::info("Retrieving infos from every download (if possible)...");
+  log::info("Retrieving data from every download (if possible)...");
 
   int incompleteInfos = 0;
 
@@ -467,8 +467,8 @@ void DownloadManager::queryDownloadListInfo()
   } else {
 
     // Warn the user if the number of incomplete infos is over 5
-    QString message = tr("There %1 incomplete download meta files.\n\n"
-                         "Do you want to fetch metadata for all incomplete downloads?\n"
+    QString message = tr("There are %1 incomplete download meta files.\n\n"
+                         "Do you want to fetch all incomplete metadata?\n"
                          "API uses will be consumed, and Mod Organizer may stutter.");
     message         = message.arg(incompleteInfos);
     if (QMessageBox::question(m_ParentWidget, tr("Incomplete Download Infos"), message,
@@ -485,7 +485,7 @@ void DownloadManager::queryDownloadListInfo()
     return;
   }
 
-  log::info("Files infos have been retrieved successfully!");
+  log::info("Metadata has been retrieved successfully!");
 }
 
 bool DownloadManager::addDownload(const QStringList& URLs, QString gameName, int modID,
