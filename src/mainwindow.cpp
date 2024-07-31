@@ -406,14 +406,6 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
   connect(&NexusInterface::instance(), SIGNAL(needLogin()), &m_OrganizerCore,
           SLOT(nexusApi()));
 
-  connect(NexusInterface::instance().getAccessManager(),
-          SIGNAL(credentialsReceived(const APIUserAccount&)), this,
-          SLOT(updateWindowTitle(const APIUserAccount&)));
-
-  connect(NexusInterface::instance().getAccessManager(),
-          SIGNAL(credentialsReceived(const APIUserAccount&)),
-          &NexusInterface::instance(), SLOT(setUserAccount(const APIUserAccount&)));
-
   connect(&NexusInterface::instance(),
           SIGNAL(requestsChanged(const APIStats&, const APIUserAccount&)), this,
           SLOT(onRequestsChanged(const APIStats&, const APIUserAccount&)));
