@@ -406,9 +406,10 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
   connect(&NexusInterface::instance(), SIGNAL(needLogin()), &m_OrganizerCore,
           SLOT(nexusApi()));
 
-  connect(&NexusInterface::instance(),
-          SIGNAL(requestsChanged(const APIStats&, const APIUserAccount&)), this,
-          SLOT(onRequestsChanged(const APIStats&, const APIUserAccount&)));
+  connect(NexusInterface::instance().getAccessManager(),
+          &NXMAccessManager::credentialsReceived, this, &MainWindow::updateWindowTitle);
+  connect(&NexusInterface::instance(), &NexusInterface::requestsChanged, ui->statusBar,
+          &StatusBar::setAPI);
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this,
           SLOT(windowTutorialFinished(QString)));
@@ -648,11 +649,6 @@ void MainWindow::updateWindowTitle(const APIUserAccount& user)
   }
 
   this->setWindowTitle(title);
-}
-
-void MainWindow::onRequestsChanged(const APIStats& stats, const APIUserAccount& user)
-{
-  ui->statusBar->setAPI(stats, user);
 }
 
 void MainWindow::resizeLists(bool pluginListCustom)

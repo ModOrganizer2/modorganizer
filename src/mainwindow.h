@@ -385,8 +385,6 @@ private slots:
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData,
                         int requestID, int errorCode, const QString& errorString);
 
-  void onRequestsChanged(const APIStats& stats, const APIUserAccount& user);
-
   void modRenamed(const QString& oldName, const QString& newName);
   void modRemoved(const QString& fileName);
 
