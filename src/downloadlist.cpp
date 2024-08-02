@@ -221,7 +221,8 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
             .arg(info->modName)
             .arg(m_manager.getModID(index.row()))
             .arg(info->version.canonicalString())
-            .arg(info->description.chopped(4096));
+            .arg(info->description.size() > 4096 ? info->description.chopped(4096)
+                                                 : info->description);
       }
       return text;
     }
