@@ -639,9 +639,10 @@ MainWindow::~MainWindow()
 void MainWindow::updateWindowTitle(const APIUserAccount& user)
 {
   //"\xe2\x80\x93" is an "em dash", a longer "-"
-  QString title = QString("%1 \xe2\x80\x93 Mod Organizer v%2")
-                      .arg(m_OrganizerCore.managedGame()->displayGameName(),
-                           m_OrganizerCore.getVersion().string());
+  QString title =
+      QString("%1 \xe2\x80\x93 Mod Organizer v%2")
+          .arg(m_OrganizerCore.managedGame()->displayGameName(),
+               m_OrganizerCore.getVersion().string(Version::FormatCondensed));
 
   if (!user.name().isEmpty()) {
     const QString premium = (user.type() == APIUserAccountTypes::Premium ? "*" : "");
@@ -1039,7 +1040,8 @@ void MainWindow::checkForProblemsImpl()
 
 void MainWindow::about()
 {
-  AboutDialog(m_OrganizerCore.getVersion().string(), this).exec();
+  AboutDialog(m_OrganizerCore.getVersion().string(Version::FormatCondensed), this)
+      .exec();
 }
 
 void MainWindow::createEndorseMenu()
