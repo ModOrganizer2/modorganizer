@@ -95,6 +95,8 @@ private:
   using SignalProfileRemoved = boost::signals2::signal<void(QString const&)>;
   using SignalProfileChanged =
       boost::signals2::signal<void(MOBase::IProfile*, MOBase::IProfile*)>;
+  using SignalProfileSettingChanged = boost::signals2::signal<void(
+      MOBase::IProfile*, const QString& key, const QVariant&, const QVariant&)>;
   using SignalPluginSettingChanged = boost::signals2::signal<void(
       QString const&, const QString& key, const QVariant&, const QVariant&)>;
   using SignalPluginEnabled = boost::signals2::signal<void(const MOBase::IPlugin*)>;
@@ -402,6 +404,9 @@ public:
   onProfileRemoved(std::function<void(QString const&)> const& func);
   boost::signals2::connection onProfileChanged(
       std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func);
+  boost::signals2::connection onProfileSettingChanged(
+      std::function<void(MOBase::IProfile*, const QString& key, const QVariant&,
+                         const QVariant&)> const& func);
   boost::signals2::connection onPluginSettingChanged(
       std::function<void(QString const&, const QString& key, const QVariant&,
                          const QVariant&)> const& func);
@@ -452,6 +457,8 @@ public slots:
   void profileRenamed(MOBase::IProfile* profile, QString const& oldName,
                       QString const& newName);
   void profileRemoved(QString const& profileName);
+  void profileSettingChanged(MOBase::IProfile* profile, const QString& settingName,
+                      const QVariant& oldValue, const QVariant& newValue);
 
   bool nexusApi(bool retry = false);
 
@@ -544,6 +551,7 @@ private:
   SignalProfileRenamed m_ProfileRenamed;
   SignalProfileRemoved m_ProfileRemoved;
   SignalProfileChanged m_ProfileChanged;
+  SignalProfileSettingChanged m_ProfileSettingChanged;
   SignalPluginSettingChanged m_PluginSettingChanged;
   SignalPluginEnabled m_PluginEnabled;
   SignalPluginEnabled m_PluginDisabled;

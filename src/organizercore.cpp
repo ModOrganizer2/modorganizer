@@ -354,6 +354,13 @@ void OrganizerCore::profileRemoved(QString const& profileName)
   m_ProfileRemoved(profileName);
 }
 
+void OrganizerCore::profileSettingChanged(MOBase::IProfile* profile, const QString& settingName,
+                                          const QVariant& oldValue, const QVariant& newValue)
+{
+  m_ProfileSettingChanged(profile, settingName, oldValue, newValue);
+}
+
+
 void OrganizerCore::downloadRequested(QNetworkReply* reply, QString gameName, int modID,
                                       const QString& fileName)
 {
@@ -1201,6 +1208,13 @@ boost::signals2::connection
 OrganizerCore::onProfileChanged(std::function<void(IProfile*, IProfile*)> const& func)
 {
   return m_ProfileChanged.connect(func);
+}
+
+boost::signals2::connection OrganizerCore::onProfileSettingChanged(
+    std::function<void(IProfile*, const QString& key, const QVariant&,
+                       const QVariant&)> const& func)
+{
+  return m_ProfileSettingChanged.connect(func);
 }
 
 boost::signals2::connection OrganizerCore::onPluginSettingChanged(

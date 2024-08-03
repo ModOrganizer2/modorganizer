@@ -93,6 +93,9 @@ public:  // IOrganizer interface
   onProfileRemoved(std::function<void(QString const&)> const& func) override;
   virtual bool onProfileChanged(
       std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func) override;
+  virtual bool onProfileSettingChanged(
+      std::function<void(MOBase::IProfile*, const QString& key, const QVariant&,
+                         const QVariant&)> const& func) override;
 
   // Plugin related:
   virtual bool isPluginEnabled(QString const& pluginName) const override;
@@ -145,6 +148,7 @@ private:
   OrganizerCore::SignalProfileRenamed m_ProfileRenamed;
   OrganizerCore::SignalProfileRemoved m_ProfileRemoved;
   OrganizerCore::SignalProfileChanged m_ProfileChanged;
+  OrganizerCore::SignalProfileSettingChanged m_ProfileSettingChanged;
   OrganizerCore::SignalPluginSettingChanged m_PluginSettingChanged;
   OrganizerCore::SignalPluginEnabled m_PluginEnabled;
   OrganizerCore::SignalPluginEnabled m_PluginDisabled;

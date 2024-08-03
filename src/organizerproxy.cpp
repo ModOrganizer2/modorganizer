@@ -50,6 +50,8 @@ void OrganizerProxy::connectSignals()
       m_Proxied->onProfileRemoved(callSignalIfPluginActive(this, m_ProfileRemoved)));
   m_Connections.push_back(
       m_Proxied->onProfileChanged(callSignalIfPluginActive(this, m_ProfileChanged)));
+  m_Connections.push_back(
+      m_Proxied->onProfileSettingChanged(callSignalIfPluginActive(this, m_ProfileSettingChanged)));
 
   m_Connections.push_back(m_Proxied->onUserInterfaceInitialized(
       callSignalAlways(m_UserInterfaceInitialized)));
@@ -395,6 +397,14 @@ bool OrganizerProxy::onProfileChanged(
 {
   return m_ProfileChanged.connect(func).connected();
 }
+
+bool OrganizerProxy::onProfileSettingChanged(
+    std::function<void(MOBase::IProfile*, const QString& key, const QVariant&,
+                       const QVariant&)> const& func)
+{
+  return m_ProfileSettingChanged.connect(func).connected();
+}
+
 // Always call these one, otherwise plugin cannot detect they are being enabled /
 // disabled:
 bool OrganizerProxy::onPluginSettingChanged(
