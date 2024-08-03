@@ -93,6 +93,12 @@ signals:
    */
   void profileRemoved(QString const& profileName);
 
+  /**
+   * @brief Signal emitted when a profile's setting has been changed.
+   */
+  void profileSettingChanged(Profile* profile, const QString& settingName,
+                             const QVariant& oldValue, const QVariant& newValue);
+
 protected:
   virtual void showEvent(QShowEvent* event);
 

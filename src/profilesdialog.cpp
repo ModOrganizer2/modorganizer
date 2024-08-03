@@ -91,6 +91,8 @@ ProfilesDialog::ProfilesDialog(const QString& profileName, OrganizerCore& organi
           &OrganizerCore::profileRenamed);
   connect(this, &ProfilesDialog::profileRemoved, &organizer,
           &OrganizerCore::profileRemoved);
+  connect(this, &ProfilesDialog::profileSettingChanged, &organizer,
+          &OrganizerCore::profileSettingChanged);
 }
 
 ProfilesDialog::~ProfilesDialog()
@@ -328,11 +330,14 @@ void ProfilesDialog::on_invalidationBox_stateChanged(int state)
     }
     const Profile::Ptr currentProfile =
         currentItem->data(Qt::UserRole).value<Profile::Ptr>();
-    if (state == Qt::Unchecked) {
-      currentProfile->deactivateInvalidation();
-    } else {
+
+    bool enable = (state == Qt::Checked);
+    if (enable) {
       currentProfile->activateInvalidation();
+    } else {
+      currentProfile->deactivateInvalidation();
     }
+    emit profileSettingChanged(currentProfile.get(), "Invalidation", !enable, enable);
   } catch (const std::exception& e) {
     reportError(tr("failed to change archive invalidation state: %1").arg(e.what()));
   }
@@ -396,11 +401,13 @@ void ProfilesDialog::on_localSavesBox_stateChanged(int state)
   Profile::Ptr currentProfile =
       ui->profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
 
-  if (currentProfile->enableLocalSaves(state == Qt::Checked)) {
-    ui->transferButton->setEnabled(state == Qt::Checked);
+  bool enable = (state == Qt::Checked);
+  if (currentProfile->enableLocalSaves(enable)) {
+    ui->transferButton->setEnabled(enable);
+    emit profileSettingChanged(currentProfile.get(), "LocalSaves", !enable, enable);
   } else {
     // revert checkbox-state
-    ui->localSavesBox->setChecked(state != Qt::Checked);
+    ui->localSavesBox->setChecked(!enable);
   }
 }
 
@@ -417,8 +424,11 @@ void ProfilesDialog::on_localIniFilesBox_stateChanged(int state)
   Profile::Ptr currentProfile =
       ui->profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
 
-  if (!currentProfile->enableLocalSettings(state == Qt::Checked)) {
+  bool enable = (state == Qt::Checked);
+  if (currentProfile->enableLocalSettings(enable)) {
+    emit profileSettingChanged(currentProfile.get(), "LocalSettings", !enable, enable);
+  } else {
     // revert checkbox-state
-    ui->localIniFilesBox->setChecked(state != Qt::Checked);
+    ui->localIniFilesBox->setChecked(!enable);
   }
 }
