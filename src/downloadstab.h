@@ -23,6 +23,7 @@ private:
   struct DownloadsTabUi
   {
     QPushButton* refresh;
+    QPushButton* queryInfos;
     DownloadListView* list;
     QCheckBox* showHidden;
     QLineEdit* filter;
@@ -33,6 +34,12 @@ private:
   MOBase::FilterWidget m_filter;
 
   void refresh();
+
+  /**
+   * @brief Handle click on the "Query infos" button
+   **/
+  void queryInfos();
+
   void resumeDownload(int downloadIndex);
 };
 

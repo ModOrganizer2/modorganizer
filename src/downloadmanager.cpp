@@ -440,6 +440,54 @@ void DownloadManager::refreshList()
   }
 }
 
+void DownloadManager::queryDownloadListInfo()
+{
+  TimeThis tt("DownloadManager::queryDownloadListInfos()");
+
+  log::info("Retrieving data from every download (if possible)...");
+
+  int incompleteInfos = 0;
+
+  // Just go through all active downloads to query infos
+  for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
+    if (isInfoIncomplete(i)) {
+      incompleteInfos++;
+    }
+  }
+
+  if (incompleteInfos <= 5) {
+    // Fetch metadata for incomplete download infos
+    startDisableDirWatcher();
+    for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
+      if (isInfoIncomplete(i)) {
+        queryInfoMd5(i);
+      }
+    }
+    endDisableDirWatcher();
+  } else {
+
+    // Warn the user if the number of incomplete infos is over 5
+    QString message = tr("There are %1 incomplete download meta files.\n\n"
+                         "Do you want to fetch all incomplete metadata?\n"
+                         "API uses will be consumed, and Mod Organizer may stutter.");
+    message         = message.arg(incompleteInfos);
+    if (QMessageBox::question(m_ParentWidget, tr("Incomplete Download Infos"), message,
+                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      // Fetch metadata for incomplete download infos
+      startDisableDirWatcher();
+      for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
+        if (isInfoIncomplete(i)) {
+          queryInfoMd5(i);
+        }
+      }
+      endDisableDirWatcher();
+    }
+    return;
+  }
+
+  log::info("Metadata has been retrieved successfully!");
+}
+
 bool DownloadManager::addDownload(const QStringList& URLs, QString gameName, int modID,
                                   int fileID, const ModRepositoryFileInfo* fileInfo)
 {
