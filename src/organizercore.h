@@ -1,30 +1,6 @@
 #ifndef ORGANIZERCORE_H
 #define ORGANIZERCORE_H
 
-#include "downloadmanager.h"
-#include "envdump.h"
-#include "executableinfo.h"
-#include "executableslist.h"
-#include "guessedvalue.h"
-#include "installationmanager.h"
-#include "memoizedlock.h"
-#include "moddatacontent.h"
-#include "modinfo.h"
-#include "modlist.h"
-#include "moshortcut.h"
-#include "pluginlist.h"
-#include "processrunner.h"
-#include "selfupdater.h"
-#include "settings.h"
-#include "uilocker.h"
-#include "usvfsconnector.h"
-#include <boost/signals2.hpp>
-#include <delayedfilewriter.h>
-#include <imoinfo.h>
-#include <iplugindiagnose.h>
-#include <log.h>
-#include <versioninfo.h>
-
 #include <QDir>
 #include <QFileInfo>
 #include <QList>
@@ -34,6 +10,32 @@
 #include <QStringList>
 #include <QThread>
 #include <QVariant>
+
+#include <boost/signals2.hpp>
+
+#include <uibase/delayedfilewriter.h>
+#include <uibase/executableinfo.h>
+#include <uibase/game_features/moddatacontent.h>
+#include <uibase/guessedvalue.h>
+#include <uibase/imoinfo.h>
+#include <uibase/iplugindiagnose.h>
+#include <uibase/log.h>
+#include <uibase/memoizedlock.h>
+#include <uibase/versioning.h>
+
+#include "downloadmanager.h"
+#include "envdump.h"
+#include "executableslist.h"
+#include "installationmanager.h"
+#include "modinfo.h"
+#include "modlist.h"
+#include "moshortcut.h"
+#include "pluginlist.h"
+#include "processrunner.h"
+#include "selfupdater.h"
+#include "settings.h"
+#include "uilocker.h"
+#include "usvfsconnector.h"
 
 class ModListSortProxy;
 class PluginListSortProxy;
@@ -270,7 +272,7 @@ public:
 
   std::vector<QString> enabledArchives();
 
-  MOBase::VersionInfo getVersion() const { return m_Updater.getVersion(); }
+  MOBase::Version getVersion() const { return m_Updater.getVersion(); }
 
   // return the plugin container
   //
@@ -358,7 +360,7 @@ public:
   QString overwritePath() const;
   QString basePath() const;
   QString modsPath() const;
-  MOBase::VersionInfo appVersion() const;
+  MOBase::Version version() const;
   MOBase::IPluginGame* getGame(const QString& gameName) const;
   MOBase::IModInterface* createMod(MOBase::GuessedValue<QString>& name);
   void modDataChanged(MOBase::IModInterface* mod);

@@ -114,9 +114,53 @@ QString OrganizerProxy::modsPath() const
   return m_Proxied->modsPath();
 }
 
+Version OrganizerProxy::version() const
+{
+  return m_Proxied->version();
+}
+
 VersionInfo OrganizerProxy::appVersion() const
 {
-  return m_Proxied->appVersion();
+  const auto version = m_Proxied->version();
+  const int major = version.major(), minor = version.minor(),
+            subminor                       = version.patch();
+  int subsubminor                          = 0;
+  VersionInfo::ReleaseType infoReleaseType = VersionInfo::RELEASE_FINAL;
+
+  // make a copy
+  auto prereleases = version.preReleases();
+
+  if (!prereleases.empty()) {
+    // check if the first pre-release entry is a number
+    if (prereleases.front().index() == 0) {
+      subsubminor = std::get<int>(prereleases.front());
+      prereleases.erase(prereleases.begin());
+    }
+
+    if (!prereleases.empty()) {
+      const auto releaseType = std::get<Version::ReleaseType>(prereleases.front());
+      switch (releaseType) {
+      case Version::Development:
+        infoReleaseType = VersionInfo::RELEASE_PREALPHA;
+        break;
+      case Version::Alpha:
+        infoReleaseType = VersionInfo::RELEASE_ALPHA;
+        break;
+      case Version::Beta:
+        infoReleaseType = VersionInfo::RELEASE_BETA;
+        break;
+      case Version::ReleaseCandidate:
+        infoReleaseType = VersionInfo::RELEASE_CANDIDATE;
+        break;
+      default:
+        infoReleaseType = VersionInfo::RELEASE_PREALPHA;
+      }
+    }
+
+    // there is no way to differentiate two pre-releases?
+  }
+
+  return VersionInfo(major, minor, subminor, subsubminor, infoReleaseType);
 }
 
 IPluginGame* OrganizerProxy::getGame(const QString& gameName) const
