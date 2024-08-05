@@ -11,16 +11,16 @@
 
 #include <QObject>
 
-#include <extension.h>
-#include <iplugin.h>
-#include <iplugindiagnose.h>
-#include <ipluginfilemapper.h>
-#include <iplugingame.h>
-#include <iplugininstaller.h>
-#include <ipluginloader.h>
-#include <ipluginmodpage.h>
-#include <ipluginpreview.h>
-#include <iplugintool.h>
+#include <uibase/extensions/extension.h>
+#include <uibase/extensions/ipluginloader.h>
+#include <uibase/iplugin.h>
+#include <uibase/iplugindiagnose.h>
+#include <uibase/ipluginfilemapper.h>
+#include <uibase/iplugingame.h>
+#include <uibase/iplugininstaller.h>
+#include <uibase/ipluginmodpage.h>
+#include <uibase/ipluginpreview.h>
+#include <uibase/iplugintool.h>
 
 #include "game_features.h"
 #include "previewgenerator.h"

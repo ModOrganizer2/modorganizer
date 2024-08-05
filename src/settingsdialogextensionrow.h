@@ -3,7 +3,7 @@
 
 #include <QWidget>
 
-#include "extension.h"
+#include <uibase/extensions/extension.h>
 
 namespace Ui
 {

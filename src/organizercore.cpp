@@ -1081,7 +1081,7 @@ bool OrganizerCore::previewFileWithAlternatives(QWidget* parent, QString fileNam
           libbsarch::memory_blob fileData =
               archiveLoader.extract_to_memory(fileName.toStdWString());
           QByteArray convertedFileData((char*)(fileData.data), fileData.size);
-          QWidget* wid = m_PluginContainer->previewGenerator().genArchivePreview(
+          QWidget* wid = m_PluginManager->previewGenerator().genArchivePreview(
               convertedFileData, filePath);
           if (wid == nullptr) {
             reportError(tr("failed to generate preview for %1").arg(filePath));

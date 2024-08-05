@@ -7,7 +7,7 @@
 #include <boost/fusion/container.hpp>
 #include <boost/fusion/include/at_key.hpp>
 
-#include <extension.h>
+#include <uibase/extensions/extension.h>
 
 #include "extensionwatcher.h"
 

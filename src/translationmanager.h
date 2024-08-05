@@ -4,7 +4,7 @@
 #include <QApplication>
 #include <QTranslator>
 
-#include <translation.h>
+#include <uibase/extensions/translation.h>
 
 #include "extensionwatcher.h"
 

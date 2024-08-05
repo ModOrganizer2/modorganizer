@@ -3,7 +3,7 @@
 
 #include <map>
 
-#include <ipluginloader.h>
+#include <uibase/extensions/ipluginloader.h>
 
 class ProxyQtLoader : public MOBase::IPluginLoader
 {

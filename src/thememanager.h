@@ -4,7 +4,7 @@
 #include <QApplication>
 #include <QFileSystemWatcher>
 
-#include <theme.h>
+#include <uibase/extensions/theme.h>
 
 #include "extensionwatcher.h"
 
@@ -70,9 +70,11 @@ private:
   //
   void loadExtensionTheme(std::shared_ptr<const MOBase::Theme> const& theme);
 
-  // build a stylesheet for a theme
+  // build a stylesheet for a theme, extracting the base theme if needed (if no base
+  // theme is found, the baseTheme variable is kept untouched)
   //
-  QString buildStyleSheet(std::shared_ptr<const MOBase::Theme> const& theme) const;
+  QString buildStyleSheet(std::shared_ptr<const MOBase::Theme> const& theme,
+                          QString& baseTheme) const;
 
   // patch the given stylesheet by replacing url() to be relative to the given folder
   //

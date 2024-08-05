@@ -1,7 +1,7 @@
 #ifndef EXTENSIONLISTPROXY_H
 #define EXTENSIONLISTPROXY_H
 
-#include <iextensionlist.h>
+#include <uibase/extensions/iextensionlist.h>
 
 #include "extensionmanager.h"
 

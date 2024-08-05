@@ -3,9 +3,10 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QProxyStyle>
+#include <QTextStream>
 
-#include <log.h>
-#include <utility.h>
+#include <uibase/log.h>
+#include <uibase/utility.h>
 
 #include "shared/appconfig.h"
 
@@ -60,6 +61,87 @@ public:
   }
 };
 
+namespace
+{
+QString readWholeFile(std::filesystem::path const& path)
+{
+  QFile file(path);
+  if (!file.open(QFile::ReadOnly | QFile::Text)) {
+    return {};
+  }
+
+  return QTextStream(&file).readAll();
+}
+
+QStringList extractTopStyleSheetComments(QString const& stylesheet)
+{
+  QTextStream stream(stylesheet.toUtf8());
+  QStringList topComments;
+
+  while (true) {
+    const auto byteLine = stream.readLine();
+    if (byteLine.isNull()) {
+      break;
+    }
+
+    const auto line = QString(byteLine).trimmed();
+
+    // skip empty lines
+    if (line.isEmpty()) {
+      continue;
+    }
+
+    // only handle single line comments
+    if (!line.startsWith("/*")) {
+      break;
+    }
+
+    topComments.push_back(line.mid(2, line.size() - 4).trimmed());
+  }
+
+  return topComments;
+}
+
+QString extractBaseStyleFromStyleSheet(std::filesystem::path const& path,
+                                       QString const& stylesheet,
+                                       const QString& defaultStyle)
+{
+  // read the first line of the files that are either empty or comments
+  //
+  const auto topLines = extractTopStyleSheetComments(stylesheet);
+
+  const auto factoryStyles = QStyleFactory::keys();
+
+  QString style = defaultStyle;
+
+  for (const auto& line : topLines) {
+    if (!line.startsWith("mo2-base-style")) {
+      continue;
+    }
+
+    const auto parts = line.split(":");
+    if (parts.size() != 2) {
+      log::warn("found invalid top-comment for mo2 in {}: {}", path, line);
+      continue;
+    }
+
+    const auto tmpStyle = parts[1].trimmed();
+    const auto index    = factoryStyles.indexOf(tmpStyle, 0, Qt::CaseInsensitive);
+    if (index == -1) {
+      log::warn("base style '{}' from style '{}' not found", tmpStyle, path, line);
+      continue;
+    }
+
+    style = factoryStyles[index];
+    log::info("found base style '{}' for style '{}'", style, path);
+    break;
+  }
+
+  return style;
+}
+
+}  // namespace
+
 ThemeManager::ThemeManager(QApplication* application) : m_app{application}
 {
   // add built-in themes
@@ -67,8 +149,7 @@ ThemeManager::ThemeManager(QApplication* application) : m_app{application}
 
   // find the default theme - this might be a built-in Qt theme, or null, in which case
   // we just create a default theme
-  if (auto it =
-          m_baseThemesByIdentifier.find(m_app->style()->objectName().toStdString());
+  if (auto it = m_baseThemesByIdentifier.find("windowsvista");
       it != m_baseThemesByIdentifier.end()) {
     m_defaultTheme = it->second;
   } else {
@@ -148,12 +229,14 @@ void ThemeManager::loadQtTheme(std::string_view themeIdentifier)
 
 void ThemeManager::loadExtensionTheme(std::shared_ptr<const Theme> const& theme)
 {
+  auto baseTheme        = ToQString(m_defaultTheme->identifier());
+  const auto stylesheet = buildStyleSheet(theme, baseTheme);
+
   // load the default theme
-  m_app->setStyle(
-      new ProxyStyle(QStyleFactory::create(ToQString(m_defaultTheme->identifier()))));
+  m_app->setStyle(new ProxyStyle(QStyleFactory::create(baseTheme)));
 
   // build the stylesheet and set it
-  m_app->setStyleSheet(buildStyleSheet(theme));
+  m_app->setStyleSheet(stylesheet);
 }
 
 void ThemeManager::unload()
@@ -198,24 +281,19 @@ void ThemeManager::addQtThemes()
   }
 }
 
-namespace
+QString ThemeManager::buildStyleSheet(std::shared_ptr<const Theme> const& theme,
+                                      QString& baseTheme) const
 {
-QString readWholeFile(std::filesystem::path const& path)
-{
-  QFile file(path);
-  if (!file.open(QFile::ReadOnly | QFile::Text)) {
-    return {};
-  }
+  // read the file
+  const auto stylesheetContent = readWholeFile(theme->stylesheet());
 
-  return QTextStream(&file).readAll();
-}
-}  // namespace
+  // check for base theme override
+  baseTheme =
+      extractBaseStyleFromStyleSheet(theme->stylesheet(), stylesheetContent, baseTheme);
 
-QString ThemeManager::buildStyleSheet(std::shared_ptr<const Theme> const& theme) const
-{
-  // create the base stylesheet
-  QString stylesheet = patchStyleSheet(readWholeFile(theme->stylesheet()),
-                                       theme->stylesheet().parent_path());
+  // patch the file
+  QString stylesheet =
+      patchStyleSheet(stylesheetContent, theme->stylesheet().parent_path());
 
   for (auto&& themeAddition : m_additions) {
     if (themeAddition->isAdditionFor(*theme)) {

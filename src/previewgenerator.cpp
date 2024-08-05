@@ -67,9 +67,9 @@ QWidget* PreviewGenerator::genArchivePreview(const QByteArray& fileData,
                                              const QString& fileName) const
 {
   const QString ext = QFileInfo(fileName).suffix().toLower();
-  auto& previews    = m_PluginContainer.plugins<IPluginPreview>();
+  auto& previews    = m_PluginManager.plugins<IPluginPreview>();
   for (auto* preview : previews) {
-    if (m_PluginContainer.isEnabled(preview) &&
+    if (m_PluginManager.isEnabled(preview) &&
         preview->supportedExtensions().contains(ext) && preview->supportsArchives()) {
       return preview->genDataPreview(fileData, fileName, m_MaxSize);
     }

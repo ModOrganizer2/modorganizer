@@ -1,7 +1,7 @@
 #ifndef EXTENSIONWATCHER_H
 #define EXTENSIONWATCHER_H
 
-#include <extension.h>
+#include <uibase/extensions/extension.h>
 
 // an extension watcher is a class that watches extensions get loaded/unloaded,
 // typically to extract information from theme that are needed by MO2
