@@ -203,8 +203,8 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
   log::debug("command line: '{}'", QString::fromWCharArray(GetCommandLineW()));
 
   log::info("starting Mod Organizer version {} revision {} in {}, usvfs: {}",
-            createVersionInfo().displayString(3), GITID,
-            QCoreApplication::applicationDirPath(), MOShared::getUsvfsVersionString());
+            createVersionInfo().string(), GITID, QCoreApplication::applicationDirPath(),
+            MOShared::getUsvfsVersionString());
 
   if (multiProcess.secondary()) {
     log::debug("another instance of MO is running but --multiple was given");

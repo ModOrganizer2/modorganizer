@@ -639,9 +639,10 @@ MainWindow::~MainWindow()
 void MainWindow::updateWindowTitle(const APIUserAccount& user)
 {
   //"\xe2\x80\x93" is an "em dash", a longer "-"
-  QString title = QString("%1 \xe2\x80\x93 Mod Organizer v%2")
-                      .arg(m_OrganizerCore.managedGame()->displayGameName(),
-                           m_OrganizerCore.getVersion().displayString(3));
+  QString title =
+      QString("%1 \xe2\x80\x93 Mod Organizer v%2")
+          .arg(m_OrganizerCore.managedGame()->displayGameName(),
+               m_OrganizerCore.getVersion().string(Version::FormatCondensed));
 
   if (!user.name().isEmpty()) {
     const QString premium = (user.type() == APIUserAccountTypes::Premium ? "*" : "");
@@ -1039,7 +1040,8 @@ void MainWindow::checkForProblemsImpl()
 
 void MainWindow::about()
 {
-  AboutDialog(m_OrganizerCore.getVersion().displayString(3), this).exec();
+  AboutDialog(m_OrganizerCore.getVersion().string(Version::FormatCondensed), this)
+      .exec();
 }
 
 void MainWindow::createEndorseMenu()
@@ -2163,8 +2165,9 @@ void MainWindow::processUpdates()
   auto& settings      = m_OrganizerCore.settings();
   const auto earliest = QVersionNumber::fromString("2.1.2").normalized();
 
-  const auto lastVersion    = settings.version().value_or(earliest);
-  const auto currentVersion = m_OrganizerCore.getVersion().asQVersionNumber();
+  const auto lastVersion = settings.version().value_or(earliest);
+  const auto currentVersion =
+      QVersionNumber::fromString(m_OrganizerCore.getVersion().string()).normalized();
 
   m_LastVersion = lastVersion;
 
@@ -2967,8 +2970,7 @@ void MainWindow::actionEndorseMO()
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance().requestToggleEndorsement(
         game->gameShortName(), game->nexusModOrganizerID(),
-        m_OrganizerCore.getVersion().canonicalString(), true, this, QVariant(),
-        QString());
+        m_OrganizerCore.getVersion().string(), true, this, QVariant(), QString());
   }
 }
 
@@ -2989,8 +2991,7 @@ void MainWindow::actionWontEndorseMO()
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance().requestToggleEndorsement(
         game->gameShortName(), game->nexusModOrganizerID(),
-        m_OrganizerCore.getVersion().canonicalString(), false, this, QVariant(),
-        QString());
+        m_OrganizerCore.getVersion().string(), false, this, QVariant(), QString());
   }
 }
 

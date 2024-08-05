@@ -732,7 +732,7 @@ public:  // Methods after this do not come from IModInterface:
    *
    * @note Currently, this changes the color of the cell under the "Notes" column.
    */
-  virtual void setColor(QColor color) {}
+  virtual void setColor([[maybe_unused]] QColor color) {}
 
   /**
    * @brief Adds the information that a file has been installed into this mod.

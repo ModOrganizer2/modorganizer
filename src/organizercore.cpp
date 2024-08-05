@@ -646,7 +646,7 @@ QString OrganizerCore::modsPath() const
   return QDir::fromNativeSeparators(m_Settings.paths().mods());
 }
 
-MOBase::VersionInfo OrganizerCore::appVersion() const
+MOBase::Version OrganizerCore::version() const
 {
   return m_Updater.getVersion();
 }
