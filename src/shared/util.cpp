@@ -208,9 +208,11 @@ std::wstring GetFileVersionString(const std::wstring& fileName)
   }
 }
 
-VersionInfo createVersionInfo()
+Version createVersionInfo()
 {
   VS_FIXEDFILEINFO version = GetFileVersion(env::thisProcessPath().native());
+
+  std::optional<Version::ReleaseType> releaseType;
 
   if (version.dwFileFlags & VS_FF_PRERELEASE) {
     // Pre-release builds need annotating
@@ -227,21 +229,29 @@ VersionInfo createVersionInfo()
       }
     }
 
-    if (noLetters) {
-      // Default to pre-alpha when release type is unspecified
-      return VersionInfo(
-          version.dwFileVersionMS >> 16, version.dwFileVersionMS & 0xFFFF,
-          version.dwFileVersionLS >> 16, version.dwFileVersionLS & 0xFFFF,
-          VersionInfo::RELEASE_PREALPHA);
-    } else {
-      // Trust the string to make sense
-      return VersionInfo(versionString);
+    if (!noLetters) {
+      // trust the string to make sense
+      return Version::parse(versionString, Version::ParseMode::MO2);
     }
-  } else {
-    // Non-pre-release builds just need their version numbers reading
-    return VersionInfo(version.dwFileVersionMS >> 16, version.dwFileVersionMS & 0xFFFF,
-                       version.dwFileVersionLS >> 16, version.dwFileVersionLS & 0xFFFF);
+
+    if (noLetters) {
+      // default to development when release type is unspecified
+      releaseType = Version::Development;
+    } else {
+    }
   }
+
+  const int major    = version.dwFileVersionMS >> 16,
+            minor    = version.dwFileVersionMS & 0xFFFF,
+            patch    = version.dwFileVersionLS >> 16,
+            subpatch = version.dwFileVersionLS & 0xFFFF;
+
+  std::vector<std::variant<int, Version::ReleaseType>> prereleases;
+  if (releaseType) {
+    prereleases.push_back(*releaseType);
+  }
+
+  return Version(major, minor, patch, subpatch, std::move(prereleases));
 }
 
 QString getUsvfsDLLVersion()
