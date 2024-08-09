@@ -1476,9 +1476,9 @@ If you disable this feature, MO will only display official DLCs this way. Please
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="pluginsTab">
+     <widget class="QWidget" name="extensionsTab">
       <attribute name="title">
-       <string>Plugins</string>
+       <string>Extensions</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
@@ -1532,13 +1532,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                 <number>0</number>
                </property>
                <item>
-                <widget class="QTreeWidget" name="pluginsList">
-                 <column>
-                  <property name="text">
-                   <string notr="true">1</string>
-                  </property>
-                 </column>
-                </widget>
+                <widget class="QListWidget" name="extensionsList"/>
                </item>
                <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_4">

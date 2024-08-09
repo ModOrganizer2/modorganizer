@@ -21,7 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define NEXUSINTERFACE_H
 
 #include "apiuseraccount.h"
-#include "plugincontainer.h"
+#include "pluginmanager.h"
 
 #include <imodrepositorybridge.h>
 #include <utility.h>
@@ -58,7 +58,7 @@ class NexusBridge : public MOBase::IModRepositoryBridge
   Q_OBJECT
 
 public:
-  NexusBridge(PluginContainer* pluginContainer, const QString& subModule = "");
+  NexusBridge(const QString& subModule = "");
 
   /**
    * @brief request description for a mod
@@ -561,7 +561,7 @@ public:
    */
   bool isModURL(int modID, QString const& url) const;
 
-  void setPluginContainer(PluginContainer* pluginContainer);
+  void setPluginManager(PluginManager* pluginManager);
 
 signals:
 
@@ -681,7 +681,7 @@ private:
   NXMAccessManager* m_AccessManager;
   std::list<NXMRequestInfo> m_ActiveRequest;
   QQueue<NXMRequestInfo> m_RequestQueue;
-  PluginContainer* m_PluginContainer;
+  PluginManager* m_PluginManager;
   APIUserAccount m_User;
 };
 

@@ -35,7 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 
 #include "modinfo.h"
-#include "plugincontainer.h"
+#include "pluginmanager.h"
 
 // contains installation result from the manager, internal class
 // for MO2 that is not forwarded to plugin
@@ -129,7 +129,7 @@ public:
   /**
    *
    */
-  void setPluginContainer(const PluginContainer* pluginContainer);
+  void setPluginManager(const PluginManager* pluginManager);
 
   /**
    * @brief update the directory where downloads are stored
@@ -332,7 +332,7 @@ private:
 
 private:
   // The plugin container, mostly to check if installer are enabled or not.
-  const PluginContainer* m_PluginContainer;
+  const PluginManager* m_PluginManager;
 
   bool m_IsRunning;
 

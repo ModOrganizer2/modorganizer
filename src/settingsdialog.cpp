@@ -19,27 +19,31 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "settingsdialog.h"
 #include "settingsdialogdiagnostics.h"
+#include "settingsdialogextensions.h"
 #include "settingsdialoggeneral.h"
 #include "settingsdialogmodlist.h"
 #include "settingsdialognexus.h"
 #include "settingsdialogpaths.h"
-#include "settingsdialogplugins.h"
 #include "settingsdialogtheme.h"
 #include "settingsdialogworkarounds.h"
 #include "ui_settingsdialog.h"
 
 using namespace MOBase;
 
-SettingsDialog::SettingsDialog(PluginContainer* pluginContainer, Settings& settings,
-                               QWidget* parent)
+SettingsDialog::SettingsDialog(ExtensionManager& extensionManager,
+                               PluginManager& pluginManager,
+                               ThemeManager const& themeManager,
+                               TranslationManager const& translationManager,
+                               Settings& settings, QWidget* parent)
     : TutorableDialog("SettingsDialog", parent), ui(new Ui::SettingsDialog),
-      m_settings(settings), m_exit(Exit::None), m_pluginContainer(pluginContainer)
+      m_settings(settings), m_exit(Exit::None)
 {
   ui->setupUi(this);
 
-  m_tabs.push_back(
-      std::unique_ptr<SettingsTab>(new GeneralSettingsTab(settings, *this)));
-  m_tabs.push_back(std::unique_ptr<SettingsTab>(new ThemeSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(
+      new GeneralSettingsTab(settings, translationManager, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(
+      new ThemeSettingsTab(settings, themeManager, *this)));
   m_tabs.push_back(
       std::unique_ptr<SettingsTab>(new ModListSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new PathsSettingsTab(settings, *this)));
@@ -47,14 +51,9 @@ SettingsDialog::SettingsDialog(PluginContainer* pluginContainer, Settings& setti
       std::unique_ptr<SettingsTab>(new DiagnosticsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(
-      new PluginsSettingsTab(settings, m_pluginContainer, *this)));
+      new ExtensionsSettingsTab(settings, extensionManager, pluginManager, *this)));
   m_tabs.push_back(
       std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(settings, *this)));
-}
-
-PluginContainer* SettingsDialog::pluginContainer()
-{
-  return m_pluginContainer;
 }
 
 QWidget* SettingsDialog::parentWidgetForDialogs()

@@ -14,7 +14,7 @@ class MainWindow;
 }
 class OrganizerCore;
 class Settings;
-class PluginContainer;
+class PluginManager;
 class FileTree;
 
 namespace MOShared
@@ -27,8 +27,7 @@ class DataTab : public QObject
   Q_OBJECT;
 
 public:
-  DataTab(OrganizerCore& core, PluginContainer& pc, QWidget* parent,
-          Ui::MainWindow* ui);
+  DataTab(OrganizerCore& core, PluginManager& pc, QWidget* parent, Ui::MainWindow* ui);
 
   void saveState(Settings& s) const;
   void restoreState(const Settings& s);
@@ -57,7 +56,7 @@ private:
   };
 
   OrganizerCore& m_core;
-  PluginContainer& m_pluginContainer;
+  PluginManager& m_pluginManager;
   QWidget* m_parent;
   DataTabUi ui;
   std::unique_ptr<FileTree> m_filetree;

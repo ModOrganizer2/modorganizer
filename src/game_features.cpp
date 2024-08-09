@@ -12,7 +12,7 @@
 #include "gameplugins.h"
 #include "localsavegames.h"
 #include "organizercore.h"
-#include "plugincontainer.h"
+#include "pluginmanager.h"
 #include "savegameinfo.h"
 #include "scriptextender.h"
 #include "unmanagedmods.h"
@@ -132,9 +132,8 @@ public:
   }
 };
 
-GameFeatures::GameFeatures(OrganizerCore* core, PluginContainer* plugins)
-    : m_pluginContainer(*plugins),
-      m_modDataChecker(std::make_unique<CombinedModDataChecker>()),
+GameFeatures::GameFeatures(OrganizerCore* core, PluginManager* plugins)
+    : m_plugins(*plugins), m_modDataChecker(std::make_unique<CombinedModDataChecker>()),
       m_modDataContent(std::make_unique<CombinedModDataContent>())
 {
   // can be nullptr since the plugin container can be initialized with a Core (e.g.,
@@ -151,10 +150,10 @@ GameFeatures::GameFeatures(OrganizerCore* core, PluginContainer* plugins)
     });
   };
 
-  connect(plugins, &PluginContainer::pluginEnabled, updateFeatures);
-  connect(plugins, &PluginContainer::pluginDisabled, updateFeatures);
-  connect(plugins, &PluginContainer::pluginRegistered, updateFeatures);
-  connect(plugins, &PluginContainer::pluginUnregistered,
+  connect(plugins, &PluginManager::pluginEnabled, updateFeatures);
+  connect(plugins, &PluginManager::pluginDisabled, updateFeatures);
+  connect(plugins, &PluginManager::pluginRegistered, updateFeatures);
+  connect(plugins, &PluginManager::pluginUnregistered,
           [this, updateFeatures](MOBase::IPlugin* plugin) {
             // remove features from the current plugin
             for (auto& [_, features] : m_allFeatures) {
@@ -188,20 +187,20 @@ void GameFeatures::updateCurrentFeatures(std::type_index const& index)
   m_currentFeatures[index].clear();
 
   // this can occur when starting MO2, just wait for the next update
-  if (!m_pluginContainer.managedGame()) {
+  if (!m_plugins.managedGame()) {
     return;
   }
 
   for (const auto& dataFeature : features) {
 
     // registering plugin is disabled
-    if (!m_pluginContainer.isEnabled(dataFeature.plugin())) {
+    if (!m_plugins.isEnabled(dataFeature.plugin())) {
       continue;
     }
 
     // games does not match
     if (!dataFeature.games().isEmpty() &&
-        !dataFeature.games().contains(m_pluginContainer.managedGame()->gameName())) {
+        !dataFeature.games().contains(m_plugins.managedGame()->gameName())) {
       continue;
     }
 

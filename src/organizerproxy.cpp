@@ -1,12 +1,14 @@
 #include "organizerproxy.h"
 
 #include "downloadmanagerproxy.h"
+#include "extensionlistproxy.h"
+#include "extensionmanager.h"
 #include "gamefeaturesproxy.h"
 #include "glob_matching.h"
 #include "modlistproxy.h"
 #include "organizercore.h"
-#include "plugincontainer.h"
 #include "pluginlistproxy.h"
+#include "pluginmanager.h"
 #include "proxyutils.h"
 #include "settings.h"
 #include "shared/appconfig.h"
@@ -19,16 +21,18 @@ using namespace MOBase;
 using namespace MOShared;
 
 OrganizerProxy::OrganizerProxy(OrganizerCore* organizer,
-                               PluginContainer* pluginContainer,
-                               MOBase::IPlugin* plugin)
-    : m_Proxied(organizer), m_PluginContainer(pluginContainer), m_Plugin(plugin),
+                               const ExtensionManager& extensionManager,
+                               PluginManager* pluginManager, MOBase::IPlugin* plugin)
+    : m_Proxied(organizer), m_PluginManager(pluginManager), m_Plugin(plugin),
       m_DownloadManagerProxy(
           std::make_unique<DownloadManagerProxy>(this, organizer->downloadManager())),
+      m_ExtensionListProxy(
+          std::make_unique<ExtensionListProxy>(this, extensionManager)),
       m_ModListProxy(std::make_unique<ModListProxy>(this, organizer->modList())),
       m_PluginListProxy(
           std::make_unique<PluginListProxy>(this, organizer->pluginList())),
       m_GameFeaturesProxy(
-          std::make_unique<GameFeaturesProxy>(this, pluginContainer->gameFeatures()))
+          std::make_unique<GameFeaturesProxy>(this, pluginManager->gameFeatures()))
 {}
 
 OrganizerProxy::~OrganizerProxy()
@@ -81,7 +85,7 @@ void OrganizerProxy::disconnectSignals()
 
 IModRepositoryBridge* OrganizerProxy::createNexusBridge() const
 {
-  return new NexusBridge(m_PluginContainer, m_Plugin->name());
+  return new NexusBridge(m_Plugin->name());
 }
 
 QString OrganizerProxy::profileName() const
@@ -178,14 +182,19 @@ void OrganizerProxy::modDataChanged(IModInterface* mod)
   m_Proxied->modDataChanged(mod);
 }
 
+MOBase::IExtensionList& OrganizerProxy::extensionList() const
+{
+  return *m_ExtensionListProxy;
+}
+
 bool OrganizerProxy::isPluginEnabled(QString const& pluginName) const
 {
-  return m_PluginContainer->isEnabled(pluginName);
+  return m_PluginManager->isEnabled(pluginName);
 }
 
 bool OrganizerProxy::isPluginEnabled(IPlugin* plugin) const
 {
-  return m_PluginContainer->isEnabled(plugin);
+  return m_PluginManager->isEnabled(plugin);
 }
 
 QVariant OrganizerProxy::pluginSetting(const QString& pluginName,

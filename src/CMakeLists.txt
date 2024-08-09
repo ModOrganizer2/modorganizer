@@ -52,12 +52,6 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.debug.qt6"
 		CONFIGURATIONS Debug
 		RENAME dlls.manifest)
 
-if (NOT MO2_SKIP_STYLESHEETS_INSTALL)
-	install(
-		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/stylesheets"
-		DESTINATION ${_bin})
-endif()
-
 if (NOT MO2_SKIP_TUTORIALS_INSTALL)
 	install(
 		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tutorials"
@@ -128,17 +122,26 @@ mo2_add_filter(NAME src/categories GROUPS
 mo2_add_filter(NAME src/core GROUPS
 	archivefiletree
 	githubpp
+	inibakery
 	installationmanager
 	nexusinterface
 	nxmaccessmanager
 	organizercore
-	game_features
-	plugincontainer
 	apiuseraccount
 	processrunner
 	qdirfiletree
 	virtualfiletree
 	uilocker
+)
+
+mo2_add_filter(NAME src/extensions GROUPS
+	game_features
+	thememanager
+	translationmanager
+	extensionmanager
+	extensionwatcher
+	pluginmanager
+	proxyqt
 )
 
 mo2_add_filter(NAME src/dialogs GROUPS
@@ -276,6 +279,7 @@ mo2_add_filter(NAME src/proxies GROUPS
 	downloadmanagerproxy
 	gamefeaturesproxy
 	modlistproxy
+	extensionlistproxy
 	organizerproxy
 	pluginlistproxy
 	proxyutils
@@ -302,7 +306,8 @@ mo2_add_filter(NAME src/settingsdialog GROUPS
 	settingsdialoggeneral
 	settingsdialognexus
 	settingsdialogpaths
-	settingsdialogplugins
+	settingsdialogextensions
+	settingsdialogextensionrow
 	settingsdialogworkarounds
 	settingsdialogmodlist
 	settingsdialogtheme

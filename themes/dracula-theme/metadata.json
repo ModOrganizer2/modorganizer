@@ -1,0 +1,15 @@
+{
+  "id": "mo2-theme-dracula",
+  "type": "theme",
+  "name": "Dracula Theme",
+  "description": "Dracula theme for ModOrganizer2.",
+  "version": "1.0.0",
+  "content": {
+    "themes": {
+      "dracula": {
+        "name": "Dracula",
+        "path": "dracula.qss"
+      }
+    }
+  }
+}
