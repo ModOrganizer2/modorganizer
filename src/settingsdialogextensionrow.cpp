@@ -39,10 +39,8 @@ ExtensionListItemWidget::ExtensionListItemWidget(const IExtension& extension)
   ui->setupUi(this);
 
   const auto& metadata = extension.metadata();
+  const auto& icon     = metadata.icon().isNull() ? defaultIcon() : metadata.icon();
 
-  const auto& icon = metadata.icon().isNull() ? defaultIcon() : metadata.icon();
-
-  QIcon icon = style()->standardIcon(QStyle::SP_DialogOkButton);
   ui->extensionIcon->setPixmap(icon.pixmap(QSize(48, 48)));
   ui->extensionName->setText(extension.metadata().name());
 
