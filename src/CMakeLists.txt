@@ -121,7 +121,7 @@ mo2_add_filter(NAME src/categories GROUPS
 
 mo2_add_filter(NAME src/core GROUPS
 	archivefiletree
-	githubpp
+	github
 	inibakery
 	installationmanager
 	nexusinterface
@@ -308,6 +308,7 @@ mo2_add_filter(NAME src/settingsdialog GROUPS
 	settingsdialogpaths
 	settingsdialogextensions
 	settingsdialogextensionrow
+	settingsdialogextensioninfo
 	settingsdialogworkarounds
 	settingsdialogmodlist
 	settingsdialogtheme

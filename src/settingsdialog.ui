@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>820</width>
-    <height>592</height>
+    <height>607</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>5</number>
      </property>
      <widget class="QWidget" name="generalTab">
       <attribute name="title">
@@ -44,8 +44,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>761</width>
-            <height>550</height>
+            <width>766</width>
+            <height>611</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -1052,8 +1052,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>761</width>
-            <height>515</height>
+            <width>766</width>
+            <height>548</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -1537,7 +1537,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_4">
                  <item>
-                  <widget class="QLineEdit" name="pluginFilterEdit">
+                  <widget class="QLineEdit" name="extensionFilterEdit">
                    <property name="placeholderText">
                     <string/>
                    </property>
@@ -1547,8 +1547,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
                </item>
               </layout>
              </widget>
-             <widget class="QWidget" name="pluginWidget" native="true">
-              <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,1,0">
+             <widget class="ExtensionListInfoWidget" name="infoWidget" native="true">
+              <layout class="QVBoxLayout" name="verticalLayout_7" stretch="">
                <property name="leftMargin">
                 <number>0</number>
                </property>
@@ -1561,130 +1561,6 @@ If you disable this feature, MO will only display official DLCs this way. Please
                <property name="bottomMargin">
                 <number>0</number>
                </property>
-               <item>
-                <widget class="QWidget" name="pluginDescription" native="true">
-                 <layout class="QFormLayout" name="pluginDescriptionLayout">
-                  <property name="labelAlignment">
-                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-                  </property>
-                  <property name="leftMargin">
-                   <number>6</number>
-                  </property>
-                  <item row="0" column="0">
-                   <widget class="QLabel" name="label_13">
-                    <property name="text">
-                     <string>Author:</string>
-                    </property>
-                    <property name="alignment">
-                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="0" column="1">
-                   <widget class="QLabel" name="authorLabel">
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="alignment">
-                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="0">
-                   <widget class="QLabel" name="label_15">
-                    <property name="text">
-                     <string>Version:</string>
-                    </property>
-                    <property name="alignment">
-                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="1">
-                   <widget class="QLabel" name="versionLabel">
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="alignment">
-                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="0">
-                   <widget class="QLabel" name="label_14">
-                    <property name="text">
-                     <string>Description:</string>
-                    </property>
-                    <property name="alignment">
-                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="1">
-                   <widget class="QLabel" name="descriptionLabel">
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="alignment">
-                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-                    </property>
-                    <property name="wordWrap">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="3" column="0">
-                   <widget class="QCheckBox" name="enabledCheckbox">
-                    <property name="text">
-                     <string>Enabled</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </widget>
-               </item>
-               <item>
-                <widget class="QTreeWidget" name="pluginSettingsList">
-                 <property name="indentation">
-                  <number>0</number>
-                 </property>
-                 <property name="rootIsDecorated">
-                  <bool>false</bool>
-                 </property>
-                 <property name="itemsExpandable">
-                  <bool>false</bool>
-                 </property>
-                 <property name="expandsOnDoubleClick">
-                  <bool>false</bool>
-                 </property>
-                 <attribute name="headerVisible">
-                  <bool>false</bool>
-                 </attribute>
-                 <attribute name="headerDefaultSectionSize">
-                  <number>170</number>
-                 </attribute>
-                 <column>
-                  <property name="text">
-                   <string>Key</string>
-                  </property>
-                 </column>
-                 <column>
-                  <property name="text">
-                   <string>Value</string>
-                  </property>
-                 </column>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="noPluginLabel">
-                 <property name="text">
-                  <string>No plugin found.</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
               </layout>
              </widget>
             </widget>
@@ -1736,8 +1612,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>778</width>
-            <height>475</height>
+            <width>780</width>
+            <height>489</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -2035,9 +1911,6 @@ p, li { white-space: pre-wrap; }
               </item>
               <item>
                <spacer name="horizontalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>40</width>
@@ -2330,6 +2203,12 @@ programs you are intentionally running.</string>
    <extends>QTableWidget</extends>
    <header>colortable.h</header>
   </customwidget>
+  <customwidget>
+   <class>ExtensionListInfoWidget</class>
+   <extends>QWidget</extends>
+   <header>settingsdialogextensioninfo.h</header>
+   <container>1</container>
+  </customwidget>
  </customwidgets>
  <tabstops>
   <tabstop>languageBox</tabstop>
@@ -2348,7 +2227,6 @@ programs you are intentionally running.</string>
   <tabstop>browseOverwriteDirBtn</tabstop>
   <tabstop>managedGameDirEdit</tabstop>
   <tabstop>browseGameDirBtn</tabstop>
-  <tabstop>pluginSettingsList</tabstop>
   <tabstop>lockGUIBox</tabstop>
  </tabstops>
  <resources>

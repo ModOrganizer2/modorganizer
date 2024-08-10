@@ -1355,32 +1355,32 @@ void PluginSettings::registerPlugin(IPlugin* plugin)
   m_PluginSettings.insert(plugin->name(), QVariantMap());
   m_PluginDescriptions.insert(plugin->name(), QVariantMap());
 
-  for (const PluginSetting& setting : plugin->settings()) {
-    const QString settingName = plugin->name() + "/" + setting.key;
+  for (const auto& setting : plugin->settings()) {
+    const auto settingPath = plugin->name() + "/" + setting.name();
 
-    QVariant temp = get<QVariant>(m_Settings, "Plugins", settingName, QVariant());
+    QVariant temp = get<QVariant>(m_Settings, "Plugins", settingPath, QVariant());
 
     // No previous enabled? Skip.
-    if (setting.key == "enabled" && (!temp.isValid() || !temp.canConvert<bool>())) {
+    if (setting.name() == "enabled" && (!temp.isValid() || !temp.canConvert<bool>())) {
       continue;
     }
 
     if (!temp.isValid()) {
-      temp = setting.defaultValue;
-    } else if (!temp.convert(setting.defaultValue.type())) {
+      temp = setting.defaultValue();
+    } else if (!temp.convert(setting.defaultValue().metaType())) {
       log::warn("failed to interpret \"{}\" as correct type for \"{}\" in plugin "
                 "\"{}\", using default",
-                temp.toString(), setting.key, plugin->name());
+                temp.toString(), setting.name(), plugin->name());
 
-      temp = setting.defaultValue;
+      temp = setting.defaultValue();
     }
 
-    m_PluginSettings[plugin->name()][setting.key] = temp;
+    m_PluginSettings[plugin->name()][setting.name()] = temp;
 
-    m_PluginDescriptions[plugin->name()][setting.key] =
+    m_PluginDescriptions[plugin->name()][setting.name()] =
         QString("%1 (default: %2)")
-            .arg(setting.description)
-            .arg(setting.defaultValue.toString());
+            .arg(setting.description())
+            .arg(setting.defaultValue().toString());
   }
 
   // Handle previous "enabled" settings:

@@ -43,6 +43,8 @@ private slots:
   // */
   // MOBase::IPlugin* plugin(QListWidgetItem* pluginItem) const;
 
+  void extensionSelected(MOBase::IExtension const& extension);
+
   enum
   {
     PluginRole       = Qt::UserRole,
@@ -53,6 +55,9 @@ private slots:
 private:
   ExtensionManager* m_extensionManager;
   PluginManager* m_pluginManager;
+
+  // the currently selected extension
+  const MOBase::IExtension* m_currentExtension{nullptr};
 
   MOBase::FilterWidget m_filter;
 };

@@ -10,14 +10,6 @@
 
 using namespace MOBase;
 
-struct PluginExtensionComparator
-{
-  bool operator()(const PluginExtension* lhs, const PluginExtension* rhs) const
-  {
-    return lhs->metadata().name().compare(rhs->metadata().name(), Qt::CaseInsensitive);
-  }
-};
-
 ExtensionsSettingsTab::ExtensionsSettingsTab(Settings& s,
                                              ExtensionManager& extensionManager,
                                              PluginManager& pluginManager,
@@ -44,6 +36,14 @@ ExtensionsSettingsTab::ExtensionsSettingsTab(Settings& s,
     ui->extensionsList->addItem(item);
     ui->extensionsList->setItemWidget(item, widget);
   }
+
+  QObject::connect(ui->extensionsList, &QListWidget::currentItemChanged,
+                   [this](QListWidgetItem* current, QListWidgetItem*) {
+                     if (auto* widget = dynamic_cast<ExtensionListItemWidget*>(
+                             ui->extensionsList->itemWidget(current))) {
+                       extensionSelected(widget->extension());
+                     }
+                   });
 
   // ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
   // ui->pluginsList->setHeaderHidden(true);
@@ -82,11 +82,6 @@ ExtensionsSettingsTab::ExtensionsSettingsTab(Settings& s,
   // }
 
   // m_filter.setEdit(ui->pluginFilterEdit);
-
-  // QObject::connect(ui->pluginsList, &QTreeWidget::currentItemChanged,
-  //                  [&](auto* current, auto* previous) {
-  //                    on_pluginsList_currentItemChanged(current, previous);
-  //                  });
 
   // QShortcut* delShortcut =
   //     new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
@@ -205,6 +200,17 @@ void ExtensionsSettingsTab::closing()
 {
   // storeSettings(ui->pluginsList->currentItem());
 }
+
+void ExtensionsSettingsTab::extensionSelected(IExtension const& extension)
+{
+  // TODO: store current settings in-memory for save later OR save live when modifying?
+  if (m_currentExtension) {
+  }
+
+  m_currentExtension = &extension;
+  ui->infoWidget->setExtension(extension);
+}
+
 //
 // void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem* current,
 //                                                           QTreeWidgetItem* previous)

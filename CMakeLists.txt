@@ -5,6 +5,8 @@ set(MO2_CMAKE_DEPRECATED_UIBASE_INCLUDE ON)
 
 project(organizer)
 
+set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
+
 # if MO2_INSTALL_IS_BIN is set, this means that we should install directly into the
 # installation prefix, without the bin/ subfolder, typically for a standalone build
 # to update an existing install

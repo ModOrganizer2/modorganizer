@@ -24,9 +24,8 @@ void ExtensionManager::loadExtensions(fs::path const& directory)
           continue;
         }
 
-        log::debug("extension correctly loaded from '{}': {}, {}",
-                   entry.path().native(), extension->metadata().identifier(),
-                   extension->metadata().type());
+        log::debug("extension data loaded from '{}': {}, {}", entry.path().native(),
+                   extension->metadata().identifier(), extension->metadata().type());
 
         triggerWatchers(*extension);
         m_extensions.push_back(std::move(extension));

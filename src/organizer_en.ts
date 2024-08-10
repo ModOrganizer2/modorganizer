@@ -1759,6 +1759,54 @@ Right now the only case I know of where this needs to be overwritten is for the 
     </message>
 </context>
 <context>
+    <name>ExtensionListInfoWidget</name>
+    <message>
+        <location filename="settingsdialogextensioninfo.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialogextensioninfo.ui" line="29"/>
+        <source>Author:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialogextensioninfo.ui" line="49"/>
+        <source>Version:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialogextensioninfo.ui" line="69"/>
+        <source>Description:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialogextensioninfo.ui" line="92"/>
+        <source>Enabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialogextensioninfo.ui" line="121"/>
+        <source>Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialogextensioninfo.ui" line="126"/>
+        <source>Value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialogextensioninfo.ui" line="134"/>
+        <source>No plugin found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialogextensioninfo.cpp" line="41"/>
+        <source>Translation and theme extensions cannot be disabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ExtensionListItemWidget</name>
     <message>
         <location filename="settingsdialogextensionrow.ui" line="14"/>
@@ -8520,7 +8568,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
         <location filename="settingsdialog.ui" line="847"/>
         <location filename="settingsdialog.ui" line="944"/>
         <location filename="settingsdialog.ui" line="1002"/>
-        <location filename="settingsdialog.ui" line="1975"/>
+        <location filename="settingsdialog.ui" line="1851"/>
         <source>...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8657,7 +8705,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
     </message>
     <message>
         <location filename="settingsdialog.ui" line="1293"/>
-        <location filename="settingsdialog.ui" line="1762"/>
+        <location filename="settingsdialog.ui" line="1638"/>
         <source>Options</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8718,119 +8766,84 @@ If you disable this feature, MO will only display official DLCs this way. Please
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1576"/>
-        <source>Author:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="1596"/>
-        <source>Version:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="1616"/>
-        <source>Description:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="1639"/>
-        <source>Enabled</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="1668"/>
-        <source>Key</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="1673"/>
-        <source>Value</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="1681"/>
-        <source>No plugin found.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="1702"/>
+        <location filename="settingsdialog.ui" line="1578"/>
         <source>Blacklisted Plugins (use &lt;del&gt; to remove):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1716"/>
+        <location filename="settingsdialog.ui" line="1592"/>
         <source>Workarounds</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1780"/>
+        <location filename="settingsdialog.ui" line="1656"/>
         <source>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1783"/>
+        <location filename="settingsdialog.ui" line="1659"/>
         <source>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)
 Uncheck this if you want to use Mod Organizer with total conversions (like Nehrim) but be aware that the game will crash if required files are not enabled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1787"/>
+        <location filename="settingsdialog.ui" line="1663"/>
         <source>Force-enable game files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1797"/>
+        <location filename="settingsdialog.ui" line="1673"/>
         <source>Enable parsing of Archives. This is an Experimental Feature. Has negative effects on performance and known incorrectness.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1800"/>
+        <location filename="settingsdialog.ui" line="1676"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, MO will parse archive files (BSA, BA2) to calculate conflicts between the contents of the archive files and other loose files. This process has a noticeable cost in performance.&lt;/p&gt;&lt;p&gt;This feature should not be confused with the archive management feature offered by MO1. MO2 will only show conflicts with archives and will NOT load them into the game or program.&lt;/p&gt;&lt;p&gt;If you disable this feature, MO will only display conflicts between loose files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1803"/>
+        <location filename="settingsdialog.ui" line="1679"/>
         <source>Enable archives parsing (experimental)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1813"/>
-        <location filename="settingsdialog.ui" line="1816"/>
+        <location filename="settingsdialog.ui" line="1689"/>
+        <location filename="settingsdialog.ui" line="1692"/>
         <source>Disable this to prevent the GUI from being locked when running an executable.  This may result in abnormal behavior.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1819"/>
+        <location filename="settingsdialog.ui" line="1695"/>
         <source>Lock GUI when running executable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1832"/>
+        <location filename="settingsdialog.ui" line="1708"/>
         <source>Steam</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1841"/>
+        <location filename="settingsdialog.ui" line="1717"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1855"/>
+        <location filename="settingsdialog.ui" line="1731"/>
         <source>Username</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1862"/>
+        <location filename="settingsdialog.ui" line="1738"/>
         <source>Steam App ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1869"/>
+        <location filename="settingsdialog.ui" line="1745"/>
         <source>The Steam AppID for your game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1872"/>
+        <location filename="settingsdialog.ui" line="1748"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -8846,69 +8859,69 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1899"/>
+        <location filename="settingsdialog.ui" line="1775"/>
         <source>Network</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1905"/>
+        <location filename="settingsdialog.ui" line="1781"/>
         <source>Disable automatic internet features</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1908"/>
+        <location filename="settingsdialog.ui" line="1784"/>
         <source>Disable automatic internet features. This does not affect features that are explicitly invoked by the user (like checking mods for updates, endorsing, opening the web browser)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1911"/>
+        <location filename="settingsdialog.ui" line="1787"/>
         <source>Offline Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1918"/>
+        <location filename="settingsdialog.ui" line="1794"/>
         <source>Use a proxy for network connections.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1921"/>
+        <location filename="settingsdialog.ui" line="1797"/>
         <source>Use a proxy for network connections. This uses the system-wide settings which can be configured in Internet Explorer. Please note that MO will start up a few seconds slower on some systems when using a proxy.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1924"/>
+        <location filename="settingsdialog.ui" line="1800"/>
         <source>Use System HTTP Proxy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1946"/>
-        <location filename="settingsdialog.ui" line="1949"/>
-        <location filename="settingsdialog.ui" line="1952"/>
-        <location filename="settingsdialog.ui" line="1962"/>
-        <location filename="settingsdialog.ui" line="1965"/>
-        <location filename="settingsdialog.ui" line="1968"/>
+        <location filename="settingsdialog.ui" line="1822"/>
+        <location filename="settingsdialog.ui" line="1825"/>
+        <location filename="settingsdialog.ui" line="1828"/>
+        <location filename="settingsdialog.ui" line="1838"/>
+        <location filename="settingsdialog.ui" line="1841"/>
+        <location filename="settingsdialog.ui" line="1844"/>
         <source>Use &quot;%1&quot; as a placeholder for the URL.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1955"/>
+        <location filename="settingsdialog.ui" line="1831"/>
         <source>Custom browser</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2003"/>
-        <location filename="settingsdialog.ui" line="2006"/>
+        <location filename="settingsdialog.ui" line="1879"/>
+        <location filename="settingsdialog.ui" line="1882"/>
         <source>Resets the window geometries for all windows.  This can be useful if a window becomes too small or too large, if a column becomes too thin or too wide, and in similar situations.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2009"/>
+        <location filename="settingsdialog.ui" line="1885"/>
         <source>Reset Window Geometries</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2016"/>
-        <location filename="settingsdialog.ui" line="2022"/>
+        <location filename="settingsdialog.ui" line="1892"/>
+        <location filename="settingsdialog.ui" line="1898"/>
         <source>
                           For Skyrim, this can be used instead of Archive Invalidation. It should make AI redundant for all Profiles.
                           For the other games this is not a sufficient replacement for AI!
@@ -8916,7 +8929,7 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2070"/>
+        <location filename="settingsdialog.ui" line="1943"/>
         <source>Add executables to the blacklist to prevent them from
 accessing the virtual file system. This is useful to prevent
 unintended programs from being hooked. Hooking unintended
@@ -8925,17 +8938,17 @@ programs you are intentionally running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2077"/>
+        <location filename="settingsdialog.ui" line="1950"/>
         <source>Add executables to the blacklist to prevent them from accessing the virtual file system.  This is useful to prevent unintended programs from being hooked.  Hooking unintended programs may affect the execution of these programs or the programs you are intentionally running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2080"/>
+        <location filename="settingsdialog.ui" line="1953"/>
         <source>Executables Blacklist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2028"/>
+        <location filename="settingsdialog.ui" line="1904"/>
         <source>Back-date BSAs</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8945,54 +8958,54 @@ programs you are intentionally running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2090"/>
-        <location filename="settingsdialog.ui" line="2093"/>
+        <location filename="settingsdialog.ui" line="1963"/>
+        <location filename="settingsdialog.ui" line="1966"/>
         <source>Files to skip or ignore from the virtual file system.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2096"/>
+        <location filename="settingsdialog.ui" line="1969"/>
         <source>Skip File Suffixes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2106"/>
-        <location filename="settingsdialog.ui" line="2109"/>
+        <location filename="settingsdialog.ui" line="1979"/>
+        <location filename="settingsdialog.ui" line="1982"/>
         <source>Directories to skip or ignore from the virtual file system.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2112"/>
+        <location filename="settingsdialog.ui" line="1985"/>
         <source>Skip Directories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2155"/>
+        <location filename="settingsdialog.ui" line="2028"/>
         <source>These are workarounds for problems with Mod Organizer. Please make sure you read the help text before changing anything here.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2166"/>
+        <location filename="settingsdialog.ui" line="2039"/>
         <source>Diagnostics</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2175"/>
+        <location filename="settingsdialog.ui" line="2048"/>
         <source>Logs and Crashes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2184"/>
+        <location filename="settingsdialog.ui" line="2057"/>
         <source>Log Level</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2191"/>
+        <location filename="settingsdialog.ui" line="2064"/>
         <source>Decides the amount of data printed to &quot;ModOrganizer.log&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2194"/>
+        <location filename="settingsdialog.ui" line="2067"/>
         <source>
                                     Decides the amount of data printed to &quot;ModOrganizer.log&quot;.
                                     &quot;Debug&quot; produces very useful information for finding problems. There is usually no noteworthy performance impact but the file may become rather large. If this is a problem you may prefer the &quot;Info&quot; level for regular use. On the &quot;Error&quot; level the log file usually remains empty.
@@ -9000,17 +9013,17 @@ programs you are intentionally running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2204"/>
+        <location filename="settingsdialog.ui" line="2077"/>
         <source>Crash Dumps</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2211"/>
+        <location filename="settingsdialog.ui" line="2084"/>
         <source>Decides which type of crash dumps are collected when injected processes crash.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2214"/>
+        <location filename="settingsdialog.ui" line="2087"/>
         <source>
                                     Decides which type of crash dumps are collected when injected processes crash.
                                     &quot;None&quot; Disables the generation of crash dumps by MO.
@@ -9021,17 +9034,17 @@ programs you are intentionally running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2227"/>
+        <location filename="settingsdialog.ui" line="2100"/>
         <source>Max Dumps To Keep</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2234"/>
+        <location filename="settingsdialog.ui" line="2107"/>
         <source>Maximum number of crash dumps to keep on disk. Use 0 for unlimited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2237"/>
+        <location filename="settingsdialog.ui" line="2110"/>
         <source>
                                     Maximum number of crash dumps to keep on disk. Use 0 for unlimited.
                                     Set &quot;Crash Dumps&quot; above to None to disable crash dump collection.
@@ -9039,22 +9052,22 @@ programs you are intentionally running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2250"/>
+        <location filename="settingsdialog.ui" line="2123"/>
         <source>Integrated LOOT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2259"/>
+        <location filename="settingsdialog.ui" line="2132"/>
         <source>LOOT Log Level</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2272"/>
+        <location filename="settingsdialog.ui" line="2145"/>
         <source>Click a link to open the location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="2275"/>
+        <location filename="settingsdialog.ui" line="2148"/>
         <source>
                             Logs and crash dumps are stored under your current instance in the &lt;a href=&quot;LOGS_FULL_PATH&quot;&gt;LOGS_DIR&lt;/a&gt;
                             and &lt;a href=&quot;DUMPS_FULL_PATH&quot;&gt;DUMPS_DIR&lt;/a&gt; folders.
