@@ -30,11 +30,11 @@ mo2_configure_target(organizer WARNINGS 4 TRANSLATIONS OFF)
 # we add translations "manually" to handle MO2_INSTALL_IS_BIN
 mo2_add_translations(organizer
 	INSTALL_RELEASE
-	INSTALL_DIRECTORY "${_bin}/translations"
+	INSTALL_DIRECTORY "${MO2_INSTALL_BIN}/translations"
 	SOURCES ${CMAKE_CURRENT_SOURCE_DIR})
 
 mo2_set_project_to_run_from_install(
-	organizer EXECUTABLE ${CMAKE_INSTALL_PREFIX}/${_bin}/ModOrganizer.exe)
+	organizer EXECUTABLE ${CMAKE_INSTALL_PREFIX}/${MO2_INSTALL_BIN}/ModOrganizer.exe)
 
 target_link_libraries(organizer PRIVATE
 	Shlwapi Bcrypt
@@ -44,30 +44,30 @@ target_link_libraries(organizer PRIVATE
 	Qt6::WebEngineWidgets Qt6::WebSockets Version Dbghelp)
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt6"
-		DESTINATION ${_bin}/dlls
+		DESTINATION ${MO2_INSTALL_BIN}/dlls
 		CONFIGURATIONS Release RelWithDebInfo
 		RENAME dlls.manifest)
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.debug.qt6"
-		DESTINATION ${_bin}/dlls
+		DESTINATION ${MO2_INSTALL_BIN}/dlls
 		CONFIGURATIONS Debug
 		RENAME dlls.manifest)
 
 if (NOT MO2_SKIP_TUTORIALS_INSTALL)
 	install(
 		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tutorials"
-		DESTINATION ${_bin})
+		DESTINATION ${MO2_INSTALL_BIN})
 endif()
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html"
-	DESTINATION ${_bin}/resources)
+	DESTINATION ${MO2_INSTALL_BIN}/resources)
 
 # install ModOrganizer.exe itself
-install(FILES $<TARGET_FILE:organizer> DESTINATION ${_bin})
+install(FILES $<TARGET_FILE:organizer> DESTINATION ${MO2_INSTALL_BIN})
 
 # install dependencies DLLs
-install(FILES $<TARGET_FILE:mo2::libbsarch> DESTINATION ${_bin}/dlls)
-install(FILES $<TARGET_FILE:mo2::archive> DESTINATION ${_bin}/dlls)
-install(FILES $<TARGET_FILE:7zip::7zip> DESTINATION ${_bin}/dlls)
+install(FILES $<TARGET_FILE:mo2::libbsarch> DESTINATION ${MO2_INSTALL_BIN}/dlls)
+install(FILES $<TARGET_FILE:mo2::archive> DESTINATION ${MO2_INSTALL_BIN}/dlls)
+install(FILES $<TARGET_FILE:7zip::7zip> DESTINATION ${MO2_INSTALL_BIN}/dlls)
 
 # this may copy over the ones from uibase/usvfs
 # - when building with mob, this should not matter as the files should be identical
@@ -83,7 +83,7 @@ install(FILES
 	$<TARGET_FILE:usvfs_x86::usvfs_dll>
 	$<TARGET_FILE:usvfs_x64::usvfs_proxy>
 	$<TARGET_FILE:usvfs_x86::usvfs_proxy>
-DESTINATION ${_bin})
+DESTINATION ${MO2_INSTALL_BIN})
 
 # do not install PDB if CMAKE_INSTALL_PREFIX is "bin"
 if (NOT MO2_INSTALL_IS_BIN)
@@ -91,7 +91,7 @@ if (NOT MO2_INSTALL_IS_BIN)
 endif()
 
 mo2_deploy_qt(
-	DIRECTORY ${_bin}
+	DIRECTORY ${MO2_INSTALL_BIN}
 	BINARIES ModOrganizer.exe $<TARGET_FILE_NAME:mo2::uibase>)
 
 # set source groups for VS
