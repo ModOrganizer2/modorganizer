@@ -2,8 +2,12 @@
   "id": "mo2-theme-nighteyes",
   "type": "theme",
   "name": "Night Eyes Theme",
+  "author": {
+    "name": "ciathyza",
+    "homepage": "https://github.com/ciathyza"
+  },
   "description": "Night Eyes theme for ModOrganizer2.",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "content": {
     "themes": {
       "nighteyes": {
