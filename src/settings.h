@@ -20,12 +20,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#include "envdump.h"
-#include <lootcli/lootcli.h>
-#include <questionboxmemory.h>
 #include <uibase/filterwidget.h>
 #include <uibase/log.h>
+#include <uibase/questionboxmemory.h>
 #include <usvfs/usvfsparameters.h>
+
+#include <lootcli/lootcli.h>
+
+#include "envdump.h"
+#include "extensionsettings.h"
 
 #ifdef interface
 #undef interface
@@ -276,102 +279,6 @@ public:
 
 private:
   QSettings& m_Settings;
-};
-
-// settings about plugins
-//
-class PluginSettings : public QObject
-{
-  Q_OBJECT
-
-public:
-  PluginSettings(QSettings& settings);
-
-  // forgets all the plugins
-  //
-  void clearPlugins();
-
-  // adds/removes the given plugin to the list and loads all of its settings
-  //
-  void registerPlugin(MOBase::IPlugin* plugin);
-  void unregisterPlugin(MOBase::IPlugin* plugin);
-
-  // returns all the registered plugins
-  //
-  std::vector<MOBase::IPlugin*> plugins() const;
-
-  // returns the plugin setting for the given key
-  //
-  QVariant setting(const QString& pluginName, const QString& key) const;
-
-  // sets the plugin setting for the given key
-  //
-  void setSetting(const QString& pluginName, const QString& key, const QVariant& value);
-
-  // returns all settings
-  //
-  QVariantMap settings(const QString& pluginName) const;
-
-  // overwrites all settings
-  //
-  void setSettings(const QString& pluginName, const QVariantMap& map);
-
-  // returns all descriptions
-  //
-  QVariantMap descriptions(const QString& pluginName) const;
-
-  // overwrites all descriptions
-  //
-  void setDescriptions(const QString& pluginName, const QVariantMap& map);
-
-  // ?
-  QVariant persistent(const QString& pluginName, const QString& key,
-                      const QVariant& def) const;
-  void setPersistent(const QString& pluginName, const QString& key,
-                     const QVariant& value, bool sync);
-
-  // adds the given plugin to the blacklist
-  //
-  void addBlacklist(const QString& fileName);
-
-  // returns whether the given plugin is blacklisted
-  //
-  bool blacklisted(const QString& fileName) const;
-
-  // overwrites the whole blacklist
-  //
-  void setBlacklist(const QStringList& pluginNames);
-
-  // returns the blacklist
-  //
-  const QSet<QString>& blacklist() const;
-
-  // commits all the settings to the ini
-  //
-  void save();
-
-Q_SIGNALS:
-
-  /**
-   * Emitted when a plugin setting changes.
-   */
-  void pluginSettingChanged(QString const& pluginName, const QString& key,
-                            const QVariant& oldValue, const QVariant& newValue);
-
-private:
-  QSettings& m_Settings;
-  std::vector<MOBase::IPlugin*> m_Plugins;
-  QMap<QString, QVariantMap> m_PluginSettings;
-  QMap<QString, QVariantMap> m_PluginDescriptions;
-  QSet<QString> m_PluginBlacklist;
-
-  // commits the blacklist to the ini
-  //
-  void writeBlacklist();
-
-  // reads the blacklist from the ini
-  //
-  QSet<QString> readBlacklist() const;
 };
 
 // paths for the game and various components

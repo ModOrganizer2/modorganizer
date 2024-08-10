@@ -296,6 +296,7 @@ mo2_add_filter(NAME src/register GROUPS
 )
 
 mo2_add_filter(NAME src/settings GROUPS
+	extensionsettings
 	settings
 	settingsutilities
 )

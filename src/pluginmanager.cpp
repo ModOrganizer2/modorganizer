@@ -383,7 +383,8 @@ IPlugin* PluginManager::registerPlugin(const PluginExtension& extension,
   plugin->setParent(this);
 
   if (m_core) {
-    m_core->settings().plugins().registerPlugin(pluginObj);
+    m_core->settings().plugins().fixPluginEnabledSetting(pluginObj);
+    m_core->settings().plugins().checkPluginSettings(pluginObj);
   }
 
   {  // diagnosis plugin
@@ -564,8 +565,6 @@ void PluginManager::unloadPlugin(MOBase::IPlugin* plugin, QObject* object)
     mapNames.erase(plugin->name());
   }
 
-  m_core->settings().plugins().unregisterPlugin(plugin);
-
   // force disconnection of the signals from the proxies
   //
   // this is a safety operations since those signals should be disconnected when the
@@ -611,16 +610,6 @@ bool PluginManager::unloadPlugins(const MOBase::PluginExtension& extension)
 
 void PluginManager::unloadPlugins()
 {
-  if (m_core) {
-    // this will clear several structures that can hold on to pointers to
-    // plugins, as well as read the plugin blacklist from the ini file, which
-    // is used in loadPlugins() below to skip plugins
-    //
-    // note that the first thing loadPlugins() does is call unloadPlugins(),
-    // so this makes sure the blacklist is always available
-    m_core->settings().plugins().clearPlugins();
-  }
-
   bf::for_each(m_plugins, [](auto& t) {
     t.second.clear();
   });
