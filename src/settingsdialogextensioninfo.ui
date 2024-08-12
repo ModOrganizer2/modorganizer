@@ -101,41 +101,20 @@
      <property name="indentation">
       <number>0</number>
      </property>
-     <property name="rootIsDecorated">
-      <bool>false</bool>
+     <property name="headerHidden">
+      <bool>true</bool>
      </property>
-     <property name="itemsExpandable">
-      <bool>false</bool>
-     </property>
-     <property name="expandsOnDoubleClick">
-      <bool>false</bool>
+     <property name="columnCount">
+      <number>1</number>
      </property>
      <attribute name="headerVisible">
       <bool>false</bool>
-     </attribute>
-     <attribute name="headerDefaultSectionSize">
-      <number>170</number>
      </attribute>
      <column>
       <property name="text">
        <string>Key</string>
       </property>
      </column>
-     <column>
-      <property name="text">
-       <string>Value</string>
-      </property>
-     </column>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="noPluginLabel">
-     <property name="text">
-      <string>No plugin found.</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
     </widget>
    </item>
   </layout>

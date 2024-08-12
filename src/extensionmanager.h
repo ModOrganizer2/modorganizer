@@ -10,10 +10,15 @@
 #include <uibase/extensions/extension.h>
 
 #include "extensionwatcher.h"
+#include "organizerproxy.h"
+
+class OrganizerCore;
 
 class ExtensionManager
 {
 public:
+  ExtensionManager(OrganizerCore* core);
+
   // retrieve the list of currently loaded extensions
   //
   const auto& extensions() const { return m_extensions; }
@@ -58,6 +63,8 @@ private:
   void triggerWatchers(const MOBase::IExtension& extension) const;
 
 private:
+  OrganizerCore* m_core;
+  std::unique_ptr<OrganizerProxy> m_proxy;
   std::vector<std::unique_ptr<const MOBase::IExtension>> m_extensions;
 
   using WatcherMap = boost::fusion::map<

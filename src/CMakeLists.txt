@@ -25,7 +25,7 @@ set_target_properties(organizer PROPERTIES
 
 # disable translations because we want to be able to install somewhere else if
 # required
-mo2_configure_target(organizer WARNINGS 4 TRANSLATIONS OFF)
+mo2_configure_target(organizer WARNINGS 3 TRANSLATIONS OFF)
 
 # we add translations "manually" to handle MO2_INSTALL_IS_BIN
 mo2_add_translations(organizer

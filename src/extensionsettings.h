@@ -4,7 +4,47 @@
 #include <QObject>
 #include <QSettings>
 
+#include <uibase/extensions/extension.h>
 #include <uibase/iplugin.h>
+
+// settings about extensions
+class ExtensionSettings : public QObject
+{
+  Q_OBJECT
+
+public:
+  ExtensionSettings(QSettings& settings);
+
+  // check if the specified extension is enabled in the settings
+  //
+  bool isEnabled(const MOBase::IExtension& extension, bool defaultValue = true) const;
+
+  // set the extension as enabled or disabled in the settings
+  //
+  void setEnabled(const MOBase::IExtension& extension, bool enabled) const;
+
+  // returns the plugin setting for the given key
+  //
+  QVariant setting(const MOBase::IExtension& extension,
+                   const MOBase::Setting& setting) const;
+
+  // sets the plugin setting for the given key
+  //
+  void setSetting(const MOBase::IExtension& extension, const MOBase::Setting& setting,
+                  const QVariant& value);
+
+  // commits all the settings to the ini
+  //
+  void save();
+
+private:
+  QSettings& m_Settings;
+
+  // retrieve the path to the given setting
+  //
+  static QString path(const MOBase::IExtension& extension,
+                      const MOBase::Setting& setting);
+};
 
 // settings about plugins
 //

@@ -47,7 +47,7 @@ void TranslationManager::addOldFormatTranslations()
 
     QString languageString = QString("%1 (%2)")
                                  .arg(locale.nativeLanguageName())
-                                 .arg(locale.nativeCountryName());
+                                 .arg(locale.nativeTerritoryName());
 
     if (locale.language() == QLocale::Chinese) {
       if (languageCode == "zh_TW") {

@@ -17,6 +17,8 @@ ExtensionsSettingsTab::ExtensionsSettingsTab(Settings& s,
     : SettingsTab(s, d), m_extensionManager(&extensionManager),
       m_pluginManager(&pluginManager)
 {
+  ui->infoWidget->setup(s, extensionManager, pluginManager);
+
   // TODO: use Qt system to sort extensions instead of sorting beforehand
   std::vector<const IExtension*> extensions;
   for (auto& extension : m_extensionManager->extensions()) {

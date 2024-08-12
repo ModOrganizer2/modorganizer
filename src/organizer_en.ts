@@ -1786,22 +1786,12 @@ Right now the only case I know of where this needs to be overwritten is for the 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialogextensioninfo.ui" line="121"/>
+        <location filename="settingsdialogextensioninfo.ui" line="115"/>
         <source>Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialogextensioninfo.ui" line="126"/>
-        <source>Value</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialogextensioninfo.ui" line="134"/>
-        <source>No plugin found.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialogextensioninfo.cpp" line="41"/>
+        <location filename="settingsdialogextensioninfo.cpp" line="148"/>
         <source>Translation and theme extensions cannot be disabled.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1819,6 +1809,24 @@ Right now the only case I know of where this needs to be overwritten is for the 
         <location filename="settingsdialogextensionrow.ui" line="97"/>
         <location filename="settingsdialogextensionrow.ui" line="111"/>
         <source>TextLabel</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ExtensionSettingWidget</name>
+    <message>
+        <location filename="settingsdialogextensioninfo.cpp" line="45"/>
+        <source>False</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialogextensioninfo.cpp" line="45"/>
+        <source>True</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialogextensioninfo.cpp" line="77"/>
+        <source>Edit</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -7382,94 +7390,94 @@ Destination:<byte value="xd"/>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="192"/>
+        <location filename="nxmaccessmanager.cpp" line="190"/>
         <source>Connecting to Nexus...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="195"/>
+        <location filename="nxmaccessmanager.cpp" line="193"/>
         <source>Waiting for Nexus...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="198"/>
+        <location filename="nxmaccessmanager.cpp" line="196"/>
         <source>Opened Nexus in browser.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="199"/>
+        <location filename="nxmaccessmanager.cpp" line="197"/>
         <source>Switch to your browser and accept the request.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="202"/>
+        <location filename="nxmaccessmanager.cpp" line="200"/>
         <source>Finished.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="205"/>
+        <location filename="nxmaccessmanager.cpp" line="203"/>
         <source>No answer from Nexus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="206"/>
-        <location filename="nxmaccessmanager.cpp" line="210"/>
+        <location filename="nxmaccessmanager.cpp" line="204"/>
+        <location filename="nxmaccessmanager.cpp" line="208"/>
         <source>A firewall might be blocking Mod Organizer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="209"/>
+        <location filename="nxmaccessmanager.cpp" line="207"/>
         <source>Nexus closed the connection.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="213"/>
+        <location filename="nxmaccessmanager.cpp" line="211"/>
         <source>Cancelled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="401"/>
+        <location filename="nxmaccessmanager.cpp" line="399"/>
         <source>Failed to request %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="423"/>
-        <location filename="nxmaccessmanager.cpp" line="753"/>
+        <location filename="nxmaccessmanager.cpp" line="421"/>
+        <location filename="nxmaccessmanager.cpp" line="751"/>
         <source>Cancelled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="469"/>
+        <location filename="nxmaccessmanager.cpp" line="467"/>
         <source>Internal error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="504"/>
+        <location filename="nxmaccessmanager.cpp" line="502"/>
         <source>HTTP code %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="514"/>
+        <location filename="nxmaccessmanager.cpp" line="512"/>
         <source>Invalid JSON</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="519"/>
+        <location filename="nxmaccessmanager.cpp" line="517"/>
         <source>Bad response</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="529"/>
+        <location filename="nxmaccessmanager.cpp" line="527"/>
         <source>API key is empty</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="552"/>
+        <location filename="nxmaccessmanager.cpp" line="550"/>
         <source>SSL error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="557"/>
+        <location filename="nxmaccessmanager.cpp" line="555"/>
         <source>Timed out</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7537,12 +7545,12 @@ This program is known to cause issues with Mod Organizer, such as freezing or bl
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="1750"/>
+        <location filename="settings.cpp" line="1761"/>
         <source>Failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="1751"/>
+        <location filename="settings.cpp" line="1762"/>
         <source>Failed to start the helper application: %1</source>
         <translation type="unfinished"></translation>
     </message>

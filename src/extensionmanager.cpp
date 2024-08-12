@@ -1,9 +1,13 @@
 #include "extensionmanager.h"
 
-#include <log.h>
+#include <uibase/log.h>
+
+#include "organizercore.h"
 
 using namespace MOBase;
 namespace fs = std::filesystem;
+
+ExtensionManager::ExtensionManager(OrganizerCore* core) : m_core{core} {}
 
 void ExtensionManager::loadExtensions(fs::path const& directory)
 {
@@ -60,8 +64,18 @@ const IExtension* ExtensionManager::extension(QString const& identifier) const
 
 bool ExtensionManager::isEnabled(MOBase::IExtension const& extension) const
 {
-  // TODO
-  return true;
+  if (!m_core) {
+    return true;
+  }
+
+  for (auto& requirement : extension.metadata().requirements()) {
+    // TODO: needs an organizerproxy...
+    // if (!requirement.check(m_core)) {
+    //  return false;
+    //}
+  }
+
+  return m_core->settings().extensions().isEnabled(extension, true);
 }
 
 bool ExtensionManager::isEnabled(QString const& identifier) const

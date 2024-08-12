@@ -704,7 +704,7 @@ std::unique_ptr<Instance> selectInstance()
   // since there is no instance currently active, load plugins with a null
   // OrganizerCore; see PluginManager::initPlugin()
   NexusInterface ni(nullptr);
-  ExtensionManager ec;
+  ExtensionManager ec(nullptr);
   ec.loadExtensions(QDir(QCoreApplication::applicationDirPath() + "/extensions")
                         .filesystemAbsolutePath());
 

@@ -768,6 +768,9 @@ public:
   ColorSettings& colors();
   const ColorSettings& colors() const;
 
+  ExtensionSettings& extensions();
+  const ExtensionSettings& extensions() const;
+
   PluginSettings& plugins();
   const PluginSettings& plugins() const;
 
@@ -818,6 +821,7 @@ private:
   GeometrySettings m_Geometry;
   WidgetSettings m_Widgets;
   ColorSettings m_Colors;
+  ExtensionSettings m_Extensions;
   PluginSettings m_Plugins;
   PathSettings m_Paths;
   NetworkSettings m_Network;

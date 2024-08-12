@@ -4,8 +4,54 @@
 
 using namespace MOBase;
 
+static const QString EXTENSIONS_GROUP         = "Extensions";
+static const QString EXTENSIONS_ENABLED_GROUP = "ExtensionsEnabled";
 static const QString PLUGINS_GROUP            = "Plugins";
 static const QString PLUGINS_PERSISTENT_GROUP = "PluginPersistance";
+
+ExtensionSettings::ExtensionSettings(QSettings& settings) : m_Settings(settings) {}
+
+QString ExtensionSettings::path(const IExtension& extension, const Setting& setting)
+{
+  QString path = extension.metadata().identifier();
+  if (!setting.group().isEmpty()) {
+    path += "/" + setting.group();
+  }
+  return path + "/" + setting.name();
+}
+
+bool ExtensionSettings::isEnabled(const MOBase::IExtension& extension,
+                                  bool defaultValue) const
+{
+  return get<bool>(m_Settings, EXTENSIONS_ENABLED_GROUP,
+                   extension.metadata().identifier(), defaultValue);
+}
+
+void ExtensionSettings::setEnabled(const MOBase::IExtension& extension,
+                                   bool enabled) const
+{
+  set(m_Settings, EXTENSIONS_ENABLED_GROUP, extension.metadata().identifier(), enabled);
+}
+
+QVariant ExtensionSettings::setting(const IExtension& extension,
+                                    const Setting& setting) const
+{
+  return get<QVariant>(m_Settings, EXTENSIONS_GROUP, path(extension, setting),
+                       setting.defaultValue());
+}
+
+void ExtensionSettings::setSetting(const IExtension& extension, const Setting& setting,
+                                   const QVariant& value)
+{
+  set(m_Settings, EXTENSIONS_GROUP, path(extension, setting), value);
+}
+
+// commits all the settings to the ini
+//
+void ExtensionSettings::save()
+{
+  m_Settings.sync();
+}
 
 PluginSettings::PluginSettings(QSettings& settings) : m_Settings(settings) {}
 
@@ -57,7 +103,7 @@ void PluginSettings::fixPluginEnabledSetting(const IPlugin* plugin)
 QVariant PluginSettings::setting(const QString& pluginName, const QString& key,
                                  const QVariant& defaultValue) const
 {
-  return get<QVariant>(m_Settings, "Settings", path(pluginName, key), defaultValue);
+  return get<QVariant>(m_Settings, PLUGINS_GROUP, path(pluginName, key), defaultValue);
 }
 
 void PluginSettings::setSetting(const QString& pluginName, const QString& key,

@@ -48,10 +48,6 @@ public:
   //
   const auto* proxy() const { return m_organizer; }
 
-  // the "master" of the group this plugin belongs to
-  //
-  MOBase::IPlugin* master() const { return m_master; }
-
   // the extension containing this plugin
   //
   const MOBase::PluginExtension& extension() const { return *m_extension; }
@@ -79,7 +75,6 @@ private:
   PluginManager* m_manager;
   MOBase::IPlugin* m_plugin;
   const MOBase::PluginExtension* m_extension;
-  MOBase::IPlugin* m_master;
   std::vector<std::shared_ptr<const MOBase::IPluginRequirement>> m_requirements;
   OrganizerProxy* m_organizer;
 

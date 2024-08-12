@@ -64,9 +64,10 @@ Settings* Settings::s_Instance = nullptr;
 Settings::Settings(const QString& path, bool globalInstance)
     : m_Settings(path, QSettings::IniFormat), m_Game(m_Settings),
       m_Geometry(m_Settings), m_Widgets(m_Settings, globalInstance),
-      m_Colors(m_Settings), m_Plugins(m_Settings), m_Paths(m_Settings),
-      m_Network(m_Settings, globalInstance), m_Nexus(*this, m_Settings),
-      m_Steam(*this, m_Settings), m_Interface(m_Settings), m_Diagnostics(m_Settings)
+      m_Colors(m_Settings), m_Extensions(m_Settings), m_Plugins(m_Settings),
+      m_Paths(m_Settings), m_Network(m_Settings, globalInstance),
+      m_Nexus(*this, m_Settings), m_Steam(*this, m_Settings), m_Interface(m_Settings),
+      m_Diagnostics(m_Settings)
 {
   if (globalInstance) {
     if (s_Instance != nullptr) {
@@ -455,6 +456,16 @@ ColorSettings& Settings::colors()
 const ColorSettings& Settings::colors() const
 {
   return m_Colors;
+}
+
+ExtensionSettings& Settings::extensions()
+{
+  return m_Extensions;
+}
+
+const ExtensionSettings& Settings::extensions() const
+{
+  return m_Extensions;
 }
 
 PluginSettings& Settings::plugins()

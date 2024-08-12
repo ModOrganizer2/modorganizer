@@ -215,7 +215,7 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
   m_themes       = std::make_unique<ThemeManager>(this);
   m_translations = std::make_unique<TranslationManager>(this);
 
-  m_extensions = std::make_unique<ExtensionManager>();
+  m_extensions = std::make_unique<ExtensionManager>(m_core.get());
   m_extensions->registerWatcher(*m_themes);
   m_extensions->registerWatcher(*m_translations);
 

@@ -73,7 +73,7 @@ PluginDetails::PluginDetails(PluginManager* manager, PluginExtension const& exte
 
 void PluginDetails::fetchRequirements()
 {
-  // m_requirements = m_plugin->requirements();
+  m_requirements = m_plugin->requirements();
 }
 
 std::vector<IPluginRequirement::Problem> PluginDetails::problems() const
@@ -133,6 +133,11 @@ PluginManager::PluginManager(ExtensionManager const& manager, OrganizerCore* cor
       m_gameFeatures(std::make_unique<GameFeatures>(core, this))
 {
   m_loaders = makeLoaders();
+
+  if (m_core) {
+    bf::at_key<IPluginDiagnose>(m_plugins).push_back(m_core);
+    m_core->connectPlugins(this);
+  }
 }
 
 QStringList PluginManager::implementedInterfaces(IPlugin* plugin) const
@@ -249,12 +254,7 @@ bool PluginManager::isEnabled(MOBase::IPlugin* plugin) const
     return plugin == m_core->managedGame();
   }
 
-  // check the master of the group
-  const auto& d = details(plugin);
-  if (d.master() && d.master() != plugin) {
-    return isEnabled(d.master());
-  }
-
+  // TODO: allow disabling/enabling plugins alone?
   return m_extensions.isEnabled(details(plugin).extension());
 }
 
@@ -499,28 +499,12 @@ bool PluginManager::loadPlugins(const MOBase::PluginExtension& extension)
       continue;
     }
 
-    // find the best interface
-    auto it         = std::min_element(std::begin(objectGroup), std::end(objectGroup),
-                                       [&](auto const& lhs, auto const& rhs) {
-                                 return isBetterInterface(lhs, rhs);
-                               });
-    IPlugin* master = qobject_cast<IPlugin*>(*it);
-
     // register plugins in the group
     for (auto* object : objectGroup) {
-      IPlugin* plugin = registerPlugin(extension, object, objectGroup);
-
-      if (plugin) {
-        m_details.at(plugin).m_master = master;
-      }
+      registerPlugin(extension, object, objectGroup);
     }
   }
 
-  // TODO: move this elsewhere, e.g., in core
-  if (m_core) {
-    bf::at_key<IPluginDiagnose>(m_plugins).push_back(m_core);
-    m_core->connectPlugins(this);
-  }
   return true;
 }
 
