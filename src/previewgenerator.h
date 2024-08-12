@@ -26,12 +26,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <ipluginpreview.h>
 #include <map>
 
-class PluginContainer;
+class PluginManager;
 
 class PreviewGenerator
 {
 public:
-  PreviewGenerator(const PluginContainer& pluginContainer);
+  PreviewGenerator(const PluginManager& pluginManager);
 
   bool previewSupported(const QString& fileExtension, const bool& isArchive) const;
 
@@ -40,7 +40,7 @@ public:
   QWidget* genArchivePreview(const QByteArray& fileData, const QString& fileName) const;
 
 private:
-  const PluginContainer& m_PluginContainer;
+  const PluginManager& m_PluginManager;
   QSize m_MaxSize;
 };
 

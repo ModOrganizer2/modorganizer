@@ -14,9 +14,9 @@ using namespace MOBase;
 // in mainwindow.cpp
 QString UnmanagedModName();
 
-DataTab::DataTab(OrganizerCore& core, PluginContainer& pc, QWidget* parent,
+DataTab::DataTab(OrganizerCore& core, PluginManager& pc, QWidget* parent,
                  Ui::MainWindow* mwui)
-    : m_core(core), m_pluginContainer(pc), m_parent(parent),
+    : m_core(core), m_pluginManager(pc), m_parent(parent),
       ui{mwui->tabWidget,
          mwui->dataTab,
          mwui->dataTabRefresh,
@@ -25,7 +25,7 @@ DataTab::DataTab(OrganizerCore& core, PluginContainer& pc, QWidget* parent,
          mwui->dataTabShowFromArchives},
       m_needUpdate(true)
 {
-  m_filetree.reset(new FileTree(core, m_pluginContainer, ui.tree));
+  m_filetree.reset(new FileTree(core, m_pluginManager, ui.tree));
   m_filter.setUseSourceSort(true);
   m_filter.setFilterColumn(FileTreeModel::FileName);
   m_filter.setEdit(mwui->dataTabFilter);

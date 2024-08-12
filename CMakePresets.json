@@ -29,7 +29,7 @@
         "value": "x64"
       },
       "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4",
+        "CMAKE_CXX_FLAGS": "/EHsc /MP /W3",
         "VCPKG_TARGET_TRIPLET": {
           "type": "STRING",
           "value": "x64-windows-static-md"

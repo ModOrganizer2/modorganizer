@@ -4,7 +4,6 @@
 #include "filterwidget.h"
 #include "modinfodialogtab.h"
 #include "organizercore.h"
-#include "plugincontainer.h"
 #include <QScrollBar>
 
 using namespace MOBase;

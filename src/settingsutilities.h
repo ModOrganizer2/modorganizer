@@ -1,42 +1,15 @@
 #ifndef SETTINGSUTILITIES_H
 #define SETTINGSUTILITIES_H
 
-#include <log.h>
+#include <uibase/log.h>
+
+#include <QAbstractButton>
+#include <QHeaderView>
 
 namespace MOBase
 {
 class ExpanderWidget;
 }
-
-template <class T, class = void>
-struct ValueConverter
-{
-  static const T& convert(const T& t) { return t; }
-};
-
-template <class T>
-struct ValueConverter<T, std::enable_if_t<std::is_enum_v<T>>>
-{
-  static QString convert(const T& t)
-  {
-    return QString("%1").arg(static_cast<std::underlying_type_t<T>>(t));
-  }
-};
-
-template <>
-struct ValueConverter<QVariantList>
-{
-  static QString convert(const QVariantList& t)
-  {
-    return QString("%1").arg(QVariant(t).toStringList().join(","));
-  }
-};
-
-template <>
-struct ValueConverter<QStringList>
-{
-  static QString convert(const QStringList& t) { return t.join(", "); }
-};
 
 bool shouldLogSetting(const QString& displayName);
 
@@ -47,13 +20,11 @@ void logChange(const QString& displayName, std::optional<T> oldValue, const T& n
     return;
   }
 
-  using VC = ValueConverter<T>;
-
   if (oldValue) {
-    MOBase::log::debug("setting '{}' changed from '{}' to '{}'", displayName,
-                       VC::convert(*oldValue), VC::convert(newValue));
+    MOBase::log::debug("setting '{}' changed from '{}' to '{}'", displayName, *oldValue,
+                       newValue);
   } else {
-    MOBase::log::debug("setting '{}' set to '{}'", displayName, VC::convert(newValue));
+    MOBase::log::debug("setting '{}' set to '{}'", displayName, newValue);
   }
 }
 

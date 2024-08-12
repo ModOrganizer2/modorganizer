@@ -46,7 +46,7 @@ void throttledWarning(const APIUserAccount& user)
              APIUserAccount::ThrottleThreshold, user.remainingRequests());
 }
 
-NexusBridge::NexusBridge(PluginContainer* pluginContainer, const QString& subModule)
+NexusBridge::NexusBridge(const QString& subModule)
     : m_Interface(&NexusInterface::instance()), m_SubModule(subModule)
 {}
 
@@ -268,7 +268,7 @@ NexusInterface::parseLimits(const QList<QNetworkReply::RawHeaderPair>& headers)
 
 static NexusInterface* g_instance = nullptr;
 
-NexusInterface::NexusInterface(Settings* s) : m_PluginContainer(nullptr)
+NexusInterface::NexusInterface(Settings* s) : m_PluginManager(nullptr)
 {
   MO_ASSERT(!g_instance);
   g_instance = this;
@@ -435,7 +435,7 @@ NexusInterface::getGameChoices(const MOBase::IPluginGame* game)
   choices.push_back(
       std::pair<QString, QString>(game->gameShortName(), game->gameName()));
   for (QString gameName : game->validShortNames()) {
-    for (auto gamePlugin : m_PluginContainer->plugins<IPluginGame>()) {
+    for (auto gamePlugin : m_PluginManager->plugins<IPluginGame>()) {
       if (gamePlugin->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
         choices.push_back(std::pair<QString, QString>(gamePlugin->gameShortName(),
                                                       gamePlugin->gameName()));
@@ -456,9 +456,9 @@ bool NexusInterface::isModURL(int modID, const QString& url) const
   return QUrl(alt) == QUrl(url);
 }
 
-void NexusInterface::setPluginContainer(PluginContainer* pluginContainer)
+void NexusInterface::setPluginManager(PluginManager* pluginContainer)
 {
-  m_PluginContainer = pluginContainer;
+  m_PluginManager = pluginContainer;
 }
 
 int NexusInterface::requestDescription(QString gameName, int modID, QObject* receiver,
@@ -806,7 +806,7 @@ int NexusInterface::requestInfoFromMd5(QString gameName, QByteArray& hash,
 
 IPluginGame* NexusInterface::getGame(QString gameName) const
 {
-  auto gamePlugins        = m_PluginContainer->plugins<IPluginGame>();
+  auto gamePlugins        = m_PluginManager->plugins<IPluginGame>();
   IPluginGame* gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
   for (auto plugin : gamePlugins) {
     if (plugin != nullptr &&

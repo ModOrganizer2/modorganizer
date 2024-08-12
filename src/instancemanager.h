@@ -10,7 +10,7 @@ class IPluginGame;
 }
 
 class Settings;
-class PluginContainer;
+class PluginManager;
 
 // represents an instance, either global or portable
 //
@@ -110,7 +110,7 @@ public:
   // setup() tries to recover from some errors, but can fail for a variety of
   // reasons, see SetupResults
   //
-  SetupResults setup(PluginContainer& plugins);
+  SetupResults setup(PluginManager& plugins);
 
   // overrides the game name and directory
   //
@@ -198,7 +198,7 @@ private:
 
   // figures out the game plugin for this instance
   //
-  SetupResults getGamePlugin(PluginContainer& plugins);
+  SetupResults getGamePlugin(PluginManager& plugins);
 
   // figures out the profile name for this instance
   //
@@ -243,11 +243,11 @@ public:
   //
   // returns null if all of this fails
   //
-  const MOBase::IPluginGame*
-  gamePluginForDirectory(const QString& dir, const PluginContainer& plugins) const;
+  const MOBase::IPluginGame* gamePluginForDirectory(const QString& dir,
+                                                    const PluginManager& plugins) const;
 
   MOBase::IPluginGame* gamePluginForDirectory(const QString& dir,
-                                              PluginContainer& plugins) const;
+                                              PluginManager& plugins) const;
 
   // clears the instance name from the registry; on restart, this will make MO
   // either select the portable instance if it exists, or display the instance
@@ -359,6 +359,6 @@ std::unique_ptr<Instance> selectInstance();
 //
 //  - if the instance has been set up correctly, returns Okay
 //
-SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc);
+SetupInstanceResults setupInstance(Instance& instance, PluginManager& pc);
 
 #endif  // MODORGANIZER_INSTANCEMANAGER_INCLUDED

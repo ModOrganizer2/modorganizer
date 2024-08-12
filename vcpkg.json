@@ -12,7 +12,6 @@
     "boost-thread",
     "boost-uuid",
     "lz4",
-    "mo2-cmake",
     "mo2-libbsarch",
     "zlib"
   ],
@@ -20,6 +19,7 @@
     "standalone": {
       "description": "Build Standalone.",
       "dependencies": [
+        "mo2-cmake",
         "mo2-archive",
         "mo2-bsatk",
         "mo2-esptk",
@@ -28,5 +28,26 @@
         "usvfs"
       ]
     }
+  },
+  "vcpkg-configuration": {
+    "default-registry": {
+      "kind": "git",
+      "repository": "https://github.com/Microsoft/vcpkg",
+      "baseline": "8ae59b5b1329a51875abc71d528da93d9c3e8972"
+    },
+    "registries": [
+      {
+        "kind": "git",
+        "repository": "https://github.com/Microsoft/vcpkg",
+        "baseline": "8ae59b5b1329a51875abc71d528da93d9c3e8972",
+        "packages": ["boost*", "boost-*"]
+      },
+      {
+        "kind": "git",
+        "repository": "https://github.com/ModOrganizer2/vcpkg-registry",
+        "baseline": "84ff92223433d101738a3c6cef96fa6ae6a6f302",
+        "packages": ["mo2-*", "7zip", "usvfs"]
+      }
+    ]
   }
 }

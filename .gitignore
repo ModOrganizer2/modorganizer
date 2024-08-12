@@ -12,5 +12,6 @@ edit
 /msbuild.log
 /*std*.log
 /*build
+.vscode
 
 /src/version.aps

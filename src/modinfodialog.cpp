@@ -27,7 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfodialogtextfiles.h"
 #include "modlistview.h"
 #include "organizercore.h"
-#include "plugincontainer.h"
+#include "pluginmanager.h"
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
 #include "ui_modinfodialog.h"
@@ -39,11 +39,11 @@ namespace fs = std::filesystem;
 
 const int max_scan_for_context_menu = 50;
 
-bool canPreviewFile(const PluginContainer& pluginContainer, bool isArchive,
+bool canPreviewFile(const PluginManager& pluginManager, bool isArchive,
                     const QString& filename)
 {
   const auto ext = QFileInfo(filename).suffix().toLower();
-  return pluginContainer.previewGenerator().previewSupported(ext, isArchive);
+  return pluginManager.previewGenerator().previewSupported(ext, isArchive);
 }
 
 bool isExecutableFilename(const QString& filename)
@@ -164,11 +164,11 @@ bool ModInfoDialog::TabInfo::isVisible() const
   return (realPos != -1);
 }
 
-ModInfoDialog::ModInfoDialog(OrganizerCore& core, PluginContainer& plugin,
+ModInfoDialog::ModInfoDialog(OrganizerCore& core, PluginManager& plugins,
                              ModInfo::Ptr mod, ModListView* modListView,
                              QWidget* parent)
     : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_core(core),
-      m_plugin(plugin), m_modListView(modListView), m_initialTab(ModInfoTabIDs::None),
+      m_plugins(plugins), m_modListView(modListView), m_initialTab(ModInfoTabIDs::None),
       m_arrangingTabs(false)
 {
   ui->setupUi(this);
@@ -218,7 +218,7 @@ template <class T>
 std::unique_ptr<ModInfoDialogTab> createTab(ModInfoDialog& d, ModInfoTabIDs id)
 {
   return std::make_unique<T>(ModInfoDialogTabContext(
-      d.m_core, d.m_plugin, &d, d.ui.get(), id, d.m_mod, d.getOrigin()));
+      d.m_core, d.m_plugins, &d, d.ui.get(), id, d.m_mod, d.getOrigin()));
 }
 
 void ModInfoDialog::createTabs()
