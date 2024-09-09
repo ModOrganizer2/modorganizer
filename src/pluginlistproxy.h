@@ -36,6 +36,9 @@ public:
   bool isLightFlagged(const QString& name) const override;
   bool hasNoRecords(const QString& name) const override;
 
+  QString author(const QString& name) const override;
+  QString description(const QString& name) const override;
+
 private:
   friend class OrganizerProxy;
 
