@@ -167,6 +167,7 @@ void DirectoryEntry::addFromAllBSAs(const std::wstring& originName,
                                     const std::vector<std::wstring>& loadOrder,
                                     DirectoryStats& stats)
 {
+  std::vector<std::wstring>::const_iterator itor;
   for (const auto& archive : archives) {
     const std::filesystem::path archivePath(archive);
     const auto filename = archivePath.filename().native();
@@ -185,7 +186,7 @@ void DirectoryEntry::addFromAllBSAs(const std::wstring& originName,
 
       if (filenameLc.starts_with(pluginNameLc + L" - ") ||
           filenameLc.starts_with(pluginNameLc + L".")) {
-        auto itor = std::find(loadOrder.begin(), loadOrder.end(), plugin);
+        itor = std::find(loadOrder.begin(), loadOrder.end(), plugin);
         if (itor != loadOrder.end()) {
           order = std::distance(loadOrder.begin(), itor);
         }
