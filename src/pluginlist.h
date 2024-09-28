@@ -244,6 +244,9 @@ public:
   bool isLightFlagged(const QString& name) const;
   bool hasNoRecords(const QString& name) const;
 
+  QString author(const QString& name) const;
+  QString description(const QString& name) const;
+
   boost::signals2::connection onRefreshed(const std::function<void()>& callback);
   boost::signals2::connection
   onPluginMoved(const std::function<void(const QString&, int, int)>& func);

@@ -128,3 +128,13 @@ bool PluginListProxy::hasNoRecords(const QString& name) const
 {
   return m_Proxied->hasNoRecords(name);
 }
+
+QString PluginListProxy::author(const QString& name) const
+{
+  return m_Proxied->author(name);
+}
+
+QString PluginListProxy::description(const QString& name) const
+{
+  return m_Proxied->description(name);
+}
