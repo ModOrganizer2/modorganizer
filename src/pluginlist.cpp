@@ -1080,6 +1080,26 @@ bool PluginList::hasNoRecords(const QString& name) const
   }
 }
 
+QString PluginList::author(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return QString();
+  } else {
+    return m_ESPs[iter->second].author;
+  }
+}
+
+QString PluginList::description(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return QString();
+  } else {
+    return m_ESPs[iter->second].description;
+  }
+}
+
 boost::signals2::connection PluginList::onPluginStateChanged(
     const std::function<void(const std::map<QString, PluginStates>&)>& func)
 {
