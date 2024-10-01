@@ -124,6 +124,11 @@ bool PluginListProxy::isLightFlagged(const QString& name) const
   return m_Proxied->isLightFlagged(name);
 }
 
+bool PluginListProxy::isBlueprintFlagged(const QString& name) const
+{
+  return m_Proxied->isBlueprintFlagged(name);
+}
+
 bool PluginListProxy::hasNoRecords(const QString& name) const
 {
   return m_Proxied->hasNoRecords(name);
