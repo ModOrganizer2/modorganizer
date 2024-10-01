@@ -242,6 +242,7 @@ public:
   bool isMasterFlagged(const QString& name) const;
   bool isMediumFlagged(const QString& name) const;
   bool isLightFlagged(const QString& name) const;
+  bool isBlueprintFlagged(const QString& name) const;
   bool hasNoRecords(const QString& name) const;
 
   boost::signals2::connection onRefreshed(const std::function<void()>& callback);
@@ -317,7 +318,7 @@ private:
     ESPInfo(const QString& name, bool forceLoaded, bool forceEnabled,
             bool forceDisabled, const QString& originName, const QString& fullPath,
             bool hasIni, std::set<QString> archives, bool lightSupported,
-            bool mediumSupported);
+            bool mediumSupported, bool blueprintSupported);
 
     QString name;
     QString fullPath;
@@ -335,6 +336,7 @@ private:
     bool isMasterFlagged;
     bool isMediumFlagged;
     bool isLightFlagged;
+    bool isBlueprintFlagged;
     bool hasNoRecords;
     bool modSelected;
     QString author;

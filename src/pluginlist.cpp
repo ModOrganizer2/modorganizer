@@ -182,6 +182,8 @@ void PluginList::refresh(const QString& profileName,
       gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
   const bool mediumPluginsAreSupported =
       gamePlugins ? gamePlugins->mediumPluginsAreSupported() : false;
+  const bool blueprintPluginsAreSupported =
+      gamePlugins ? gamePlugins->blueprintPluginsAreSupported() : false;
   const bool loadOrderMechanismNone =
       m_GamePlugin->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::None;
 
@@ -245,7 +247,7 @@ void PluginList::refresh(const QString& profileName,
       m_ESPs.emplace_back(filename, forceLoaded, forceEnabled, forceDisabled,
                           originName, ToQString(current->getFullPath()), hasIni,
                           loadedArchives, lightPluginsAreSupported,
-                          mediumPluginsAreSupported);
+                          mediumPluginsAreSupported, blueprintPluginsAreSupported);
       m_ESPs.rbegin()->priority = -1;
     } catch (const std::exception& e) {
       reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3")
@@ -304,18 +306,33 @@ void PluginList::fixPrimaryPlugins()
   // This function ensures that the primary plugins are first and in the correct order
   QStringList primaryPlugins = m_Organizer.managedGame()->primaryPlugins();
   int prio                   = 0;
+  int prioBlueprint          = 0;
   bool somethingChanged      = false;
+  for (auto esp : m_ESPs) {
+    if (!esp.isBlueprintFlagged)
+      prioBlueprint++;
+  }
   for (QString plugin : primaryPlugins) {
     std::map<QString, int>::iterator iter = m_ESPsByName.find(plugin);
     // Plugin is present?
     if (iter != m_ESPsByName.end()) {
-      if (prio != m_ESPs[iter->second].priority) {
-        // Priority is wrong! Fix it!
-        int newPrio = prio;
-        setPluginPriority(iter->second, newPrio, true /* isForced */);
-        somethingChanged = true;
+      if (!m_ESPs[iter->second].isBlueprintFlagged) {
+        if (prio != m_ESPs[iter->second].priority) {
+          // Priority is wrong! Fix it!
+          int newPrio = prio;
+          setPluginPriority(iter->second, newPrio, true /* isForced */);
+          somethingChanged = true;
+        }
+        prio++;
+      } else {
+        if (prioBlueprint != m_ESPs[iter->second].priority) {
+          // Priority is wrong! Fix it!
+          int newPrio = prioBlueprint;
+          setPluginPriority(iter->second, newPrio, true /* isForced */);
+          somethingChanged = true;
+        }
+        prioBlueprint++;
       }
-      prio++;
     }
   }
 
@@ -329,11 +346,20 @@ void PluginList::fixPluginRelationships()
   TimeThis timer("PluginList::fixPluginRelationships");
 
   // Count the types of plugins
-  int masterCount = 0;
+  int standardCount        = 0;
+  int masterCount          = 0;
+  int blueprintMasterCount = 0;
   for (auto plugin : m_ESPs) {
     if (plugin.hasLightExtension || plugin.hasMasterExtension ||
         plugin.isMasterFlagged) {
-      masterCount++;
+      if (plugin.isBlueprintFlagged) {
+        blueprintMasterCount++;
+      } else {
+        masterCount++;
+      }
+    }
+    if (!plugin.isBlueprintFlagged) {
+      standardCount++;
     }
   }
 
@@ -342,14 +368,28 @@ void PluginList::fixPluginRelationships()
     ESPInfo& plugin = m_ESPs[i];
     if (plugin.hasLightExtension || plugin.hasMasterExtension ||
         plugin.isMasterFlagged) {
-      if (plugin.priority > masterCount) {
-        int newPriority = masterCount + 1;
-        setPluginPriority(i, newPriority);
+      if (plugin.isBlueprintFlagged) {
+        if (plugin.priority > standardCount + blueprintMasterCount) {
+          int newPriority = standardCount + blueprintMasterCount;
+          setPluginPriority(i, newPriority);
+        }
+      } else {
+        if (plugin.priority > masterCount) {
+          int newPriority = masterCount;
+          setPluginPriority(i, newPriority);
+        }
       }
     } else {
-      if (plugin.priority < masterCount) {
-        int newPriority = masterCount + 1;
-        setPluginPriority(i, newPriority);
+      if (plugin.isBlueprintFlagged) {
+        if (plugin.priority < standardCount + blueprintMasterCount) {
+          int newPriority = standardCount + blueprintMasterCount + 1;
+          setPluginPriority(i, newPriority);
+        }
+      } else {
+        if (plugin.priority < masterCount) {
+          int newPriority = masterCount + 1;
+          setPluginPriority(i, newPriority);
+        }
       }
     }
   }
@@ -361,7 +401,9 @@ void PluginList::fixPluginRelationships()
     for (auto master : plugin.masters) {
       auto iter = m_ESPsByName.find(master);
       if (iter != m_ESPsByName.end()) {
-        newPriority = std::max(newPriority, m_ESPs[iter->second].priority);
+        if (m_ESPs.at(iter->second).isBlueprintFlagged == plugin.isBlueprintFlagged) {
+          newPriority = std::max(newPriority, m_ESPs[iter->second].priority);
+        }
       }
     }
     if (newPriority != plugin.priority) {
@@ -1018,6 +1060,16 @@ bool PluginList::isLightFlagged(const QString& name) const
   }
 }
 
+bool PluginList::isBlueprintFlagged(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  } else {
+    return m_ESPs[iter->second].isBlueprintFlagged;
+  }
+}
+
 bool PluginList::hasNoRecords(const QString& name) const
 {
   auto iter = m_ESPsByName.find(name);
@@ -1256,6 +1308,8 @@ QVariant PluginList::fontData(const QModelIndex& modelIndex) const
     result.setItalic(true);
   else if (m_ESPs[index].isMediumFlagged)
     result.setUnderline(true);
+  if (m_ESPs[index].isBlueprintFlagged)
+    result.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, 2);
 
   return result;
 }
@@ -1354,6 +1408,13 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
                tr("This ESM is flagged as a medium plugin (ESH). It adheres to the ESM "
                   "load order but loads records in ESH space (FD). You can have 256 "
                   "medium plugins in addition to other plugin types.");
+  }
+
+  if (esp.isBlueprintFlagged) {
+    toolTip += "<br><br>" +
+               tr("This plugin has the blueprint flag. This forces it to load after "
+                  "every other non-blueprint plugin. Blueprint plugins will adhere to "
+                  "standard load order rules with other blueprint plugins.");
   }
 
   if (esp.isLightFlagged && esp.isMediumFlagged) {
@@ -1501,6 +1562,10 @@ QVariant PluginList::iconData(const QModelIndex& modelIndex) const
     }
   }
 
+  if (esp.isBlueprintFlagged) {
+    result.append(":/MO/gui/resources/go-down.png");
+  }
+
   if (esp.hasNoRecords) {
     result.append(":/MO/gui/unchecked-checkbox");
   }
@@ -1638,10 +1703,33 @@ void PluginList::setPluginPriority(int row, int& newPriority, bool isForced)
   else if (newPriorityTemp >= static_cast<int>(m_ESPsByPriority.size()))
     newPriorityTemp = static_cast<int>(m_ESPsByPriority.size()) - 1;
 
+  int blueprintStartPos = 0;
+  for (auto esp : m_ESPs) {
+    if (!esp.isBlueprintFlagged) {
+      blueprintStartPos++;
+    }
+  }
+
+  bool isBlueprint = m_ESPs[row].isBlueprintFlagged;
+  int lowerLimit   = 0;
+  int upperLimit   = 0;
+  if (isBlueprint) {
+    if (newPriorityTemp < blueprintStartPos) {
+      newPriorityTemp = blueprintStartPos;
+    }
+    lowerLimit = blueprintStartPos;
+    upperLimit = static_cast<int>(m_ESPsByPriority.size() - 1);
+  }
+  if (!isBlueprint) {
+    if (newPriorityTemp >= blueprintStartPos) {
+      newPriorityTemp = blueprintStartPos - 1;
+    }
+    upperLimit = blueprintStartPos - 1;
+  }
   if (!m_ESPs[row].isMasterFlagged && !m_ESPs[row].hasLightExtension &&
       !m_ESPs[row].hasMasterExtension) {
     // don't allow esps to be moved above esms
-    while ((newPriorityTemp < static_cast<int>(m_ESPsByPriority.size() - 1)) &&
+    while ((newPriorityTemp < upperLimit) &&
            (m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).isMasterFlagged ||
             m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).hasLightExtension ||
             m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).hasMasterExtension)) {
@@ -1649,14 +1737,14 @@ void PluginList::setPluginPriority(int row, int& newPriority, bool isForced)
     }
   } else {
     // don't allow esms to be moved below esps
-    while ((newPriorityTemp > 0) &&
+    while ((newPriorityTemp > lowerLimit) &&
            !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).isMasterFlagged &&
            !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).hasLightExtension &&
            !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).hasMasterExtension) {
       --newPriorityTemp;
     }
     // also don't allow "regular" esms to be moved above primary plugins
-    while ((newPriorityTemp < static_cast<int>(m_ESPsByPriority.size() - 1)) &&
+    while ((newPriorityTemp < upperLimit) &&
            (m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).forceLoaded)) {
       ++newPriorityTemp;
     }
@@ -1668,9 +1756,12 @@ void PluginList::setPluginPriority(int row, int& newPriority, bool isForced)
     for (auto master : m_ESPs[row].masters) {
       auto iter = m_ESPsByName.find(master);
       if (iter != m_ESPsByName.end()) {
-        int masterPriority = m_ESPs[iter->second].priority;
-        if (masterPriority >= newPriorityTemp) {
-          newPriorityTemp = masterPriority + 1;
+        if (m_ESPs[iter->second].isBlueprintFlagged ==
+            m_ESPs.at(row).isBlueprintFlagged) {
+          int masterPriority = m_ESPs[iter->second].priority;
+          if (masterPriority >= newPriorityTemp) {
+            newPriorityTemp = masterPriority + 1;
+          }
         }
       }
     }
@@ -1679,9 +1770,15 @@ void PluginList::setPluginPriority(int row, int& newPriority, bool isForced)
     for (int i = oldPriority + 1; i <= newPriorityTemp; i++) {
       PluginList::ESPInfo* otherInfo = &m_ESPs.at(m_ESPsByPriority[i]);
       for (auto master : otherInfo->masters) {
-        if (master.compare(m_ESPs[row].name, Qt::CaseInsensitive) == 0) {
-          newPriorityTemp = otherInfo->priority - 1;
-          break;
+        auto iter = m_ESPsByName.find(master);
+        if (iter != m_ESPsByName.end()) {
+          if (m_ESPs[iter->second].isBlueprintFlagged ==
+              otherInfo->isBlueprintFlagged) {
+            if (master.compare(m_ESPs[row].name, Qt::CaseInsensitive) == 0) {
+              newPriorityTemp = otherInfo->priority - 1;
+              break;
+            }
+          }
         }
       }
     }
@@ -1720,23 +1817,6 @@ void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
 {
   ChangeBracket<PluginList> layoutChange(this);
   const std::vector<ESPInfo>& esp = m_ESPs;
-
-  int minPriority = INT_MAX;
-  int maxPriority = INT_MIN;
-
-  // don't try to move plugins before force-enabled plugins
-  for (std::vector<ESPInfo>::const_iterator iter = m_ESPs.begin(); iter != m_ESPs.end();
-       ++iter) {
-    if (iter->forceLoaded) {
-      newPriority = std::max(newPriority, iter->priority + 1);
-    }
-    maxPriority = std::max(maxPriority, iter->priority + 1);
-    minPriority = std::min(minPriority, iter->priority);
-  }
-
-  // limit the new priority to existing priorities
-  newPriority = std::min(newPriority, maxPriority);
-  newPriority = std::max(newPriority, minPriority);
 
   // sort the moving plugins by ascending priorities
   std::sort(rows.begin(), rows.end(), [&esp](const int& LHS, const int& RHS) {
@@ -1817,7 +1897,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
                              bool forceDisabled, const QString& originName,
                              const QString& fullPath, bool hasIni,
                              std::set<QString> archives, bool lightSupported,
-                             bool mediumSupported)
+                             bool mediumSupported, bool blueprintSupported)
     : name(name), fullPath(fullPath), enabled(forceLoaded), forceLoaded(forceLoaded),
       forceEnabled(forceEnabled), forceDisabled(forceDisabled), priority(0),
       loadOrder(-1), originName(originName), hasIni(hasIni),
@@ -1831,6 +1911,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     isMasterFlagged    = file.isMaster();
     isLightFlagged     = lightSupported && file.isLight(mediumSupported);
     isMediumFlagged    = mediumSupported && file.isMedium();
+    isBlueprintFlagged = blueprintSupported && file.isBlueprint();
     hasNoRecords       = file.isDummy();
 
     author      = QString::fromLatin1(file.author().c_str());
@@ -1844,8 +1925,9 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     hasMasterExtension = false;
     hasLightExtension  = false;
     isMasterFlagged    = false;
-    isMediumFlagged    = false;
     isLightFlagged     = false;
+    isMediumFlagged    = false;
+    isBlueprintFlagged = false;
     hasNoRecords       = false;
   }
 }
