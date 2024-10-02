@@ -1931,7 +1931,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     isMasterFlagged    = file.isMaster();
     isLightFlagged     = lightSupported && file.isLight(mediumSupported);
     isMediumFlagged    = mediumSupported && file.isMedium();
-    isBlueprintFlagged = blueprintSupported && file.isBlueprint();
+    isBlueprintFlagged = blueprintSupported && isMasterFlagged && file.isBlueprint();
     hasNoRecords       = file.isDummy();
 
     author      = QString::fromLatin1(file.author().c_str());
