@@ -34,6 +34,7 @@ public:
   bool isMasterFlagged(const QString& name) const override;
   bool isMediumFlagged(const QString& name) const override;
   bool isLightFlagged(const QString& name) const override;
+  bool isBlueprintFlagged(const QString& name) const override;
   bool hasNoRecords(const QString& name) const override;
 
   QString author(const QString& name) const override;
