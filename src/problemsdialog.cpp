@@ -16,6 +16,7 @@ ProblemsDialog::ProblemsDialog(const PluginContainer& pluginContainer, QWidget* 
       m_hasProblems(false)
 {
   ui->setupUi(this);
+  ui->problemsWidget->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
   runDiagnosis();
 
