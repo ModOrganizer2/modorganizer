@@ -16,24 +16,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 #include "pluginlist.h"
-#include "modinfo.h"
-#include "modlist.h"
-#include "scopeguard.h"
-#include "settings.h"
-#include "shared/directoryentry.h"
-#include "shared/fileentry.h"
-#include "shared/filesorigin.h"
-#include "viewmarkingscrollbar.h"
 
-#include "shared/windows_error.h"
-#include <espfile.h>
-#include <gameplugins.h>
-#include <iplugingame.h>
-#include <report.h>
-#include <safewritefile.h>
-#include <utility.h>
+#include <algorithm>
+#include <ctime>
+#include <stdexcept>
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -50,11 +37,23 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QString>
 #include <QtDebug>
 
-#include <algorithm>
-#include <ctime>
-#include <stdexcept>
+#include <esptk/espfile.h>
+#include <uibase/iplugingame.h>
+#include <uibase/report.h>
+#include <uibase/safewritefile.h>
+#include <uibase/scopeguard.h>
+#include <uibase/utility.h>
 
+#include "gameplugins.h"
+#include "modinfo.h"
+#include "modlist.h"
 #include "organizercore.h"
+#include "settings.h"
+#include "shared/directoryentry.h"
+#include "shared/fileentry.h"
+#include "shared/filesorigin.h"
+#include "shared/windows_error.h"
+#include "viewmarkingscrollbar.h"
 
 using namespace MOBase;
 using namespace MOShared;
