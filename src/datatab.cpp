@@ -22,7 +22,8 @@ DataTab::DataTab(OrganizerCore& core, PluginContainer& pc, QWidget* parent,
          mwui->dataTabRefresh,
          mwui->dataTree,
          mwui->dataTabShowOnlyConflicts,
-         mwui->dataTabShowFromArchives},
+         mwui->dataTabShowFromArchives,
+         mwui->dataTabShowHiddenFiles},
       m_needUpdate(true)
 {
   m_filetree.reset(new FileTree(core, m_pluginContainer, ui.tree));
@@ -52,6 +53,10 @@ DataTab::DataTab(OrganizerCore& core, PluginContainer& pc, QWidget* parent,
     onArchives();
   });
 
+  connect(ui.hiddenFiles, &QCheckBox::toggled, [&] {
+    onHiddenFiles();
+  });
+
   connect(m_filetree.get(), &FileTree::executablesChanged, this,
           &DataTab::executablesChanged);
 
@@ -66,6 +71,7 @@ void DataTab::saveState(Settings& s) const
   s.geometry().saveState(ui.tree->header());
   s.widgets().saveChecked(ui.conflicts);
   s.widgets().saveChecked(ui.archives);
+  s.widgets().saveChecked(ui.hiddenFiles);
 }
 
 void DataTab::restoreState(const Settings& s)
@@ -78,6 +84,7 @@ void DataTab::restoreState(const Settings& s)
 
   s.widgets().restoreChecked(ui.conflicts);
   s.widgets().restoreChecked(ui.archives);
+  s.widgets().restoreChecked(ui.hiddenFiles);
 }
 
 void DataTab::activated()
@@ -146,6 +153,11 @@ void DataTab::onArchives()
   updateOptions();
 }
 
+void DataTab::onHiddenFiles()
+{
+  updateOptions();
+}
+
 void DataTab::updateOptions()
 {
   using M = FileTreeModel;
@@ -158,6 +170,10 @@ void DataTab::updateOptions()
 
   if (ui.archives->isChecked()) {
     flags |= M::Archives;
+  }
+
+  if (ui.hiddenFiles->isChecked()) {
+    flags |= M::HiddenFiles;
   }
 
   m_filetree->model()->setFlags(flags);
