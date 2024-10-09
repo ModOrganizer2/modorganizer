@@ -460,7 +460,8 @@ bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
 
         // Search by notes
         if (!foundKeyword && m_EnabledColumns[ModList::COL_NOTES] &&
-            info->comments().contains(currentKeyword, Qt::CaseInsensitive)) {
+            (info->notes().contains(currentKeyword, Qt::CaseInsensitive) ||
+             info->comments().contains(currentKeyword, Qt::CaseInsensitive))) {
           foundKeyword = true;
         }
 
