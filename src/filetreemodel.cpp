@@ -182,8 +182,8 @@ void* makeInternalPointer(FileTreeItem* item)
 
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent)
     : QAbstractItemModel(parent), m_core(core), m_enabled(true),
-      m_root(FileTreeItem::createDirectory(this, nullptr, L"", L"")), m_flags(NoFlags),
-      m_fullyLoaded(false), m_sortingEnabled(true)
+      m_root(FileTreeItem::createDirectory(this, nullptr, L"", L"")),
+      m_flags(HiddenFiles), m_fullyLoaded(false), m_sortingEnabled(true)
 {
   m_root->setExpanded(true);
   m_sortTimer.setSingleShot(true);
@@ -267,6 +267,11 @@ const FileTreeModel::SortInfo& FileTreeModel::sortInfo() const
 bool FileTreeModel::showArchives() const
 {
   return (m_flags.testFlag(Archives) && m_core.settings().archiveParsing());
+}
+
+bool FileTreeModel::showHiddenFiles() const
+{
+  return m_flags.testAnyFlag(HiddenFiles);
 }
 
 QModelIndex FileTreeModel::index(int row, int col, const QModelIndex& parentIndex) const
@@ -971,6 +976,11 @@ bool FileTreeModel::shouldShowFile(const FileEntry& file) const
 
   if (!showArchives() && file.isFromArchive()) {
     // files from archives shouldn't be shown, but this file is from an archive
+    return false;
+  }
+
+  if (!showHiddenFiles() && file.getName().ends_with(L".mohidden")) {
+    // hidden files shouldn't be shown, but this file is hidden
     return false;
   }
 

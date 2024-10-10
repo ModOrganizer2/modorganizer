@@ -18,7 +18,8 @@ public:
     NoFlags          = 0x00,
     ConflictsOnly    = 0x01,
     Archives         = 0x02,
-    PruneDirectories = 0x04
+    PruneDirectories = 0x04,
+    HiddenFiles      = 0x08
   };
 
   enum Columns
@@ -101,6 +102,8 @@ private:
   bool showConflictsOnly() const { return (m_flags & ConflictsOnly); }
 
   bool showArchives() const;
+
+  bool showHiddenFiles() const;
 
   // for `forFetching`, see top of filetreemodel.cpp
   void update(FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,

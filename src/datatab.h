@@ -54,6 +54,7 @@ private:
     QTreeView* tree;
     QCheckBox* conflicts;
     QCheckBox* archives;
+    QCheckBox* hiddenFiles;
   };
 
   OrganizerCore& m_core;
@@ -69,6 +70,7 @@ private:
   void onItemExpanded(QTreeWidgetItem* item);
   void onConflicts();
   void onArchives();
+  void onHiddenFiles();
   void updateOptions();
   void ensureFullyLoaded();
   bool isActive() const;

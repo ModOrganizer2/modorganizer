@@ -1181,6 +1181,25 @@
                 </widget>
                </item>
                <item>
+                <widget class="QCheckBox" name="dataTabShowHiddenFiles">
+                 <property name="toolTip">
+                  <string>Filter the list so that hidden files are shown.</string>
+                 </property>
+                 <property name="statusTip">
+                  <string/>
+                 </property>
+                 <property name="whatsThis">
+                  <string>Filter the list so that hidden files are shown.</string>
+                 </property>
+                 <property name="text">
+                  <string>Hidden Files</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QLineEdit" name="dataTabFilter">
                  <property name="toolTip">
                   <string>Filter the Data tree.</string>
