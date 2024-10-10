@@ -315,7 +315,7 @@
      </widget>
      <widget class="QWidget" name="tabESPs">
       <attribute name="title">
-       <string>Optional ESPs</string>
+       <string>Optional Plugins</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_23">
        <item>
@@ -340,20 +340,20 @@
            <item>
             <widget class="QLabel" name="label_2">
              <property name="text">
-              <string>Optional ESPs</string>
+              <string>Optional Plugins</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QListView" name="inactiveESPList">
              <property name="toolTip">
-              <string>List of esps, esms, and esls that can not be loaded by the game.</string>
+              <string>List of esps, esms, and esls that will not be loaded by the game.</string>
              </property>
              <property name="whatsThis">
-              <string>List of esps, esms, and esls contained in this plugin that currently can not be loaded by the game. They will not even appear in the esp-list in the main MO-window.
+              <string>List of esps, esms, and esls contained in this mod that currently will not be loaded by the game. They will not even appear in the plugin list in the main MO-window.
 They usually contain optional functionality, see the readme.
 
-Most mods do not have optional esps, so chances are good you are looking at an empty list.</string>
+Most mods do not have optional plugins, so chances are good you are looking at an empty list.</string>
              </property>
              <property name="alternatingRowColors">
               <bool>true</bool>
@@ -397,10 +397,10 @@ Most mods do not have optional esps, so chances are good you are looking at an e
              <item>
               <widget class="QToolButton" name="activateESP">
                <property name="toolTip">
-                <string>Move a file to the data directory.</string>
+                <string>Move a plugin to the data directory.</string>
                </property>
                <property name="whatsThis">
-                <string>This moves a esp to the esp directory so it can be enabled in the main window. Please note that the ESP merely becomes &quot;available&quot;, it will not necessarily be loaded! That is configured in the main window of MO.</string>
+                <string>This moves a plugin to the data directory so it can be enabled in the main window. Please note that the plugin merely becomes &quot;available&quot;, it will not necessarily be loaded! That is configured in the main window of MO.</string>
                </property>
                <property name="text">
                 <string/>
@@ -420,10 +420,10 @@ Most mods do not have optional esps, so chances are good you are looking at an e
              <item>
               <widget class="QToolButton" name="deactivateESP">
                <property name="toolTip">
-                <string>Make the selected mod in the right list unavailable.</string>
+                <string>Make the selected plugin in the right list unavailable.</string>
                </property>
                <property name="whatsThis">
-                <string>The selected esp (in the right list) will be pushed into a subdirectory of the mod and will thus become &quot;invisible&quot; to the game. It can then no longer be activated.</string>
+                <string>The selected plugin (in the right list) will be pushed into a subdirectory of the mod and will thus become &quot;invisible&quot; to the game. It can then no longer be activated.</string>
                </property>
                <property name="text">
                 <string/>
@@ -473,17 +473,17 @@ Most mods do not have optional esps, so chances are good you are looking at an e
               <item>
                <widget class="QLabel" name="label">
                 <property name="text">
-                 <string>Available ESPs</string>
+                 <string>Available Plugins</string>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QListView" name="activeESPList">
                 <property name="toolTip">
-                 <string>ESPs in the data directory and thus visible to the game.</string>
+                 <string>Plugins in the data directory and thus visible to the game.</string>
                 </property>
                 <property name="whatsThis">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are the mod files that are in the (virtual) data directory of your game and will thus be selectable in the esp list in the main window.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are the plugins that are in the (virtual) data directory of your game and will thus be selectable in the plugin list in the main window.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="alternatingRowColors">
                  <bool>true</bool>
