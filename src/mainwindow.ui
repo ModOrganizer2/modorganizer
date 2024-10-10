@@ -1345,6 +1345,26 @@
                  </property>
                 </spacer>
                </item>
+               <item>
+                <widget class="QPushButton" name="btnQueryDownloadsInfo">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="contextMenuPolicy">
+                  <enum>Qt::ContextMenuPolicy::DefaultContextMenu</enum>
+                 </property>
+                 <property name="text">
+                  <string>Query Metadata</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="resources.qrc">
+                   <normaloff>:/MO/gui/resources/system-search.png</normaloff>:/MO/gui/resources/system-search.png</iconset>
+                 </property>
+                </widget>
+               </item>
               </layout>
              </item>
              <item>
