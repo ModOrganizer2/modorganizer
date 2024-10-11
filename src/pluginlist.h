@@ -222,6 +222,8 @@ public:
   void highlightPlugins(const std::vector<unsigned int>& modIndices,
                         const MOShared::DirectoryEntry& directoryEntry);
 
+  void highlightMasters(const std::vector<unsigned int>& selectedPluginIndices);
+
   void refreshLoadOrder();
 
   void disconnectSlots();
@@ -342,6 +344,7 @@ private:
     bool isBlueprintFlagged;
     bool hasNoRecords;
     bool modSelected;
+    bool isMasterOfSelectedPlugin;
     QString author;
     QString description;
     bool hasIni;

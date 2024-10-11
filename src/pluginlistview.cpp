@@ -233,6 +233,8 @@ void PluginListView::setup(OrganizerCore& core, MainWindow* mw, Ui::MainWindow* 
               pluginIndices.push_back(idx.row());
             }
             mwui->modList->setHighlightedMods(pluginIndices);
+            m_core->pluginList()->highlightMasters(pluginIndices);
+            verticalScrollBar()->repaint();
           });
 
   // using a lambda here to avoid storing the mod list actions

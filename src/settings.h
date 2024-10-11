@@ -257,6 +257,9 @@ public:
   QColor pluginListContained() const;
   void setPluginListContained(const QColor& c);
 
+  QColor pluginListMaster() const;
+  void setPluginListMaster(const QColor& c);
+
   std::optional<QColor> previousSeparatorColor() const;
   void setPreviousSeparatorColor(const QColor& c) const;
   void removePreviousSeparatorColor();

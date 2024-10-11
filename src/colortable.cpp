@@ -249,6 +249,15 @@ void ColorTable::load(Settings& s)
       [this](auto&& v) {
         m_settings->colors().setPluginListContained(v);
       });
+
+  addColor(
+      QObject::tr("Plugin is master of selected plugin"), QColor(255, 255, 0, 64),
+      [this] {
+        return m_settings->colors().pluginListMaster();
+      },
+      [this](auto&& v) {
+        m_settings->colors().setPluginListMaster(v);
+      });
 }
 
 void ColorTable::resetColors()
