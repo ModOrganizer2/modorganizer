@@ -3068,12 +3068,14 @@ void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData
           ModInfo::getByModID(result->first, result->second.first);
 
       for (auto mod : modsList) {
-        if (result->second.second == "Endorsed")
-          mod->setIsEndorsed(true);
-        else if (result->second.second == "Abstained")
-          mod->setNeverEndorse();
-        else
-          mod->setIsEndorsed(false);
+        if (mod->endorsedState() != EndorsedState::ENDORSED_NEVER) {
+          if (result->second.second == "Endorsed")
+            mod->setIsEndorsed(true);
+          else if (result->second.second == "Abstained")
+            mod->setNeverEndorse();
+          else
+            mod->setIsEndorsed(false);
+        }
       }
 
       if (Settings::instance().nexus().endorsementIntegration()) {
