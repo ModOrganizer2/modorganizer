@@ -161,6 +161,27 @@ void PluginList::highlightPlugins(const std::vector<unsigned int>& modIndices,
                                                   this->columnCount() - 1));
 }
 
+void PluginList::highlightMasters(
+    const std::vector<unsigned int>& selectedPluginIndices)
+{
+  for (auto& esp : m_ESPs) {
+    esp.isMasterOfSelectedPlugin = false;
+  }
+
+  for (const auto& pluginIndex : selectedPluginIndices) {
+    const ESPInfo& plugin = m_ESPs[pluginIndex];
+    for (const auto& master : plugin.masters) {
+      const auto iter = m_ESPsByName.find(master);
+      if (iter != m_ESPsByName.end()) {
+        m_ESPs[iter->second].isMasterOfSelectedPlugin = true;
+      }
+    }
+  }
+
+  emit dataChanged(this->index(0, 0), this->index(static_cast<int>(m_ESPs.size()) - 1,
+                                                  this->columnCount() - 1));
+}
+
 void PluginList::refresh(const QString& profileName,
                          const DirectoryEntry& baseDirectory,
                          const QString& lockedOrderFile, bool force)
@@ -1306,10 +1327,13 @@ QVariant PluginList::foregroundData(const QModelIndex& modelIndex) const
 
 QVariant PluginList::backgroundData(const QModelIndex& modelIndex) const
 {
-  const int index = modelIndex.row();
+  const int index       = modelIndex.row();
+  const ESPInfo& plugin = m_ESPs[index];
 
-  if (m_ESPs[index].modSelected) {
+  if (plugin.modSelected) {
     return Settings::instance().colors().pluginListContained();
+  } else if (plugin.isMasterOfSelectedPlugin) {
+    return Settings::instance().colors().pluginListMaster();
   }
 
   return {};
@@ -1921,7 +1945,8 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     : name(name), fullPath(fullPath), enabled(forceLoaded), forceLoaded(forceLoaded),
       forceEnabled(forceEnabled), forceDisabled(forceDisabled), priority(0),
       loadOrder(-1), originName(originName), hasIni(hasIni),
-      archives(archives.begin(), archives.end()), modSelected(false)
+      archives(archives.begin(), archives.end()), modSelected(false),
+      isMasterOfSelectedPlugin(false)
 {
   try {
     ESP::File file(ToWString(fullPath));

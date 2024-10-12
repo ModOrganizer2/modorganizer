@@ -1286,6 +1286,16 @@ void ColorSettings::setPluginListContained(const QColor& c)
   set(m_Settings, "Settings", "containedColor", c);
 }
 
+QColor ColorSettings::pluginListMaster() const
+{
+  return get<QColor>(m_Settings, "Settings", "masterColor", QColor(255, 255, 0, 64));
+}
+
+void ColorSettings::setPluginListMaster(const QColor& c)
+{
+  set(m_Settings, "Settings", "masterColor", c);
+}
+
 std::optional<QColor> ColorSettings::previousSeparatorColor() const
 {
   const auto c = getOptional<QColor>(m_Settings, "General", "previousSeparatorColor");
