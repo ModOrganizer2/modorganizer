@@ -1081,7 +1081,7 @@ std::wstring safeVersion()
 {
   try {
     // this can throw
-    return MOShared::createVersionInfo().displayString(3).toStdWString() + L"-";
+    return MOShared::createVersionInfo().string().toStdWString() + L"-";
   } catch (...) {
     return {};
   }
