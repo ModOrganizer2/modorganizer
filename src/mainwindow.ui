@@ -1192,7 +1192,7 @@
                   <string>Filter the list so that hidden files are shown.</string>
                  </property>
                  <property name="text">
-                  <string>Hidden Files</string>
+                  <string>Hidden files</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>
