@@ -12,7 +12,6 @@
     "boost-thread",
     "boost-uuid",
     "lz4",
-    "mo2-cmake",
     "mo2-libbsarch",
     "zlib"
   ],
@@ -20,6 +19,7 @@
     "standalone": {
       "description": "Build Standalone.",
       "dependencies": [
+        "mo2-cmake",
         "mo2-archive",
         "mo2-bsatk",
         "mo2-esptk",
