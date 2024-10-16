@@ -979,7 +979,8 @@ bool FileTreeModel::shouldShowFile(const FileEntry& file) const
     return false;
   }
 
-  if (!showHiddenFiles() && file.getName().ends_with(L".mohidden")) {
+  if (!showHiddenFiles() &&
+      file.getName().ends_with(ModInfo::s_HiddenExt.toStdWString())) {
     // hidden files shouldn't be shown, but this file is hidden
     return false;
   }
@@ -990,6 +991,11 @@ bool FileTreeModel::shouldShowFile(const FileEntry& file) const
 bool FileTreeModel::shouldShowFolder(const DirectoryEntry& dir,
                                      const FileTreeItem* item) const
 {
+  if (!showHiddenFiles() &&
+      dir.getName().ends_with(ModInfo::s_HiddenExt.toStdWString())) {
+    return false;
+  }
+
   bool shouldPrune = m_flags.testFlag(PruneDirectories);
 
   if (m_core.settings().archiveParsing()) {
