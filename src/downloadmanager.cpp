@@ -440,6 +440,36 @@ void DownloadManager::refreshList()
   }
 }
 
+void DownloadManager::queryDownloadListInfo()
+{
+  int incompleteCount = 0;
+  for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
+    if (isInfoIncomplete(i)) {
+      incompleteCount++;
+    }
+  }
+
+  if (incompleteCount <= 5 ||
+      QMessageBox::question(
+          m_ParentWidget, tr("Query Metadata"),
+          tr("There are %1 downloads with incomplete metadata.\n\n"
+             "Do you want to fetch all incomplete metadata?\n"
+             "API requests will be consumed, and Mod Organizer may stutter.")
+              .arg(incompleteCount),
+          QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    TimeThis tt("DownloadManager::queryDownloadListInfo()");
+    log::info("Querying metadata for every download with incomplete info...");
+    startDisableDirWatcher();
+    for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
+      if (isInfoIncomplete(i)) {
+        queryInfoMd5(i, false);
+      }
+    }
+    endDisableDirWatcher();
+    log::info("Metadata has been retrieved successfully!");
+  }
+}
+
 bool DownloadManager::addDownload(const QStringList& URLs, QString gameName, int modID,
                                   int fileID, const ModRepositoryFileInfo* fileInfo)
 {
@@ -1053,10 +1083,18 @@ void DownloadManager::queryInfo(int index)
     QString fileName = getFileName(index);
     QString ignore;
     NexusInterface::interpretNexusFileName(fileName, ignore, info->m_FileInfo->modID,
-                                           true);
+                                           info->m_AskIfNotFound);
+    if (!info->m_AskIfNotFound && (info->m_FileInfo->modID < 0) ||
+        info->m_FileInfo->gameName.isEmpty()) {
+      // prevent re-querying (only possible with Nexus)
+      info->m_FileInfo->repository = "";
+      setState(info, STATE_READY);
+      return;
+    }
+
     if (info->m_FileInfo->modID < 0) {
       bool ok   = false;
-      int modId = QInputDialog::getInt(nullptr, tr("Please enter the nexus mod id"),
+      int modId = QInputDialog::getInt(nullptr, tr("Please enter the Nexus mod ID"),
                                        tr("Mod ID:"), 1, 1,
                                        std::numeric_limits<int>::max(), 1, &ok);
       // careful now: while the dialog was displayed, events were processed.
@@ -1067,7 +1105,7 @@ void DownloadManager::queryInfo(int index)
     }
   }
 
-  if (info->m_FileInfo->gameName.size() == 0) {
+  if (info->m_FileInfo->gameName.isEmpty()) {
     SelectionDialog selection(
         tr("Please select the source game code for %1").arg(getFileName(index)));
 
@@ -1090,7 +1128,7 @@ void DownloadManager::queryInfo(int index)
   setState(info, STATE_FETCHINGMODINFO);
 }
 
-void DownloadManager::queryInfoMd5(int index)
+void DownloadManager::queryInfoMd5(int index, bool askIfNotFound)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
     reportError(tr("query: invalid download index %1").arg(index));
@@ -1147,8 +1185,9 @@ void DownloadManager::queryInfoMd5(int index)
   progress.close();
   downloadFile.close();
 
-  info->m_Hash      = hash.result();
-  info->m_ReQueried = true;
+  info->m_Hash          = hash.result();
+  info->m_ReQueried     = true;
+  info->m_AskIfNotFound = askIfNotFound;
   setState(info, STATE_FETCHINGMODINFO_MD5);
 }
 
