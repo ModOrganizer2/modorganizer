@@ -98,6 +98,7 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
 
   bool providesAnything = false;
   bool hasHiddenFiles   = false;
+  bool hasVisibleFiles  = false;
 
   std::vector<int> dataIDs;
   if (m_Core.directoryStructure()->originExists(L"data")) {
@@ -120,36 +121,39 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
 
     // for all files in this origin
     for (FileEntryPtr file : files) {
+      const fs::path nameAsPath(file->getName());
+      if (nameAsPath.extension().wstring().compare(hideExt) == 0) {
+        hasHiddenFiles = true;
+        // skip hidden file conflicts
+        continue;
+      } else {
+        const DirectoryEntry* parent = file->getParent();
+        auto hidden                  = false;
 
-      // skip hiidden file check if already found one
-      if (!hasHiddenFiles) {
-        const fs::path nameAsPath(file->getName());
+        // iterate on all parent direEntries to check for .mohiddden
+        while (parent != nullptr) {
+          auto insertResult = checkedDirs.insert(parent);
 
-        if (nameAsPath.extension().wstring().compare(hideExt) == 0) {
-          hasHiddenFiles = true;
-        } else {
-          const DirectoryEntry* parent = file->getParent();
-
-          // iterate on all parent direEntries to check for .mohiddden
-          while (parent != nullptr) {
-            auto insertResult = checkedDirs.insert(parent);
-
-            if (insertResult.second == false) {
-              // if already present break as we can assume to have checked the parents
-              // as well
+          if (insertResult.second == false) {
+            // if already present break as we can assume to have checked the parents as
+            // well
+            break;
+          } else {
+            const fs::path dirPath(parent->getName());
+            if (dirPath.extension().wstring().compare(hideExt) == 0) {
+              hasHiddenFiles = hidden = true;
               break;
-            } else {
-              const fs::path dirPath(parent->getName());
-              if (dirPath.extension().wstring().compare(hideExt) == 0) {
-                hasHiddenFiles = true;
-                break;
-              }
-              parent = parent->getParent();
             }
+            parent = parent->getParent();
           }
+        }
+        if (hidden) {
+          // skip hidden file conflicts
+          continue;
         }
       }
 
+      hasVisibleFiles   = true;
       auto alternatives = file->getAlternatives();
       if ((alternatives.size() == 0) ||
           std::find(dataIDs.begin(), dataIDs.end(), alternatives.back().originID()) !=
@@ -223,7 +227,7 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
     }
 
     if (files.size() != 0) {
-      if (!providesAnything)
+      if (hasVisibleFiles && !providesAnything)
         conflicts.m_CurrentConflictState = CONFLICT_REDUNDANT;
       else if (!conflicts.m_OverwriteList.empty() &&
                !conflicts.m_OverwrittenList.empty())
