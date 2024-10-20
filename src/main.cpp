@@ -6,6 +6,7 @@
 #include "multiprocess.h"
 #include "organizercore.h"
 #include "shared/util.h"
+#include "thememanager.h"
 #include "thread_utils.h"
 #include <log.h>
 #include <report.h>
@@ -39,7 +40,6 @@ int run(int argc, char* argv[])
   // must be after logging
   TimeThis tt("main() multiprocess");
 
-  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
   MOApplication app(argc, argv);
 
   // check if the command line wants to run something right now

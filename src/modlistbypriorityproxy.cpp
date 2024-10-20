@@ -131,8 +131,8 @@ void ModListByPriorityProxy::onModelLayoutChanged(const QList<QPersistentModelIn
   for (auto& idx : persistent) {
     // we can still access the TreeItem* because we did not destroy them
     auto* item = static_cast<TreeItem*>(idx.internalPointer());
-    toPersistent.append(
-        createIndex(item->parent->childIndex(item), idx.column(), item));
+    toPersistent.append(createIndex(static_cast<int>(item->parent->childIndex(item)),
+                                    idx.column(), item));
   }
   changePersistentIndexList(persistent, toPersistent);
 
@@ -171,7 +171,8 @@ QModelIndex ModListByPriorityProxy::mapFromSource(const QModelIndex& sourceIndex
   }
 
   auto* item = m_IndexToItem.at(sourceIndex.row()).get();
-  return createIndex(item->parent->childIndex(item), sourceIndex.column(), item);
+  return createIndex(static_cast<int>(item->parent->childIndex(item)),
+                     sourceIndex.column(), item);
 }
 
 QModelIndex ModListByPriorityProxy::mapToSource(const QModelIndex& proxyIndex) const
@@ -187,13 +188,13 @@ QModelIndex ModListByPriorityProxy::mapToSource(const QModelIndex& proxyIndex) c
 int ModListByPriorityProxy::rowCount(const QModelIndex& parent) const
 {
   if (!parent.isValid()) {
-    return m_Root.children.size();
+    return static_cast<int>(m_Root.children.size());
   }
 
   auto* item = static_cast<TreeItem*>(parent.internalPointer());
 
   if (item->mod->isSeparator()) {
-    return item->children.size();
+    return static_cast<int>(item->children.size());
   }
 
   return 0;
@@ -216,7 +217,8 @@ QModelIndex ModListByPriorityProxy::parent(const QModelIndex& child) const
     return QModelIndex();
   }
 
-  return createIndex(item->parent->parent->childIndex(item->parent), 0, item->parent);
+  return createIndex(static_cast<int>(item->parent->parent->childIndex(item->parent)),
+                     0, item->parent);
 }
 
 bool ModListByPriorityProxy::hasChildren(const QModelIndex& parent) const

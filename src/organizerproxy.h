@@ -9,17 +9,19 @@
 #include "organizercore.h"
 
 class GameFeaturesProxy;
-class PluginContainer;
+class PluginManager;
 class DownloadManagerProxy;
 class ModListProxy;
+class ExtensionManager;
 class PluginListProxy;
+class ExtensionListProxy;
 
 class OrganizerProxy : public MOBase::IOrganizer
 {
 
 public:
-  OrganizerProxy(OrganizerCore* organizer, PluginContainer* pluginContainer,
-                 MOBase::IPlugin* plugin);
+  OrganizerProxy(OrganizerCore* organizer, const ExtensionManager& extensionManager,
+                 PluginManager* pluginManager, MOBase::IPlugin* plugin);
   ~OrganizerProxy();
 
 public:
@@ -92,7 +94,9 @@ public:  // IOrganizer interface
   bool onProfileChanged(
       std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func) override;
 
-  // Plugin related:
+  // Plugin/extension related:
+  virtual MOBase::IExtensionList& extensionList() const override;
+
   virtual bool isPluginEnabled(QString const& pluginName) const override;
   virtual bool isPluginEnabled(MOBase::IPlugin* plugin) const override;
   virtual QVariant pluginSetting(const QString& pluginName,
@@ -115,7 +119,7 @@ public:  // IOrganizer interface
 
 protected:
   // The container needs access to some callbacks to simulate startup.
-  friend class PluginContainer;
+  friend class PluginManager;
 
   /**
    * @brief Connect the signals from this proxy and all the child proxies (plugin list,
@@ -132,7 +136,7 @@ protected:
 
 private:
   OrganizerCore* m_Proxied;
-  PluginContainer* m_PluginContainer;
+  PluginManager* m_PluginManager;
 
   MOBase::IPlugin* m_Plugin;
 
@@ -150,6 +154,7 @@ private:
   std::vector<boost::signals2::connection> m_Connections;
 
   std::unique_ptr<DownloadManagerProxy> m_DownloadManagerProxy;
+  std::unique_ptr<ExtensionListProxy> m_ExtensionListProxy;
   std::unique_ptr<ModListProxy> m_ModListProxy;
   std::unique_ptr<PluginListProxy> m_PluginListProxy;
   std::unique_ptr<GameFeaturesProxy> m_GameFeaturesProxy;

@@ -4,7 +4,7 @@
 #include "messagedialog.h"
 #include "moddatacontent.h"
 #include "organizercore.h"
-#include "plugincontainer.h"
+#include "pluginmanager.h"
 #include "report.h"
 #include "settings.h"
 #include <iplugingame.h>
@@ -34,8 +34,7 @@ ModInfoRegular::ModInfoRegular(const QDir& path, OrganizerCore& core)
       m_GameName(core.managedGame()->gameShortName()), m_IsAlternate(false),
       m_Converted(false), m_Validated(false), m_MetaInfoChanged(false),
       m_EndorsedState(EndorsedState::ENDORSED_UNKNOWN),
-      m_TrackedState(TrackedState::TRACKED_UNKNOWN),
-      m_NexusBridge(&core.pluginContainer())
+      m_TrackedState(TrackedState::TRACKED_UNKNOWN), m_NexusBridge()
 {
   m_CreationTime = QFileInfo(path.absolutePath()).birthTime();
   // read out the meta-file for information
@@ -704,7 +703,7 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 std::set<int> ModInfoRegular::doGetContents() const
 {
   auto contentFeature =
-      m_Core.pluginContainer().gameFeatures().gameFeature<ModDataContent>();
+      m_Core.pluginManager().gameFeatures().gameFeature<ModDataContent>();
 
   if (contentFeature) {
     auto result = contentFeature->getContentsFor(fileTree());

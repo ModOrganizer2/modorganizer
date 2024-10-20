@@ -2,7 +2,7 @@
 #include "createinstancedialog.h"
 #include "filesystemutilities.h"
 #include "instancemanager.h"
-#include "plugincontainer.h"
+#include "pluginmanager.h"
 #include "selectiondialog.h"
 #include "settings.h"
 #include "shared/appconfig.h"
@@ -17,7 +17,7 @@ using namespace MOBase;
 // returns the icon for the given instance or an empty 32x32 icon if the game
 // plugin couldn't be found
 //
-QIcon instanceIcon(PluginContainer& pc, const Instance& i)
+QIcon instanceIcon(PluginManager& pc, const Instance& i)
 {
   auto* game = InstanceManager::singleton().gamePluginForDirectory(i.directory(), pc);
 
@@ -146,7 +146,7 @@ QString getInstanceName(QWidget* parent, const QString& title, const QString& mo
 
 InstanceManagerDialog::~InstanceManagerDialog() = default;
 
-InstanceManagerDialog::InstanceManagerDialog(PluginContainer& pc, QWidget* parent)
+InstanceManagerDialog::InstanceManagerDialog(PluginManager& pc, QWidget* parent)
     : QDialog(parent), ui(new Ui::InstanceManagerDialog), m_pc(pc), m_model(nullptr),
       m_restartOnSelect(true)
 {
@@ -313,7 +313,7 @@ void InstanceManagerDialog::select(std::size_t i)
     fillData(*ii);
 
     ui->list->selectionModel()->select(
-        m_filter.mapFromSource(m_filter.sourceModel()->index(i, 0)),
+        m_filter.mapFromSource(m_filter.sourceModel()->index(static_cast<int>(i), 0)),
         QItemSelectionModel::ClearAndSelect);
   } else {
     clearData();
@@ -341,7 +341,8 @@ void InstanceManagerDialog::selectActiveInstance()
       if (m_instances[i]->displayName() == active->displayName()) {
         select(i);
 
-        ui->list->scrollTo(m_filter.mapFromSource(m_filter.sourceModel()->index(i, 0)));
+        ui->list->scrollTo(m_filter.mapFromSource(
+            m_filter.sourceModel()->index(static_cast<int>(i), 0)));
 
         return;
       }
@@ -455,7 +456,7 @@ void InstanceManagerDialog::rename()
   auto newInstance = std::make_unique<Instance>(dest, false);
   i                = newInstance.get();
 
-  m_model->item(selIndex)->setText(newName);
+  m_model->item(static_cast<int>(selIndex))->setText(newName);
   m_instances[selIndex] = std::move(newInstance);
 
   fillData(*i);

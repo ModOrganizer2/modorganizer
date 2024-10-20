@@ -64,9 +64,10 @@ Settings* Settings::s_Instance = nullptr;
 Settings::Settings(const QString& path, bool globalInstance)
     : m_Settings(path, QSettings::IniFormat), m_Game(m_Settings),
       m_Geometry(m_Settings), m_Widgets(m_Settings, globalInstance),
-      m_Colors(m_Settings), m_Plugins(m_Settings), m_Paths(m_Settings),
-      m_Network(m_Settings, globalInstance), m_Nexus(*this, m_Settings),
-      m_Steam(*this, m_Settings), m_Interface(m_Settings), m_Diagnostics(m_Settings)
+      m_Colors(m_Settings), m_Extensions(m_Settings), m_Plugins(m_Settings),
+      m_Paths(m_Settings), m_Network(m_Settings, globalInstance),
+      m_Nexus(*this, m_Settings), m_Steam(*this, m_Settings), m_Interface(m_Settings),
+      m_Diagnostics(m_Settings)
 {
   if (globalInstance) {
     if (s_Instance != nullptr) {
@@ -455,6 +456,16 @@ ColorSettings& Settings::colors()
 const ColorSettings& Settings::colors() const
 {
   return m_Colors;
+}
+
+ExtensionSettings& Settings::extensions()
+{
+  return m_Extensions;
+}
+
+const ExtensionSettings& Settings::extensions() const
+{
+  return m_Extensions;
 }
 
 PluginSettings& Settings::plugins()
@@ -1338,251 +1349,6 @@ QColor ColorSettings::idealTextColor(const QColor& rBackgroundColor)
   return QColor(iLuminance >= 128 ? Qt::black : Qt::white);
 }
 
-PluginSettings::PluginSettings(QSettings& settings) : m_Settings(settings) {}
-
-void PluginSettings::clearPlugins()
-{
-  m_Plugins.clear();
-  m_PluginSettings.clear();
-  m_PluginBlacklist.clear();
-
-  m_PluginBlacklist = readBlacklist();
-}
-
-void PluginSettings::registerPlugin(IPlugin* plugin)
-{
-  m_Plugins.push_back(plugin);
-  m_PluginSettings.insert(plugin->name(), QVariantMap());
-  m_PluginDescriptions.insert(plugin->name(), QVariantMap());
-
-  for (const PluginSetting& setting : plugin->settings()) {
-    const QString settingName = plugin->name() + "/" + setting.key;
-
-    QVariant temp = get<QVariant>(m_Settings, "Plugins", settingName, QVariant());
-
-    // No previous enabled? Skip.
-    if (setting.key == "enabled" && (!temp.isValid() || !temp.canConvert<bool>())) {
-      continue;
-    }
-
-    if (!temp.isValid()) {
-      temp = setting.defaultValue;
-    } else if (!temp.convert(setting.defaultValue.type())) {
-      log::warn("failed to interpret \"{}\" as correct type for \"{}\" in plugin "
-                "\"{}\", using default",
-                temp.toString(), setting.key, plugin->name());
-
-      temp = setting.defaultValue;
-    }
-
-    m_PluginSettings[plugin->name()][setting.key] = temp;
-
-    m_PluginDescriptions[plugin->name()][setting.key] =
-        QString("%1 (default: %2)")
-            .arg(setting.description)
-            .arg(setting.defaultValue.toString());
-  }
-
-  // Handle previous "enabled" settings:
-  if (m_PluginSettings[plugin->name()].contains("enabled")) {
-    setPersistent(plugin->name(), "enabled",
-                  m_PluginSettings[plugin->name()]["enabled"].toBool(), true);
-    m_PluginSettings[plugin->name()].remove("enabled");
-    m_PluginDescriptions[plugin->name()].remove("enabled");
-
-    // We need to drop it manually in Settings since it is not possible to remove plugin
-    // settings:
-    remove(m_Settings, "Plugins", plugin->name() + "/enabled");
-  }
-}
-
-void PluginSettings::unregisterPlugin(IPlugin* plugin)
-{
-  auto it = std::find(m_Plugins.begin(), m_Plugins.end(), plugin);
-  if (it != m_Plugins.end()) {
-    m_Plugins.erase(it);
-  }
-  m_PluginSettings.remove(plugin->name());
-  m_PluginDescriptions.remove(plugin->name());
-}
-
-std::vector<MOBase::IPlugin*> PluginSettings::plugins() const
-{
-  return m_Plugins;
-}
-
-QVariant PluginSettings::setting(const QString& pluginName, const QString& key) const
-{
-  auto iterPlugin = m_PluginSettings.find(pluginName);
-  if (iterPlugin == m_PluginSettings.end()) {
-    return QVariant();
-  }
-
-  auto iterSetting = iterPlugin->find(key);
-  if (iterSetting == iterPlugin->end()) {
-    return QVariant();
-  }
-
-  return *iterSetting;
-}
-
-void PluginSettings::setSetting(const QString& pluginName, const QString& key,
-                                const QVariant& value)
-{
-  auto iterPlugin = m_PluginSettings.find(pluginName);
-
-  if (iterPlugin == m_PluginSettings.end()) {
-    throw MyException(QObject::tr("attempt to store setting for unknown plugin \"%1\"")
-                          .arg(pluginName));
-  }
-
-  QVariant oldValue = m_PluginSettings[pluginName][key];
-
-  // store the new setting both in memory and in the ini
-  m_PluginSettings[pluginName][key] = value;
-  set(m_Settings, "Plugins", pluginName + "/" + key, value);
-
-  // emit signal:
-  emit pluginSettingChanged(pluginName, key, oldValue, value);
-}
-
-QVariantMap PluginSettings::settings(const QString& pluginName) const
-{
-  return m_PluginSettings[pluginName];
-}
-
-void PluginSettings::setSettings(const QString& pluginName, const QVariantMap& map)
-{
-  auto iterPlugin = m_PluginSettings.find(pluginName);
-
-  if (iterPlugin == m_PluginSettings.end()) {
-    throw MyException(QObject::tr("attempt to store setting for unknown plugin \"%1\"")
-                          .arg(pluginName));
-  }
-
-  QVariantMap oldSettings      = m_PluginSettings[pluginName];
-  m_PluginSettings[pluginName] = map;
-
-  // Emit signals for settings that have been changed or added:
-  for (auto& k : map.keys()) {
-    // .value() return a default-constructed QVariant if k is not in oldSettings:
-    QVariant oldValue = oldSettings.value(k);
-    if (oldValue != map[k]) {
-      emit pluginSettingChanged(pluginName, k, oldSettings.value(k), map[k]);
-    }
-  }
-
-  // Emit signals for settings that have been removed:
-  for (auto& k : oldSettings.keys()) {
-    if (!map.contains(k)) {
-      emit pluginSettingChanged(pluginName, k, oldSettings[k], QVariant());
-    }
-  }
-}
-
-QVariantMap PluginSettings::descriptions(const QString& pluginName) const
-{
-  return m_PluginDescriptions[pluginName];
-}
-
-void PluginSettings::setDescriptions(const QString& pluginName, const QVariantMap& map)
-{
-  m_PluginDescriptions[pluginName] = map;
-}
-
-QVariant PluginSettings::persistent(const QString& pluginName, const QString& key,
-                                    const QVariant& def) const
-{
-  if (!m_PluginSettings.contains(pluginName)) {
-    return def;
-  }
-
-  return get<QVariant>(m_Settings, "PluginPersistance", pluginName + "/" + key, def);
-}
-
-void PluginSettings::setPersistent(const QString& pluginName, const QString& key,
-                                   const QVariant& value, bool sync)
-{
-  if (!m_PluginSettings.contains(pluginName)) {
-    throw MyException(QObject::tr("attempt to store setting for unknown plugin \"%1\"")
-                          .arg(pluginName));
-  }
-
-  set(m_Settings, "PluginPersistance", pluginName + "/" + key, value);
-
-  if (sync) {
-    m_Settings.sync();
-  }
-}
-
-void PluginSettings::addBlacklist(const QString& fileName)
-{
-  m_PluginBlacklist.insert(fileName);
-  writeBlacklist();
-}
-
-bool PluginSettings::blacklisted(const QString& fileName) const
-{
-  return m_PluginBlacklist.contains(fileName);
-}
-
-void PluginSettings::setBlacklist(const QStringList& pluginNames)
-{
-  m_PluginBlacklist.clear();
-
-  for (const auto& name : pluginNames) {
-    m_PluginBlacklist.insert(name);
-  }
-}
-
-const QSet<QString>& PluginSettings::blacklist() const
-{
-  return m_PluginBlacklist;
-}
-
-void PluginSettings::save()
-{
-  for (auto iterPlugins = m_PluginSettings.begin();
-       iterPlugins != m_PluginSettings.end(); ++iterPlugins) {
-    for (auto iterSettings = iterPlugins->begin(); iterSettings != iterPlugins->end();
-         ++iterSettings) {
-      const auto key = iterPlugins.key() + "/" + iterSettings.key();
-      set(m_Settings, "Plugins", key, iterSettings.value());
-    }
-  }
-
-  writeBlacklist();
-}
-
-void PluginSettings::writeBlacklist()
-{
-  const auto current = readBlacklist();
-
-  if (current.size() > m_PluginBlacklist.size()) {
-    // Qt can't remove array elements, the section must be cleared
-    removeSection(m_Settings, "pluginBlacklist");
-  }
-
-  ScopedWriteArray swa(m_Settings, "pluginBlacklist", m_PluginBlacklist.size());
-
-  for (const QString& plugin : m_PluginBlacklist) {
-    swa.next();
-    swa.set("name", plugin);
-  }
-}
-
-QSet<QString> PluginSettings::readBlacklist() const
-{
-  QSet<QString> set;
-
-  ScopedReadArray sra(m_Settings, "pluginBlacklist");
-  sra.for_each([&] {
-    set.insert(sra.get<QString>("name"));
-  });
-
-  return set;
-}
-
 const QString PathSettings::BaseDirVariable = "%BASE_DIR%";
 
 PathSettings::PathSettings(QSettings& settings) : m_Settings(settings) {}
@@ -2136,12 +1902,12 @@ void InterfaceSettings::setLockGUI(bool b)
   set(m_Settings, "Settings", "lock_gui", b);
 }
 
-std::optional<QString> InterfaceSettings::styleName() const
+std::optional<QString> InterfaceSettings::themeName() const
 {
   return getOptional<QString>(m_Settings, "Settings", "style");
 }
 
-void InterfaceSettings::setStyleName(const QString& name)
+void InterfaceSettings::setThemeName(const QString& name)
 {
   set(m_Settings, "Settings", "style", name);
 }

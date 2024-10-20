@@ -3,6 +3,7 @@
 #include "filetreeitem.h"
 #include "filetreemodel.h"
 #include "organizercore.h"
+#include "previewgenerator.h"
 #include "shared/directoryentry.h"
 #include "shared/fileentry.h"
 #include "shared/filesorigin.h"
@@ -12,7 +13,7 @@
 using namespace MOShared;
 using namespace MOBase;
 
-bool canPreviewFile(const PluginContainer& pc, const FileEntry& file)
+bool canPreviewFile(const PluginManager& pc, const FileEntry& file)
 {
   return canPreviewFile(pc, file.isFromArchive(),
                         QString::fromStdWString(file.getName()));
@@ -116,7 +117,7 @@ private:
   }
 };
 
-FileTree::FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree)
+FileTree::FileTree(OrganizerCore& core, PluginManager& pc, QTreeView* tree)
     : m_core(core), m_plugins(pc), m_tree(tree), m_model(new FileTreeModel(core))
 {
   m_tree->sortByColumn(0, Qt::AscendingOrder);

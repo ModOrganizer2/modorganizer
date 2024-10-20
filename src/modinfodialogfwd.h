@@ -21,9 +21,9 @@ enum class ModInfoTabIDs
   Filetree
 };
 
-class PluginContainer;
+class PluginManager;
 
-bool canPreviewFile(const PluginContainer& pluginContainer, bool isArchive,
+bool canPreviewFile(const PluginManager& pluginManager, bool isArchive,
                     const QString& filename);
 bool canRunFile(bool isArchive, const QString& filename);
 bool canOpenFile(bool isArchive, const QString& filename);

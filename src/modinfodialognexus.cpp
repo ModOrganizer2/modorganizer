@@ -100,7 +100,7 @@ void NexusTab::update()
   if (core().managedGame()->validShortNames().size() == 0) {
     ui->sourceGame->setDisabled(true);
   } else {
-    for (auto game : plugin().plugins<MOBase::IPluginGame>()) {
+    for (auto game : plugins().plugins<MOBase::IPluginGame>()) {
       for (QString gameName : core().managedGame()->validShortNames()) {
         if (game->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
           ui->sourceGame->addItem(game->gameName(), game->gameShortName());
@@ -345,7 +345,7 @@ void NexusTab::onSourceGameChanged()
     return;
   }
 
-  for (auto game : plugin().plugins<MOBase::IPluginGame>()) {
+  for (auto game : plugins().plugins<MOBase::IPluginGame>()) {
     if (game->gameName() == ui->sourceGame->currentText()) {
       mod().setGameName(game->gameShortName());
       mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));

@@ -21,17 +21,17 @@ class OrganizerCore;
 struct ModInfoDialogTabContext
 {
   OrganizerCore& core;
-  PluginContainer& plugin;
+  PluginManager& plugins;
   QWidget* parent;
   Ui::ModInfoDialog* ui;
   ModInfoTabIDs id;
   ModInfoPtr mod;
   MOShared::FilesOrigin* origin;
 
-  ModInfoDialogTabContext(OrganizerCore& core, PluginContainer& plugin, QWidget* parent,
+  ModInfoDialogTabContext(OrganizerCore& core, PluginManager& plugins, QWidget* parent,
                           Ui::ModInfoDialog* ui, ModInfoTabIDs id, ModInfoPtr mod,
                           MOShared::FilesOrigin* origin)
-      : core(core), plugin(plugin), parent(parent), ui(ui), id(id), mod(mod),
+      : core(core), plugins(plugins), parent(parent), ui(ui), id(id), mod(mod),
         origin(origin)
   {}
 };
@@ -227,7 +227,7 @@ protected:
   ModInfoDialogTab(ModInfoDialogTabContext cx);
 
   OrganizerCore& core();
-  PluginContainer& plugin();
+  PluginManager& plugins();
   QWidget* parentWidget();
 
   // emits originModified
@@ -254,7 +254,7 @@ private:
   OrganizerCore& m_core;
 
   // plugin
-  PluginContainer& m_plugin;
+  PluginManager& m_plugins;
 
   // current mod, never null
   ModInfoPtr m_mod;

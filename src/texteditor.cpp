@@ -464,7 +464,7 @@ TextEditorToolbar::TextEditorToolbar(TextEditor& editor)
   m_save = new QAction(QIcon(":/MO/gui/save"), QObject::tr("&Save"), &editor);
 
   m_save->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-  m_save->setShortcut(Qt::CTRL + Qt::Key_S);
+  m_save->setShortcut(Qt::CTRL | Qt::Key_S);
   m_editor.addAction(m_save);
 
   m_wordWrap =

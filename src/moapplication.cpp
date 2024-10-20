@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "moapplication.h"
 #include "commandline.h"
+#include "extensionmanager.h"
 #include "instancemanager.h"
 #include "loglist.h"
 #include "mainwindow.h"
@@ -27,16 +28,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "organizercore.h"
+#include "pluginmanager.h"
 #include "sanitychecks.h"
 #include "settings.h"
 #include "shared/appconfig.h"
 #include "shared/util.h"
+#include "thememanager.h"
 #include "thread_utils.h"
 #include "tutorialmanager.h"
 #include <QDebug>
 #include <QFile>
 #include <QPainter>
-#include <QProxyStyle>
 #include <QSSLSocket>
 #include <QStringList>
 #include <QStyleFactory>
@@ -56,55 +58,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 using namespace MOShared;
-
-// style proxy that changes the appearance of drop indicators
-//
-class ProxyStyle : public QProxyStyle
-{
-public:
-  ProxyStyle(QStyle* baseStyle = 0) : QProxyStyle(baseStyle) {}
-
-  void drawPrimitive(PrimitiveElement element, const QStyleOption* option,
-                     QPainter* painter, const QWidget* widget) const override
-  {
-    if (element == QStyle::PE_IndicatorItemViewItemDrop) {
-
-      // 0. Fix a bug that made the drop indicator sometimes appear on top
-      // of the mod list when selecting a mod.
-      if (option->rect.height() == 0 && option->rect.bottomRight() == QPoint(-1, -1)) {
-        return;
-      }
-
-      // 1. full-width drop indicator
-      QRect rect(option->rect);
-      if (auto* view = qobject_cast<const QTreeView*>(widget)) {
-        rect.setLeft(view->indentation());
-        rect.setRight(widget->width());
-      }
-
-      // 2. stylish drop indicator
-      painter->setRenderHint(QPainter::Antialiasing, true);
-
-      QColor col(option->palette.windowText().color());
-      QPen pen(col);
-      pen.setWidth(2);
-      col.setAlpha(50);
-
-      painter->setPen(pen);
-      painter->setBrush(QBrush(col));
-      if (rect.height() == 0) {
-        QPoint tri[3] = {rect.topLeft(), rect.topLeft() + QPoint(-5, 5),
-                         rect.topLeft() + QPoint(-5, -5)};
-        painter->drawPolygon(tri, 3);
-        painter->drawLine(rect.topLeft(), rect.topRight());
-      } else {
-        painter->drawRoundedRect(rect, 5, 5);
-      }
-    } else {
-      QProxyStyle::drawPrimitive(element, option, painter, widget);
-    }
-  }
-};
 
 // This adds the `dlls` directory to the path so the dlls can be found. How
 // MO is able to find dlls in there is a bit convoluted:
@@ -149,15 +102,6 @@ MOApplication::MOApplication(int& argc, char** argv) : QApplication(argc, argv)
   TimeThis tt("MOApplication()");
 
   qputenv("QML_DISABLE_DISK_CACHE", "true");
-
-  connect(&m_styleWatcher, &QFileSystemWatcher::fileChanged, [&](auto&& file) {
-    log::debug("style file '{}' changed, reloading", file);
-    updateStyle(file);
-  });
-
-  m_defaultStyle = "windowsvista";
-  updateStyle(m_defaultStyle);
-  addDllsToPath();
 }
 
 OrganizerCore& MOApplication::core()
@@ -268,7 +212,18 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
   tt.start("MOApplication::doOneRun() plugins");
   log::debug("initializing plugins");
 
-  m_plugins = std::make_unique<PluginContainer>(m_core.get());
+  m_themes       = std::make_unique<ThemeManager>(this);
+  m_translations = std::make_unique<TranslationManager>(this);
+
+  m_extensions = std::make_unique<ExtensionManager>(m_core.get());
+  m_extensions->registerWatcher(*m_themes);
+  m_extensions->registerWatcher(*m_translations);
+
+  m_extensions->loadExtensions(
+      QDir(QCoreApplication::applicationDirPath() + "/extensions")
+          .filesystemAbsolutePath());
+
+  m_plugins = std::make_unique<PluginManager>(*m_extensions, m_core.get());
   m_plugins->loadPlugins();
 
   // instance
@@ -330,25 +285,27 @@ int MOApplication::run(MOMultiProcess& multiProcess)
                         m_core.get());
 
   // styling
-  if (!setStyleFile(m_settings->interface().styleName().value_or(""))) {
+  if (!m_themes->load(m_settings->interface().themeName().value_or("").toStdString())) {
     // disable invalid stylesheet
-    m_settings->interface().setStyleName("");
+    m_settings->interface().setThemeName("");
   }
 
   int res = 1;
 
   {
     tt.start("MOApplication::doOneRun() MainWindow setup");
-    MainWindow mainWindow(*m_settings, *m_core, *m_plugins);
+    MainWindow mainWindow(*m_settings, *m_core, *m_extensions, *m_plugins, *m_themes,
+                          *m_translations);
 
     // the nexus interface can show dialogs, make sure they're parented to the
     // main window
     m_nexus->getAccessManager()->setTopLevelWidget(&mainWindow);
 
+    // TODO:
     connect(
-        &mainWindow, &MainWindow::styleChanged, this,
-        [this](auto&& file) {
-          setStyleFile(file);
+        &mainWindow, &MainWindow::themeChanged, this,
+        [this](auto&& themeIdentifier) {
+          m_themes->load(themeIdentifier.toStdString());
         },
         Qt::QueuedConnection);
 
@@ -471,7 +428,7 @@ std::unique_ptr<Instance> MOApplication::getCurrentInstance(bool forceSelect)
 }
 
 std::optional<int> MOApplication::setupInstanceLoop(Instance& currentInstance,
-                                                    PluginContainer& pc)
+                                                    PluginManager& pc)
 {
   for (;;) {
     const auto setupResult = setupInstance(currentInstance, pc);
@@ -523,31 +480,6 @@ void MOApplication::resetForRestart()
   m_instance = {};
 }
 
-bool MOApplication::setStyleFile(const QString& styleName)
-{
-  // remove all files from watch
-  QStringList currentWatch = m_styleWatcher.files();
-  if (currentWatch.count() != 0) {
-    m_styleWatcher.removePaths(currentWatch);
-  }
-  // set new stylesheet or clear it
-  if (styleName.length() != 0) {
-    QString styleSheetName = applicationDirPath() + "/" +
-                             MOBase::ToQString(AppConfig::stylesheetsPath()) + "/" +
-                             styleName;
-    if (QFile::exists(styleSheetName)) {
-      m_styleWatcher.addPath(styleSheetName);
-      updateStyle(styleSheetName);
-    } else {
-      updateStyle(styleName);
-    }
-  } else {
-    setStyle(new ProxyStyle(QStyleFactory::create(m_defaultStyle)));
-    setStyleSheet("");
-  }
-  return true;
-}
-
 bool MOApplication::notify(QObject* receiver, QEvent* event)
 {
   try {
@@ -562,101 +494,6 @@ bool MOApplication::notify(QObject* receiver, QEvent* event)
                receiver->objectName(), event->type());
     reportError(tr("an error occurred"));
     return false;
-  }
-}
-
-namespace
-{
-QStringList extractTopStyleSheetComments(QFile& stylesheet)
-{
-  if (!stylesheet.open(QFile::ReadOnly)) {
-    log::error("failed to open stylesheet file {}", stylesheet.fileName());
-    return {};
-  }
-  ON_BLOCK_EXIT([&stylesheet]() {
-    stylesheet.close();
-  });
-
-  QStringList topComments;
-
-  while (true) {
-    const auto byteLine = stylesheet.readLine();
-    if (byteLine.isNull()) {
-      break;
-    }
-
-    const auto line = QString(byteLine).trimmed();
-
-    // skip empty lines
-    if (line.isEmpty()) {
-      continue;
-    }
-
-    // only handle single line comments
-    if (!line.startsWith("/*")) {
-      break;
-    }
-
-    topComments.push_back(line.mid(2, line.size() - 4).trimmed());
-  }
-
-  return topComments;
-}
-
-QString extractBaseStyleFromStyleSheet(QFile& stylesheet, const QString& defaultStyle)
-{
-  // read the first line of the files that are either empty or comments
-  //
-  const auto topLines = extractTopStyleSheetComments(stylesheet);
-
-  const auto factoryStyles = QStyleFactory::keys();
-
-  QString style = defaultStyle;
-
-  for (const auto& line : topLines) {
-    if (!line.startsWith("mo2-base-style")) {
-      continue;
-    }
-
-    const auto parts = line.split(":");
-    if (parts.size() != 2) {
-      log::warn("found invalid top-comment for mo2 in {}: {}", stylesheet.fileName(),
-                line);
-      continue;
-    }
-
-    const auto tmpStyle = parts[1].trimmed();
-    const auto index    = factoryStyles.indexOf(tmpStyle, 0, Qt::CaseInsensitive);
-    if (index == -1) {
-      log::warn("base style '{}' from style '{}' not found", tmpStyle,
-                stylesheet.fileName(), line);
-      continue;
-    }
-
-    style = factoryStyles[index];
-    log::info("found base style '{}' for style '{}'", style, stylesheet.fileName());
-    break;
-  }
-
-  return style;
-}
-
-}  // namespace
-
-void MOApplication::updateStyle(const QString& fileName)
-{
-  if (QStyleFactory::keys().contains(fileName)) {
-    setStyleSheet("");
-    setStyle(new ProxyStyle(QStyleFactory::create(fileName)));
-  } else {
-    QFile stylesheet(fileName);
-    if (stylesheet.exists()) {
-      setStyle(new ProxyStyle(QStyleFactory::create(
-          extractBaseStyleFromStyleSheet(stylesheet, m_defaultStyle))));
-      setStyleSheet(QString("file:///%1").arg(fileName));
-    } else {
-      log::warn("invalid stylesheet: {}", fileName);
-    }
   }
 }
 

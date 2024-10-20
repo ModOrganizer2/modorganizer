@@ -73,9 +73,9 @@ bool ConflictItem::canOpen() const
   return canOpenFile(isArchive(), fileName());
 }
 
-bool ConflictItem::canPreview(PluginContainer& pluginContainer) const
+bool ConflictItem::canPreview(PluginManager& pluginManager) const
 {
-  return canPreviewFile(pluginContainer, isArchive(), fileName());
+  return canPreviewFile(pluginManager, isArchive(), fileName());
 }
 
 bool ConflictItem::canExplore() const
