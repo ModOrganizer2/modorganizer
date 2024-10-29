@@ -390,9 +390,9 @@ void MOApplication::externalMessage(const QString& message)
       }
     }
   } else if (isNxmLink(message)) {
-    if (InstanceManager::singleton().currentInstance()->gamePlugin() == nullptr) {
+    if (m_core == nullptr) {
       // This can happen if MO2 is started with the --pick option and no instance has
-      // been selected yet, in which case m_core will be null.
+      // been selected yet.
       reportError(tr("You need to select an instance before trying to download mods."));
     } else {
       MessageDialog::showMessage(tr("Download started"), qApp->activeWindow(), false);
