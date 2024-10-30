@@ -369,26 +369,33 @@ void ModInfoRegular::nxmDescriptionAvailable(QString, int, QVariant,
 void ModInfoRegular::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData)
 {
   QMap results = resultData.toMap();
-  if (results["status"].toString().compare("Endorsed") == 0) {
-    m_EndorsedState = EndorsedState::ENDORSED_TRUE;
-  } else if (results["status"].toString().compare("Abstained") == 0) {
-    m_EndorsedState = EndorsedState::ENDORSED_NEVER;
-  } else {
-    m_EndorsedState = EndorsedState::ENDORSED_FALSE;
+  QMutexLocker locker(&s_Mutex);
+  for (auto& mod : s_Collection) {
+    if (mod->gameName().compare(m_GameName, Qt::CaseInsensitive) == 0 &&
+        mod->nexusId() == m_NexusID) {
+      if (results["status"].toString().compare("Endorsed") == 0) {
+        mod->setIsEndorsed(true);
+      } else if (results["status"].toString().compare("Abstained") == 0) {
+        mod->setNeverEndorse();
+      } else {
+        mod->setIsEndorsed(false);
+      }
+      mod->saveMeta();
+    }
   }
-  m_MetaInfoChanged = true;
-  saveMeta();
   emit modDetailsUpdated(true);
 }
 
 void ModInfoRegular::nxmTrackingToggled(QString, int, QVariant, bool tracked)
 {
-  if (tracked)
-    m_TrackedState = TrackedState::TRACKED_TRUE;
-  else
-    m_TrackedState = TrackedState::TRACKED_FALSE;
-  m_MetaInfoChanged = true;
-  saveMeta();
+  QMutexLocker locker(&s_Mutex);
+  for (auto& mod : s_Collection) {
+    if (mod->gameName().compare(m_GameName, Qt::CaseInsensitive) == 0 &&
+        mod->nexusId() == m_NexusID) {
+      mod->setIsTracked(tracked);
+      mod->saveMeta();
+    }
+  }
   emit modDetailsUpdated(true);
 }
 
@@ -583,11 +590,9 @@ void ModInfoRegular::addNexusCategory(int categoryID)
 
 void ModInfoRegular::setIsEndorsed(bool endorsed)
 {
-  if (m_EndorsedState != EndorsedState::ENDORSED_NEVER) {
-    m_EndorsedState =
-        endorsed ? EndorsedState::ENDORSED_TRUE : EndorsedState::ENDORSED_FALSE;
-    m_MetaInfoChanged = true;
-  }
+  m_EndorsedState =
+      endorsed ? EndorsedState::ENDORSED_TRUE : EndorsedState::ENDORSED_FALSE;
+  m_MetaInfoChanged = true;
 }
 
 void ModInfoRegular::setNeverEndorse()
