@@ -1084,14 +1084,6 @@ void DownloadManager::queryInfo(int index)
     QString ignore;
     NexusInterface::interpretNexusFileName(fileName, ignore, info->m_FileInfo->modID,
                                            info->m_AskIfNotFound);
-    if (!info->m_AskIfNotFound && (info->m_FileInfo->modID < 0) ||
-        info->m_FileInfo->gameName.isEmpty()) {
-      // prevent re-querying (only possible with Nexus)
-      info->m_FileInfo->repository = "";
-      setState(info, STATE_READY);
-      return;
-    }
-
     if (info->m_FileInfo->modID < 0) {
       bool ok   = false;
       int modId = QInputDialog::getInt(nullptr, tr("Please enter the Nexus mod ID"),
@@ -1106,6 +1098,12 @@ void DownloadManager::queryInfo(int index)
   }
 
   if (info->m_FileInfo->gameName.isEmpty()) {
+    if (!info->m_AskIfNotFound) {
+      // in case the info couldn't be retrieved from Nexus due to connection issues,
+      // don't create a meta file so you can query again after the issues are resolved.
+      return;
+    }
+
     SelectionDialog selection(
         tr("Please select the source game code for %1").arg(getFileName(index)));
 
@@ -2171,6 +2169,11 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID,
       if (info->m_GamesToQuery.count() >= 2) {
         info->m_GamesToQuery.pop_front();
         setState(info, STATE_FETCHINGMODINFO_MD5);
+        return;
+      } else if (errorCode == 404 && !info->m_AskIfNotFound) {
+        // prevent re-querying (only possible with repository = "Nexus")
+        info->m_FileInfo->repository = "";
+        setState(info, STATE_READY);
         return;
       } else {
         info->m_State = STATE_READY;
