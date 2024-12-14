@@ -86,6 +86,17 @@ void DownloadsTab::refresh()
 
 void DownloadsTab::queryInfos()
 {
+  if (m_core.settings().network().offlineMode()) {
+    if (QMessageBox::warning(nullptr, tr("Query Metadata"),
+                             tr("Cannot query metadata while offline mode is enabled. "
+                                "Do you want to disable it?"),
+                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      m_core.settings().network().setOfflineMode(false);
+    } else {
+      return;
+    }
+  }
+
   m_core.downloadManager()->queryDownloadListInfo();
 }
 
