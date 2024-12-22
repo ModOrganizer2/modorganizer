@@ -972,9 +972,8 @@ bool FileTreeModel::shouldShowFile(const FileEntry& file) const
 {
   if (showConflictsOnly() &&
       ((file.getAlternatives().size() == 0) ||
-       fs::path(file.getName())
-               .extension()
-               .compare(ModInfo::s_HiddenExt.toStdWString()) == 0)) {
+       QString::fromStdWString(file.getName())
+           .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive))) {
     // only conflicts should be shown, but this file is hidden or not conflicted
     return false;
   }
@@ -984,10 +983,8 @@ bool FileTreeModel::shouldShowFile(const FileEntry& file) const
     return false;
   }
 
-  if (!showHiddenFiles() &&
-      fs::path(file.getName())
-              .extension()
-              .compare(ModInfo::s_HiddenExt.toStdWString()) == 0) {
+  if (!showHiddenFiles() && QString::fromStdWString(file.getName())
+                                .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
     // hidden files shouldn't be shown, but this file is hidden
     return false;
   }
@@ -999,9 +996,8 @@ bool FileTreeModel::shouldShowFolder(const DirectoryEntry& dir,
                                      const FileTreeItem* item) const
 {
   if ((!showHiddenFiles() || showConflictsOnly()) &&
-      fs::path(dir.getName())
-              .extension()
-              .compare(ModInfo::s_HiddenExt.toStdWString()) == 0) {
+      QString::fromStdWString(dir.getName())
+          .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
     return false;
   }
 

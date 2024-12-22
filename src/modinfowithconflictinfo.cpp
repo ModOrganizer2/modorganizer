@@ -111,8 +111,7 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
     }
   }
 
-  std::wstring name          = ToWString(this->name());
-  const std::wstring hideExt = ToWString(ModInfo::s_HiddenExt);
+  std::wstring name = ToWString(this->name());
 
   if (m_Core.directoryStructure()->originExists(name)) {
     FilesOrigin& origin = m_Core.directoryStructure()->getOriginByName(name);
@@ -121,8 +120,8 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
 
     // for all files in this origin
     for (FileEntryPtr file : files) {
-      const fs::path nameAsPath(file->getName());
-      if (nameAsPath.extension().wstring().compare(hideExt) == 0) {
+      if (QString::fromStdWString(file->getName())
+              .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
         hasHiddenFiles = true;
         // skip hidden file conflicts
         continue;
@@ -130,7 +129,7 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
         const DirectoryEntry* parent = file->getParent();
         auto hidden                  = false;
 
-        // iterate on all parent direEntries to check for .mohiddden
+        // iterate on all parent directory entries to check for .mohiddden
         while (parent != nullptr) {
           auto insertResult = checkedDirs.insert(parent);
 
@@ -139,8 +138,8 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
             // well
             break;
           } else {
-            const fs::path dirPath(parent->getName());
-            if (dirPath.extension().wstring().compare(hideExt) == 0) {
+            if (QString::fromStdWString(parent->getName())
+                    .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
               hasHiddenFiles = hidden = true;
               break;
             }

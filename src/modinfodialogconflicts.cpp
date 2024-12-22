@@ -598,18 +598,17 @@ bool GeneralConflictsTab::update()
 
   if (m_tab->origin() != nullptr) {
     const auto rootPath = m_tab->mod().absolutePath();
-    const auto hideExt  = ModInfo::s_HiddenExt.toStdWString();
     std::set<const DirectoryEntry*> checkedDirs;
 
     for (const auto& file : m_tab->origin()->getFiles()) {
-      const fs::path nameAsPath(file->getName());
-      if (nameAsPath.extension().wstring().compare(hideExt) == 0) {
+      if (QString::fromStdWString(file->getName())
+              .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
         // skip hidden file conflicts
         continue;
       } else {
         const DirectoryEntry* parent = file->getParent();
         auto hidden                  = false;
-        // iterate on all parent direEntries to check for .mohiddden
+        // iterate on all parent directory entries to check for .mohiddden
         while (parent != nullptr) {
           auto insertResult = checkedDirs.insert(parent);
 
@@ -618,8 +617,8 @@ bool GeneralConflictsTab::update()
             // well
             break;
           } else {
-            const fs::path dirPath(parent->getName());
-            if (dirPath.extension().wstring().compare(hideExt) == 0) {
+            if (QString::fromStdWString(parent->getName())
+                    .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
               hidden = true;
               break;
             }
@@ -948,21 +947,20 @@ void AdvancedConflictsTab::update()
 
   if (m_tab->origin() != nullptr) {
     const auto rootPath = m_tab->mod().absolutePath();
-    const auto hideExt  = ModInfo::s_HiddenExt.toStdWString();
 
     const auto& files = m_tab->origin()->getFiles();
     m_model->reserve(files.size());
     std::set<const DirectoryEntry*> checkedDirs;
 
     for (const auto& file : files) {
-      const fs::path nameAsPath(file->getName());
-      if (nameAsPath.extension().wstring().compare(hideExt) == 0) {
+      if (QString::fromStdWString(file->getName())
+              .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
         // skip hidden file conflicts
         continue;
       } else {
         const DirectoryEntry* parent = file->getParent();
         auto hidden                  = false;
-        // iterate on all parent direEntries to check for .mohiddden
+        // iterate on all parent directory entries to check for .mohiddden
         while (parent != nullptr) {
           auto insertResult = checkedDirs.insert(parent);
 
@@ -971,8 +969,8 @@ void AdvancedConflictsTab::update()
             // well
             break;
           } else {
-            const fs::path dirPath(parent->getName());
-            if (dirPath.extension().wstring().compare(hideExt) == 0) {
+            if (QString::fromStdWString(parent->getName())
+                    .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
               hidden = true;
               break;
             }
