@@ -161,15 +161,14 @@ void PluginList::highlightPlugins(const std::vector<unsigned int>& modIndices,
                                                   this->columnCount() - 1));
 }
 
-void PluginList::highlightMasters(
-    const std::vector<unsigned int>& selectedPluginIndices)
+void PluginList::highlightMasters(const QModelIndexList& selectedPluginIndices)
 {
   for (auto& esp : m_ESPs) {
     esp.isMasterOfSelectedPlugin = false;
   }
 
   for (const auto& pluginIndex : selectedPluginIndices) {
-    const ESPInfo& plugin = m_ESPs[pluginIndex];
+    const ESPInfo& plugin = m_ESPs[pluginIndex.row()];
     for (const auto& master : plugin.masters) {
       const auto iter = m_ESPsByName.find(master);
       if (iter != m_ESPsByName.end()) {

@@ -16,6 +16,9 @@
 #include "organizercore.h"
 #include "pluginlistcontextmenu.h"
 #include "pluginlistsortproxy.h"
+#include "shared/directoryentry.h"
+#include "shared/fileentry.h"
+#include "shared/filesorigin.h"
 #include "ui_mainwindow.h"
 
 using namespace MOBase;
@@ -28,6 +31,12 @@ PluginListView::PluginListView(QWidget* parent)
   setVerticalScrollBar(m_Scrollbar);
   MOBase::setCustomizableColumns(this);
   installEventFilter(new CopyEventFilter(this));
+}
+
+void PluginListView::activated()
+{
+  // update highlighted mods
+  selectionModel()->selectionChanged({}, {});
 }
 
 int PluginListView::sortColumn() const
@@ -259,17 +268,26 @@ void PluginListView::setup(OrganizerCore& core, MainWindow* mw, Ui::MainWindow* 
           &PluginListSortProxy::updateFilter);
   connect(ui.filter, &QLineEdit::textChanged, this, &PluginListView::onFilterChanged);
 
-  // highligth mod list when selected
-  connect(selectionModel(), &QItemSelectionModel::selectionChanged,
-          [=](auto&& selected) {
-            std::vector<unsigned int> pluginIndices;
-            for (auto& idx : indexViewToModel(selectionModel()->selectedRows())) {
-              pluginIndices.push_back(idx.row());
-            }
-            mwui->modList->setHighlightedMods(pluginIndices);
-            m_core->pluginList()->highlightMasters(pluginIndices);
-            verticalScrollBar()->repaint();
-          });
+  // highlight mod list when selected
+  connect(selectionModel(), &QItemSelectionModel::selectionChanged, [=] {
+    std::set<QString> mods;
+    auto& directoryEntry = *m_core->directoryStructure();
+    auto pluginIndices   = indexViewToModel(selectionModel()->selectedRows());
+    for (auto& idx : pluginIndices) {
+      QString pluginName = m_core->pluginList()->getName(idx.row());
+
+      const MOShared::FileEntryPtr fileEntry =
+          directoryEntry.findFile(pluginName.toStdWString());
+      if (fileEntry.get() != nullptr) {
+        QString originName = QString::fromStdWString(
+            directoryEntry.getOriginByID(fileEntry->getOrigin()).getName());
+        mods.insert(originName);
+      }
+    }
+    mwui->modList->setHighlightedMods(mods);
+    m_core->pluginList()->highlightMasters(pluginIndices);
+    verticalScrollBar()->repaint();
+  });
 
   // using a lambda here to avoid storing the mod list actions
   connect(this, &QTreeView::customContextMenuRequested, [=](auto&& pos) {

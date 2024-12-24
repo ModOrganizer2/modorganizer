@@ -222,7 +222,7 @@ public:
   void highlightPlugins(const std::vector<unsigned int>& modIndices,
                         const MOShared::DirectoryEntry& directoryEntry);
 
-  void highlightMasters(const std::vector<unsigned int>& selectedPluginIndices);
+  void highlightMasters(const QModelIndexList& selectedPluginIndices);
 
   void refreshLoadOrder();
 

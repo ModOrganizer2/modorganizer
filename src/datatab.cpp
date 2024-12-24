@@ -2,6 +2,7 @@
 #include "filetree.h"
 #include "filetreemodel.h"
 #include "messagedialog.h"
+#include "modelutils.h"
 #include "organizercore.h"
 #include "settings.h"
 #include "ui_mainwindow.h"
@@ -57,6 +58,17 @@ DataTab::DataTab(OrganizerCore& core, PluginContainer& pc, QWidget* parent,
     onHiddenFiles();
   });
 
+  connect(ui.tree->selectionModel(), &QItemSelectionModel::selectionChanged, [=] {
+    const auto* fileTreeModel     = m_filetree->model();
+    const auto& selectedIndexList = MOShared::indexViewToModel(
+        ui.tree->selectionModel()->selectedRows(), fileTreeModel);
+    std::set<QString> mods;
+    for (auto& idx : selectedIndexList) {
+      mods.insert(fileTreeModel->itemFromIndex(idx)->mod());
+    }
+    mwui->modList->setHighlightedMods(mods);
+  });
+
   connect(m_filetree.get(), &FileTree::executablesChanged, this,
           &DataTab::executablesChanged);
 
@@ -92,6 +104,8 @@ void DataTab::activated()
   if (m_needUpdate) {
     updateTree();
   }
+  // update highlighted mods
+  ui.tree->selectionModel()->selectionChanged({}, {});
 }
 
 bool DataTab::isActive() const
