@@ -43,7 +43,14 @@ int DownloadManagerProxy::startDownloadURLs(const QStringList& urls)
 
 int DownloadManagerProxy::startDownloadNexusFile(int modID, int fileID)
 {
-  return m_Proxied->startDownloadNexusFile(modID, fileID);
+  return m_Proxied->startDownloadNexusFile(
+      m_OrganizerProxy->managedGame()->gameNexusName(), modID, fileID);
+}
+
+int DownloadManagerProxy::startDownloadNexusFileForGame(const QString& gameName,
+                                                        int modID, int fileID)
+{
+  return m_Proxied->startDownloadNexusFile(gameName, modID, fileID);
 }
 
 QString DownloadManagerProxy::downloadPath(int id)

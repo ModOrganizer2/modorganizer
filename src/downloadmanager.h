@@ -404,7 +404,7 @@ public:
 
 public:  // IDownloadManager interface:
   int startDownloadURLs(const QStringList& urls);
-  int startDownloadNexusFile(int modID, int fileID);
+  int startDownloadNexusFile(const QString& gameName, int modID, int fileID);
   QString downloadPath(int id);
 
   boost::signals2::connection

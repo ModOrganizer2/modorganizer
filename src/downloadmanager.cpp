@@ -1907,13 +1907,12 @@ int DownloadManager::startDownloadURLs(const QStringList& urls)
   return m_ActiveDownloads.size() - 1;
 }
 
-int DownloadManager::startDownloadNexusFile(int modID, int fileID)
+int DownloadManager::startDownloadNexusFile(const QString& gameName, int modID,
+                                            int fileID)
 {
   int newID = m_ActiveDownloads.size();
-  addNXMDownload(QString("nxm://%1/mods/%2/files/%3")
-                     .arg(m_ManagedGame->gameShortName())
-                     .arg(modID)
-                     .arg(fileID));
+  addNXMDownload(
+      QString("nxm://%1/mods/%2/files/%3").arg(gameName).arg(modID).arg(fileID));
   return newID;
 }
 

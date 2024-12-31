@@ -15,6 +15,8 @@ public:
 
   int startDownloadURLs(const QStringList& urls) override;
   int startDownloadNexusFile(int modID, int fileID) override;
+  int startDownloadNexusFileForGame(const QString& gameName, int modID,
+                                    int fileID) override;
   QString downloadPath(int id) override;
 
   bool onDownloadComplete(const std::function<void(int)>& callback) override;
