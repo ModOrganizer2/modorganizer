@@ -1265,15 +1265,15 @@ void ColorSettings::setModlistOverwritingArchive(const QColor& c)
   set(m_Settings, "Settings", "overwritingArchiveFilesColor", c);
 }
 
-QColor ColorSettings::modlistContainsPlugin() const
+QColor ColorSettings::modlistContainsFile() const
 {
-  return get<QColor>(m_Settings, "Settings", "containsPluginColor",
+  return get<QColor>(m_Settings, "Settings", "containsFileColor",
                      QColor(0, 0, 255, 64));
 }
 
-void ColorSettings::setModlistContainsPlugin(const QColor& c)
+void ColorSettings::setModlistContainsFile(const QColor& c)
 {
-  set(m_Settings, "Settings", "containsPluginColor", c);
+  set(m_Settings, "Settings", "containsFileColor", c);
 }
 
 QColor ColorSettings::pluginListContained() const

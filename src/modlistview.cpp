@@ -27,9 +27,6 @@
 #include "modlistversiondelegate.h"
 #include "modlistviewactions.h"
 #include "organizercore.h"
-#include "shared/directoryentry.h"
-#include "shared/fileentry.h"
-#include "shared/filesorigin.h"
 
 using namespace MOBase;
 using namespace MOShared;
@@ -1101,7 +1098,7 @@ void ModListView::refreshMarkersAndPlugins()
 
   setOverwriteMarkers(indexes);
 
-  // highligth plugins
+  // highlight plugins
   std::vector<unsigned int> modIndices;
   for (auto& idx : indexes) {
     modIndices.push_back(idx.data(ModList::IndexRole).toInt());
@@ -1110,22 +1107,13 @@ void ModListView::refreshMarkersAndPlugins()
   ui.pluginList->verticalScrollBar()->repaint();
 }
 
-void ModListView::setHighlightedMods(const std::vector<unsigned int>& pluginIndices)
+void ModListView::setHighlightedMods(const std::set<QString>& modNames)
 {
   m_markers.highlight.clear();
-  auto& directoryEntry = *m_core->directoryStructure();
-  for (auto idx : pluginIndices) {
-    QString pluginName = m_core->pluginList()->getName(idx);
-
-    const MOShared::FileEntryPtr fileEntry =
-        directoryEntry.findFile(pluginName.toStdWString());
-    if (fileEntry.get() != nullptr) {
-      QString originName = QString::fromStdWString(
-          directoryEntry.getOriginByID(fileEntry->getOrigin()).getName());
-      const auto index = ModInfo::getIndex(originName);
-      if (index != UINT_MAX) {
-        m_markers.highlight.insert(index);
-      }
+  for (const auto& modName : modNames) {
+    const auto index = ModInfo::getIndex(modName);
+    if (index != UINT_MAX) {
+      m_markers.highlight.insert(index);
     }
   }
   dataChanged(model()->index(0, 0),
@@ -1136,7 +1124,7 @@ void ModListView::setHighlightedMods(const std::vector<unsigned int>& pluginIndi
 QColor ModListView::markerColor(const QModelIndex& index) const
 {
   unsigned int modIndex = index.data(ModList::IndexRole).toInt();
-  bool highligth = m_markers.highlight.find(modIndex) != m_markers.highlight.end();
+  bool highlight = m_markers.highlight.find(modIndex) != m_markers.highlight.end();
   bool overwrite = m_markers.overwrite.find(modIndex) != m_markers.overwrite.end();
   bool archiveOverwrite =
       m_markers.archiveOverwrite.find(modIndex) != m_markers.archiveOverwrite.end();
@@ -1149,8 +1137,8 @@ QColor ModListView::markerColor(const QModelIndex& index) const
   bool archiveLooseOverwritten = m_markers.archiveLooseOverwritten.find(modIndex) !=
                                  m_markers.archiveLooseOverwritten.end();
 
-  if (highligth) {
-    return Settings::instance().colors().modlistContainsPlugin();
+  if (highlight) {
+    return Settings::instance().colors().modlistContainsFile();
   } else if (overwritten || archiveLooseOverwritten) {
     return Settings::instance().colors().modlistOverwritingLoose();
   } else if (overwrite || archiveLooseOverwrite) {

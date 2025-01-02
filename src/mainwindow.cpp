@@ -2240,6 +2240,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
   QWidget* currentWidget = ui->tabWidget->widget(index);
   if (currentWidget == ui->espTab) {
     m_OrganizerCore.refreshESPList();
+    ui->espList->activated();
   } else if (currentWidget == ui->bsaTab) {
     m_OrganizerCore.refreshBSAList();
   } else if (currentWidget == ui->dataTab) {

@@ -233,12 +233,12 @@ void ColorTable::load(Settings& s)
       });
 
   addColor(
-      QObject::tr("Mod contains selected plugin"), QColor(0, 0, 255, 64),
+      QObject::tr("Mod contains selected file"), QColor(0, 0, 255, 64),
       [this] {
-        return m_settings->colors().modlistContainsPlugin();
+        return m_settings->colors().modlistContainsFile();
       },
       [this](auto&& v) {
-        m_settings->colors().setModlistContainsPlugin(v);
+        m_settings->colors().setModlistContainsFile(v);
       });
 
   addColor(

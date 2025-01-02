@@ -21,6 +21,7 @@ class PluginListView : public QTreeView
 public:
   explicit PluginListView(QWidget* parent = nullptr);
 
+  void activated();
   void setup(OrganizerCore& core, MainWindow* mw, Ui::MainWindow* mwui);
 
   // the column by which the plugin list is currently sorted

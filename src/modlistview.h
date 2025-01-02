@@ -138,7 +138,7 @@ public slots:
 
   // set highligth markers
   //
-  void setHighlightedMods(const std::vector<unsigned int>& pluginIndices);
+  void setHighlightedMods(const std::set<QString>& modNames);
 
 protected:
   // map from/to the view indexes to the model
@@ -215,7 +215,7 @@ private:  // private structures
     QPushButton* clearFilters;
     QComboBox* filterSeparators;
 
-    // the plugin list (for highligths)
+    // the plugin list (for highlights)
     PluginListView* pluginList;
   };
 
@@ -265,7 +265,7 @@ private:  // private functions
   void onModInstalled(const QString& modName);
   void onModFilterActive(bool filterActive);
 
-  // refresh the overwrite markers and the highligthed plugins from
+  // refresh the overwrite markers and the highlighted plugins from
   // the current selection
   //
   void refreshMarkersAndPlugins();
