@@ -9,6 +9,7 @@
 
 using namespace MOBase;
 using namespace MOShared;
+namespace fs = std::filesystem;
 
 // in mainwindow.cpp
 QString UnmanagedModName();
@@ -969,8 +970,11 @@ void FileTreeModel::updateFileItem(FileTreeItem& item, const MOShared::FileEntry
 
 bool FileTreeModel::shouldShowFile(const FileEntry& file) const
 {
-  if (showConflictsOnly() && (file.getAlternatives().size() == 0)) {
-    // only conflicts should be shown, but this file is not conflicted
+  if (showConflictsOnly() &&
+      ((file.getAlternatives().size() == 0) ||
+       QString::fromStdWString(file.getName())
+           .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive))) {
+    // only conflicts should be shown, but this file is hidden or not conflicted
     return false;
   }
 
@@ -979,8 +983,8 @@ bool FileTreeModel::shouldShowFile(const FileEntry& file) const
     return false;
   }
 
-  if (!showHiddenFiles() &&
-      file.getName().ends_with(ModInfo::s_HiddenExt.toStdWString())) {
+  if (!showHiddenFiles() && QString::fromStdWString(file.getName())
+                                .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
     // hidden files shouldn't be shown, but this file is hidden
     return false;
   }
@@ -991,8 +995,9 @@ bool FileTreeModel::shouldShowFile(const FileEntry& file) const
 bool FileTreeModel::shouldShowFolder(const DirectoryEntry& dir,
                                      const FileTreeItem* item) const
 {
-  if (!showHiddenFiles() &&
-      dir.getName().ends_with(ModInfo::s_HiddenExt.toStdWString())) {
+  if ((!showHiddenFiles() || showConflictsOnly()) &&
+      QString::fromStdWString(dir.getName())
+          .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
     return false;
   }
 
