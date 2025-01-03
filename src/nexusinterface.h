@@ -681,7 +681,6 @@ private:
   NXMAccessManager* m_AccessManager;
   std::list<NXMRequestInfo> m_ActiveRequest;
   QQueue<NXMRequestInfo> m_RequestQueue;
-  MOBase::VersionInfo m_MOVersion;
   PluginContainer* m_PluginContainer;
   APIUserAccount m_User;
 };
