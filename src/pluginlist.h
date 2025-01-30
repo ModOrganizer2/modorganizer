@@ -247,6 +247,8 @@ public:
   bool isBlueprintFlagged(const QString& name) const;
   bool hasNoRecords(const QString& name) const;
 
+  int formVersion(const QString& name) const;
+  float headerVersion(const QString& name) const;
   QString author(const QString& name) const;
   QString description(const QString& name) const;
 
@@ -345,6 +347,8 @@ private:
     bool hasNoRecords;
     bool modSelected;
     bool isMasterOfSelectedPlugin;
+    int formVersion;
+    float headerVersion;
     QString author;
     QString description;
     bool hasIni;

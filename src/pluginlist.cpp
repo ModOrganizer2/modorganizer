@@ -1100,6 +1100,26 @@ bool PluginList::hasNoRecords(const QString& name) const
   }
 }
 
+int PluginList::formVersion(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return -1;
+  } else {
+    return m_ESPs[iter->second].formVersion;
+  }
+}
+
+float PluginList::headerVersion(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return -1;
+  } else {
+    return m_ESPs[iter->second].headerVersion;
+  }
+}
+
 QString PluginList::author(const QString& name) const
 {
   auto iter = m_ESPsByName.find(name);
@@ -1387,6 +1407,15 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
     toolTip += "<br><b><i>" +
                tr("This plugin can't be disabled (enforced by the game).") + "</i></b>";
   }
+
+  if (esp.formVersion != 0) {
+    // Oblivion-style plugin headers don't have a form version
+    toolTip +=
+        "<br><b>" + tr("Form Version") + "</b>: " + QString::number(esp.formVersion);
+  }
+
+  toolTip +=
+      "<br><b>" + tr("Header Version") + "</b>: " + QString::number(esp.headerVersion);
 
   if (!esp.author.isEmpty()) {
     toolTip += "<br><b>" + tr("Author") + "</b>: " + TruncateString(esp.author);
@@ -1960,8 +1989,10 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
                          file.isBlueprint();
     hasNoRecords = file.isDummy();
 
-    author      = QString::fromLatin1(file.author().c_str());
-    description = QString::fromLatin1(file.description().c_str());
+    formVersion   = file.formVersion();
+    headerVersion = file.headerVersion();
+    author        = QString::fromLatin1(file.author().c_str());
+    description   = QString::fromLatin1(file.description().c_str());
 
     for (auto&& m : file.masters()) {
       masters.insert(QString::fromStdString(m));
