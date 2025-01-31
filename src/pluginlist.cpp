@@ -100,6 +100,10 @@ QString PluginList::getColumnName(int column)
     return tr("Form Version");
   case COL_HEADERVERSION:
     return tr("Header Version");
+  case COL_AUTHOR:
+    return tr("Author");
+  case COL_DESCRIPTION:
+    return tr("Description");
   default:
     return tr("unknown");
   }
@@ -122,6 +126,10 @@ QString PluginList::getColumnToolTip(int column)
     return tr("Form version of the plugin.");
   case COL_HEADERVERSION:
     return tr("Header version of the plugin.");
+  case COL_AUTHOR:
+    return tr("Author of the plugin.");
+  case COL_DESCRIPTION:
+    return tr("Description of the plugin.");
   default:
     return tr("unknown");
   }
@@ -1325,6 +1333,12 @@ QVariant PluginList::displayData(const QModelIndex& modelIndex) const
 
   case COL_HEADERVERSION:
     return QString::number(plugin.headerVersion);
+
+  case COL_AUTHOR:
+    return plugin.author;
+
+  case COL_DESCRIPTION:
+    return plugin.description;
 
   default:
     return {};

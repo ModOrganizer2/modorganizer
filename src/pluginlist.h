@@ -95,8 +95,10 @@ public:
     COL_MODINDEX,
     COL_FORMVERSION,
     COL_HEADERVERSION,
+    COL_AUTHOR,
+    COL_DESCRIPTION,
 
-    COL_LASTCOLUMN = COL_HEADERVERSION,
+    COL_LASTCOLUMN = COL_DESCRIPTION,
   };
 
   using PluginStates = MOBase::IPluginList::PluginStates;
@@ -212,6 +214,8 @@ public:
 
   QString getName(int index) const { return m_ESPs.at(index).name; }
   int getPriority(int index) const { return m_ESPs.at(index).priority; }
+  QString getAuthor(int index) const { return m_ESPs.at(index).author; }
+  QString getDescription(int index) const { return m_ESPs.at(index).description; }
   QString getIndexPriority(int index) const;
   bool isESPLocked(int index) const;
   void lockESPIndex(int index, bool lock);
