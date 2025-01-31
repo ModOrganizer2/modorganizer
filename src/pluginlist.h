@@ -93,8 +93,12 @@ public:
     COL_FLAGS,
     COL_PRIORITY,
     COL_MODINDEX,
+    COL_FORMVERSION,
+    COL_HEADERVERSION,
+    COL_AUTHOR,
+    COL_DESCRIPTION,
 
-    COL_LASTCOLUMN = COL_MODINDEX
+    COL_LASTCOLUMN = COL_DESCRIPTION,
   };
 
   using PluginStates = MOBase::IPluginList::PluginStates;
@@ -210,6 +214,8 @@ public:
 
   QString getName(int index) const { return m_ESPs.at(index).name; }
   int getPriority(int index) const { return m_ESPs.at(index).priority; }
+  QString getAuthor(int index) const { return m_ESPs.at(index).author; }
+  QString getDescription(int index) const { return m_ESPs.at(index).description; }
   QString getIndexPriority(int index) const;
   bool isESPLocked(int index) const;
   void lockESPIndex(int index, bool lock);
@@ -247,6 +253,8 @@ public:
   bool isBlueprintFlagged(const QString& name) const;
   bool hasNoRecords(const QString& name) const;
 
+  int formVersion(const QString& name) const;
+  float headerVersion(const QString& name) const;
   QString author(const QString& name) const;
   QString description(const QString& name) const;
 
@@ -345,6 +353,8 @@ private:
     bool hasNoRecords;
     bool modSelected;
     bool isMasterOfSelectedPlugin;
+    int formVersion;
+    float headerVersion;
     QString author;
     QString description;
     bool hasIni;

@@ -96,6 +96,14 @@ QString PluginList::getColumnName(int column)
     return tr("Mod Index");
   case COL_FLAGS:
     return tr("Flags");
+  case COL_FORMVERSION:
+    return tr("Form Version");
+  case COL_HEADERVERSION:
+    return tr("Header Version");
+  case COL_AUTHOR:
+    return tr("Author");
+  case COL_DESCRIPTION:
+    return tr("Description");
   default:
     return tr("unknown");
   }
@@ -114,6 +122,14 @@ QString PluginList::getColumnToolTip(int column)
         "overwrites data from plugins with lower priority.");
   case COL_MODINDEX:
     return tr("Determines the formids of objects originating from this mods.");
+  case COL_FORMVERSION:
+    return tr("Form version of the plugin.");
+  case COL_HEADERVERSION:
+    return tr("Header version of the plugin.");
+  case COL_AUTHOR:
+    return tr("Author of the plugin.");
+  case COL_DESCRIPTION:
+    return tr("Description of the plugin.");
   default:
     return tr("unknown");
   }
@@ -1100,6 +1116,26 @@ bool PluginList::hasNoRecords(const QString& name) const
   }
 }
 
+int PluginList::formVersion(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return -1;
+  } else {
+    return m_ESPs[iter->second].formVersion;
+  }
+}
+
+float PluginList::headerVersion(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return -1;
+  } else {
+    return m_ESPs[iter->second].headerVersion;
+  }
+}
+
 QString PluginList::author(const QString& name) const
 {
   auto iter = m_ESPsByName.find(name);
@@ -1279,17 +1315,30 @@ QVariant PluginList::data(const QModelIndex& modelIndex, int role) const
 
 QVariant PluginList::displayData(const QModelIndex& modelIndex) const
 {
-  const int index = modelIndex.row();
+  const int index    = modelIndex.row();
+  const auto& plugin = m_ESPs[index];
 
   switch (modelIndex.column()) {
   case COL_NAME:
-    return m_ESPs[index].name;
+    return plugin.name;
 
   case COL_PRIORITY:
-    return QString::number(m_ESPs[index].priority);
+    return QString::number(plugin.priority);
 
   case COL_MODINDEX:
-    return m_ESPs[index].index;
+    return plugin.index;
+
+  case COL_FORMVERSION:
+    return plugin.formVersion != 0 ? QString::number(plugin.formVersion) : QString();
+
+  case COL_HEADERVERSION:
+    return QString::number(plugin.headerVersion);
+
+  case COL_AUTHOR:
+    return plugin.author;
+
+  case COL_DESCRIPTION:
+    return plugin.description;
 
   default:
     return {};
@@ -1387,6 +1436,15 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
     toolTip += "<br><b><i>" +
                tr("This plugin can't be disabled (enforced by the game).") + "</i></b>";
   }
+
+  if (esp.formVersion != 0) {
+    // Oblivion-style plugin headers don't have a form version
+    toolTip +=
+        "<br><b>" + tr("Form Version") + "</b>: " + QString::number(esp.formVersion);
+  }
+
+  toolTip +=
+      "<br><b>" + tr("Header Version") + "</b>: " + QString::number(esp.headerVersion);
 
   if (!esp.author.isEmpty()) {
     toolTip += "<br><b>" + tr("Author") + "</b>: " + TruncateString(esp.author);
@@ -1960,8 +2018,10 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
                          file.isBlueprint();
     hasNoRecords = file.isDummy();
 
-    author      = QString::fromLatin1(file.author().c_str());
-    description = QString::fromLatin1(file.description().c_str());
+    formVersion   = file.formVersion();
+    headerVersion = file.headerVersion();
+    author        = QString::fromLatin1(file.author().c_str());
+    description   = QString::fromLatin1(file.description().c_str());
 
     for (auto&& m : file.masters()) {
       masters.insert(QString::fromStdString(m));

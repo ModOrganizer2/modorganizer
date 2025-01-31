@@ -83,6 +83,15 @@ bool PluginListSortProxy::lessThan(const QModelIndex& left,
     QString rightVal = plugins->getIndexPriority(right.row());
     return leftVal < rightVal;
   } break;
+  case PluginList::COL_AUTHOR: {
+    return QString::compare(plugins->getAuthor(left.row()),
+                            plugins->getAuthor(right.row()), Qt::CaseInsensitive) < 0;
+  } break;
+  case PluginList::COL_DESCRIPTION: {
+    return QString::compare(plugins->getDescription(left.row()),
+                            plugins->getDescription(right.row()),
+                            Qt::CaseInsensitive) < 0;
+  } break;
   default: {
     return plugins->getPriority(left.row()) < plugins->getPriority(right.row());
   } break;
