@@ -96,6 +96,10 @@ QString PluginList::getColumnName(int column)
     return tr("Mod Index");
   case COL_FLAGS:
     return tr("Flags");
+  case COL_FORMVERSION:
+    return tr("Form Version");
+  case COL_HEADERVERSION:
+    return tr("Header Version");
   default:
     return tr("unknown");
   }
@@ -114,6 +118,10 @@ QString PluginList::getColumnToolTip(int column)
         "overwrites data from plugins with lower priority.");
   case COL_MODINDEX:
     return tr("Determines the formids of objects originating from this mods.");
+  case COL_FORMVERSION:
+    return tr("Form version of the plugin.");
+  case COL_HEADERVERSION:
+    return tr("Header version of the plugin.");
   default:
     return tr("unknown");
   }
@@ -1299,17 +1307,24 @@ QVariant PluginList::data(const QModelIndex& modelIndex, int role) const
 
 QVariant PluginList::displayData(const QModelIndex& modelIndex) const
 {
-  const int index = modelIndex.row();
+  const int index    = modelIndex.row();
+  const auto& plugin = m_ESPs[index];
 
   switch (modelIndex.column()) {
   case COL_NAME:
-    return m_ESPs[index].name;
+    return plugin.name;
 
   case COL_PRIORITY:
-    return QString::number(m_ESPs[index].priority);
+    return QString::number(plugin.priority);
 
   case COL_MODINDEX:
-    return m_ESPs[index].index;
+    return plugin.index;
+
+  case COL_FORMVERSION:
+    return plugin.formVersion != 0 ? QString::number(plugin.formVersion) : QString();
+
+  case COL_HEADERVERSION:
+    return QString::number(plugin.headerVersion);
 
   default:
     return {};

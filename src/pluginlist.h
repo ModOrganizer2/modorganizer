@@ -93,8 +93,10 @@ public:
     COL_FLAGS,
     COL_PRIORITY,
     COL_MODINDEX,
+    COL_FORMVERSION,
+    COL_HEADERVERSION,
 
-    COL_LASTCOLUMN = COL_MODINDEX
+    COL_LASTCOLUMN = COL_HEADERVERSION,
   };
 
   using PluginStates = MOBase::IPluginList::PluginStates;
