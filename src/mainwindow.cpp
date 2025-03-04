@@ -2559,7 +2559,7 @@ void MainWindow::saveArchiveList()
         }
       }
     }
-    archiveFile.commitIfDifferent(m_ArchiveListHash);
+    archiveFile->commit();
   } else {
     log::debug("archive list not initialised");
   }
@@ -3767,16 +3767,25 @@ QString MainWindow::queryRestore(const QString& filePath)
   SelectionDialog dialog(tr("Choose backup to restore"), this);
   QRegularExpression exp(QRegularExpression::anchoredPattern(pluginFileInfo.fileName() +
                                                              PATTERN_BACKUP_REGEX));
-  QRegularExpression exp2(
+  // match orphaned SafeWriteFile temporaries
+  QRegularExpression exp2(QRegularExpression::anchoredPattern(
+      pluginFileInfo.fileName() + "\\.([A-Za-z]{6})"));
+  QRegularExpression exp3(
       QRegularExpression::anchoredPattern(pluginFileInfo.fileName() + "\\.(.*)"));
   for (const QFileInfo& info : boost::adaptors::reverse(files)) {
     auto match  = exp.match(info.fileName());
     auto match2 = exp2.match(info.fileName());
+    auto match3 = exp3.match(info.fileName());
     if (match.hasMatch()) {
       QDateTime time = QDateTime::fromString(match.captured(1), PATTERN_BACKUP_DATE);
       dialog.addChoice(time.toString(), "", match.captured(1));
     } else if (match2.hasMatch()) {
-      dialog.addChoice(match2.captured(1), "", match2.captured(1));
+      dialog.addChoice(match2.captured(1),
+                       tr("This file might be left over following a crash or power "
+                          "loss event. Check its contents before restoring."),
+                       match2.captured(1));
+    } else if (match3.hasMatch()) {
+      dialog.addChoice(match3.captured(1), "", match3.captured(1));
     }
   }
 
