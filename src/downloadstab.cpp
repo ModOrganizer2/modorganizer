@@ -5,8 +5,9 @@
 #include "ui_mainwindow.h"
 
 DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
-    : m_core(core), ui{mwui->btnRefreshDownloads, mwui->downloadView,
-                       mwui->showHiddenBox, mwui->downloadFilterEdit}
+    : m_core(core),
+      ui{mwui->btnRefreshDownloads, mwui->btnQueryDownloadsInfo, mwui->downloadView,
+         mwui->showHiddenBox, mwui->downloadFilterEdit}
 {
   DownloadList* sourceModel = new DownloadList(m_core, ui.list);
 
@@ -25,6 +26,9 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
 
   connect(ui.refresh, &QPushButton::clicked, [&] {
     refresh();
+  });
+  connect(ui.queryInfos, &QPushButton::clicked, [&] {
+    queryInfos();
   });
   connect(ui.list, SIGNAL(installDownload(int)), &m_core, SLOT(installDownload(int)));
   connect(ui.list, SIGNAL(queryInfo(int)), m_core.downloadManager(),
@@ -78,6 +82,22 @@ void DownloadsTab::update()
 void DownloadsTab::refresh()
 {
   m_core.downloadManager()->refreshList();
+}
+
+void DownloadsTab::queryInfos()
+{
+  if (m_core.settings().network().offlineMode()) {
+    if (QMessageBox::warning(nullptr, tr("Query Metadata"),
+                             tr("Cannot query metadata while offline mode is enabled. "
+                                "Do you want to disable offline mode?"),
+                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      m_core.settings().network().setOfflineMode(false);
+    } else {
+      return;
+    }
+  }
+
+  m_core.downloadManager()->queryDownloadListInfo();
 }
 
 void DownloadsTab::resumeDownload(int downloadIndex)
