@@ -273,7 +273,7 @@ void Profile::doWriteModlist()
       }
     }
 
-    file.commitIfDifferent(m_LastModlistHash);
+    file->commit();
   } catch (const std::exception& e) {
     reportError(tr("failed to write mod list: %1").arg(e.what()));
     return;

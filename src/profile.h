@@ -411,7 +411,6 @@ private:
   // or overwrite)
   std::size_t m_NumRegularMods;
 
-  mutable QByteArray m_LastModlistHash;
   MOBase::DelayedFileWriter m_ModListWriter;
 };
 
