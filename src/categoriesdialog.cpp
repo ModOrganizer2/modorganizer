@@ -254,12 +254,14 @@ void CategoriesDialog::fillTable()
     }
   }
 
+  table->setSortingEnabled(true);
   refreshIDs();
 }
 
 void CategoriesDialog::addCategory_clicked()
 {
   int row = m_ContextRow >= 0 ? m_ContextRow : 0;
+  ui->categoriesTable->setSortingEnabled(false);
   ui->categoriesTable->insertRow(row);
   ui->categoriesTable->setVerticalHeaderItem(row, new QTableWidgetItem("  "));
   ui->categoriesTable->setItem(row, 0,
@@ -267,6 +269,7 @@ void CategoriesDialog::addCategory_clicked()
   ui->categoriesTable->setItem(row, 1, new QTableWidgetItem("new"));
   ui->categoriesTable->setItem(row, 2, new QTableWidgetItem("0"));
   ui->categoriesTable->setItem(row, 3, new QTableWidgetItem(""));
+  ui->categoriesTable->setSortingEnabled(true);
 }
 
 void CategoriesDialog::removeCategory_clicked()
@@ -300,6 +303,7 @@ void CategoriesDialog::nexusImport_clicked()
       m_HighestID = 0;
     }
     int row = 0;
+    table->setSortingEnabled(false);
     for (int i = 0; i < list->count(); ++i) {
       QString name = list->item(i)->data(Qt::DisplayRole).toString();
       int nexusID  = list->item(i)->data(Qt::UserRole).toInt();
@@ -344,6 +348,7 @@ void CategoriesDialog::nexusImport_clicked()
         }
       }
     }
+    table->setSortingEnabled(true);
     refreshIDs();
   }
 }
