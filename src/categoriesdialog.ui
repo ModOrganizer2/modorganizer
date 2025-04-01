@@ -79,9 +79,6 @@
      <property name="gridStyle">
       <enum>Qt::DashLine</enum>
      </property>
-     <property name="sortingEnabled">
-      <bool>true</bool>
-     </property>
      <property name="wordWrap">
       <bool>false</bool>
      </property>
