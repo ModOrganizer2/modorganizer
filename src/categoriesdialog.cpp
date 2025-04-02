@@ -97,6 +97,11 @@ public:
     int pos          = 0;
     QString editText = edit->text();
     if (m_Validator->validate(editText, pos) == QValidator::Acceptable) {
+      // Set ID and Parent ID as ints so sorting works as expected
+      if (index.column() == 0 || index.column() == 2) {
+        model->setData(index, editText.toInt());
+        return;
+      }
       QItemDelegate::setModelData(editor, model, index);
     }
   }
@@ -198,8 +203,8 @@ void CategoriesDialog::fillTable()
   table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
   table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Fixed);
   table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
-  table->verticalHeader()->setSectionsMovable(true);
   table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+  table->verticalHeader()->setVisible(false);
   table->setItemDelegateForColumn(
       0, new ValidatingDelegate(this, new NewIDValidator(m_IDs)));
   table->setItemDelegateForColumn(
@@ -217,7 +222,6 @@ void CategoriesDialog::fillTable()
     }
     ++row;
     table->insertRow(row);
-    //    table->setVerticalHeaderItem(row, new QTableWidgetItem("  "));
 
     QScopedPointer<QTableWidgetItem> idItem(new QTableWidgetItem());
     idItem->setData(Qt::DisplayRole, category.ID());
@@ -263,11 +267,15 @@ void CategoriesDialog::addCategory_clicked()
   int row = m_ContextRow >= 0 ? m_ContextRow : 0;
   ui->categoriesTable->setSortingEnabled(false);
   ui->categoriesTable->insertRow(row);
-  ui->categoriesTable->setVerticalHeaderItem(row, new QTableWidgetItem("  "));
-  ui->categoriesTable->setItem(row, 0,
-                               new QTableWidgetItem(QString::number(++m_HighestID)));
+
+  QScopedPointer<QTableWidgetItem> idItem(new QTableWidgetItem());
+  idItem->setData(Qt::DisplayRole, ++m_HighestID);
+  QScopedPointer<QTableWidgetItem> parentIDItem(new QTableWidgetItem());
+  parentIDItem->setData(Qt::DisplayRole, 0);
+
+  ui->categoriesTable->setItem(row, 0, idItem.take());
   ui->categoriesTable->setItem(row, 1, new QTableWidgetItem("new"));
-  ui->categoriesTable->setItem(row, 2, new QTableWidgetItem("0"));
+  ui->categoriesTable->setItem(row, 2, parentIDItem.take());
   ui->categoriesTable->setItem(row, 3, new QTableWidgetItem(""));
   ui->categoriesTable->setSortingEnabled(true);
 }
@@ -320,7 +328,6 @@ void CategoriesDialog::nexusImport_clicked()
       if (!table->findItems(name, Qt::MatchExactly).size()) {
         row = table->rowCount();
         table->insertRow(table->rowCount());
-        //    table->setVerticalHeaderItem(row, new QTableWidgetItem("  "));
 
         QScopedPointer<QTableWidgetItem> idItem(new QTableWidgetItem());
         idItem->setData(Qt::DisplayRole, ++m_HighestID);
