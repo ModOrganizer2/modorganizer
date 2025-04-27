@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "windows_error.h"
 #include <log.h>
 #include <utility.h>
+#include <filesystem>
 
 namespace MOShared
 {
@@ -630,19 +631,22 @@ void DirectoryEntry::addFiles(env::DirectoryWalker& walker, FilesOrigin& origin,
   Context cx = {origin, stats};
   cx.current.push(this);
 
-  walker.forEachEntry(
-      path, &cx,
-      [](void* pcx, std::wstring_view path) {
-        onDirectoryStart((Context*)pcx, path);
-      },
+  if (std::filesystem::exists(path)) {
+    walker.forEachEntry(
+        path, &cx,
+        [](void* pcx, std::wstring_view path) {
+          onDirectoryStart((Context*)pcx, path);
+        },
 
-      [](void* pcx, std::wstring_view path) {
-        onDirectoryEnd((Context*)pcx, path);
-      },
+        [](void* pcx, std::wstring_view path) {
+          onDirectoryEnd((Context*)pcx, path);
+        },
 
-      [](void* pcx, std::wstring_view path, FILETIME ft, uint64_t) {
-        onFile((Context*)pcx, path, ft);
-      });
+        [](void* pcx, std::wstring_view path, FILETIME ft, uint64_t) {
+          onFile((Context*)pcx, path, ft);
+        });
+  }
+
 }
 
 void DirectoryEntry::onDirectoryStart(Context* cx, std::wstring_view path)
