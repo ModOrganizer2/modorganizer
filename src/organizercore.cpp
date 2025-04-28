@@ -1406,8 +1406,11 @@ void OrganizerCore::updateModsInDirectoryStructure(
   std::vector<DirectoryRefresher::EntryInfo> entries;
 
   for (auto idx : modInfo.keys()) {
+    QString path       = modInfo[idx]->absolutePath();
+    QString modDataDir = managedGame()->modDataDirectory();
+    path               = modDataDir.isEmpty() ? path : path + "/" + modDataDir;
     entries.push_back({modInfo[idx]->name(),
-                       modInfo[idx]->absolutePath(),
+                       path,
                        modInfo[idx]->stealFiles(),
                        {},
                        m_CurrentProfile->getModPriority(idx)});

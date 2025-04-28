@@ -147,10 +147,18 @@ void PluginList::highlightPlugins(const std::vector<unsigned int>& modIndices,
   for (auto& modIndex : modIndices) {
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(modIndex);
     if (!selectedMod.isNull() && profile->modEnabled(modIndex)) {
-      QDir dir(selectedMod->absolutePath());
-      QStringList plugins = dir.entryList(QStringList() << "*.esp"
-                                                        << "*.esm"
-                                                        << "*.esl");
+      QString modDataPath = selectedMod->absolutePath();
+      modDataPath =
+          m_Organizer.managedGame()->modDataDirectory().isEmpty()
+              ? modDataPath
+              : modDataPath + "/" + m_Organizer.managedGame()->modDataDirectory();
+      QDir dir(modDataPath);
+      QStringList plugins;
+      if (dir.exists()) {
+        plugins = dir.entryList(QStringList() << "*.esp"
+                                                          << "*.esm"
+                                                          << "*.esl");
+      }
       const MOShared::FilesOrigin& origin =
           directoryEntry.getOriginByName(selectedMod->internalName().toStdWString());
       if (plugins.size() > 0) {

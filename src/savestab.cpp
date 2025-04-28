@@ -3,6 +3,7 @@
 #include "organizercore.h"
 #include "ui_mainwindow.h"
 #include <iplugingame.h>
+#include <localsavegames.h>
 #include <isavegameinfowidget.h>
 
 using namespace MOBase;
