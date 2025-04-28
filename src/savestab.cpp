@@ -129,13 +129,14 @@ void SavesTab::refreshSavesIfOpen()
 
 QDir SavesTab::currentSavesDir() const
 {
+  // TODO: This code should probably be handled by the game plugins
   QDir savesDir;
   if (m_core.currentProfile()->localSavesEnabled()) {
     savesDir.setPath(m_core.currentProfile()->savePath());
   } else {
     auto iniFiles = m_core.managedGame()->iniFiles();
 
-    if (iniFiles.isEmpty()) {
+    if (iniFiles.isEmpty() || m_core.gameFeatures().gameFeature<LocalSavegames>() == nullptr) {
       return m_core.managedGame()->savesDirectory();
     }
 
