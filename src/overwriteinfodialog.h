@@ -21,6 +21,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define OVERWRITEINFODIALOG_H
 
 #include "modinfo.h"
+#include "modlistdropinfo.h"
+#include "organizercore.h"
 #include <QDialog>
 #include <QFileSystemModel>
 
@@ -34,8 +36,8 @@ class OverwriteFileSystemModel : public QFileSystemModel
   Q_OBJECT;
 
 public:
-  OverwriteFileSystemModel(QObject* parent)
-      : QFileSystemModel(parent), m_RegularColumnCount(0)
+  OverwriteFileSystemModel(QObject* parent, OrganizerCore &organizer)
+      : QFileSystemModel(parent), m_Organizer(organizer), m_RegularColumnCount(0)
   {}
 
   virtual int columnCount(const QModelIndex& parent) const
@@ -70,8 +72,27 @@ public:
     }
   }
 
+  virtual bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
+    int column, const QModelIndex& parent)
+  {
+    ModListDropInfo dropInfo(data, m_Organizer);
+    if (dropInfo.isLocalFileDrop()) {
+      for (auto entry : dropInfo.localUrls()) {
+        QFileInfo sourceInfo(entry.url.toLocalFile());
+        if (sourceInfo.isDir() &&
+            m_Organizer.managedGame()->getModMappings().keys().contains(
+                entry.relativePath, Qt::CaseInsensitive)) {
+          return false;
+        }
+      }
+    }
+    return QFileSystemModel::dropMimeData(data, action, row, column, parent);
+  }
+
 private:
   mutable int m_RegularColumnCount;
+
+  OrganizerCore &m_Organizer;
 };
 
 class OverwriteInfoDialog : public QDialog

@@ -1028,15 +1028,46 @@ bool ModList::dropLocalFiles(const ModListDropInfo& dropInfo, int row,
   QList<QPair<QString, QString>> relativePathList;
 
   for (auto localUrl : dropInfo.localUrls()) {
-
     QFileInfo sourceInfo(localUrl.url.toLocalFile());
-    QString sourceFile = sourceInfo.canonicalFilePath();
+    if (localUrl.originName.compare("overwrite", Qt::CaseInsensitive) == 0) {
+      if (sourceInfo.isDir()) {
+        for (auto dir : m_Organizer->managedGame()->getModMappings().keys()) {
+          QDir overDir(m_Organizer->overwritePath());
+          if (sourceInfo.canonicalFilePath().compare(overDir.absoluteFilePath(dir),
+                                                     Qt::CaseInsensitive) == 0) {
 
-    QFileInfo targetInfo(modDir.absoluteFilePath(localUrl.relativePath));
-    sourceList << sourceFile;
-    targetList << targetInfo.absoluteFilePath();
-    relativePathList << QPair<QString, QString>(localUrl.relativePath,
-                                                localUrl.originName);
+            QDirIterator dirIter(overDir.absoluteFilePath(dir),
+                                 QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);
+            while (dirIter.hasNext()) {
+              auto entry         = dirIter.nextFileInfo();
+              QString sourceFile = entry.canonicalFilePath();
+
+              QFileInfo targetInfo(modDir.absoluteFilePath(overDir.relativeFilePath(entry.absoluteFilePath())));
+              sourceList << sourceFile;
+              targetList << targetInfo.absoluteFilePath();
+              relativePathList << QPair<QString, QString>(localUrl.relativePath,
+                                                          localUrl.originName);
+            }
+          }
+        }
+      } else {
+        QString sourceFile = sourceInfo.canonicalFilePath();
+
+        QFileInfo targetInfo(modDir.absoluteFilePath(localUrl.relativePath));
+        sourceList << sourceFile;
+        targetList << targetInfo.absoluteFilePath();
+        relativePathList << QPair<QString, QString>(localUrl.relativePath,
+                                                    localUrl.originName);
+      }
+    } else {
+      QString sourceFile = sourceInfo.canonicalFilePath();
+
+      QFileInfo targetInfo(modDir.absoluteFilePath(localUrl.relativePath));
+      sourceList << sourceFile;
+      targetList << targetInfo.absoluteFilePath();
+      relativePathList << QPair<QString, QString>(localUrl.relativePath,
+                                                  localUrl.originName);
+    }
   }
 
   if (sourceList.count()) {

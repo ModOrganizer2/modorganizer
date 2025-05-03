@@ -18,7 +18,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "overwriteinfodialog.h"
-#include "organizercore.h"
 #include "report.h"
 #include "ui_overwriteinfodialog.h"
 #include "utility.h"
@@ -39,7 +38,7 @@ OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, OrganizerCore &or
 
   this->setWindowModality(Qt::NonModal);
 
-  m_FileSystemModel = new OverwriteFileSystemModel(this);
+  m_FileSystemModel = new OverwriteFileSystemModel(this, organizer);
   m_FileSystemModel->setReadOnly(false);
   setModInfo(modInfo);
   ui->filesView->setModel(m_FileSystemModel);
