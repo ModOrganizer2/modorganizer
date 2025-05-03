@@ -29,9 +29,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget* parent)
-    : QDialog(parent), ui(new Ui::OverwriteInfoDialog), m_FileSystemModel(nullptr),
-      m_DeleteAction(nullptr), m_RenameAction(nullptr), m_OpenAction(nullptr)
+OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, OrganizerCore &organizer,
+                                         QWidget* parent)
+    : QDialog(parent), m_Organizer(organizer), ui(new Ui::OverwriteInfoDialog),
+      m_FileSystemModel(nullptr), m_DeleteAction(nullptr), m_RenameAction(nullptr),
+      m_OpenAction(nullptr)
 {
   ui->setupUi(this);
 
@@ -137,10 +139,17 @@ void OverwriteInfoDialog::delete_activated()
     QItemSelectionModel* selection = ui->filesView->selectionModel();
 
     if (selection->hasSelection() && selection->selectedRows().count() >= 1) {
+      auto root = m_FileSystemModel->rootDirectory();
 
       if (selection->selectedRows().count() == 0) {
         return;
       } else if (selection->selectedRows().count() == 1) {
+        for (auto modDir : m_Organizer.managedGame()->getModMappings().keys()) {
+          if (root.absoluteFilePath(modDir).compare(m_FileSystemModel->filePath(selection->selectedRows().at(0)), Qt::CaseInsensitive) == 0) {
+            return;
+          }
+        }
+
         QString fileName = m_FileSystemModel->fileName(selection->selectedRows().at(0));
         if (QMessageBox::question(
                 this, tr("Confirm"),
@@ -158,6 +167,13 @@ void OverwriteInfoDialog::delete_activated()
       }
 
       foreach (QModelIndex index, selection->selectedRows()) {
+        for (auto modDir : m_Organizer.managedGame()->getModMappings().keys()) {
+          if (root.absoluteFilePath(modDir).compare(
+                  m_FileSystemModel->filePath(index),
+                  Qt::CaseInsensitive) == 0) {
+            return;
+          }
+        }
         deleteFile(index);
       }
     }
@@ -166,9 +182,17 @@ void OverwriteInfoDialog::delete_activated()
 
 void OverwriteInfoDialog::deleteTriggered()
 {
+  auto root = m_FileSystemModel->rootDirectory();
   if (m_FileSelection.count() == 0) {
     return;
   } else if (m_FileSelection.count() == 1) {
+    for (auto modDir : m_Organizer.managedGame()->getModMappings().keys()) {
+      if (root.absoluteFilePath(modDir).compare(
+              m_FileSystemModel->filePath(m_FileSelection.at(0)),
+              Qt::CaseInsensitive) == 0) {
+        return;
+      }
+    }
     QString fileName = m_FileSystemModel->fileName(m_FileSelection.at(0));
     if (QMessageBox::question(
             this, tr("Confirm"),
@@ -185,18 +209,31 @@ void OverwriteInfoDialog::deleteTriggered()
   }
 
   foreach (QModelIndex index, m_FileSelection) {
+    for (auto modDir : m_Organizer.managedGame()->getModMappings().keys()) {
+      if (root.absoluteFilePath(modDir).compare(
+              m_FileSystemModel->filePath(index),
+              Qt::CaseInsensitive) == 0) {
+        return;
+      }
+    }
     deleteFile(index);
   }
 }
 
 void OverwriteInfoDialog::renameTriggered()
 {
+  auto root             = m_FileSystemModel->rootDirectory();
   QModelIndex selection = m_FileSelection.at(0);
   QModelIndex index     = selection.sibling(selection.row(), 0);
   if (!index.isValid() || m_FileSystemModel->isReadOnly()) {
     return;
   }
-
+  for (auto modDir : m_Organizer.managedGame()->getModMappings().keys()) {
+    if (root.absoluteFilePath(modDir).compare(m_FileSystemModel->filePath(selection),
+                                              Qt::CaseInsensitive) == 0) {
+      return;
+    }
+  }
   ui->filesView->edit(index);
 }
 

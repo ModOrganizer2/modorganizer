@@ -548,7 +548,7 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo,
     QDialog* dialog = m_parent->findChild<QDialog*>("__overwriteDialog");
     try {
       if (dialog == nullptr) {
-        dialog = new OverwriteInfoDialog(modInfo, m_parent);
+        dialog = new OverwriteInfoDialog(modInfo, m_core, m_parent);
         dialog->setObjectName("__overwriteDialog");
       } else {
         qobject_cast<OverwriteInfoDialog*>(dialog)->setModInfo(modInfo);
@@ -1299,9 +1299,40 @@ void ModListViewActions::restoreBackup(const QModelIndex& index) const
 void ModListViewActions::moveOverwriteContentsTo(const QString& absolutePath) const
 {
   ModInfo::Ptr overwriteInfo = ModInfo::getOverwrite();
-  bool successful =
-      shellMove((QDir::toNativeSeparators(overwriteInfo->absolutePath()) + "\\*"),
-                (QDir::toNativeSeparators(absolutePath)), false, m_parent);
+  bool successful            = false;
+  if (m_core.managedGame()->getModMappings().count() > 1 ||
+      m_core.managedGame()->getModMappings().keys().first() != "") {
+    QDirIterator iter(overwriteInfo->absolutePath(),
+                      QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);
+    while (iter.hasNext()) {
+      auto entry = iter.nextFileInfo();
+      if (entry.isDir() && m_core.managedGame()->getModMappings().keys().contains(
+                               entry.fileName(), Qt::CaseInsensitive)) {
+        successful = shellCopy((QDir::toNativeSeparators(entry.absolutePath())),
+                  (QDir::toNativeSeparators(absolutePath)), false, m_parent);
+        QDirIterator subDirIter(entry.absoluteFilePath(),
+                                QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);
+        while (subDirIter.hasNext()) {
+          auto subDirEntry = subDirIter.nextFileInfo();
+          if (subDirEntry.isDir()) {
+            QDir(subDirEntry.absoluteFilePath()).removeRecursively();
+          } else {
+            QFile(subDirEntry.absoluteFilePath()).remove();
+          }
+        }
+      } else {
+        successful = shellMove((QDir::toNativeSeparators(iter.filePath())),
+                  (QDir::toNativeSeparators(absolutePath)), false, m_parent);
+      }
+      if (!successful)
+        break;
+    }
+
+  } else {
+    successful =
+        shellMove((QDir::toNativeSeparators(overwriteInfo->absolutePath()) + "\\*"),
+                  (QDir::toNativeSeparators(absolutePath)), false, m_parent);
+  }
 
   if (successful) {
     MessageDialog::showMessage(tr("Move successful."), m_parent);
@@ -1397,8 +1428,18 @@ void ModListViewActions::clearOverwrite() const
             QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok) {
       QStringList delList;
       for (auto f :
-           overwriteDir.entryList(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot))
-        delList.push_back(overwriteDir.absoluteFilePath(f));
+           overwriteDir.entryInfoList(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot)) {
+        if (f.isDir() && m_core.managedGame()->getModMappings().keys().contains(
+                             f.fileName(), Qt::CaseInsensitive)) {
+          for (auto sf :
+               QDir(f.absoluteFilePath())
+                   .entryInfoList(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot)) {
+            delList.push_back(sf.absoluteFilePath());
+          }
+        } else {
+          delList.push_back(f.absoluteFilePath());
+        }
+      }
       if (shellDelete(delList, true)) {
         emit overwriteCleared();
         m_core.refresh();

@@ -79,7 +79,7 @@ class OverwriteInfoDialog : public QDialog
   Q_OBJECT
 
 public:
-  explicit OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget* parent = 0);
+  explicit OverwriteInfoDialog(ModInfo::Ptr modInfo, OrganizerCore &organizer, QWidget* parent = 0);
   ~OverwriteInfoDialog();
 
   ModInfo::Ptr modInfo() const { return m_ModInfo; }
@@ -122,6 +122,7 @@ private:
   QAction* m_NewFolderAction;
 
   ModInfo::Ptr m_ModInfo;
+  OrganizerCore &m_Organizer;
 };
 
 #endif  // OVERWRITEINFODIALOG_H
