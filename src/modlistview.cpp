@@ -1078,7 +1078,8 @@ void ModListView::setOverwriteMarkers(const QModelIndexList& indexes)
     }
   }
   dataChanged(model()->index(0, 0),
-              model()->index(model()->rowCount(), model()->columnCount()));
+              model()->index(model()->rowCount() ? model()->rowCount() - 1 : 0,
+                             model()->columnCount() ? model()->columnCount() - 1 : 0));
   verticalScrollBar()->repaint();
 }
 
@@ -1117,7 +1118,8 @@ void ModListView::setHighlightedMods(const std::set<QString>& modNames)
     }
   }
   dataChanged(model()->index(0, 0),
-              model()->index(model()->rowCount(), model()->columnCount()));
+              model()->index(model()->rowCount() ? model()->rowCount() - 1 : 0,
+                             model()->columnCount() ? model()->columnCount() - 1 : 0));
   verticalScrollBar()->repaint();
 }
 
