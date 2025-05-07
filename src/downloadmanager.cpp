@@ -332,6 +332,7 @@ void DownloadManager::refreshList()
   TimeThis tt("DownloadManager::refreshList()");
 
   try {
+    emit aboutToUpdate();
     // avoid triggering other refreshes
     ScopedDisableDirWatcher scopedDirWatcher(this);
 
@@ -2225,10 +2226,12 @@ void DownloadManager::downloadFinished(int index)
                "There may be an issue with the Nexus servers."));
       emit update(-1);
     } else if (info->isPausedState() || info->m_State == STATE_PAUSING) {
+      emit aboutToUpdate();
       info->m_Output.close();
       createMetaFile(info);
       emit update(index);
     } else {
+      emit aboutToUpdate();
       QString url = info->m_Urls[info->m_CurrentUrl];
       if (info->m_FileInfo->userData.contains("downloadMap")) {
         foreach (const QVariant& server,
