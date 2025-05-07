@@ -1030,11 +1030,13 @@ bool ModList::dropLocalFiles(const ModListDropInfo& dropInfo, int row,
   for (auto localUrl : dropInfo.localUrls()) {
     QFileInfo sourceInfo(localUrl.url.toLocalFile());
     if (localUrl.originName.compare("overwrite", Qt::CaseInsensitive) == 0) {
+      bool needsMove = true;
       if (sourceInfo.isDir()) {
         for (auto dir : m_Organizer->managedGame()->getModMappings().keys()) {
           QDir overDir(m_Organizer->overwritePath());
           if (sourceInfo.canonicalFilePath().compare(overDir.absoluteFilePath(dir),
                                                      Qt::CaseInsensitive) == 0) {
+            needsMove = false;
 
             QDirIterator dirIter(overDir.absoluteFilePath(dir),
                                  QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);
@@ -1050,7 +1052,8 @@ bool ModList::dropLocalFiles(const ModListDropInfo& dropInfo, int row,
             }
           }
         }
-      } else {
+      }
+      if (needsMove) {
         QString sourceFile = sourceInfo.canonicalFilePath();
 
         QFileInfo targetInfo(modDir.absoluteFilePath(localUrl.relativePath));
