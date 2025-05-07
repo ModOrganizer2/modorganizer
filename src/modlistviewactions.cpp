@@ -1308,8 +1308,9 @@ void ModListViewActions::moveOverwriteContentsTo(const QString& absolutePath) co
       auto entry = iter.nextFileInfo();
       if (entry.isDir() && m_core.managedGame()->getModMappings().keys().contains(
                                entry.fileName(), Qt::CaseInsensitive)) {
-        successful = shellCopy((QDir::toNativeSeparators(entry.absolutePath())),
-                  (QDir::toNativeSeparators(absolutePath)), false, m_parent);
+        successful =
+            shellCopy((QDir::toNativeSeparators(entry.absolutePath())),
+                      (QDir::toNativeSeparators(absolutePath)), false, m_parent);
         QDirIterator subDirIter(entry.absoluteFilePath(),
                                 QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);
         while (subDirIter.hasNext()) {
@@ -1321,8 +1322,9 @@ void ModListViewActions::moveOverwriteContentsTo(const QString& absolutePath) co
           }
         }
       } else {
-        successful = shellMove((QDir::toNativeSeparators(iter.filePath())),
-                  (QDir::toNativeSeparators(absolutePath)), false, m_parent);
+        successful =
+            shellMove((QDir::toNativeSeparators(iter.filePath())),
+                      (QDir::toNativeSeparators(absolutePath)), false, m_parent);
       }
       if (!successful)
         break;
@@ -1427,8 +1429,8 @@ void ModListViewActions::clearOverwrite() const
             tr("About to recursively delete:\n") + overwriteDir.absolutePath(),
             QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok) {
       QStringList delList;
-      for (auto f :
-           overwriteDir.entryInfoList(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot)) {
+      for (auto f : overwriteDir.entryInfoList(QDir::AllDirs | QDir::Files |
+                                               QDir::NoDotAndDotDot)) {
         if (f.isDir() && m_core.managedGame()->getModMappings().keys().contains(
                              f.fileName(), Qt::CaseInsensitive)) {
           for (auto sf :

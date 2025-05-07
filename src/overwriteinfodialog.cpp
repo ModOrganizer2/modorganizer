@@ -28,7 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, OrganizerCore &organizer,
+OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, OrganizerCore& organizer,
                                          QWidget* parent)
     : QDialog(parent), m_Organizer(organizer), ui(new Ui::OverwriteInfoDialog),
       m_FileSystemModel(nullptr), m_DeleteAction(nullptr), m_RenameAction(nullptr),
@@ -144,7 +144,9 @@ void OverwriteInfoDialog::delete_activated()
         return;
       } else if (selection->selectedRows().count() == 1) {
         for (auto modDir : m_Organizer.managedGame()->getModMappings().keys()) {
-          if (root.absoluteFilePath(modDir).compare(m_FileSystemModel->filePath(selection->selectedRows().at(0)), Qt::CaseInsensitive) == 0) {
+          if (root.absoluteFilePath(modDir).compare(
+                  m_FileSystemModel->filePath(selection->selectedRows().at(0)),
+                  Qt::CaseInsensitive) == 0) {
             return;
           }
         }
@@ -167,9 +169,8 @@ void OverwriteInfoDialog::delete_activated()
 
       foreach (QModelIndex index, selection->selectedRows()) {
         for (auto modDir : m_Organizer.managedGame()->getModMappings().keys()) {
-          if (root.absoluteFilePath(modDir).compare(
-                  m_FileSystemModel->filePath(index),
-                  Qt::CaseInsensitive) == 0) {
+          if (root.absoluteFilePath(modDir).compare(m_FileSystemModel->filePath(index),
+                                                    Qt::CaseInsensitive) == 0) {
             return;
           }
         }
@@ -209,9 +210,8 @@ void OverwriteInfoDialog::deleteTriggered()
 
   foreach (QModelIndex index, m_FileSelection) {
     for (auto modDir : m_Organizer.managedGame()->getModMappings().keys()) {
-      if (root.absoluteFilePath(modDir).compare(
-              m_FileSystemModel->filePath(index),
-              Qt::CaseInsensitive) == 0) {
+      if (root.absoluteFilePath(modDir).compare(m_FileSystemModel->filePath(index),
+                                                Qt::CaseInsensitive) == 0) {
         return;
       }
     }

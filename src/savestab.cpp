@@ -3,8 +3,8 @@
 #include "organizercore.h"
 #include "ui_mainwindow.h"
 #include <iplugingame.h>
-#include <localsavegames.h>
 #include <isavegameinfowidget.h>
+#include <localsavegames.h>
 
 using namespace MOBase;
 
@@ -136,7 +136,8 @@ QDir SavesTab::currentSavesDir() const
   } else {
     auto iniFiles = m_core.managedGame()->iniFiles();
 
-    if (iniFiles.isEmpty() || m_core.gameFeatures().gameFeature<LocalSavegames>() == nullptr) {
+    if (iniFiles.isEmpty() ||
+        m_core.gameFeatures().gameFeature<LocalSavegames>() == nullptr) {
       return m_core.managedGame()->savesDirectory();
     }
 

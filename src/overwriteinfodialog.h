@@ -36,7 +36,7 @@ class OverwriteFileSystemModel : public QFileSystemModel
   Q_OBJECT;
 
 public:
-  OverwriteFileSystemModel(QObject* parent, OrganizerCore &organizer)
+  OverwriteFileSystemModel(QObject* parent, OrganizerCore& organizer)
       : QFileSystemModel(parent), m_Organizer(organizer), m_RegularColumnCount(0)
   {}
 
@@ -73,7 +73,7 @@ public:
   }
 
   virtual bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
-    int column, const QModelIndex& parent)
+                            int column, const QModelIndex& parent)
   {
     ModListDropInfo dropInfo(data, m_Organizer);
     if (dropInfo.isLocalFileDrop()) {
@@ -92,7 +92,7 @@ public:
 private:
   mutable int m_RegularColumnCount;
 
-  OrganizerCore &m_Organizer;
+  OrganizerCore& m_Organizer;
 };
 
 class OverwriteInfoDialog : public QDialog
@@ -100,7 +100,8 @@ class OverwriteInfoDialog : public QDialog
   Q_OBJECT
 
 public:
-  explicit OverwriteInfoDialog(ModInfo::Ptr modInfo, OrganizerCore &organizer, QWidget* parent = 0);
+  explicit OverwriteInfoDialog(ModInfo::Ptr modInfo, OrganizerCore& organizer,
+                               QWidget* parent = 0);
   ~OverwriteInfoDialog();
 
   ModInfo::Ptr modInfo() const { return m_ModInfo; }
@@ -143,7 +144,7 @@ private:
   QAction* m_NewFolderAction;
 
   ModInfo::Ptr m_ModInfo;
-  OrganizerCore &m_Organizer;
+  OrganizerCore& m_Organizer;
 };
 
 #endif  // OVERWRITEINFODIALOG_H

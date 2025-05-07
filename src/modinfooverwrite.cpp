@@ -3,9 +3,9 @@
 #include "settings.h"
 #include "shared/appconfig.h"
 
+#include "organizercore.h"
 #include <QApplication>
 #include <QDirIterator>
-#include "organizercore.h"
 
 ModInfoOverwrite::ModInfoOverwrite(OrganizerCore& core) : ModInfoWithConflictInfo(core)
 {}
@@ -31,7 +31,7 @@ bool ModInfoOverwrite::isEmpty() const
     if (iter.fileInfo().isFile() && iter.fileName() != "meta.ini")
       return false;
   }
-  
+
   return true;
 }
 

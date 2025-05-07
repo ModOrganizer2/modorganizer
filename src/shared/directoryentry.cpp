@@ -24,9 +24,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "originconnection.h"
 #include "util.h"
 #include "windows_error.h"
+#include <filesystem>
 #include <log.h>
 #include <utility.h>
-#include <filesystem>
 
 namespace MOShared
 {
@@ -646,7 +646,6 @@ void DirectoryEntry::addFiles(env::DirectoryWalker& walker, FilesOrigin& origin,
           onFile((Context*)pcx, path, ft);
         });
   }
-
 }
 
 void DirectoryEntry::onDirectoryStart(Context* cx, std::wstring_view path)

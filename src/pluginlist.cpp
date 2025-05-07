@@ -156,8 +156,8 @@ void PluginList::highlightPlugins(const std::vector<unsigned int>& modIndices,
       QStringList plugins;
       if (dir.exists()) {
         plugins = dir.entryList(QStringList() << "*.esp"
-                                                          << "*.esm"
-                                                          << "*.esl");
+                                              << "*.esm"
+                                              << "*.esl");
       }
       const MOShared::FilesOrigin& origin =
           directoryEntry.getOriginByName(selectedMod->internalName().toStdWString());

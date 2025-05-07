@@ -1044,7 +1044,8 @@ bool ModList::dropLocalFiles(const ModListDropInfo& dropInfo, int row,
               auto entry         = dirIter.nextFileInfo();
               QString sourceFile = entry.canonicalFilePath();
 
-              QFileInfo targetInfo(modDir.absoluteFilePath(overDir.relativeFilePath(entry.absoluteFilePath())));
+              QFileInfo targetInfo(modDir.absoluteFilePath(
+                  overDir.relativeFilePath(entry.absoluteFilePath())));
               sourceList << sourceFile;
               targetList << targetInfo.absoluteFilePath();
               relativePathList << QPair<QString, QString>(localUrl.relativePath,
