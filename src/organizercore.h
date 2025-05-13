@@ -332,6 +332,7 @@ public:
   bool checkPathSymlinks();
   bool bootstrap();
   void createDefaultProfile();
+  void createOverwriteDirectories();
 
   MOBase::DelayedFileWriter& pluginsWriter() { return m_PluginListsWriter; }
 

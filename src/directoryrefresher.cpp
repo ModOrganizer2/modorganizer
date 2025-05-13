@@ -179,10 +179,13 @@ void DirectoryRefresher::setMods(
 
   m_Mods.clear();
   for (auto mod = mods.begin(); mod != mods.end(); ++mod) {
-    QString name      = std::get<0>(*mod);
-    ModInfo::Ptr info = ModInfo::getByIndex(ModInfo::getIndex(name));
-    m_Mods.push_back(EntryInfo(name, std::get<1>(*mod), info->stealFiles(),
-                               info->archives(), std::get<2>(*mod)));
+    QString name       = std::get<0>(*mod);
+    ModInfo::Ptr info  = ModInfo::getByIndex(ModInfo::getIndex(name));
+    QString path       = std::get<1>(*mod);
+    QString modDataDir = m_Core.managedGame()->modDataDirectory();
+    path               = modDataDir.isEmpty() ? path : path + "/" + modDataDir;
+    m_Mods.push_back(
+        EntryInfo(name, path, info->stealFiles(), info->archives(), std::get<2>(*mod)));
   }
 
   m_EnabledArchives = managedArchives;

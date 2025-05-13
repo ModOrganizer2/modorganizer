@@ -99,6 +99,7 @@ class ESPListModel : public QAbstractItemModel
 public:
   void clear()
   {
+    beginResetModel();
     m_esps.clear();
     endResetModel();
   }
@@ -161,6 +162,8 @@ public:
 
   void finished()
   {
+    beginResetModel();
+
     std::sort(m_esps.begin(), m_esps.end(), [](const auto& a, const auto& b) {
       return (naturalCompare(a.filename(), b.filename()) < 0);
     });
