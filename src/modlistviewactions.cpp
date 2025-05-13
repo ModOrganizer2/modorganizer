@@ -599,10 +599,12 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo,
       FilesOrigin& origin =
           m_core.directoryStructure()->getOriginByName(ToWString(modInfo->name()));
       origin.enable(false);
-
+      QString path       = modInfo->absolutePath();
+      QString modDataDir = m_core.managedGame()->modDataDirectory();
+      path               = modDataDir.isEmpty() ? path : path + "/" + modDataDir;
       m_core.directoryRefresher()->addModToStructure(
           m_core.directoryStructure(), modInfo->name(),
-          m_core.currentProfile()->getModPriority(modIndex), modInfo->absolutePath(),
+          m_core.currentProfile()->getModPriority(modIndex), path,
           modInfo->stealFiles(), modInfo->archives());
       DirectoryRefresher::cleanStructure(m_core.directoryStructure());
       m_core.directoryStructure()->getFileRegister()->sortOrigins();

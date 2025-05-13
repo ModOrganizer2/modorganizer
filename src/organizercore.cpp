@@ -1439,9 +1439,12 @@ void OrganizerCore::updateModsInDirectoryStructure(
 
   // finally also add files from bsas to the directory structure
   for (auto idx : modInfo.keys()) {
+    QString path       = modInfo[idx]->absolutePath();
+    QString modDataDir = managedGame()->modDataDirectory();
+    path               = modDataDir.isEmpty() ? path : path + "/" + modDataDir;
     m_DirectoryRefresher->addModBSAToStructure(
         m_DirectoryStructure, modInfo[idx]->name(),
-        m_CurrentProfile->getModPriority(idx), modInfo[idx]->absolutePath(),
+        m_CurrentProfile->getModPriority(idx), path,
         modInfo[idx]->archives());
   }
 }
