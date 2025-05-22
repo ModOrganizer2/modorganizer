@@ -286,6 +286,7 @@ void PluginListView::setup(OrganizerCore& core, MainWindow* mw, Ui::MainWindow* 
     }
     mwui->modList->setHighlightedMods(mods);
     m_core->pluginList()->highlightMasters(pluginIndices);
+    repaint();
     verticalScrollBar()->repaint();
   });
 

@@ -192,9 +192,6 @@ void PluginList::highlightMasters(const QModelIndexList& selectedPluginIndices)
       }
     }
   }
-
-  emit dataChanged(this->index(0, 0), this->index(static_cast<int>(m_ESPs.size()) - 1,
-                                                  this->columnCount() - 1));
 }
 
 void PluginList::refresh(const QString& profileName,
