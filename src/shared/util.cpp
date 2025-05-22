@@ -22,8 +22,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "../mainwindow.h"
 #include "windows_error.h"
 #include <log.h>
-#include <usvfs.h>
-#include <usvfs_version.h>
+#include <usvfs/usvfs.h>
+#include <usvfs/usvfs_version.h>
 
 using namespace MOBase;
 

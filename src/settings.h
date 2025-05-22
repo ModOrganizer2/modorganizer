@@ -25,7 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <log.h>
 #include <lootcli/lootcli.h>
 #include <questionboxmemory.h>
-#include <usvfsparameters.h>
+#include <usvfs/usvfsparameters.h>
 
 #ifdef interface
 #undef interface

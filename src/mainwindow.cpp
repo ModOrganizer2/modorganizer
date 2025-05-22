@@ -76,7 +76,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <safewritefile.h>
 #include <scopeguard.h>
 #include <taskprogressmanager.h>
-#include <usvfs.h>
+#include <usvfs/usvfs.h>
 #include <utility.h>
 
 #include "directoryrefresher.h"

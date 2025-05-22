@@ -6,10 +6,26 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+env:
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+
 jobs:
   build:
     runs-on: windows-2022
     steps:
+      # https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: "Set environmental variables"
+        shell: bash
+        run: |
+          echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
+
       - name: Build ModOrganizer 2
         uses: ModOrganizer2/build-with-mob-action@master
         with:

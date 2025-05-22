@@ -30,7 +30,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <exception>
 #include <filemapping.h>
 #include <log.h>
-#include <usvfsparameters.h>
+#include <usvfs/usvfsparameters.h>
 
 class LogWorker : public QThread
 {

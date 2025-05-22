@@ -36,7 +36,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <errorcodes.h>
 #include <log.h>
 #include <report.h>
-#include <usvfs.h>
+#include <usvfs/usvfs.h>
 
 using namespace MOBase;
 using namespace MOShared;
