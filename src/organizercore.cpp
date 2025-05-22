@@ -36,7 +36,7 @@
 #include <report.h>
 #include <scopeguard.h>
 #include <scriptextender.h>
-#include <usvfs.h>
+#include <usvfs/usvfs.h>
 #include <utility.h>
 
 #include <QApplication>
