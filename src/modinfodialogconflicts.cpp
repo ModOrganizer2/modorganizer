@@ -11,6 +11,7 @@
 
 using namespace MOShared;
 using namespace MOBase;
+namespace fs = std::filesystem;
 
 // if there are more than 50 selected items in the conflict tree, don't bother
 // checking whether menu items apply to them, just show all of them
@@ -110,7 +111,7 @@ bool ConflictsTab::canHandleUnmanaged() const
   return true;
 }
 
-void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
+void ConflictsTab::hideItems(QTreeView* tree)
 {
   bool changed = false;
   bool stop    = false;
@@ -119,19 +120,16 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
 
   // logging
   {
-    const QString action = (visible ? "unhiding" : "hiding");
-
     QString files;
     if (n > max_small_selection)
       files = "a lot of";
     else
       files = QString("%1").arg(n);
 
-    log::debug("{} {} conflict files", action, files);
+    log::debug("hiding {} conflict files", files);
   }
 
-  QFlags<FileRenamer::RenameFlags> flags =
-      (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE);
+  QFlags<FileRenamer::RenameFlags> flags = FileRenamer::HIDE;
 
   if (n > 1) {
     flags |= FileRenamer::MULTIPLE;
@@ -158,24 +156,12 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
       return false;
     }
 
-    auto result = FileRenamer::RESULT_CANCEL;
-
-    if (visible) {
-      if (!item->canUnhide()) {
-        log::debug("cannot unhide {}, skipping", item->relativeName());
-        return true;
-      }
-
-      result = unhideFile(renamer, item->fileName());
-
-    } else {
-      if (!item->canHide()) {
-        log::debug("cannot hide {}, skipping", item->relativeName());
-        return true;
-      }
-
-      result = hideFile(renamer, item->fileName());
+    if (!item->canHide()) {
+      log::debug("cannot hide {}, skipping", item->relativeName());
+      return true;
     }
+
+    auto result = hideFile(renamer, item->fileName());
 
     switch (result) {
     case FileRenamer::RESULT_OK: {
@@ -199,7 +185,7 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
     return true;
   });
 
-  log::debug("{} conflict files done", (visible ? "unhiding" : "hiding"));
+  log::debug("hiding conflict files done");
 
   if (changed) {
     log::debug("triggering refresh");
@@ -351,19 +337,10 @@ void ConflictsTab::showContextMenu(const QPoint& pos, QTreeView* tree)
   // hide
   if (actions.hide) {
     connect(actions.hide, &QAction::triggered, [&] {
-      changeItemsVisibility(tree, false);
+      hideItems(tree);
     });
 
     menu.addAction(actions.hide);
-  }
-
-  // unhide
-  if (actions.unhide) {
-    connect(actions.unhide, &QAction::triggered, [&] {
-      changeItemsVisibility(tree, true);
-    });
-
-    menu.addAction(actions.unhide);
   }
 
   if (!menu.isEmpty()) {
@@ -386,7 +363,6 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
   }
 
   bool enableHide    = true;
-  bool enableUnhide  = true;
   bool enableRun     = true;
   bool enableOpen    = true;
   bool enablePreview = true;
@@ -421,7 +397,6 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
     }
 
     enableHide    = item->canHide();
-    enableUnhide  = item->canUnhide();
     enableRun     = item->canRun();
     enableOpen    = item->canOpen();
     enablePreview = item->canPreview(plugin());
@@ -443,19 +418,14 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
     if (n <= max_small_selection) {
       // if the number of selected items is low, checking them to accurately
       // show the menu items is worth it
-      enableHide   = false;
-      enableUnhide = false;
+      enableHide = false;
 
       forEachInSelection(tree, [&](const ConflictItem* item) {
         if (item->canHide()) {
           enableHide = true;
         }
 
-        if (item->canUnhide()) {
-          enableUnhide = true;
-        }
-
-        if (enableHide && enableUnhide && enableGoto) {
+        if (enableHide && enableGoto) {
           // found all, no need to check more
           return false;
         }
@@ -486,11 +456,6 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
   actions.hide = new QAction(tr("&Hide"), parentWidget());
   actions.hide->setEnabled(enableHide);
-
-  // note that it is possible for hidden files to appear if they override other
-  // hidden files from another mod
-  actions.unhide = new QAction(tr("&Unhide"), parentWidget());
-  actions.unhide->setEnabled(enableUnhide);
 
   if (enableGoto && n == 1) {
     const auto* item =
@@ -633,8 +598,39 @@ bool GeneralConflictsTab::update()
 
   if (m_tab->origin() != nullptr) {
     const auto rootPath = m_tab->mod().absolutePath();
+    std::set<const DirectoryEntry*> checkedDirs;
 
     for (const auto& file : m_tab->origin()->getFiles()) {
+      if (QString::fromStdWString(file->getName())
+              .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
+        // skip hidden file conflicts
+        continue;
+      } else {
+        const DirectoryEntry* parent = file->getParent();
+        auto hidden                  = false;
+        // iterate on all parent directory entries to check for .mohiddden
+        while (parent != nullptr) {
+          auto insertResult = checkedDirs.insert(parent);
+
+          if (insertResult.second == false) {
+            // if already present break as we can assume to have checked the parents as
+            // well
+            break;
+          } else {
+            if (QString::fromStdWString(parent->getName())
+                    .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
+              hidden = true;
+              break;
+            }
+            parent = parent->getParent();
+          }
+        }
+        if (hidden) {
+          // skip hidden file conflicts
+          continue;
+        }
+      }
+
       // careful: these two strings are moved into createXItem() below
       QString relativeName =
           QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
@@ -954,8 +950,38 @@ void AdvancedConflictsTab::update()
 
     const auto& files = m_tab->origin()->getFiles();
     m_model->reserve(files.size());
+    std::set<const DirectoryEntry*> checkedDirs;
 
     for (const auto& file : files) {
+      if (QString::fromStdWString(file->getName())
+              .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
+        // skip hidden file conflicts
+        continue;
+      } else {
+        const DirectoryEntry* parent = file->getParent();
+        auto hidden                  = false;
+        // iterate on all parent directory entries to check for .mohiddden
+        while (parent != nullptr) {
+          auto insertResult = checkedDirs.insert(parent);
+
+          if (insertResult.second == false) {
+            // if already present break as we can assume to have checked the parents as
+            // well
+            break;
+          } else {
+            if (QString::fromStdWString(parent->getName())
+                    .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
+              hidden = true;
+              break;
+            }
+            parent = parent->getParent();
+          }
+        }
+        if (hidden) {
+          // skip hidden file conflicts
+          continue;
+        }
+      }
       // careful: these two strings are moved into createItem() below
       QString relativeName =
           QDir::fromNativeSeparators(ToQString(file->getRelativePath()));

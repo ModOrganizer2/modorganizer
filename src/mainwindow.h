@@ -303,8 +303,6 @@ private:
 
   std::unique_ptr<BrowserDialog> m_IntegratedBrowser;
 
-  QByteArray m_ArchiveListHash;
-
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
   QAction* m_LinkToolbar;

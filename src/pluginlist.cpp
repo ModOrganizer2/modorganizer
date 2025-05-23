@@ -750,7 +750,7 @@ void PluginList::writeLockedOrder(const QString& fileName) const
   for (auto iter = m_LockedOrder.begin(); iter != m_LockedOrder.end(); ++iter) {
     file->write(QString("%1|%2\r\n").arg(iter->first).arg(iter->second).toUtf8());
   }
-  file.commit();
+  file->commit();
 }
 
 void PluginList::saveTo(const QString& lockedOrderFileName) const
