@@ -2916,8 +2916,11 @@ void MainWindow::originModified(int originID)
   origin.enable(false);
 
   DirectoryStats dummy;
+  QString path       = QString::fromStdWString(origin.getPath());
+  QString modDataDir = m_OrganizerCore.managedGame()->modDataDirectory();
+  path               = modDataDir.isEmpty() ? path : path + "/" + modDataDir;
   m_OrganizerCore.directoryStructure()->addFromOrigin(
-      origin.getName(), origin.getPath(), origin.getPriority(), dummy);
+      origin.getName(), path.toStdWString(), origin.getPriority(), dummy);
 
   DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
 }

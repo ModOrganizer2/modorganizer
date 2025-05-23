@@ -3,6 +3,7 @@
 #include "settings.h"
 #include "shared/appconfig.h"
 
+#include "organizercore.h"
 #include <QApplication>
 #include <QDirIterator>
 
@@ -14,10 +15,24 @@ bool ModInfoOverwrite::isEmpty() const
   QDirIterator iter(absolutePath(), QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs);
   if (!iter.hasNext())
     return true;
-  iter.next();
-  if ((iter.fileName() == "meta.ini") && !iter.hasNext())
-    return true;
-  return false;
+  while (iter.hasNext()) {
+    iter.next();
+    if (iter.fileInfo().isDir() &&
+        !m_Core.managedGame()->getModMappings().keys().contains(iter.fileName(),
+                                                                Qt::CaseInsensitive))
+      return false;
+    if (iter.fileInfo().isDir() &&
+        m_Core.managedGame()->getModMappings().keys().contains(iter.fileName(),
+                                                               Qt::CaseInsensitive)) {
+      if (QDir(iter.filePath()).count() > 2) {
+        return false;
+      }
+    }
+    if (iter.fileInfo().isFile() && iter.fileName() != "meta.ini")
+      return false;
+  }
+
+  return true;
 }
 
 QString ModInfoOverwrite::absolutePath() const

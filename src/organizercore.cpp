@@ -462,6 +462,16 @@ void OrganizerCore::createDefaultProfile()
   }
 }
 
+void OrganizerCore::createOverwriteDirectories()
+{
+  QString overwritePath = settings().paths().overwrite();
+  for (auto modDirectory : managedGame()->getModMappings().keys()) {
+    if (!modDirectory.isEmpty()) {
+      QDir(overwritePath).mkdir(modDirectory);
+    }
+  }
+}
+
 void OrganizerCore::prepareVFS()
 {
   m_USVFS.updateMapping(fileMapping(m_CurrentProfile->name(), QString()));
@@ -1396,8 +1406,11 @@ void OrganizerCore::updateModsInDirectoryStructure(
   std::vector<DirectoryRefresher::EntryInfo> entries;
 
   for (auto idx : modInfo.keys()) {
+    QString path       = modInfo[idx]->absolutePath();
+    QString modDataDir = managedGame()->modDataDirectory();
+    path               = modDataDir.isEmpty() ? path : path + "/" + modDataDir;
     entries.push_back({modInfo[idx]->name(),
-                       modInfo[idx]->absolutePath(),
+                       path,
                        modInfo[idx]->stealFiles(),
                        {},
                        m_CurrentProfile->getModPriority(idx)});
@@ -1426,10 +1439,12 @@ void OrganizerCore::updateModsInDirectoryStructure(
 
   // finally also add files from bsas to the directory structure
   for (auto idx : modInfo.keys()) {
+    QString path       = modInfo[idx]->absolutePath();
+    QString modDataDir = managedGame()->modDataDirectory();
+    path               = modDataDir.isEmpty() ? path : path + "/" + modDataDir;
     m_DirectoryRefresher->addModBSAToStructure(
         m_DirectoryStructure, modInfo[idx]->name(),
-        m_CurrentProfile->getModPriority(idx), modInfo[idx]->absolutePath(),
-        modInfo[idx]->archives());
+        m_CurrentProfile->getModPriority(idx), path, modInfo[idx]->archives());
   }
 }
 
@@ -2034,12 +2049,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
 
   MappingType result;
 
-  QStringList dataPaths;
-  dataPaths.append(QDir::toNativeSeparators(game->dataDirectory().absolutePath()));
-
-  for (auto directory : game->secondaryDataDirectories()) {
-    dataPaths.append(directory.absolutePath());
-  }
+  auto dataMaps = game->getModMappings();
 
   bool overwriteActive = false;
 
@@ -2052,13 +2062,19 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
     ModInfo::Ptr modPtr   = ModInfo::getByIndex(modIndex);
 
     bool createTarget = customOverwrite == std::get<0>(mod);
+    QDir modDir       = QDir(std::get<1>(mod));
 
     overwriteActive |= createTarget;
 
     if (modPtr->isRegular()) {
-      for (auto dataPath : dataPaths) {
-        result.insert(result.end(), {QDir::toNativeSeparators(std::get<1>(mod)),
-                                     dataPath, true, createTarget});
+      for (auto dataMap : dataMaps.asKeyValueRange()) {
+        auto mapDir = QDir(modDir.absoluteFilePath(dataMap.first));
+        if (mapDir.exists()) {
+          for (auto dir : dataMap.second) {
+            result.insert(result.end(),
+                          {mapDir.absolutePath(), dir, true, createTarget});
+          }
+        }
       }
     }
   }
@@ -2080,10 +2096,15 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
     }
   }
 
-  for (auto dataPath : dataPaths) {
-    result.insert(result.end(),
-                  {QDir::toNativeSeparators(m_Settings.paths().overwrite()), dataPath,
-                   true, customOverwrite.isEmpty()});
+  QDir overwriteDir(m_Settings.paths().overwrite());
+  for (auto dataMap : dataMaps.asKeyValueRange()) {
+    auto overwriteSubpath = overwriteDir.absoluteFilePath(dataMap.first);
+    if (QDir(overwriteSubpath).exists()) {
+      for (auto dir : dataMap.second) {
+        result.insert(result.end(),
+                      {overwriteSubpath, dir, true, customOverwrite.isEmpty()});
+      }
+    }
   }
 
   for (MOBase::IPluginFileMapper* mapper :
