@@ -1919,12 +1919,18 @@ void MainWindow::updateBSAList(const QStringList& defaultArchives,
                fileName.endsWith(".esl", Qt::CaseInsensitive);
       });
 
+  QList<std::pair<QString, QString>> pluginNamePairs;
+  pluginNamePairs.reserve(plugins.size());
+  for (const QString& pluginName : plugins) {
+    QFileInfo pluginInfo(pluginName);
+    pluginNamePairs.append(
+        std::make_pair(pluginInfo.completeBaseName(), pluginInfo.fileName()));
+  }
+
   auto hasAssociatedPlugin = [&](const QString& bsaName) -> bool {
-    for (const QString& pluginName : plugins) {
-      QFileInfo pluginInfo(pluginName);
-      if (bsaName.startsWith(QFileInfo(pluginName).completeBaseName(),
-                             Qt::CaseInsensitive) &&
-          (m_OrganizerCore.pluginList()->state(pluginInfo.fileName()) ==
+    for (const auto& [completeBaseName, fileName] : pluginNamePairs) {
+      if (bsaName.startsWith(completeBaseName, Qt::CaseInsensitive) &&
+          (m_OrganizerCore.pluginList()->state(fileName) ==
            IPluginList::STATE_ACTIVE)) {
         return true;
       }
