@@ -108,6 +108,7 @@ private:
 
     int m_Tries;
     bool m_ReQueried;
+    bool m_AskIfNotFound;
 
     quint32 m_TaskProgressId;
 
@@ -143,7 +144,7 @@ private:
   private:
     DownloadInfo()
         : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_HasData(false),
-          m_DownloadTimeLast(0), m_DownloadLast(0),
+          m_AskIfNotFound(true), m_DownloadTimeLast(0), m_DownloadLast(0),
           m_DownloadAcc(tag::rolling_window::window_size = 200),
           m_DownloadTimeAcc(tag::rolling_window::window_size = 200)
     {}
@@ -402,6 +403,11 @@ public:
    */
   void refreshList();
 
+  /**
+   * @brief Query infos for every download in the list
+   */
+  void queryDownloadListInfo();
+
 public:  // IDownloadManager interface:
   int startDownloadURLs(const QStringList& urls);
   int startDownloadNexusFile(const QString& gameName, int modID, int fileID);
@@ -493,7 +499,7 @@ public slots:
 
   void queryInfo(int index);
 
-  void queryInfoMd5(int index);
+  void queryInfoMd5(int index, bool askIfNotFound = true);
 
   void visitOnNexus(int index);
 
