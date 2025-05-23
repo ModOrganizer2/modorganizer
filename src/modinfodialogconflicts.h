@@ -135,7 +135,7 @@ public:
 
   void openItem(const ConflictItem* item, bool hooked);
   void previewItem(const ConflictItem* item);
-  void changeItemsVisibility(QTreeView* tree, bool visible);
+  void hideItems(QTreeView* tree);
 
   void showContextMenu(const QPoint& pos, QTreeView* tree);
 
@@ -143,7 +143,6 @@ private:
   struct Actions
   {
     QAction* hide      = nullptr;
-    QAction* unhide    = nullptr;
     QAction* open      = nullptr;
     QAction* runHooked = nullptr;
     QAction* preview   = nullptr;
