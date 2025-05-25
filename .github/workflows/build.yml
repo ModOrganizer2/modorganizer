@@ -14,7 +14,7 @@ jobs:
         id: build-modorganizer
         uses: ModOrganizer2/build-with-mob-action@dev/vcpkg
         with:
-          mo2-dependencies: uibase bsatk esptk archive lootcli
+          mo2-dependencies: usvfs uibase bsatk esptk archive lootcli
 
       - name: Install ModOrganizer
         shell: pwsh
