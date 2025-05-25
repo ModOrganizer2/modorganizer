@@ -6,6 +6,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+env:
+  VCPKG_BINARY_SOURCES: clear;x-azblob,${{ vars.AZ_BLOB_VCPKG_URL }},${{ secrets.AZ_BLOB_SAS }},readwrite
+
 jobs:
   build:
     runs-on: windows-2022
