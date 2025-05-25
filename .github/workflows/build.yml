@@ -17,6 +17,7 @@ jobs:
         id: build-modorganizer
         uses: ModOrganizer2/build-with-mob-action@dev/vcpkg
         with:
+          qt-modules: qtpositioning qtwebchannel qtwebengine qtwebsockets
           mo2-dependencies: usvfs uibase bsatk esptk archive lootcli
 
       - name: Install ModOrganizer
