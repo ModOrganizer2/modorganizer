@@ -14,8 +14,8 @@
     {
       "kind": "git",
       "repository": "https://github.com/ModOrganizer2/vcpkg-registry",
-      "baseline": "27d8adbfe9e4ce88a875be3a45fadab69869eb60",
-      "packages": ["mo2-*", "7zip", "usvfs"]
+      "baseline": "69db61b22147b14ad66fd05cf798d855f6d68c12",
+      "packages": ["mo2-*", "usvfs"]
     }
   ]
 }
