@@ -127,7 +127,7 @@
          <item>
           <widget class="QLabel" name="label_3">
            <property name="text">
-            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright © 2011-2016 Sebastian Herbord&lt;br/&gt;Copyright © 2016-2023 Mod Organizer 2 Contributors&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright © 2011-2016 Sebastian Herbord&lt;br/&gt;Copyright © 2016-2025 Mod Organizer 2 Contributors&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
@@ -266,6 +266,16 @@
                 <string notr="true">Qudix</string>
                </property>
               </item>
+              <item>
+               <property name="text">
+                <string notr="true">RJ</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Jonathan Feenstra</string>
+               </property>
+              </item>
              </widget>
             </item>
            </layout>
@@ -402,7 +412,7 @@
               </item>
               <item>
                <property name="text">
-                <string>zDas (Portuguese)</string>
+                <string>Dasinho (Portuguese)</string>
                </property>
               </item>
               <item>
@@ -632,6 +642,21 @@
               <item>
                <property name="text">
                 <string notr="true">z929669</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Eddoursul</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Twinki</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">ashemedai</string>
                </property>
               </item>
              </widget>

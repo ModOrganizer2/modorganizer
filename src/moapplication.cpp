@@ -287,6 +287,7 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
   // setting up organizer core
   m_core->setManagedGame(m_instance->gamePlugin());
   m_core->createDefaultProfile();
+  m_core->createOverwriteDirectories();
 
   log::info("using game plugin '{}' ('{}', variant {}, steam id '{}') at {}",
             m_instance->gamePlugin()->gameName(),

@@ -130,6 +130,7 @@ private:
   QColor m_highlightBackground;
   QString m_filename;
   QString m_encoding;
+  bool m_needsBOM;
   bool m_dirty;
   bool m_loading;
 

@@ -65,6 +65,7 @@ void TextEditor::clear()
 
   m_filename.clear();
   m_encoding.clear();
+  m_needsBOM = false;
   setPlainText("");
   dirty(false);
   document()->setModified(false);
@@ -80,7 +81,7 @@ bool TextEditor::load(const QString& filename)
 
   m_filename = filename;
 
-  const QString s = MOBase::readFileText(filename, &m_encoding);
+  const QString s = MOBase::readFileText(filename, &m_encoding, &m_needsBOM);
 
   setPlainText(s);
   document()->setModified(false);
@@ -106,10 +107,13 @@ bool TextEditor::save()
   file.open(QIODevice::WriteOnly);
   file.resize(0);
 
-  auto codec = QStringConverter::encodingForName(m_encoding.toLocal8Bit());
+  auto codec = QStringConverter::encodingForName(m_encoding.toUtf8());
   if (!codec.has_value())
     return false;
-  QStringEncoder encoder(codec.value());
+  QStringConverter::Flags flags = QStringEncoder::Flag::Default;
+  if (m_needsBOM)
+    flags |= QStringConverter::Flag::WriteBom;
+  QStringEncoder encoder(codec.value(), flags);
 
   QString data = toPlainText().replace("\n", "\r\n");
 

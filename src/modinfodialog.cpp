@@ -571,25 +571,30 @@ void ModInfoDialog::updateTabs(bool becauseOriginChanged)
 
 void ModInfoDialog::feedFiles(std::vector<TabInfo*>& interestedTabs)
 {
-  const auto rootPath = m_mod->absolutePath();
+  const auto rootPath =
+      m_mod->absolutePath() + (m_core.managedGame()->modDataDirectory().isEmpty()
+                                   ? ""
+                                   : "/" + m_core.managedGame()->modDataDirectory());
   if (rootPath.isEmpty()) {
     return;
   }
 
-  const fs::path fsPath(rootPath.toStdWString());
+  if (fs::exists(rootPath.toStdWString())) {
+    const fs::path fsPath(rootPath.toStdWString());
 
-  for (const auto& entry : fs::recursive_directory_iterator(fsPath)) {
-    if (!entry.is_regular_file()) {
-      // skip directories
-      continue;
-    }
+    for (const auto& entry : fs::recursive_directory_iterator(fsPath)) {
+      if (!entry.is_regular_file()) {
+        // skip directories
+        continue;
+      }
 
-    const auto filePath = QString::fromStdWString(entry.path().native());
+      const auto filePath = QString::fromStdWString(entry.path().native());
 
-    // for each tab
-    for (auto* tabInfo : interestedTabs) {
-      if (tabInfo->tab->feedFile(rootPath, filePath)) {
-        break;
+      // for each tab
+      for (auto* tabInfo : interestedTabs) {
+        if (tabInfo->tab->feedFile(rootPath, filePath)) {
+          break;
+        }
       }
     }
   }

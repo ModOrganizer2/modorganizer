@@ -2,51 +2,28 @@ name: Build ModOrganizer 2
 
 on:
   push:
-    branches: master
+    branches: [master]
   pull_request:
     types: [opened, synchronize, reopened]
-
-env:
-  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
 jobs:
   build:
     runs-on: windows-2022
     steps:
-      # https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
-      - name: Export GitHub Actions cache environment variables
-        uses: actions/github-script@v7
+      - name: Build ModOrganizer
+        id: build-modorganizer
+        uses: ModOrganizer2/build-with-mob-action@dev/vcpkg
         with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+          mo2-dependencies: uibase bsatk esptk archive lootcli
 
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          version: 6.7.1
-          modules: qtpositioning qtwebchannel qtwebengine qtwebsockets
-          cache: true
-
-      - uses: actions/checkout@v4
-
-      - name: "Set environmental variables"
-        shell: bash
-        run: |
-          echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
-
-      - name: Configure ModOrganizer
+      - name: Install ModOrganizer
         shell: pwsh
         run: |
-          cmake --preset vs2022-windows-standalone `
-            "-DCMAKE_PREFIX_PATH=${env:QT_ROOT_DIR}\msvc2019_64" `
-            "-DCMAKE_INSTALL_PREFIX=install"
-
-      - name: Build ModOrganizer
-        run: cmake --build vsbuild --config RelWithDebInfo --target INSTALL
+          cmake --install vsbuild --config RelWithDebInfo -j4
+        working-directory: ./build/${{ github.event.repository.name }}
 
       - name: Package ModOrganizer
         uses: actions/upload-artifact@master
         with:
           name: modorganizer
-          path: ./install
+          path: ./install/bin

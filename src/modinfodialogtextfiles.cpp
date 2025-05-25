@@ -9,6 +9,7 @@ class FileListModel : public QAbstractItemModel
 public:
   void clear()
   {
+    beginResetModel();
     m_files.clear();
     endResetModel();
   }
@@ -58,6 +59,8 @@ public:
 
   void finished()
   {
+    beginResetModel();
+
     std::sort(m_files.begin(), m_files.end(), [](const auto& a, const auto& b) {
       return (naturalCompare(a.text, b.text) < 0);
     });

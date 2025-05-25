@@ -37,6 +37,8 @@ public:
   bool isBlueprintFlagged(const QString& name) const override;
   bool hasNoRecords(const QString& name) const override;
 
+  int formVersion(const QString& name) const override;
+  float headerVersion(const QString& name) const override;
   QString author(const QString& name) const override;
   QString description(const QString& name) const override;
 

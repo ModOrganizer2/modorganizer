@@ -134,6 +134,16 @@ bool PluginListProxy::hasNoRecords(const QString& name) const
   return m_Proxied->hasNoRecords(name);
 }
 
+int PluginListProxy::formVersion(const QString& name) const
+{
+  return m_Proxied->formVersion(name);
+}
+
+float PluginListProxy::headerVersion(const QString& name) const
+{
+  return m_Proxied->headerVersion(name);
+}
+
 QString PluginListProxy::author(const QString& name) const
 {
   return m_Proxied->author(name);
