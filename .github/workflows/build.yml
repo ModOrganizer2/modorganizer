@@ -23,7 +23,7 @@ jobs:
       - name: Install ModOrganizer
         shell: pwsh
         run: |
-          cmake --install vsbuild --config RelWithDebInfo -j4
+          cmake --install vsbuild --config RelWithDebInfo
         working-directory: ./build/${{ github.event.repository.name }}
 
       - name: Package ModOrganizer
