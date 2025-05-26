@@ -55,5 +55,12 @@
       "name": "vs2022-windows-standalone"
     }
   ],
+  "buildPresets": [
+    {
+      "name": "vs2022-windows",
+      "resolvePackageReferences": "on",
+      "configurePreset": "vs2022-windows"
+    }
+  ],
   "version": 4
 }
