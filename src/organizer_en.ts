@@ -3144,6 +3144,12 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="mainwindow.ui" line="1195"/>
+        <location filename="mainwindow.ui" line="1434"/>
+        <source>Hidden files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="mainwindow.ui" line="1205"/>
         <location filename="mainwindow.ui" line="1208"/>
         <source>Filter the Data tree.</source>
@@ -3203,12 +3209,6 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
         <location filename="mainwindow.ui" line="1428"/>
         <location filename="mainwindow.ui" line="1431"/>
         <source>Show downloads marked as hidden.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="1195"/>
-        <location filename="mainwindow.ui" line="1434"/>
-        <source>Hidden files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4136,13 +4136,11 @@ You will have to visit the mod page on the %1 Nexus site to change your mind.</s
         <location filename="modinfodialog.ui" line="318"/>
         <location filename="modinfodialog.ui" line="343"/>
         <source>Optional Plugins</source>
-        <oldsource>Optional ESPs</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="350"/>
         <source>List of esps, esms, and esls that will not be loaded by the game.</source>
-        <oldsource>List of esps, esms, and esls that can not be loaded by the game.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4151,52 +4149,41 @@ You will have to visit the mod page on the %1 Nexus site to change your mind.</s
 They usually contain optional functionality, see the readme.
 
 Most mods do not have optional plugins, so chances are good you are looking at an empty list.</source>
-        <oldsource>List of esps, esms, and esls contained in this plugin that currently can not be loaded by the game. They will not even appear in the esp-list in the main MO-window.
-They usually contain optional functionality, see the readme.
-
-Most mods do not have optional esps, so chances are good you are looking at an empty list.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="400"/>
         <source>Move a plugin to the data directory.</source>
-        <oldsource>Move a file to the data directory.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="403"/>
         <source>This moves a plugin to the data directory so it can be enabled in the main window. Please note that the plugin merely becomes &quot;available&quot;, it will not necessarily be loaded! That is configured in the main window of MO.</source>
-        <oldsource>This moves a esp to the esp directory so it can be enabled in the main window. Please note that the ESP merely becomes &quot;available&quot;, it will not necessarily be loaded! That is configured in the main window of MO.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="423"/>
         <source>Make the selected plugin in the right list unavailable.</source>
-        <oldsource>Make the selected mod in the right list unavailable.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="426"/>
         <source>The selected plugin (in the right list) will be pushed into a subdirectory of the mod and will thus become &quot;invisible&quot; to the game. It can then no longer be activated.</source>
-        <oldsource>The selected esp (in the right list) will be pushed into a subdirectory of the mod and will thus become &quot;invisible&quot; to the game. It can then no longer be activated.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="476"/>
         <source>Available Plugins</source>
-        <oldsource>Available ESPs</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="483"/>
         <source>Plugins in the data directory and thus visible to the game.</source>
-        <oldsource>ESPs in the data directory and thus visible to the game.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="486"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are the plugins that are in the (virtual) data directory of your game and will thus be selectable in the plugin list in the main window.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <oldsource>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are the mod files that are in the (virtual) data directory of your game and will thus be selectable in the esp list in the main window.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6078,6 +6065,30 @@ Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="pluginlist.cpp" line="99"/>
+        <location filename="pluginlist.cpp" line="1447"/>
+        <source>Form Version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="pluginlist.cpp" line="101"/>
+        <location filename="pluginlist.cpp" line="1451"/>
+        <source>Header Version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="pluginlist.cpp" line="103"/>
+        <location filename="pluginlist.cpp" line="1454"/>
+        <source>Author</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="pluginlist.cpp" line="105"/>
+        <location filename="pluginlist.cpp" line="1459"/>
+        <source>Description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="pluginlist.cpp" line="107"/>
         <location filename="pluginlist.cpp" line="133"/>
         <source>unknown</source>
@@ -6104,6 +6115,26 @@ Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="pluginlist.cpp" line="125"/>
+        <source>Form version of the plugin.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="pluginlist.cpp" line="127"/>
+        <source>Header version of the plugin.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="pluginlist.cpp" line="129"/>
+        <source>Author of the plugin.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="pluginlist.cpp" line="131"/>
+        <source>Description of the plugin.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="pluginlist.cpp" line="293"/>
         <source>failed to update esp info for file %1 (source id: %2), error: %3</source>
         <translation type="unfinished"></translation>
@@ -6126,50 +6157,6 @@ Continue?</source>
     <message>
         <location filename="pluginlist.cpp" line="1441"/>
         <source>This plugin can&apos;t be disabled (enforced by the game).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="pluginlist.cpp" line="103"/>
-        <location filename="pluginlist.cpp" line="1454"/>
-        <source>Author</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="pluginlist.cpp" line="99"/>
-        <location filename="pluginlist.cpp" line="1447"/>
-        <source>Form Version</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="pluginlist.cpp" line="101"/>
-        <location filename="pluginlist.cpp" line="1451"/>
-        <source>Header Version</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="pluginlist.cpp" line="105"/>
-        <location filename="pluginlist.cpp" line="1459"/>
-        <source>Description</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="pluginlist.cpp" line="125"/>
-        <source>Form version of the plugin.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="pluginlist.cpp" line="127"/>
-        <source>Header version of the plugin.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="pluginlist.cpp" line="129"/>
-        <source>Author of the plugin.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="pluginlist.cpp" line="131"/>
-        <source>Description of the plugin.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6950,7 +6937,6 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="colortable.cpp" line="236"/>
         <source>Mod contains selected file</source>
-        <oldsource>Mod contains selected plugin</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9145,6 +9131,11 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="settingsdialog.ui" line="2034"/>
+        <source>Back-date BSAs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="settingsdialog.ui" line="2076"/>
         <source>Add executables to the blacklist to prevent them from
 accessing the virtual file system. This is useful to prevent
@@ -9161,11 +9152,6 @@ programs you are intentionally running.</source>
     <message>
         <location filename="settingsdialog.ui" line="2086"/>
         <source>Executables Blacklist</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="2034"/>
-        <source>Back-date BSAs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
