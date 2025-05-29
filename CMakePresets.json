@@ -60,6 +60,11 @@
       "name": "vs2022-windows",
       "resolvePackageReferences": "on",
       "configurePreset": "vs2022-windows"
+    },
+    {
+      "name": "vs2022-windows-standalone",
+      "resolvePackageReferences": "on",
+      "configurePreset": "vs2022-windows-standalone"
     }
   ],
   "version": 4
