@@ -2,35 +2,32 @@ name: Build ModOrganizer 2
 
 on:
   push:
-    branches: master
+    branches: [master]
   pull_request:
     types: [opened, synchronize, reopened]
 
 env:
-  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+  VCPKG_BINARY_SOURCES: clear;x-azblob,${{ vars.AZ_BLOB_VCPKG_URL }},${{ secrets.AZ_BLOB_SAS }},readwrite
 
 jobs:
   build:
     runs-on: windows-2022
     steps:
-      # https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
-      - name: Export GitHub Actions cache environment variables
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-
-      - name: "Set environmental variables"
-        shell: bash
-        run: |
-          echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
-
-      - name: Build ModOrganizer 2
+      - name: Build ModOrganizer
+        id: build-modorganizer
         uses: ModOrganizer2/build-with-mob-action@master
         with:
           qt-modules: qtpositioning qtwebchannel qtwebengine qtwebsockets
-          mo2-third-parties:
-            7z zlib gtest libbsarch libloot openssl bzip2 python lz4 spdlog
-            boost boost-di sip pyqt pybind11 ss licenses explorerpp DirectXTex
-          mo2-dependencies: usvfs cmake_common uibase githubpp bsatk esptk archive lootcli game_gamebryo
+          mo2-dependencies: usvfs uibase bsatk esptk archive lootcli
+
+      - name: Install ModOrganizer
+        shell: pwsh
+        run: |
+          cmake --install vsbuild --config RelWithDebInfo
+        working-directory: ./build/${{ github.event.repository.name }}
+
+      - name: Package ModOrganizer
+        uses: actions/upload-artifact@master
+        with:
+          name: modorganizer
+          path: ./install/bin

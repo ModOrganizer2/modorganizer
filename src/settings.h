@@ -21,10 +21,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGS_H
 
 #include "envdump.h"
-#include <filterwidget.h>
-#include <log.h>
 #include <lootcli/lootcli.h>
 #include <questionboxmemory.h>
+#include <uibase/filterwidget.h>
+#include <uibase/log.h>
 #include <usvfs/usvfsparameters.h>
 
 #ifdef interface

@@ -27,5 +27,3 @@ Rectangle {
   }
   visible: false
 }
-
-

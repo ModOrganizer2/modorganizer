@@ -1,0 +1,20 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-case-conflict
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v19.1.5
+    hooks:
+    - id: clang-format
+      'types_or': [c++, c]
+
+ci:
+  autofix_commit_msg: "[pre-commit.ci] Auto fixes from pre-commit.com hooks."
+  autofix_prs: true
+  autoupdate_commit_msg: "[pre-commit.ci] Pre-commit autoupdate."
+  autoupdate_schedule: quarterly
+  submodules: false

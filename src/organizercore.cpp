@@ -29,15 +29,15 @@
 #include "spawn.h"
 #include "syncoverwritedialog.h"
 #include "virtualfiletree.h"
-#include <dataarchives.h>
 #include <ipluginmodpage.h>
-#include <localsavegames.h>
 #include <questionboxmemory.h>
-#include <report.h>
-#include <scopeguard.h>
-#include <scriptextender.h>
+#include <uibase/game_features/dataarchives.h>
+#include <uibase/game_features/localsavegames.h>
+#include <uibase/game_features/scriptextender.h>
+#include <uibase/report.h>
+#include <uibase/scopeguard.h>
+#include <uibase/utility.h>
 #include <usvfs/usvfs.h>
-#include <utility.h>
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -71,7 +71,7 @@
 #include <tuple>
 #include <utility>
 
-#include "bs_archive.h"
+#include <libbsarch/bs_archive.h>
 
 #include "organizerproxy.h"
 
@@ -656,7 +656,7 @@ QString OrganizerCore::modsPath() const
   return QDir::fromNativeSeparators(m_Settings.paths().mods());
 }
 
-MOBase::VersionInfo OrganizerCore::appVersion() const
+MOBase::Version OrganizerCore::version() const
 {
   return m_Updater.getVersion();
 }

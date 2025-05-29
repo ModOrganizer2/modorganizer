@@ -69,10 +69,9 @@ using namespace MOBase;
 using namespace MOShared;
 
 SelfUpdater::SelfUpdater(NexusInterface* nexusInterface)
-    : m_Parent(nullptr), m_Interface(nexusInterface), m_Reply(nullptr), m_Attempts(3)
-{
-  m_MOVersion = createVersionInfo();
-}
+    : m_Parent(nullptr), m_MOVersion(createVersionInfo()), m_Interface(nexusInterface),
+      m_Reply(nullptr), m_Attempts(3)
+{}
 
 SelfUpdater::~SelfUpdater() {}
 
@@ -115,7 +114,8 @@ void SelfUpdater::testForUpdate(const Settings& settings)
             QJsonObject release = releaseVal.toObject();
             if (!release["draft"].toBool() && (Settings::instance().usePrereleases() ||
                                                !release["prerelease"].toBool())) {
-              auto version       = VersionInfo(release["tag_name"].toString());
+              auto version       = Version::parse(release["tag_name"].toString(),
+                                                  Version::ParseMode::MO2);
               mreleases[version] = release;
             }
           }
@@ -132,14 +132,13 @@ void SelfUpdater::testForUpdate(const Settings& settings)
                   m_UpdateCandidates.insert(p);
                 }
               }
-              log::info("update available: {} -> {}",
-                        this->m_MOVersion.displayString(3), lastKey.displayString(3));
+              log::info("update available: {} -> {}", this->m_MOVersion, lastKey);
               emit updateAvailable();
             } else if (lastKey < this->m_MOVersion) {
               // this could happen if the user switches from using prereleases to
               // stable builds. Should we downgrade?
               log::debug("This version is newer than the latest released one: {} -> {}",
-                         this->m_MOVersion.displayString(3), lastKey.displayString(3));
+                         this->m_MOVersion, lastKey);
             }
           }
         });
@@ -158,7 +157,7 @@ void SelfUpdater::startUpdate()
   auto latestRelease = m_UpdateCandidates.begin()->second;
 
   UpdateDialog dialog(m_Parent);
-  dialog.setVersions(MOShared::createVersionInfo().displayString(3),
+  dialog.setVersions(MOShared::createVersionInfo().string(),
                      latestRelease["tag_name"].toString());
 
   // We concatenate release details. We only include pre-release if those are

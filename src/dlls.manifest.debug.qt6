@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
   <assemblyIdentity type="win32" name="dlls" version="1.0.0.0" processorArchitecture="x86" />
-  <file name="7z.dll" />
-  <file name="archive.dll" />
+  <file name="7zip.dll" />
   <file name="d3dcompiler_47.dll" />
   <file name="dxcompiler.dll" />
   <file name="dxil.dll" />
-  <file name="libbsarch.dll" />
+  <file name="libbsarchd.dll" />
   <file name="libcrypto-3-x64.dll" />
   <file name="liblz4.dll" />
   <file name="libssl-3-x64.dll" />
