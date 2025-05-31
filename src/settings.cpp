@@ -2392,7 +2392,8 @@ void DiagnosticsSettings::setLootLogLevel(lootcli::LogLevels level)
   set(m_Settings, "Settings", "loot_log_level", level);
 }
 
-bool DiagnosticsSettings::usvfsDebugMode() const {
+bool DiagnosticsSettings::usvfsDebugMode() const
+{
   return get<bool>(m_Settings, "Settings", "usvfs_debug_mode", false);
 }
 void DiagnosticsSettings::setUsvfsDebugMode(bool enabled)
