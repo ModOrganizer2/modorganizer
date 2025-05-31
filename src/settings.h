@@ -713,6 +713,10 @@ public:
   lootcli::LogLevels lootLogLevel() const;
   void setLootLogLevel(lootcli::LogLevels level);
 
+  // set USVFS debug mode
+  bool usvfsDebugMode() const;
+  void setUsvfsDebugMode(bool enabled);
+
   // crash dump type for both MO and usvfs
   //
   env::CoreDumpTypes coreDumpType() const;
