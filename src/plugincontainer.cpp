@@ -865,8 +865,7 @@ QObject* PluginContainer::loadQtPlugin(const QString& filepath)
     QObject* object = pluginLoader->instance();
     if (IPlugin* plugin = registerPlugin(object, filepath, nullptr); plugin) {
       log::debug("loaded plugin '{}@{}' from '{}' - [{}]", plugin->name(),
-                 plugin->version().canonicalString(),
-                 QFileInfo(filepath).fileName(),
+                 plugin->version().canonicalString(), QFileInfo(filepath).fileName(),
                  implementedInterfaces(plugin).join(", "));
       m_PluginLoaders.push_back(pluginLoader.release());
       return object;
