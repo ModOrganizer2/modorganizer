@@ -814,7 +814,8 @@ std::vector<QObject*> PluginContainer::loadProxied(const QString& filepath,
 
         if (IPlugin* proxied = registerPlugin(proxiedPlugin, filepath, proxy);
             proxied) {
-          log::debug("loaded plugin '{}' from '{}' - [{}]", proxied->name(),
+          log::debug("loaded plugin '{}@{}' from '{}' - [{}]", proxied->name(),
+                     proxied->version().canonicalString(),
                      QFileInfo(filepath).fileName(),
                      implementedInterfaces(proxied).join(", "));
 
@@ -863,7 +864,8 @@ QObject* PluginContainer::loadQtPlugin(const QString& filepath)
   } else {
     QObject* object = pluginLoader->instance();
     if (IPlugin* plugin = registerPlugin(object, filepath, nullptr); plugin) {
-      log::debug("loaded plugin '{}' from '{}' - [{}]", plugin->name(),
+      log::debug("loaded plugin '{}@{}' from '{}' - [{}]", plugin->name(),
+                 plugin->version().canonicalString(),
                  QFileInfo(filepath).fileName(),
                  implementedInterfaces(plugin).join(", "));
       m_PluginLoaders.push_back(pluginLoader.release());
