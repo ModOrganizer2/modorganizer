@@ -250,6 +250,10 @@ QVariant ModList::data(const QModelIndex& modelIndex, int role) const
           return QVariant();
         }
       }
+    } else if (column == COL_AUTHOR) {
+      return modInfo->author();
+    } else if (column == COL_UPLOADER) {
+      return modInfo->uploader();
     } else if (column == COL_INSTALLTIME) {
       // display installation time for mods that can be updated
       if (modInfo->creationTime().isValid()) {
@@ -1317,6 +1321,10 @@ QString ModList::getColumnName(int column)
     return tr("Priority");
   case COL_CATEGORY:
     return tr("Category");
+  case COL_AUTHOR:
+    return tr("Author");
+  case COL_UPLOADER:
+    return tr("Uploader");
   case COL_GAME:
     return tr("Source Game");
   case COL_MODID:
@@ -1343,6 +1351,10 @@ QString ModList::getColumnToolTip(int column) const
               "overwrites files from mods with lower priority.");
   case COL_CATEGORY:
     return tr("Primary category of the mod.");
+  case COL_AUTHOR:
+    return tr("Author(s) of the mod.");
+  case COL_UPLOADER:
+    return tr("Uploader of the mod. This is not necessarily the same as the author.");
   case COL_GAME:
     return tr("The source game which was the origin of this mod.");
   case COL_MODID:

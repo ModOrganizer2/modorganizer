@@ -87,6 +87,7 @@ signals:
   void pauseDownload(int index);
   void resumeDownload(int index);
   void visitOnNexus(int index);
+  void visitUploaderProfile(int index);
   void openFile(int index);
   void openMetaFile(int index);
   void openInDownloadsFolder(int index);
@@ -105,6 +106,7 @@ private slots:
   void issueRestoreToView(int index);
   void issueRestoreToViewAll();
   void issueVisitOnNexus(int index);
+  void issueVisitUploaderProfile(int index);
   void issueOpenFile(int index);
   void issueOpenMetaFile(int index);
   void issueOpenInDownloadsFolder(int index);

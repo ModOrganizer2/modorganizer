@@ -817,6 +817,7 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
     // hide these columns by default
     header()->setSectionHidden(ModList::COL_CONTENT, true);
     header()->setSectionHidden(ModList::COL_MODID, true);
+    header()->setSectionHidden(ModList::COL_UPLOADER, true);
     header()->setSectionHidden(ModList::COL_GAME, true);
     header()->setSectionHidden(ModList::COL_INSTALLTIME, true);
     header()->setSectionHidden(ModList::COL_NOTES, true);

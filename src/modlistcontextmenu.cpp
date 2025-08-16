@@ -443,6 +443,12 @@ void ModListContextMenu::addBackupActions(ModInfo::Ptr mod)
     });
   }
 
+  if (!mod->uploaderUrl().isEmpty()) {
+    addAction(tr("Visit the uploader's profile"), [=]() {
+      m_actions.visitUploaderProfile(m_selected);
+    });
+  }
+
   const auto url = mod->parseCustomURL();
   if (url.isValid()) {
     addAction(tr("Visit on %1").arg(url.host()), [=]() {
@@ -609,6 +615,12 @@ void ModListContextMenu::addRegularActions(ModInfo::Ptr mod)
   if (mod->nexusId() > 0) {
     addAction(tr("Visit on Nexus"), [=]() {
       m_actions.visitOnNexus(m_selected);
+    });
+  }
+
+  if (!mod->uploaderUrl().isEmpty()) {
+    addAction(tr("Visit the uploader's profile"), [=]() {
+      m_actions.visitUploaderProfile(m_selected);
     });
   }
 

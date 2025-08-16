@@ -40,6 +40,12 @@ public:
   virtual QString getNexusDescription() const override { return QString(); }
   virtual void setNexusCategory(int) override {}
   virtual int getNexusCategory() const override { return 0; }
+  virtual QString author() const override { return QString(); }
+  virtual void setAuthor(const QString&) override {}
+  virtual QString uploader() const override { return QString(); }
+  virtual void setUploader(const QString&) override {}
+  virtual QString uploaderUrl() const override { return QString(); }
+  virtual void setUploaderUrl(const QString&) override {}
   virtual bool isBackup() const override { return true; }
 
   virtual void addInstalledFile(int, int) override {}

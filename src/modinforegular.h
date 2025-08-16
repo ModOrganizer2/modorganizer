@@ -389,6 +389,36 @@ public:
    */
   virtual void setNexusCategory(int category) override;
 
+  /**
+   * @return the author of the mod.
+   */
+  virtual QString author() const override;
+
+  /**
+   * @brief Set the author of the mod.
+   */
+  virtual void setAuthor(const QString&) override;
+
+  /**
+   * @return the name of the uploader of this mod.
+   */
+  virtual QString uploader() const override;
+
+  /**
+   * @brief Set the name of the uploader of this mod.
+   */
+  virtual void setUploader(const QString&) override;
+
+  /**
+   * @return the URL of the uploader of this mod's profile.
+   */
+  virtual QString uploaderUrl() const override;
+
+  /**
+   * @brief Set the URL of the uploader of this mod's profile.
+   */
+  virtual void setUploaderUrl(const QString&) override;
+
   virtual QStringList archives(bool checkOnDisk = false) override;
 
   virtual void setColor(QColor color) override;
@@ -468,6 +498,9 @@ private:
   QDateTime m_LastNexusUpdate;
   QDateTime m_NexusLastModified;
   int m_NexusCategory;
+  QString m_Author;
+  QString m_Uploader;
+  QString m_UploaderUrl;
 
   QColor m_Color;
 

@@ -503,6 +503,8 @@ public slots:
 
   void visitOnNexus(int index);
 
+  void visitUploaderProfile(int index);
+
   void openFile(int index);
 
   void openMetaFile(int index);

@@ -183,6 +183,26 @@ bool ModListSortProxy::lessThan(const QModelIndex& left, const QModelIndex& righ
       }
     }
   } break;
+  case ModList::COL_AUTHOR: {
+    if (leftMod->author() != rightMod->author()) {
+      lt = leftMod->author() < rightMod->author();
+    } else {
+      int comp = QString::compare(leftMod->uploader(), rightMod->uploader(),
+                                  Qt::CaseInsensitive);
+      if (comp != 0)
+        lt = comp < 0;
+    }
+  } break;
+  case ModList::COL_UPLOADER: {
+    if (leftMod->uploader() != rightMod->uploader()) {
+      lt = leftMod->uploader() < rightMod->uploader();
+    } else {
+      int comp = QString::compare(leftMod->uploader(), rightMod->uploader(),
+                                  Qt::CaseInsensitive);
+      if (comp != 0)
+        lt = comp < 0;
+    }
+  } break;
   case ModList::COL_MODID: {
     if (leftMod->nexusId() != rightMod->nexusId())
       lt = leftMod->nexusId() < rightMod->nexusId();
@@ -447,14 +467,26 @@ bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
       segmentGood             = true;
       bool foundKeyword       = false;
 
-      // check each word in the segment for match, each word needs to be matched but it
-      // doesn't matter where.
+      // check each word in the segment for match, each word needs to be matched but
+      // it doesn't matter where.
       for (auto& currentKeyword : ANDKeywords) {
         foundKeyword = false;
 
         // search keyword in name
         if (m_EnabledColumns[ModList::COL_NAME] &&
             info->name().contains(currentKeyword, Qt::CaseInsensitive)) {
+          foundKeyword = true;
+        }
+
+        // Search by author
+        if (!foundKeyword && m_EnabledColumns[ModList::COL_AUTHOR] &&
+            info->author().contains(currentKeyword, Qt::CaseInsensitive)) {
+          foundKeyword = true;
+        }
+
+        // Search by uploader
+        if (!foundKeyword && m_EnabledColumns[ModList::COL_UPLOADER] &&
+            info->uploader().contains(currentKeyword, Qt::CaseInsensitive)) {
           foundKeyword = true;
         }
 
@@ -601,8 +633,8 @@ bool ModListSortProxy::canDropMimeData(const QMimeData* data, Qt::DropAction act
 
   // disable drop install with group proxy, except the one for collapsible separator
   // - it would be nice to be able to "install to category" or something like that but
-  //   it's a bit more complicated since the drop position is based on the category, so
-  //   just disabling for now
+  //   it's a bit more complicated since the drop position is based on the category,
+  //   so just disabling for now
   if (dropInfo.isDownloadDrop()) {
     // maybe there is a cleaner way?
     if (qobject_cast<QtGroupingProxy*>(sourceModel())) {
@@ -675,8 +707,8 @@ void ModListSortProxy::aboutToChangeData()
 void ModListSortProxy::postDataChanged()
 {
   // if the filter is re-activated right away the editor can't be deleted but becomes
-  // invisible or at least the view continues to think it's being edited. As a result no
-  // new editor can be opened
+  // invisible or at least the view continues to think it's being edited. As a result
+  // no new editor can be opened
   QTimer::singleShot(10, [this]() {
     setCriteria(m_PreChangeCriteria);
     m_PreChangeCriteria.clear();

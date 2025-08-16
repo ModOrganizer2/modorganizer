@@ -85,6 +85,8 @@ public:
     COL_FLAGS,
     COL_CONTENT,
     COL_CATEGORY,
+    COL_AUTHOR,
+    COL_UPLOADER,
     COL_MODID,
     COL_GAME,
     COL_VERSION,

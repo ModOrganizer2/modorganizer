@@ -37,6 +37,8 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
           SLOT(queryInfoMd5(int)));
   connect(ui.list, SIGNAL(visitOnNexus(int)), m_core.downloadManager(),
           SLOT(visitOnNexus(int)));
+  connect(ui.list, SIGNAL(visitUploaderProfile(int)), m_core.downloadManager(),
+          SLOT(visitUploaderProfile(int)));
   connect(ui.list, SIGNAL(openFile(int)), m_core.downloadManager(),
           SLOT(openFile(int)));
   connect(ui.list, SIGNAL(openMetaFile(int)), m_core.downloadManager(),
