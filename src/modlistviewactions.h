@@ -175,15 +175,11 @@ private:
   //
   void checkModsForUpdates(std::multimap<QString, int> const& IDs) const;
 
-  // ask the user for confirmation for opening many Nexus links at once.
+  // ask the user for confirmation for opening many links at once.
   // returns true if the user confirmed, false otherwise.
   //
-  bool askOpenNexusLinksConfirmation(const qlonglong numberOfLinks) const;
-
-  // ask the user for confirmation for opening many web pages at once.
-  // returns true if the user confirmed, false otherwise.
-  //
-  bool askOpenWebPagesConfirmation(const qlonglong numberOfLinks) const;
+  bool askOpenLinksConfirmation(std::size_t numberOfLinks,
+                                const QString& nameOfLinks) const;
 
 private:
   OrganizerCore& m_core;

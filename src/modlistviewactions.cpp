@@ -908,7 +908,7 @@ void ModListViewActions::markConverted(const QModelIndexList& indices) const
 void ModListViewActions::visitOnNexus(const QModelIndexList& indices) const
 {
   if (indices.size() > 10) {
-    if (!askOpenNexusLinksConfirmation(indices.size())) {
+    if (!askOpenLinksConfirmation(indices.size(), tr("Nexus Links"))) {
       return;
     }
   }
@@ -925,20 +925,10 @@ void ModListViewActions::visitOnNexus(const QModelIndexList& indices) const
   }
 }
 
-bool ModListViewActions::askOpenNexusLinksConfirmation(
-    const qlonglong numberOfLinks) const
-{
-  return QMessageBox::question(m_parent, tr("Opening Nexus Links"),
-                               tr("You are trying to open %1 links to Nexus Mods.  Are "
-                                  "you sure you want to do this?")
-                                   .arg(numberOfLinks),
-                               QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes;
-}
-
 void ModListViewActions::visitWebPage(const QModelIndexList& indices) const
 {
   if (indices.size() > 10) {
-    if (!askOpenWebPagesConfirmation(indices.size())) {
+    if (!askOpenLinksConfirmation(indices.size(), tr("Web Pages"))) {
       return;
     }
   }
@@ -956,7 +946,7 @@ void ModListViewActions::visitWebPage(const QModelIndexList& indices) const
 void ModListViewActions::visitNexusOrWebPage(const QModelIndexList& indices) const
 {
   if (indices.size() > 10) {
-    if (!askOpenWebPagesConfirmation(indices.size())) {
+    if (!askOpenLinksConfirmation(indices.size(), tr("Web Pages"))) {
       return;
     }
   }
@@ -985,7 +975,7 @@ void ModListViewActions::visitNexusOrWebPage(const QModelIndexList& indices) con
 void ModListViewActions::visitUploaderProfile(const QModelIndexList& indices) const
 {
   if (indices.size() > 10) {
-    if (!askOpenWebPagesConfirmation(indices.size())) {
+    if (!askOpenLinksConfirmation(indices.size(), tr("Uploader Profiles"))) {
       return;
     }
   }
@@ -1002,13 +992,14 @@ void ModListViewActions::visitUploaderProfile(const QModelIndexList& indices) co
   }
 }
 
-bool ModListViewActions::askOpenWebPagesConfirmation(
-    const qlonglong numberOfLinks) const
+bool ModListViewActions::askOpenLinksConfirmation(std::size_t numberOfLinks,
+                                                  const QString& nameOfLinks) const
 {
-  return QMessageBox::question(m_parent, tr("Opening Web Pages"),
-                               tr("You are trying to open %1 Web Pages.  Are you sure "
+  return QMessageBox::question(m_parent, tr("Opening %1").arg(nameOfLinks),
+                               tr("You are trying to open %1 %2. Are you sure "
                                   "you want to do this?")
-                                   .arg(numberOfLinks),
+                                   .arg(numberOfLinks)
+                                   .arg(nameOfLinks),
                                QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes;
 }
 
