@@ -7,7 +7,7 @@ on:
     types: [opened, synchronize, reopened]
 
 env:
-  VCPKG_BINARY_SOURCES: clear;x-azblob,${{ vars.AZ_BLOB_VCPKG_URL }},${{ secrets.AZ_BLOB_SAS }},readwrite
+  VCPKG_BINARY_SOURCES: ${{ vars.AZ_BLOB_VCPKG_URL != '' && format('clear;x-azblob,{0},{1},readwrite', vars.AZ_BLOB_VCPKG_URL, secrets.AZ_BLOB_SAS) || '' }}
 
 jobs:
   build:
