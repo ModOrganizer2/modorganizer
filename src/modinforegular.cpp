@@ -98,6 +98,9 @@ void ModInfoRegular::readMeta()
   m_NexusDescription = metaFile.value("nexusDescription", "").toString();
   m_NexusFileStatus  = metaFile.value("nexusFileStatus", "1").toInt();
   m_NexusCategory    = metaFile.value("nexusCategory", 0).toInt();
+  m_Author           = metaFile.value("author", "").toString();
+  m_Uploader         = metaFile.value("uploader", "").toString();
+  m_UploaderUrl      = metaFile.value("uploaderUrl", "").toString();
   m_Repository       = metaFile.value("repository", "Nexus").toString();
   m_Converted        = metaFile.value("converted", false).toBool();
   m_Validated        = metaFile.value("validated", false).toBool();
@@ -270,6 +273,9 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("lastNexusUpdate", m_LastNexusUpdate.toString(Qt::ISODate));
       metaFile.setValue("nexusLastModified", m_NexusLastModified.toString(Qt::ISODate));
       metaFile.setValue("nexusCategory", m_NexusCategory);
+      metaFile.setValue("author", m_Author);
+      metaFile.setValue("uploader", m_Uploader);
+      metaFile.setValue("uploaderUrl", m_UploaderUrl);
       metaFile.setValue("converted", m_Converted);
       metaFile.setValue("validated", m_Validated);
       metaFile.setValue("color", m_Color);
@@ -853,6 +859,45 @@ void ModInfoRegular::setNexusCategory(int category)
   m_NexusCategory   = category;
   m_MetaInfoChanged = true;
   saveMeta();
+}
+
+QString ModInfoRegular::author() const
+{
+  return m_Author;
+}
+
+void ModInfoRegular::setAuthor(const QString& author)
+{
+  m_Author          = author;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
+}
+
+QString ModInfoRegular::uploader() const
+{
+  return m_Uploader;
+}
+
+void ModInfoRegular::setUploader(const QString& uploader)
+{
+  m_Uploader        = uploader;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
+}
+
+QString ModInfoRegular::uploaderUrl() const
+{
+  return m_UploaderUrl;
+}
+
+void ModInfoRegular::setUploaderUrl(const QString& uploaderUrl)
+{
+  m_UploaderUrl     = uploaderUrl;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
 }
 
 void ModInfoRegular::setCustomURL(QString const& url)

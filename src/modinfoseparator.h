@@ -49,6 +49,12 @@ public:
   virtual void setNexusCategory(int) override {}
   virtual QDateTime creationTime() const override { return QDateTime(); }
   virtual QString getNexusDescription() const override { return QString(); }
+  virtual QString author() const override { return QString(); }
+  virtual void setAuthor(const QString&) override {}
+  virtual QString uploader() const override { return QString(); }
+  virtual void setUploader(const QString&) override {}
+  virtual QString uploaderUrl() const override { return QString(); }
+  virtual void setUploaderUrl(const QString&) override {}
   virtual void addInstalledFile(int /*modId*/, int /*fileId*/) override {}
   virtual bool isSeparator() const override { return true; }
 

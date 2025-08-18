@@ -3357,6 +3357,12 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
 
     mod->setNexusCategory(result["category_id"].toInt());
 
+    mod->setAuthor(result["author"].toString());
+
+    mod->setUploader(result["uploaded_by"].toString());
+
+    mod->setUploaderUrl(result["uploaded_users_profile_url"].toString());
+
     if ((mod->endorsedState() != EndorsedState::ENDORSED_NEVER) &&
         (result.contains("endorsement"))) {
       QVariantMap endorsement   = result["endorsement"].toMap();

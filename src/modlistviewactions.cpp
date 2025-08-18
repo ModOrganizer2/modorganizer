@@ -378,8 +378,11 @@ void ModListViewActions::exportModListCSV() const
   QCheckBox* mod_Status = new QCheckBox(tr("Mod_Status"));
   mod_Status->setChecked(true);
   QCheckBox* primary_Category   = new QCheckBox(tr("Primary_Category"));
+  QCheckBox* mod_Author         = new QCheckBox(tr("Mod_Author"));
+  QCheckBox* mod_Uploader       = new QCheckBox(tr("Mod_Uploader"));
   QCheckBox* nexus_ID           = new QCheckBox(tr("Nexus_ID"));
   QCheckBox* mod_Nexus_URL      = new QCheckBox(tr("Mod_Nexus_URL"));
+  QCheckBox* mod_Uploader_URL   = new QCheckBox(tr("Mod_Uploader_URL"));
   QCheckBox* mod_Version        = new QCheckBox(tr("Mod_Version"));
   QCheckBox* install_Date       = new QCheckBox(tr("Install_Date"));
   QCheckBox* download_File_Name = new QCheckBox(tr("Download_File_Name"));
@@ -390,8 +393,11 @@ void ModListViewActions::exportModListCSV() const
   vbox1->addWidget(mod_Status);
   vbox1->addWidget(mod_Note);
   vbox1->addWidget(primary_Category);
+  vbox1->addWidget(mod_Author);
+  vbox1->addWidget(mod_Uploader);
   vbox1->addWidget(nexus_ID);
   vbox1->addWidget(mod_Nexus_URL);
+  vbox1->addWidget(mod_Uploader_URL);
   vbox1->addWidget(mod_Version);
   vbox1->addWidget(install_Date);
   vbox1->addWidget(download_File_Name);
@@ -435,12 +441,21 @@ void ModListViewActions::exportModListCSV() const
       if (primary_Category->isChecked())
         fields.push_back(
             std::make_pair(QString("#Primary_Category"), CSVBuilder::TYPE_STRING));
+      if (mod_Author->isChecked())
+        fields.push_back(
+            std::make_pair(QString("#Mod_Author"), CSVBuilder::TYPE_STRING));
+      if (mod_Uploader->isChecked())
+        fields.push_back(
+            std::make_pair(QString("#Mod_Uploader"), CSVBuilder::TYPE_STRING));
       if (nexus_ID->isChecked())
         fields.push_back(
             std::make_pair(QString("#Nexus_ID"), CSVBuilder::TYPE_INTEGER));
       if (mod_Nexus_URL->isChecked())
         fields.push_back(
             std::make_pair(QString("#Mod_Nexus_URL"), CSVBuilder::TYPE_STRING));
+      if (mod_Uploader_URL->isChecked())
+        fields.push_back(
+            std::make_pair(QString("#Mod_Uploader_URL"), CSVBuilder::TYPE_STRING));
       if (mod_Version->isChecked())
         fields.push_back(
             std::make_pair(QString("#Mod_Version"), CSVBuilder::TYPE_STRING));
@@ -485,6 +500,10 @@ void ModListViewActions::exportModListCSV() const
                 (m_categories.categoryExists(info->primaryCategory()))
                     ? m_categories.getCategoryNameByID(info->primaryCategory())
                     : "");
+          if (mod_Author->isChecked())
+            builder.setRowField("#Mod_Author", info->author());
+          if (mod_Uploader->isChecked())
+            builder.setRowField("#Mod_Uploader", info->uploader());
           if (nexus_ID->isChecked())
             builder.setRowField("#Nexus_ID", info->nexusId());
           if (mod_Nexus_URL->isChecked())
@@ -493,6 +512,8 @@ void ModListViewActions::exportModListCSV() const
                                     ? NexusInterface::instance().getModURL(
                                           info->nexusId(), info->gameName())
                                     : "");
+          if (mod_Uploader_URL->isChecked())
+            builder.setRowField("#Mod_Uploader_URL", info->uploaderUrl());
           if (mod_Version->isChecked())
             builder.setRowField("#Mod_Version", info->version().canonicalString());
           if (install_Date->isChecked())
@@ -887,11 +908,7 @@ void ModListViewActions::markConverted(const QModelIndexList& indices) const
 void ModListViewActions::visitOnNexus(const QModelIndexList& indices) const
 {
   if (indices.size() > 10) {
-    if (QMessageBox::question(m_parent, tr("Opening Nexus Links"),
-                              tr("You are trying to open %1 links to Nexus Mods.  Are "
-                                 "you sure you want to do this?")
-                                  .arg(indices.size()),
-                              QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+    if (!askOpenLinksConfirmation(indices.size(), tr("Nexus Links"))) {
       return;
     }
   }
@@ -911,11 +928,7 @@ void ModListViewActions::visitOnNexus(const QModelIndexList& indices) const
 void ModListViewActions::visitWebPage(const QModelIndexList& indices) const
 {
   if (indices.size() > 10) {
-    if (QMessageBox::question(m_parent, tr("Opening Web Pages"),
-                              tr("You are trying to open %1 Web Pages.  Are you sure "
-                                 "you want to do this?")
-                                  .arg(indices.size()),
-                              QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+    if (!askOpenLinksConfirmation(indices.size(), tr("Web Pages"))) {
       return;
     }
   }
@@ -933,11 +946,7 @@ void ModListViewActions::visitWebPage(const QModelIndexList& indices) const
 void ModListViewActions::visitNexusOrWebPage(const QModelIndexList& indices) const
 {
   if (indices.size() > 10) {
-    if (QMessageBox::question(m_parent, tr("Opening Web Pages"),
-                              tr("You are trying to open %1 Web Pages.  Are you sure "
-                                 "you want to do this?")
-                                  .arg(indices.size()),
-                              QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+    if (!askOpenLinksConfirmation(indices.size(), tr("Web Pages"))) {
       return;
     }
   }
@@ -961,6 +970,37 @@ void ModListViewActions::visitNexusOrWebPage(const QModelIndexList& indices) con
       log::error("mod '{}' has no valid link", info->name());
     }
   }
+}
+
+void ModListViewActions::visitUploaderProfile(const QModelIndexList& indices) const
+{
+  if (indices.size() > 10) {
+    if (!askOpenLinksConfirmation(indices.size(), tr("Uploader Profiles"))) {
+      return;
+    }
+  }
+
+  for (auto& idx : indices) {
+    ModInfo::Ptr info      = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    const auto uploaderUrl = info->uploaderUrl();
+
+    if (!uploaderUrl.isEmpty()) {
+      shell::Open(QUrl(uploaderUrl));
+    } else {
+      log::error("mod '{}' has no uploader url", info->name());
+    }
+  }
+}
+
+bool ModListViewActions::askOpenLinksConfirmation(std::size_t numberOfLinks,
+                                                  const QString& nameOfLinks) const
+{
+  return QMessageBox::question(m_parent, tr("Opening %1").arg(nameOfLinks),
+                               tr("You are trying to open %1 %2. Are you sure "
+                                  "you want to do this?")
+                                   .arg(numberOfLinks)
+                                   .arg(nameOfLinks),
+                               QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes;
 }
 
 void ModListViewActions::reinstallMod(const QModelIndex& index) const

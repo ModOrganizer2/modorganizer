@@ -131,6 +131,9 @@ void NexusBridge::nxmFilesAvailable(QString gameName, int modID, QVariant userDa
       temp.categoryID      = fileInfo["category_id"].toInt();
       temp.fileID          = fileInfo["file_id"].toInt();
       temp.fileSize        = fileInfo["size"].toInt();
+      temp.author          = fileInfo["author"].toString();
+      temp.uploader        = fileInfo["uploaded_by"].toString();
+      temp.uploaderUrl     = fileInfo["uploaded_users_profile_url"].toString();
       fileInfoList.append(&temp);
     }
 
@@ -575,13 +578,16 @@ void NexusInterface::fakeFiles()
 
   QVariantList result;
   QVariantMap fileMap;
-  fileMap["uri"]         = "fakeURI";
-  fileMap["name"]        = "fakeName";
-  fileMap["description"] = "fakeDescription";
-  fileMap["version"]     = "1.0.0";
-  fileMap["category_id"] = "1";
-  fileMap["id"]          = "1";
-  fileMap["size"]        = "512";
+  fileMap["uri"]                        = "fakeURI";
+  fileMap["name"]                       = "fakeName";
+  fileMap["description"]                = "fakeDescription";
+  fileMap["version"]                    = "1.0.0";
+  fileMap["category_id"]                = "1";
+  fileMap["id"]                         = "1";
+  fileMap["size"]                       = "512";
+  fileMap["author"]                     = "fakeAuthor";
+  fileMap["uploaded_by"]                = "fakeUploader";
+  fileMap["uploaded_users_profile_url"] = "https://fakeuploader.com";
   result.append(fileMap);
 
   emit nxmFilesAvailable("fakeGame", 1234, "fake", result, id++);

@@ -148,6 +148,9 @@ DownloadManager::DownloadInfo::createFromMeta(const QString& filePath, bool show
   info->m_FileInfo->fileCategory = metaFile.value("fileCategory", 0).toInt();
   info->m_FileInfo->repository   = metaFile.value("repository", "Nexus").toString();
   info->m_FileInfo->userData     = metaFile.value("userData").toMap();
+  info->m_FileInfo->author       = metaFile.value("author", "").toString();
+  info->m_FileInfo->uploader     = metaFile.value("uploader", "").toString();
+  info->m_FileInfo->uploaderUrl  = metaFile.value("uploaderUrl", "").toString();
   info->m_Reply                  = nullptr;
 
   return info;
@@ -1217,6 +1220,27 @@ void DownloadManager::visitOnNexus(int index)
   }
 }
 
+void DownloadManager::visitUploaderProfile(int index)
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    reportError(tr("VisitUploaderProfile: invalid download index %1").arg(index));
+    return;
+  }
+  DownloadInfo* info = m_ActiveDownloads[index];
+
+  if (info->m_State < DownloadManager::STATE_READY) {
+    // UI shouldn't allow this
+    return;
+  }
+
+  const auto& uploaderUrl = info->m_FileInfo->uploaderUrl;
+  if (!uploaderUrl.isEmpty()) {
+    shell::Open(QUrl(uploaderUrl));
+  } else {
+    emit showMessage(tr("Uploader for this Mod is unknown"));
+  }
+}
+
 void DownloadManager::openFile(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
@@ -1724,6 +1748,9 @@ void DownloadManager::createMetaFile(DownloadInfo* info)
   metaFile.setValue("category", info->m_FileInfo->categoryID);
   metaFile.setValue("repository", info->m_FileInfo->repository);
   metaFile.setValue("userData", info->m_FileInfo->userData);
+  metaFile.setValue("author", info->m_FileInfo->author);
+  metaFile.setValue("uploader", info->m_FileInfo->uploader);
+  metaFile.setValue("uploaderUrl", info->m_FileInfo->uploaderUrl);
   metaFile.setValue("installed", info->m_State == DownloadManager::STATE_INSTALLED);
   metaFile.setValue("uninstalled", info->m_State == DownloadManager::STATE_UNINSTALLED);
   metaFile.setValue("paused", (info->m_State == DownloadManager::STATE_PAUSED) ||
@@ -1753,7 +1780,10 @@ void DownloadManager::nxmDescriptionAvailable(QString, int, QVariant userData,
   DownloadInfo* info = downloadInfoByID(userData.toInt());
   if (info == nullptr)
     return;
-  info->m_FileInfo->categoryID = result["category_id"].toInt();
+  info->m_FileInfo->categoryID  = result["category_id"].toInt();
+  info->m_FileInfo->author      = result["author"].toString();
+  info->m_FileInfo->uploader    = result["uploaded_by"].toString();
+  info->m_FileInfo->uploaderUrl = result["uploaded_users_profile_url"].toString();
   QTextDocument doc;
   doc.setHtml(result["name"].toString().trimmed());
   info->m_FileInfo->modName = doc.toPlainText();
@@ -1813,7 +1843,10 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData,
       info->m_FileInfo->fileName = fileInfo["file_name"].toString();
       info->m_FileInfo->description =
           BBCode::convertToHTML(fileInfo["description"].toString());
-      found = true;
+      info->m_FileInfo->author      = fileInfo["author"].toString();
+      info->m_FileInfo->uploader    = fileInfo["uploaded_by"].toString();
+      info->m_FileInfo->uploaderUrl = fileInfo["uploaded_users_profile_url"].toString();
+      found                         = true;
       break;
     }
   }
@@ -2116,9 +2149,12 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
     info->m_FileInfo->version.parse(fileDetails["mod_version"].toString());
   info->m_FileInfo->fileCategory = fileDetails["category_id"].toInt();
 
-  info->m_FileInfo->modID      = modDetails["mod_id"].toInt();
-  info->m_FileInfo->modName    = modDetails["name"].toString();
-  info->m_FileInfo->categoryID = modDetails["category_id"].toInt();
+  info->m_FileInfo->modID       = modDetails["mod_id"].toInt();
+  info->m_FileInfo->modName     = modDetails["name"].toString();
+  info->m_FileInfo->categoryID  = modDetails["category_id"].toInt();
+  info->m_FileInfo->author      = modDetails["author"].toString();
+  info->m_FileInfo->uploader    = modDetails["uploaded_by"].toString();
+  info->m_FileInfo->uploaderUrl = modDetails["uploaded_users_profile_url"].toString();
 
   QString gameShortName = gameName;
   QStringList games(m_ManagedGame->validShortNames());

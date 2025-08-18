@@ -352,6 +352,21 @@ public:  // IModInterface implementations / Re-declaration
   virtual QStringList categories() const override;
 
   /**
+   * @return the author of the mod.
+   */
+  virtual QString author() const = 0;
+
+  /**
+   * @return the name of the uploader of this mod.
+   */
+  virtual QString uploader() const = 0;
+
+  /**
+   * @return the URL of the uploader of this mod's profile.
+   */
+  virtual QString uploaderUrl() const = 0;
+
+  /**
    * @return the tracked state of this mod.
    */
   virtual MOBase::TrackedState trackedState() const override
@@ -485,6 +500,21 @@ public:  // Mutable operations:
    *     directory name wouldn't be valid).
    */
   virtual bool setName(const QString& name) = 0;
+
+  /**
+   * @brief Set the author of the mod.
+   */
+  virtual void setAuthor(const QString& author) = 0;
+
+  /**
+   * @brief Set the name of the uploader of this mod.
+   */
+  virtual void setUploader(const QString& uploader) = 0;
+
+  /**
+   * @brief Set the URL of the uploader of this mod's profile.
+   */
+  virtual void setUploaderUrl(const QString& uploaderUrl) = 0;
 
 public:  // Methods after this do not come from IModInterface:
   /**

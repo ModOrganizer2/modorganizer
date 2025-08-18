@@ -231,14 +231,18 @@ void DownloadListView::onCustomContextMenu(const QPoint& point)
         menu.addAction(tr("Install"), [=] {
           issueInstall(row);
         });
-        if (m_Manager->isInfoIncomplete(row))
+        if (m_Manager->isInfoIncomplete(row)) {
           menu.addAction(tr("Query Info"), [=] {
             issueQueryInfoMd5(row);
           });
-        else
+        } else {
           menu.addAction(tr("Visit on Nexus"), [=] {
             issueVisitOnNexus(row);
           });
+          menu.addAction(tr("Visit the uploader's profile"), [=] {
+            issueVisitUploaderProfile(row);
+          });
+        }
         menu.addAction(tr("Open File"), [=] {
           issueOpenFile(row);
         });
@@ -406,6 +410,11 @@ void DownloadListView::issueRestoreToViewAll()
 void DownloadListView::issueVisitOnNexus(int index)
 {
   emit visitOnNexus(index);
+}
+
+void DownloadListView::issueVisitUploaderProfile(int index)
+{
+  emit visitUploaderProfile(index);
 }
 
 void DownloadListView::issueOpenFile(int index)

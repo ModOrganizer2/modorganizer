@@ -92,6 +92,7 @@ public:
   void visitOnNexus(const QModelIndexList& indices) const;
   void visitWebPage(const QModelIndexList& indices) const;
   void visitNexusOrWebPage(const QModelIndexList& indices) const;
+  void visitUploaderProfile(const QModelIndexList& indices) const;
   void reinstallMod(const QModelIndex& index) const;
   void createBackup(const QModelIndex& index) const;
   void restoreHiddenFiles(const QModelIndexList& indices) const;
@@ -173,6 +174,12 @@ private:
   // check the given mods from update, the map should map game names to nexus ID
   //
   void checkModsForUpdates(std::multimap<QString, int> const& IDs) const;
+
+  // ask the user for confirmation for opening many links at once.
+  // returns true if the user confirmed, false otherwise.
+  //
+  bool askOpenLinksConfirmation(std::size_t numberOfLinks,
+                                const QString& nameOfLinks) const;
 
 private:
   OrganizerCore& m_core;

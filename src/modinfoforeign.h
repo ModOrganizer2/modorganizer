@@ -67,6 +67,12 @@ public:
   virtual QDateTime getNexusLastModified() const override { return QDateTime(); }
   virtual void setNexusLastModified(QDateTime) override {}
   virtual QString getNexusDescription() const override { return QString(); }
+  virtual QString author() const override { return QString(); }
+  virtual void setAuthor(const QString&) override {}
+  virtual QString uploader() const override { return QString(); }
+  virtual void setUploader(const QString&) override {}
+  virtual QString uploaderUrl() const override { return QString(); }
+  virtual void setUploaderUrl(const QString&) override {}
   virtual QStringList archives(bool = false) override { return m_Archives; }
   virtual QStringList stealFiles() const override
   {
