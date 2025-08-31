@@ -57,7 +57,7 @@ public:
 
 signals:
   void modDataCheckerUpdated(const MOBase::ModDataChecker* check);
-  void modDataContentUpdated(const MOBase::ModDataContent* check);
+  void modDataContentUpdated(const MOBase::ModDataContent* content);
 
 private:
   friend class GameFeaturesProxy;
