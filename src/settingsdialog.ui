@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>820</width>
-    <height>592</height>
+    <height>607</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>7</number>
      </property>
      <widget class="QWidget" name="generalTab">
       <attribute name="title">
@@ -44,8 +44,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>761</width>
-            <height>550</height>
+            <width>766</width>
+            <height>611</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -1052,8 +1052,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>761</width>
-            <height>515</height>
+            <width>766</width>
+            <height>548</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -1742,8 +1742,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>778</width>
-            <height>475</height>
+            <width>780</width>
+            <height>489</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -2041,9 +2041,6 @@ p, li { white-space: pre-wrap; }
               </item>
               <item>
                <spacer name="horizontalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>40</width>
@@ -2244,6 +2241,16 @@ programs you are intentionally running.</string>
                                     Maximum number of crash dumps to keep on disk. Use 0 for unlimited.
                                     Set &quot;Crash Dumps&quot; above to None to disable crash dump collection.
                                 </string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QCheckBox" name="usvfsDebugModeBox">
+            <property name="toolTip">
+             <string>For developer only.</string>
+            </property>
+            <property name="text">
+             <string>USVFS Debug Mode</string>
             </property>
            </widget>
           </item>
