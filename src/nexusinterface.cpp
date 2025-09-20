@@ -121,23 +121,28 @@ void NexusBridge::nxmFilesAvailable(QString gameName, int modID, QVariant userDa
     QVariantMap resultInfo = resultData.toMap();
     QList resultList       = resultInfo["files"].toList();
 
+    fileInfoList.reserve(resultList.size());
+
     for (const QVariant& file : resultList) {
-      ModRepositoryFileInfo temp;
+      auto* info           = new ModRepositoryFileInfo();
       QVariantMap fileInfo = file.toMap();
-      temp.uri             = fileInfo["file_name"].toString();
-      temp.name            = fileInfo["name"].toString();
-      temp.description     = BBCode::convertToHTML(fileInfo["description"].toString());
-      temp.version         = VersionInfo(fileInfo["version"].toString());
-      temp.categoryID      = fileInfo["category_id"].toInt();
-      temp.fileID          = fileInfo["file_id"].toInt();
-      temp.fileSize        = fileInfo["size"].toInt();
-      temp.author          = fileInfo["author"].toString();
-      temp.uploader        = fileInfo["uploaded_by"].toString();
-      temp.uploaderUrl     = fileInfo["uploaded_users_profile_url"].toString();
-      fileInfoList.append(&temp);
+      info->uri            = fileInfo["file_name"].toString();
+      info->name           = fileInfo["name"].toString();
+      info->description    = BBCode::convertToHTML(fileInfo["description"].toString());
+      info->version        = VersionInfo(fileInfo["version"].toString());
+      info->categoryID     = fileInfo["category_id"].toInt();
+      info->fileID         = fileInfo["file_id"].toInt();
+      info->fileSize       = fileInfo["size"].toInt();
+      info->author         = fileInfo["author"].toString();
+      info->uploader       = fileInfo["uploaded_by"].toString();
+      info->uploaderUrl    = fileInfo["uploaded_users_profile_url"].toString();
+      fileInfoList.append(info);
     }
 
     emit filesAvailable(gameName, modID, userData, fileInfoList);
+
+    // This implementation intentionally introduces a memory leak to prevent a critical use-after-free bug.
+    // The slot connected to the 'filesAvailable' signal is now responsible for memory deallocation.
   }
 }
 
