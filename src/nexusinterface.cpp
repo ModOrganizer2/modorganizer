@@ -141,8 +141,9 @@ void NexusBridge::nxmFilesAvailable(QString gameName, int modID, QVariant userDa
 
     emit filesAvailable(gameName, modID, userData, fileInfoList);
 
-    // This implementation intentionally introduces a memory leak to prevent a critical use-after-free bug.
-    // The slot connected to the 'filesAvailable' signal is now responsible for memory deallocation.
+    // This implementation intentionally introduces a memory leak to prevent a critical
+    // use-after-free bug. The slot connected to the 'filesAvailable' signal is now
+    // responsible for memory deallocation.
   }
 }
 
