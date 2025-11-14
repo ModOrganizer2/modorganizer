@@ -21,14 +21,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusoauthconfig.h"
 #include "utility.h"
 #include <QAbstractOAuth>
+#include <QCryptographicHash>
 #include <QHostAddress>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <QMultiMap>
+#include <QRandomGenerator>
 #include <QUrl>
 #include <QVariant>
-#include <QMultiMap>
-#include <QCryptographicHash>
-#include <QRandomGenerator>
 #include <QtNetworkAuth/QOAuth2AuthorizationCodeFlow>
 #include <QtNetworkAuth/QOAuthHttpServerReplyHandler>
 
@@ -42,9 +42,7 @@ QString callbackPath()
 }
 }  // namespace
 
-NexusOAuthLogin::NexusOAuthLogin(QObject* parent)
-    : QObject(parent), m_active(false)
-{}
+NexusOAuthLogin::NexusOAuthLogin(QObject* parent) : QObject(parent), m_active(false) {}
 
 NexusOAuthLogin::~NexusOAuthLogin() = default;
 
@@ -102,9 +100,8 @@ void NexusOAuthLogin::start()
         injectPkceChallenge(stage, parameters);
       });
 
-  m_replyHandler.reset(
-      new QOAuthHttpServerReplyHandler(QHostAddress::LocalHost, NexusOAuth::redirectPort(),
-                                       this));
+  m_replyHandler.reset(new QOAuthHttpServerReplyHandler(
+      QHostAddress::LocalHost, NexusOAuth::redirectPort(), this));
   m_replyHandler->setCallbackPath(callbackPath());
   m_replyHandler->setCallbackText(QObject::tr(
       "<html><body><h2>Mod Organizer</h2><p>Authorization complete. You may close this "
@@ -143,12 +140,13 @@ void NexusOAuthLogin::start()
 
   QObject::connect(m_flow.get(), &QAbstractOAuth::requestFailed, this,
                    [&](QAbstractOAuth::Error error) {
-                     handleError(QObject::tr("Authorization failed (%1)").arg(int(error)));
+                     handleError(
+                         QObject::tr("Authorization failed (%1)").arg(int(error)));
                    });
 
   QObject::connect(m_flow.get(), &QAbstractOAuth::granted, this, [&] {
-                     notifyTokens();
-                   });
+    notifyTokens();
+  });
 
   m_active = true;
   setState(State::Initializing);
@@ -236,7 +234,7 @@ QByteArray randomBytes(int length)
   QRandomGenerator::system()->generate(bytes.begin(), bytes.end());
   return bytes;
 }
-}
+}  // namespace
 
 void NexusOAuthLogin::injectPkceChallenge(QAbstractOAuth::Stage stage,
                                           QMultiMap<QString, QVariant>* parameters)
@@ -261,7 +259,8 @@ void NexusOAuthLogin::injectPkceChallenge(QAbstractOAuth::Stage stage,
 
   case QAbstractOAuth::Stage::RequestingAccessToken: {
     if (!m_codeVerifier.isEmpty()) {
-      parameters->insert(QStringLiteral("code_verifier"), QString::fromUtf8(m_codeVerifier));
+      parameters->insert(QStringLiteral("code_verifier"),
+                         QString::fromUtf8(m_codeVerifier));
     }
     parameters->insert(QStringLiteral("redirect_uri"), NexusOAuth::redirectUri());
     break;

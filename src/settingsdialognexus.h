@@ -2,12 +2,12 @@
 #define SETTINGSDIALOGNEXUS_H
 
 #include "nexusoauthlogin.h"
-#include "nxmaccessmanager.h"
 #include "nexusoauthtokens.h"
+#include "nxmaccessmanager.h"
 #include "settings.h"
 #include "settingsdialog.h"
-#include <optional>
 #include <memory>
+#include <optional>
 
 class QAbstractButton;
 class QListWidget;

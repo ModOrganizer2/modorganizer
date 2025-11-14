@@ -22,8 +22,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QDateTime>
 #include <QJsonObject>
-#include <optional>
 #include <chrono>
+#include <optional>
 
 struct NexusOAuthTokens
 {
@@ -59,17 +59,15 @@ struct NexusOAuthTokens
   static std::optional<NexusOAuthTokens> fromJson(const QJsonObject& json)
   {
     NexusOAuthTokens tokens;
-    tokens.accessToken = json.value(QStringLiteral("access_token")).toString();
+    tokens.accessToken  = json.value(QStringLiteral("access_token")).toString();
     tokens.refreshToken = json.value(QStringLiteral("refresh_token")).toString();
-    tokens.scope = json.value(QStringLiteral("scope")).toString();
-    tokens.tokenType = json.value(QStringLiteral("token_type")).toString();
-    tokens.expiresAt =
-        QDateTime::fromString(json.value(QStringLiteral("expires_at")).toString(),
-                              Qt::ISODateWithMs);
+    tokens.scope        = json.value(QStringLiteral("scope")).toString();
+    tokens.tokenType    = json.value(QStringLiteral("token_type")).toString();
+    tokens.expiresAt    = QDateTime::fromString(
+        json.value(QStringLiteral("expires_at")).toString(), Qt::ISODateWithMs);
     if (!tokens.expiresAt.isValid()) {
-      tokens.expiresAt =
-          QDateTime::fromString(json.value(QStringLiteral("expires_at")).toString(),
-                                Qt::ISODate);
+      tokens.expiresAt = QDateTime::fromString(
+          json.value(QStringLiteral("expires_at")).toString(), Qt::ISODate);
     }
 
     if (!tokens.isValid()) {
@@ -87,7 +85,7 @@ struct NexusOAuthTokens
 inline NexusOAuthTokens makeTokensFromResponse(const QJsonObject& json)
 {
   NexusOAuthTokens tokens;
-  tokens.accessToken = json.value(QStringLiteral("access_token")).toString();
+  tokens.accessToken  = json.value(QStringLiteral("access_token")).toString();
   tokens.refreshToken = json.value(QStringLiteral("refresh_token")).toString();
   tokens.scope        = json.value(QStringLiteral("scope")).toString();
   tokens.tokenType    = json.value(QStringLiteral("token_type")).toString();

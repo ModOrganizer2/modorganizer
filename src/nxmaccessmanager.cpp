@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include <QCoreApplication>
 #include <QDir>
+#include <QEventLoop>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QMessageBox>
@@ -37,7 +38,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkProxy>
 #include <QNetworkRequest>
 #include <QPushButton>
-#include <QEventLoop>
 #include <QThread>
 #include <QUrlQuery>
 
@@ -704,8 +704,7 @@ NXMAccessManager::refreshTokensBlocking(const NexusOAuthTokens& current)
   request.setRawHeader("Application-Version", MOVersion().toUtf8());
 
   QUrlQuery formData;
-  formData.addQueryItem(QStringLiteral("grant_type"),
-                        QStringLiteral("refresh_token"));
+  formData.addQueryItem(QStringLiteral("grant_type"), QStringLiteral("refresh_token"));
   formData.addQueryItem(QStringLiteral("refresh_token"), current.refreshToken);
   formData.addQueryItem(QStringLiteral("client_id"), NexusOAuth::clientId());
 

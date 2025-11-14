@@ -28,8 +28,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "shared/appconfig.h"
 #include <QJsonDocument>
 #include <expanderwidget.h>
-#include <optional>
 #include <iplugingame.h>
+#include <optional>
 #include <utility.h>
 
 using namespace MOBase;
@@ -2521,7 +2521,7 @@ std::optional<NexusOAuthTokens> parseStoredTokens(const QString& raw)
 
 bool GlobalSettings::nexusOAuthTokens(NexusOAuthTokens& tokens)
 {
-  const auto raw = getWindowsCredential(NexusOAuthCredentialKey);
+  const auto raw    = getWindowsCredential(NexusOAuthCredentialKey);
   const auto parsed = parseStoredTokens(raw);
   if (!parsed) {
     return false;
@@ -2533,8 +2533,7 @@ bool GlobalSettings::nexusOAuthTokens(NexusOAuthTokens& tokens)
 
 bool GlobalSettings::setNexusOAuthTokens(const NexusOAuthTokens& tokens)
 {
-  const auto payload =
-      QJsonDocument(tokens.toJson()).toJson(QJsonDocument::Compact);
+  const auto payload = QJsonDocument(tokens.toJson()).toJson(QJsonDocument::Compact);
 
   if (!setWindowsCredential(NexusOAuthCredentialKey, payload)) {
     const auto e = GetLastError();
