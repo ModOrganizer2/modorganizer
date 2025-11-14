@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGS_H
 
 #include "envdump.h"
+#include "nexusoauthtokens.h"
 #include <lootcli/lootcli.h>
 #include <questionboxmemory.h>
 #include <uibase/filterwidget.h>
@@ -943,23 +944,23 @@ public:
   static bool hideAssignCategoriesQuestion();
   static void setHideAssignCategoriesQuestion(bool b);
 
-  // if the key exists from the credentials store, puts it in `apiKey` and
-  // returns true; otherwise, returns false and leaves `apiKey` untouched
+  // Retrieves the stored OAuth tokens. Returns false if the credential doesn't exist
+  // or can't be parsed.
   //
-  static bool nexusApiKey(QString& apiKey);
+  static bool nexusOAuthTokens(NexusOAuthTokens& tokens);
 
-  // sets the api key in the credentials store, removes it if empty; returns
-  // false on errors
+  // Persists the OAuth tokens inside the credentials store, replacing the previous
+  // entry. Returns false on errors.
   //
-  static bool setNexusApiKey(const QString& apiKey);
+  static bool setNexusOAuthTokens(const NexusOAuthTokens& tokens);
 
-  // removes the api key from the credentials store; returns false on errors
+  // Removes the stored OAuth tokens; returns false on errors.
   //
-  static bool clearNexusApiKey();
+  static bool clearNexusOAuthTokens();
 
-  // returns whether an API key is currently stored
+  // Returns whether OAuth tokens are currently stored.
   //
-  static bool hasNexusApiKey();
+  static bool hasNexusOAuthTokens();
 
   // resets anything that the user can disable
   static void resetDialogs();
