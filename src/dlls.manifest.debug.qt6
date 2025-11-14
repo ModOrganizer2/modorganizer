@@ -12,6 +12,7 @@
   <file name="Qt6Cored.dll" />
   <file name="Qt6Guid.dll" />
   <file name="Qt6Networkd.dll" />
+  <file name="Qt6NetworkAuthd.dll" />
   <file name="Qt6OpenGLd.dll" />
   <file name="Qt6OpenGLWidgetsd.dll" />
   <file name="Qt6Positioningd.dll" />

@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define NXMACCESSMANAGER_H
 
 #include "apiuseraccount.h"
+#include "nexusoauthtokens.h"
 #include "ui_validationprogressdialog.h"
 #include <QDialogButtonBox>
 #include <QElapsedTimer>
@@ -28,7 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkReply>
 #include <QProgressDialog>
 #include <QTimer>
-#include <QWebSocket>
+#include <optional>
 #include <set>
 
 namespace MOBase
@@ -37,53 +38,6 @@ class IPluginGame;
 }
 class NXMAccessManager;
 class Settings;
-
-class NexusSSOLogin
-{
-public:
-  enum States
-  {
-    ConnectingToSSO,
-    WaitingForToken,
-    WaitingForBrowser,
-    Finished,
-    Timeout,
-    ClosedByRemote,
-    Cancelled,
-    Error
-  };
-
-  std::function<void(QString)> keyChanged;
-  std::function<void(States, QString)> stateChanged;
-
-  static QString stateToString(States s, const QString& e);
-
-  NexusSSOLogin();
-
-  void start();
-  void cancel();
-
-  bool isActive() const;
-
-private:
-  QWebSocket m_socket;
-  QString m_guid;
-  bool m_keyReceived;
-  bool m_active;
-  QTimer m_timeout;
-
-  void setState(States s, const QString& error = {});
-
-  void close();
-  void abort();
-
-  void onConnected();
-  void onMessage(const QString& s);
-  void onDisconnected();
-  void onError(QAbstractSocket::SocketError e);
-  void onSslErrors(const QList<QSslError>& errors);
-  void onTimeout();
-};
 
 class ValidationAttempt
 {
@@ -104,7 +58,7 @@ public:
   ValidationAttempt(const ValidationAttempt&)            = delete;
   ValidationAttempt& operator=(const ValidationAttempt&) = delete;
 
-  void start(NXMAccessManager& m, const QString& key);
+  void start(NXMAccessManager& m, const NexusOAuthTokens& tokens);
   void cancel();
 
   bool done() const;
@@ -119,8 +73,9 @@ private:
   QString m_message;
   QTimer m_timeout;
   QElapsedTimer m_elapsed;
+  NexusOAuthTokens m_tokens;
 
-  bool sendRequest(NXMAccessManager& m, const QString& key);
+  bool sendRequest(NXMAccessManager& m, const NexusOAuthTokens& tokens);
 
   void onFinished();
   void onSslErrors(const QList<QSslError>& errors);
@@ -150,7 +105,7 @@ public:
   NexusKeyValidator(Settings* s, NXMAccessManager& am);
   ~NexusKeyValidator();
 
-  void start(const QString& key, Behaviour b);
+  void start(const NexusOAuthTokens& tokens, Behaviour b);
   void cancel();
 
   bool isActive() const;
@@ -160,7 +115,7 @@ public:
 private:
   Settings* m_settings;
   NXMAccessManager& m_manager;
-  QString m_key;
+  std::optional<NexusOAuthTokens> m_tokens;
   std::vector<std::unique_ptr<ValidationAttempt>> m_attempts;
 
   void createAttempts(const std::vector<std::chrono::seconds>& timeouts);
@@ -219,7 +174,10 @@ public:
   bool validateAttempted() const;
   bool validateWaiting() const;
 
-  void apiCheck(const QString& apiKey, bool force = false);
+  void apiCheck(const NexusOAuthTokens& tokens, bool force = false);
+  void setTokens(const NexusOAuthTokens& tokens);
+  std::optional<NexusOAuthTokens> tokens() const;
+  bool ensureFreshToken();
 
   void showCookies() const;
 
@@ -228,7 +186,7 @@ public:
   QString userAgent(const QString& subModule = QString()) const;
   const QString& MOVersion() const;
 
-  void clearApiKey();
+  void clearTokens();
 
   void refuseValidation();
 
@@ -270,8 +228,10 @@ private:
   QString m_MOVersion;
   NexusKeyValidator m_validator;
   States m_validationState;
+  std::optional<NexusOAuthTokens> m_tokens;
 
-  void startValidationCheck(const QString& key);
+  void startValidationCheck(const NexusOAuthTokens& tokens);
+  std::optional<NexusOAuthTokens> refreshTokensBlocking(const NexusOAuthTokens& current);
 
   void onValidatorFinished(ValidationAttempt::Result r, const QString& message,
                            std::optional<APIUserAccount>);

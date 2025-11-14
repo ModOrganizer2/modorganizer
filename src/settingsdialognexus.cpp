@@ -1,8 +1,8 @@
 #include "settingsdialognexus.h"
 #include "log.h"
 #include "nexusinterface.h"
+#include "nexusoauthlogin.h"
 #include "serverinfo.h"
-#include "ui_nexusmanualkey.h"
 #include "ui_settingsdialog.h"
 #include <utility.h>
 
@@ -26,61 +26,12 @@ private:
   int m_SortRole;
 };
 
-class NexusManualKeyDialog : public QDialog
-{
-public:
-  NexusManualKeyDialog(QWidget* parent)
-      : QDialog(parent), ui(new Ui::NexusManualKeyDialog)
-  {
-    ui->setupUi(this);
-    ui->key->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
-
-    connect(ui->openBrowser, &QPushButton::clicked, [&] {
-      openBrowser();
-    });
-    connect(ui->paste, &QPushButton::clicked, [&] {
-      paste();
-    });
-    connect(ui->clear, &QPushButton::clicked, [&] {
-      clear();
-    });
-  }
-
-  void accept() override
-  {
-    m_key = ui->key->toPlainText();
-    QDialog::accept();
-  }
-
-  const QString& key() const { return m_key; }
-
-  void openBrowser()
-  {
-    shell::Open(QUrl("https://www.nexusmods.com/users/myaccount?tab=api"));
-  }
-
-  void paste()
-  {
-    const auto text = QApplication::clipboard()->text();
-    if (!text.isEmpty()) {
-      ui->key->setPlainText(text);
-    }
-  }
-
-  void clear() { ui->key->clear(); }
-
-private:
-  std::unique_ptr<Ui::NexusManualKeyDialog> ui;
-  QString m_key;
-};
-
 NexusConnectionUI::NexusConnectionUI(QWidget* parent, Settings* s,
                                      QAbstractButton* connectButton,
                                      QAbstractButton* disconnectButton,
-                                     QAbstractButton* manualButton,
                                      QListWidget* logList)
     : m_parent(parent), m_settings(s), m_connect(connectButton),
-      m_disconnect(disconnectButton), m_manual(manualButton), m_log(logList)
+      m_disconnect(disconnectButton), m_log(logList)
 {
   if (m_connect) {
     QObject::connect(m_connect, &QPushButton::clicked, [&] {
@@ -94,13 +45,7 @@ NexusConnectionUI::NexusConnectionUI(QWidget* parent, Settings* s,
     });
   }
 
-  if (m_manual) {
-    QObject::connect(manualButton, &QPushButton::clicked, [&] {
-      manual();
-    });
-  }
-
-  if (GlobalSettings::hasNexusApiKey()) {
+  if (GlobalSettings::hasNexusOAuthTokens()) {
     addLog(tr("Connected."));
   } else {
     addLog(tr("Not connected."));
@@ -117,52 +62,31 @@ void NexusConnectionUI::connect()
   }
 
   if (!m_nexusLogin) {
-    m_nexusLogin.reset(new NexusSSOLogin);
+    m_nexusLogin.reset(new NexusOAuthLogin(m_parent));
 
-    m_nexusLogin->keyChanged = [&](auto&& s) {
-      onSSOKeyChanged(s);
+    m_nexusLogin->tokensReceived = [&](const NexusOAuthTokens& tokens) {
+      onTokensReceived(tokens);
     };
 
-    m_nexusLogin->stateChanged = [&](auto&& s, auto&& e) {
-      onSSOStateChanged(s, e);
+    m_nexusLogin->stateChanged = [&](auto&& state, auto&& message) {
+      onOAuthStateChanged(state, message);
     };
   }
 
   m_log->clear();
+  m_pendingTokens.reset();
   m_nexusLogin->start();
   updateState();
 }
 
-void NexusConnectionUI::manual()
-{
-  if (m_nexusValidator && m_nexusValidator->isActive()) {
-    m_nexusValidator->cancel();
-    return;
-  }
-
-  NexusManualKeyDialog d(m_parent);
-  if (d.exec() != QDialog::Accepted) {
-    return;
-  }
-
-  const auto key = d.key();
-  if (key.isEmpty()) {
-    clearKey();
-    return;
-  }
-
-  m_log->clear();
-  validateKey(key);
-}
-
 void NexusConnectionUI::disconnect()
 {
-  clearKey();
+  clearTokens();
   m_log->clear();
   addLog(tr("Disconnected."));
 }
 
-void NexusConnectionUI::validateKey(const QString& key)
+void NexusConnectionUI::validateTokens(const NexusOAuthTokens& tokens)
 {
   if (!m_nexusValidator) {
     m_nexusValidator.reset(new NexusKeyValidator(
@@ -173,25 +97,21 @@ void NexusConnectionUI::validateKey(const QString& key)
     };
   }
 
-  addLog(tr("Checking API key..."));
-  m_nexusValidator->start(key, NexusKeyValidator::OneShot);
+  addLog(tr("Authorizing with Nexus..."));
+  m_nexusValidator->start(tokens, NexusKeyValidator::OneShot);
 }
 
-void NexusConnectionUI::onSSOKeyChanged(const QString& key)
+void NexusConnectionUI::onTokensReceived(const NexusOAuthTokens& tokens)
 {
-  if (key.isEmpty()) {
-    clearKey();
-  } else {
-    addLog(tr("Received API key."));
-    validateKey(key);
-  }
+  m_pendingTokens = tokens;
+  addLog(tr("Received authorization from Nexus."));
+  validateTokens(tokens);
 }
 
-void NexusConnectionUI::onSSOStateChanged(NexusSSOLogin::States s, const QString& e)
+void NexusConnectionUI::onOAuthStateChanged(NexusOAuthLogin::State s, const QString& e)
 {
-  if (s != NexusSSOLogin::Finished) {
-    // finished state is handled in onSSOKeyChanged()
-    const auto log = NexusSSOLogin::stateToString(s, e);
+  if (s != NexusOAuthLogin::State::Finished) {
+    const auto log = NexusOAuthLogin::stateToString(s, e);
 
     for (auto&& line : log.split("\n")) {
       addLog(line);
@@ -205,14 +125,19 @@ void NexusConnectionUI::onValidatorFinished(ValidationAttempt::Result r,
                                             const QString& message,
                                             std::optional<APIUserAccount> user)
 {
+  Q_UNUSED(r);
   if (user) {
     NexusInterface::instance().setUserAccount(*user);
     addLog(tr("Received user account information"));
 
-    if (setKey(user->apiKey())) {
-      addLog(tr("Linked with Nexus successfully."));
+    if (m_pendingTokens) {
+      if (persistTokens(*m_pendingTokens)) {
+        addLog(tr("Linked with Nexus successfully."));
+      } else {
+        addLog(tr("Failed to store OAuth tokens."));
+      }
     } else {
-      addLog(tr("Failed to set API key"));
+      addLog(tr("Linked with Nexus successfully."));
     }
   } else {
     if (message.isEmpty()) {
@@ -223,6 +148,7 @@ void NexusConnectionUI::onValidatorFinished(ValidationAttempt::Result r,
     }
   }
 
+  m_pendingTokens.reset();
   updateState();
 }
 
@@ -232,9 +158,13 @@ void NexusConnectionUI::addLog(const QString& s)
   m_log->scrollToBottom();
 }
 
-bool NexusConnectionUI::setKey(const QString& key)
+bool NexusConnectionUI::persistTokens(const NexusOAuthTokens& tokens)
 {
-  const bool ret = GlobalSettings::setNexusApiKey(key);
+  const bool ret = GlobalSettings::setNexusOAuthTokens(tokens);
+  if (ret) {
+    NexusInterface::instance().getAccessManager()->setTokens(tokens);
+  }
+
   updateState();
 
   emit keyChanged();
@@ -242,11 +172,11 @@ bool NexusConnectionUI::setKey(const QString& key)
   return ret;
 }
 
-bool NexusConnectionUI::clearKey()
+bool NexusConnectionUI::clearTokens()
 {
-  const auto ret = GlobalSettings::clearNexusApiKey();
+  const auto ret = GlobalSettings::clearNexusOAuthTokens();
 
-  NexusInterface::instance().getAccessManager()->clearApiKey();
+  NexusInterface::instance().getAccessManager()->clearTokens();
   updateState();
 
   emit keyChanged();
@@ -266,25 +196,17 @@ void NexusConnectionUI::updateState()
   };
 
   if (m_nexusLogin && m_nexusLogin->isActive()) {
-    // api key is in the process of being retrieved
     setButton(m_connect, true, QObject::tr("Cancel"));
     setButton(m_disconnect, false);
-    setButton(m_manual, false, QObject::tr("Enter API Key Manually"));
   } else if (m_nexusValidator && m_nexusValidator->isActive()) {
-    // api key is in the process of being tested
     setButton(m_connect, false, QObject::tr("Connect to Nexus"));
     setButton(m_disconnect, false);
-    setButton(m_manual, true, QObject::tr("Cancel"));
-  } else if (GlobalSettings::hasNexusApiKey()) {
-    // api key is present
-    setButton(m_connect, false, QObject::tr("Connect to Nexus"));
+  } else if (GlobalSettings::hasNexusOAuthTokens()) {
+    setButton(m_connect, true, QObject::tr("Connect to Nexus"));
     setButton(m_disconnect, true);
-    setButton(m_manual, false, QObject::tr("Enter API Key Manually"));
   } else {
-    // api key not present
     setButton(m_connect, true, QObject::tr("Connect to Nexus"));
     setButton(m_disconnect, false);
-    setButton(m_manual, true, QObject::tr("Enter API Key Manually"));
   }
 
   emit stateChanged();
@@ -325,8 +247,7 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d) : SettingsTab
   }
 
   m_connectionUI.reset(new NexusConnectionUI(&dialog(), &settings(), ui->nexusConnect,
-                                             ui->nexusDisconnect, ui->nexusManualKey,
-                                             ui->nexusLog));
+                                             ui->nexusDisconnect, ui->nexusLog));
 
   QObject::connect(
       m_connectionUI.get(), &NexusConnectionUI::stateChanged, &d,
