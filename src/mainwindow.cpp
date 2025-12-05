@@ -2609,7 +2609,7 @@ void MainWindow::openIniFolder()
   if (m_OrganizerCore.currentProfile()->localSettingsEnabled()) {
     shell::Open(m_OrganizerCore.currentProfile()->absolutePath());
   } else {
-    shell::Open(m_OrganizerCore.managedGame()->documentsDirectory());
+    shell::Open(m_OrganizerCore.managedGame()->documentsDirectory().absolutePath());
   }
 }
 
@@ -2625,12 +2625,12 @@ void MainWindow::openModsFolder()
 
 void MainWindow::openGameFolder()
 {
-  shell::Open(m_OrganizerCore.managedGame()->gameDirectory());
+  shell::Open(m_OrganizerCore.managedGame()->gameDirectory().absolutePath());
 }
 
 void MainWindow::openMyGamesFolder()
 {
-  shell::Open(m_OrganizerCore.managedGame()->documentsDirectory());
+  shell::Open(m_OrganizerCore.managedGame()->documentsDirectory().absolutePath());
 }
 
 QMenu* MainWindow::openFolderMenu()
