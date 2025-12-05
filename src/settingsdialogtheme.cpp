@@ -77,5 +77,5 @@ void ThemeSettingsTab::onExploreStyles()
 {
   QString ssPath = QCoreApplication::applicationDirPath() + "/" +
                    ToQString(AppConfig::stylesheetsPath());
-  shell::Explore(ssPath);
+  shell::Open(ssPath);
 }

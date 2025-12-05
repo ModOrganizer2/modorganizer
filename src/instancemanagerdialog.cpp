@@ -464,21 +464,21 @@ void InstanceManagerDialog::rename()
 void InstanceManagerDialog::exploreLocation()
 {
   if (const auto* i = singleSelection()) {
-    shell::Explore(i->directory());
+    shell::Open(i->directory());
   }
 }
 
 void InstanceManagerDialog::exploreBaseDirectory()
 {
   if (const auto* i = singleSelection()) {
-    shell::Explore(i->baseDirectory());
+    shell::Open(i->baseDirectory());
   }
 }
 
 void InstanceManagerDialog::exploreGame()
 {
   if (const auto* i = singleSelection()) {
-    shell::Explore(i->gameDirectory());
+    shell::Open(i->gameDirectory());
   }
 }
 

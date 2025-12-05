@@ -2577,60 +2577,60 @@ void MainWindow::saveArchiveList()
 void MainWindow::openInstanceFolder()
 {
   QString dataPath = qApp->property("dataPath").toString();
-  shell::Explore(dataPath);
+  shell::Open(dataPath);
 }
 
 void MainWindow::openInstallFolder()
 {
-  shell::Explore(qApp->applicationDirPath());
+  shell::Open(qApp->applicationDirPath());
 }
 
 void MainWindow::openPluginsFolder()
 {
   QString pluginsPath =
       QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
-  shell::Explore(pluginsPath);
+  shell::Open(pluginsPath);
 }
 
 void MainWindow::openStylesheetsFolder()
 {
   QString ssPath = QCoreApplication::applicationDirPath() + "/" +
                    ToQString(AppConfig::stylesheetsPath());
-  shell::Explore(ssPath);
+  shell::Open(ssPath);
 }
 
 void MainWindow::openProfileFolder()
 {
-  shell::Explore(m_OrganizerCore.currentProfile()->absolutePath());
+  shell::Open(m_OrganizerCore.currentProfile()->absolutePath());
 }
 
 void MainWindow::openIniFolder()
 {
   if (m_OrganizerCore.currentProfile()->localSettingsEnabled()) {
-    shell::Explore(m_OrganizerCore.currentProfile()->absolutePath());
+    shell::Open(m_OrganizerCore.currentProfile()->absolutePath());
   } else {
-    shell::Explore(m_OrganizerCore.managedGame()->documentsDirectory());
+    shell::Open(m_OrganizerCore.managedGame()->documentsDirectory());
   }
 }
 
 void MainWindow::openDownloadsFolder()
 {
-  shell::Explore(m_OrganizerCore.settings().paths().downloads());
+  shell::Open(m_OrganizerCore.settings().paths().downloads());
 }
 
 void MainWindow::openModsFolder()
 {
-  shell::Explore(m_OrganizerCore.settings().paths().mods());
+  shell::Open(m_OrganizerCore.settings().paths().mods());
 }
 
 void MainWindow::openGameFolder()
 {
-  shell::Explore(m_OrganizerCore.managedGame()->gameDirectory());
+  shell::Open(m_OrganizerCore.managedGame()->gameDirectory());
 }
 
 void MainWindow::openMyGamesFolder()
 {
-  shell::Explore(m_OrganizerCore.managedGame()->documentsDirectory());
+  shell::Open(m_OrganizerCore.managedGame()->documentsDirectory());
 }
 
 QMenu* MainWindow::openFolderMenu()

@@ -145,7 +145,7 @@ void PluginListContextMenu::openOriginExplorer(const QModelIndexList& indices)
       continue;
     }
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-    shell::Explore(modInfo->absolutePath());
+    shell::Open(modInfo->absolutePath());
   }
 }
 

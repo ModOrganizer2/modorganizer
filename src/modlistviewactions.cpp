@@ -1301,7 +1301,7 @@ void ModListViewActions::openExplorer(const QModelIndexList& index) const
   for (auto& idx : index) {
     ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
     if (!info->isForeign()) {
-      shell::Explore(info->absolutePath());
+      shell::Open(info->absolutePath());
     }
   }
 }

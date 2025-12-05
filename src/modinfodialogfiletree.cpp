@@ -234,7 +234,7 @@ void FileTreeTab::onExplore()
   if (selection.isValid()) {
     shell::Explore(m_fs->filePath(selection));
   } else {
-    shell::Explore(mod().absolutePath());
+    shell::Open(mod().absolutePath());
   }
 }
 
@@ -291,7 +291,7 @@ void FileTreeTab::onUnhide()
 
 void FileTreeTab::onOpenInExplorer()
 {
-  shell::Explore(mod().absolutePath());
+  shell::Open(mod().absolutePath());
 }
 
 bool FileTreeTab::deleteFile(const QModelIndex& index)

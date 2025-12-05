@@ -240,7 +240,7 @@ void LogList::openLogsFolder()
 {
   QString logsPath = qApp->property("dataPath").toString() + "/" +
                      QString::fromStdWString(AppConfig::logPath());
-  shell::Explore(logsPath);
+  shell::Open(logsPath);
 }
 
 QMenu* LogList::createMenu(QWidget* parent)

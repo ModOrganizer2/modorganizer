@@ -1002,7 +1002,7 @@ void ModListView::onDoubleClicked(const QModelIndex& index)
   const auto modifiers = QApplication::queryKeyboardModifiers();
   if (modifiers.testFlag(Qt::ControlModifier)) {
     try {
-      shell::Explore(modInfo->absolutePath());
+      shell::Open(modInfo->absolutePath());
     } catch (const std::exception& e) {
       reportError(e.what());
     }
