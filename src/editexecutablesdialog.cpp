@@ -118,6 +118,9 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel,
   connect(ui->useApplicationIcon, &QCheckBox::toggled, [&] {
     save();
   });
+  connect(ui->minimizeToSystemTray, &QCheckBox::toggled, [&] {
+    save();
+  });
   connect(ui->hide, &QCheckBox::toggled, [&] {
     save();
   });
@@ -382,6 +385,8 @@ void EditExecutablesDialog::clearEdits()
   ui->configureLibraries->setEnabled(false);
   ui->useApplicationIcon->setEnabled(false);
   ui->useApplicationIcon->setChecked(false);
+  ui->minimizeToSystemTray->setEnabled(false);
+  ui->minimizeToSystemTray->setChecked(false);
   ui->hide->setEnabled(false);
   ui->hide->setChecked(false);
 
@@ -398,6 +403,7 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   ui->steamAppID->setEnabled(!e.steamAppID().isEmpty());
   ui->steamAppID->setText(e.steamAppID());
   ui->useApplicationIcon->setChecked(e.usesOwnIcon());
+  ui->minimizeToSystemTray->setChecked(e.minimizeToSystemTray());
   ui->hide->setChecked(e.hide());
 
   m_lastGoodTitle = e.title();
@@ -443,6 +449,7 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   ui->useApplicationIcon->setEnabled(true);
   ui->createFilesInMod->setEnabled(true);
   ui->forceLoadLibraries->setEnabled(true);
+  ui->minimizeToSystemTray->setEnabled(true);
   ui->hide->setEnabled(true);
 }
 
@@ -501,6 +508,12 @@ void EditExecutablesDialog::save()
     e->flags(e->flags() | Executable::UseApplicationIcon);
   } else {
     e->flags(e->flags() & (~Executable::UseApplicationIcon));
+  }
+
+  if (ui->minimizeToSystemTray->isChecked()) {
+    e->flags(e->flags() | Executable::MinimizeToSystemTray);
+  } else {
+    e->flags(e->flags() & (~Executable::MinimizeToSystemTray));
   }
 
   if (ui->hide->isChecked()) {

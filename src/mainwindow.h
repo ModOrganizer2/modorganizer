@@ -34,6 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modlistsortproxy.h"
 #include "plugincontainer.h"
 #include "shared/fileregisterfwd.h"
+#include "systemtraymanager.h"
 
 class Executable;
 class CategoryFactory;
@@ -309,6 +310,8 @@ private:
   QAction* m_LinkToolbar;
   QAction* m_LinkDesktop;
   QAction* m_LinkStartMenu;
+
+  SystemTrayManager* m_SystemTrayManager;
 
   // icon set by the stylesheet, used to remember its original appearance
   // when painting the count

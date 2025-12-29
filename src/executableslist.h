@@ -43,9 +43,10 @@ class Executable
 public:
   enum Flag
   {
-    ShowInToolbar      = 0x02,
-    UseApplicationIcon = 0x04,
-    Hide               = 0x08
+    ShowInToolbar        = 0x02,
+    UseApplicationIcon   = 0x04,
+    Hide                 = 0x08,
+    MinimizeToSystemTray = 0x16
   };
 
   Q_DECLARE_FLAGS(Flags, Flag);
@@ -74,6 +75,7 @@ public:
   bool isShownOnToolbar() const;
   void setShownOnToolbar(bool state);
   bool usesOwnIcon() const;
+  bool minimizeToSystemTray() const;
   bool hide() const;
 
   void mergeFrom(const Executable& other);
