@@ -438,6 +438,19 @@ Right now the only case I know of where this needs to be overwritten is for the 
                </property>
               </widget>
              </item>
+			       <item>
+              <widget class="QCheckBox" name="minimizeToSystemTray">
+               <property name="toolTip">
+                <string>Mod Organizer will minimize to the system tray while this executable is running. It will reappear after it finishes.</string>
+               </property>
+               <property name="whatsThis">
+                <string>Mod Organizer will minimize to the system tray while this executable is running. It will reappear after it finishes.</string>
+               </property>
+               <property name="text">
+                <string>Minimize to system tray while running</string>
+               </property>
+              </widget>
+             </item>
              <item>
               <widget class="QCheckBox" name="hide">
                <property name="toolTip">
