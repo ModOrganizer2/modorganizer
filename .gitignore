@@ -8,9 +8,12 @@ src/*.bak
 CMakeLists.txt.user
 edit
 /CMakeFiles
-.idea
+.idea/*
+!.idea/filetypes/
+!.idea/filetypes/qt-translations.xml
 /msbuild.log
 /*std*.log
 /*build
 
 /src/version.aps
+.idea/

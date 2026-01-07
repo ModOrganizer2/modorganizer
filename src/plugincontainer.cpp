@@ -86,47 +86,47 @@ struct PluginTypeName;
 template <>
 struct PluginTypeName<MOBase::IPlugin>
 {
-  static QString value() { return QT_TR_NOOP("Plugin"); }
+  static QString value() { return PluginContainer::tr("Plugin"); }
 };
 template <>
 struct PluginTypeName<MOBase::IPluginDiagnose>
 {
-  static QString value() { return QT_TR_NOOP("Diagnose"); }
+  static QString value() { return PluginContainer::tr("Diagnose"); }
 };
 template <>
 struct PluginTypeName<MOBase::IPluginGame>
 {
-  static QString value() { return QT_TR_NOOP("Game"); }
+  static QString value() { return PluginContainer::tr("Game"); }
 };
 template <>
 struct PluginTypeName<MOBase::IPluginInstaller>
 {
-  static QString value() { return QT_TR_NOOP("Installer"); }
+  static QString value() { return PluginContainer::tr("Installer"); }
 };
 template <>
 struct PluginTypeName<MOBase::IPluginModPage>
 {
-  static QString value() { return QT_TR_NOOP("Mod Page"); }
+  static QString value() { return PluginContainer::tr("Mod Page"); }
 };
 template <>
 struct PluginTypeName<MOBase::IPluginPreview>
 {
-  static QString value() { return QT_TR_NOOP("Preview"); }
+  static QString value() { return PluginContainer::tr("Preview"); }
 };
 template <>
 struct PluginTypeName<MOBase::IPluginTool>
 {
-  static QString value() { return QT_TR_NOOP("Tool"); }
+  static QString value() { return PluginContainer::tr("Tool"); }
 };
 template <>
 struct PluginTypeName<MOBase::IPluginProxy>
 {
-  static QString value() { return QT_TR_NOOP("Proxy"); }
+  static QString value() { return PluginContainer::tr("Proxy"); }
 };
 template <>
 struct PluginTypeName<MOBase::IPluginFileMapper>
 {
-  static QString value() { return QT_TR_NOOP("File Mapper"); }
+  static QString value() { return PluginContainer::tr("File Mapper"); }
 };
 
 QStringList PluginContainer::pluginInterfaces()

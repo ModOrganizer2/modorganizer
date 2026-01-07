@@ -989,7 +989,21 @@ void NexusInterface::nextRequest()
   request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
   request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
                        QNetworkRequest::AlwaysNetwork);
-  request.setRawHeader("APIKEY", m_User.apiKey().toUtf8());
+  if (!m_AccessManager->ensureFreshToken()) {
+    log::error("nexus: unable to refresh OAuth token, request aborted");
+    info.m_Reply = nullptr;
+    return;
+  }
+
+  const auto currentTokens = m_AccessManager->tokens();
+  if (!currentTokens || currentTokens->accessToken.isEmpty()) {
+    log::error("nexus: no OAuth token available, request aborted");
+    info.m_Reply = nullptr;
+    return;
+  }
+
+  const auto bearer = QStringLiteral("Bearer %1").arg(currentTokens->accessToken);
+  request.setRawHeader("Authorization", bearer.toUtf8());
   request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader,
                     m_AccessManager->userAgent(info.m_SubModule));
   request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,

@@ -1,10 +1,16 @@
 #ifndef SETTINGSDIALOGNEXUS_H
 #define SETTINGSDIALOGNEXUS_H
 
+#include "nexusoauthlogin.h"
+#include "nexusoauthtokens.h"
 #include "nxmaccessmanager.h"
 #include "settings.h"
 #include "settingsdialog.h"
+#include <memory>
+#include <optional>
 
+class QAbstractButton;
+class QListWidget;
 // used by the settings dialog and the create instance dialog
 //
 class NexusConnectionUI : public QObject
@@ -13,11 +19,9 @@ class NexusConnectionUI : public QObject
 
 public:
   NexusConnectionUI(QWidget* parent, Settings* s, QAbstractButton* connectButton,
-                    QAbstractButton* disconnectButton, QAbstractButton* manualButton,
-                    QListWidget* logList);
+                    QAbstractButton* disconnectButton, QListWidget* logList);
 
   void connect();
-  void manual();
   void disconnect();
 
 signals:
@@ -29,25 +33,25 @@ private:
   Settings* m_settings;
   QAbstractButton* m_connect;
   QAbstractButton* m_disconnect;
-  QAbstractButton* m_manual;
   QListWidget* m_log;
 
-  std::unique_ptr<NexusSSOLogin> m_nexusLogin;
+  std::unique_ptr<NexusOAuthLogin> m_nexusLogin;
   std::unique_ptr<NexusKeyValidator> m_nexusValidator;
+  std::optional<NexusOAuthTokens> m_pendingTokens;
 
   void addLog(const QString& s);
 
   void updateState();
 
-  void validateKey(const QString& key);
-  bool setKey(const QString& key);
-  bool clearKey();
+  void validateTokens(const NexusOAuthTokens& tokens);
+  bool persistTokens(const NexusOAuthTokens& tokens);
+  bool clearTokens();
 
-  void onSSOKeyChanged(const QString& key);
-  void onSSOStateChanged(NexusSSOLogin::States s, const QString& e);
+  void onTokensReceived(const NexusOAuthTokens& tokens);
+  void onOAuthStateChanged(NexusOAuthLogin::State s, const QString& message);
 
   void onValidatorFinished(ValidationAttempt::Result r, const QString& message,
-                           std::optional<APIUserAccount> useR);
+                           std::optional<APIUserAccount> user);
 };
 
 class NexusSettingsTab : public SettingsTab
