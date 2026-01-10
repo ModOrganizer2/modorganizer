@@ -30,6 +30,7 @@ public:
 
 public:  // IOrganizer interface
   MOBase::IModRepositoryBridge* createNexusBridge() const override;
+  QString instanceName() const override;
   QString profileName() const override;
   QString profilePath() const override;
   QString downloadsPath() const override;
@@ -65,6 +66,7 @@ public:  // IOrganizer interface
   MOBase::IPluginList* pluginList() const override;
   MOBase::IModList* modList() const override;
   MOBase::IProfile* profile() const override;
+  std::vector<std::shared_ptr<const MOBase::IProfile>> profiles() const override;
   MOBase::IGameFeatures* gameFeatures() const override;
 
   HANDLE startApplication(const QString& executable,
