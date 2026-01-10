@@ -45,6 +45,9 @@ class GameFeatures;
 class PluginContainer;
 class DirectoryRefresher;
 
+#include <memory>
+#include <vector>
+
 namespace MOBase
 {
 template <typename T>
@@ -269,6 +272,8 @@ public:
 
   Profile* currentProfile() const { return m_CurrentProfile.get(); }
   void setCurrentProfile(const QString& profileName);
+
+  std::vector<std::shared_ptr<const MOBase::IProfile>> profiles() const;
 
   std::vector<QString> enabledArchives();
 

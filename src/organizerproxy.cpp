@@ -3,6 +3,7 @@
 #include "downloadmanagerproxy.h"
 #include "gamefeaturesproxy.h"
 #include "glob_matching.h"
+#include "instancemanager.h"
 #include "modlistproxy.h"
 #include "organizercore.h"
 #include "plugincontainer.h"
@@ -14,6 +15,9 @@
 
 #include <QApplication>
 #include <QObject>
+
+#include <memory>
+#include <vector>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -82,6 +86,11 @@ void OrganizerProxy::disconnectSignals()
 IModRepositoryBridge* OrganizerProxy::createNexusBridge() const
 {
   return new NexusBridge(m_PluginContainer, m_Plugin->name());
+}
+
+QString OrganizerProxy::instanceName() const
+{
+  return InstanceManager::singleton().currentInstance()->displayName();
 }
 
 QString OrganizerProxy::profileName() const
@@ -365,6 +374,11 @@ MOBase::IGameFeatures* OrganizerProxy::gameFeatures() const
 MOBase::IProfile* OrganizerProxy::profile() const
 {
   return m_Proxied->currentProfile();
+}
+
+std::vector<std::shared_ptr<const MOBase::IProfile>> OrganizerProxy::profiles() const
+{
+  return m_Proxied->profiles();
 }
 
 MOBase::IPluginGame const* OrganizerProxy::managedGame() const
