@@ -1802,14 +1802,14 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
   auto saveGames = m_OrganizerCore.gameFeatures().gameFeature<LocalSavegames>();
   if (saveGames != nullptr) {
-    if (saveGames->prepareProfile(m_OrganizerCore.currentProfile())) {
+    if (saveGames->prepareProfile(m_OrganizerCore.currentProfile().get())) {
       m_SavesTab->refreshSaveList();
     }
   }
 
   auto invalidation = m_OrganizerCore.gameFeatures().gameFeature<BSAInvalidation>();
   if (invalidation != nullptr) {
-    if (invalidation->prepareProfile(m_OrganizerCore.currentProfile())) {
+    if (invalidation->prepareProfile(m_OrganizerCore.currentProfile().get())) {
       QTimer::singleShot(5, [this] {
         m_OrganizerCore.refresh();
       });
@@ -2048,7 +2048,8 @@ void MainWindow::checkBSAList()
       ui->bsaList->blockSignals(false);
     });
 
-    QStringList defaultArchives = archives->archives(m_OrganizerCore.currentProfile());
+    QStringList defaultArchives =
+        archives->archives(m_OrganizerCore.currentProfile().get());
 
     bool warning = false;
 
@@ -2400,14 +2401,14 @@ void MainWindow::on_actionAdd_Profile_triggered()
 
   auto saveGames = m_OrganizerCore.gameFeatures().gameFeature<LocalSavegames>();
   if (saveGames != nullptr) {
-    if (saveGames->prepareProfile(m_OrganizerCore.currentProfile())) {
+    if (saveGames->prepareProfile(m_OrganizerCore.currentProfile().get())) {
       m_SavesTab->refreshSaveList();
     }
   }
 
   auto invalidation = m_OrganizerCore.gameFeatures().gameFeature<BSAInvalidation>();
   if (invalidation != nullptr) {
-    if (invalidation->prepareProfile(m_OrganizerCore.currentProfile())) {
+    if (invalidation->prepareProfile(m_OrganizerCore.currentProfile().get())) {
       QTimer::singleShot(5, [this] {
         m_OrganizerCore.refresh();
       });

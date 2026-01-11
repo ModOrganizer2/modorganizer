@@ -137,7 +137,7 @@ QString PluginList::getColumnToolTip(int column)
 void PluginList::highlightPlugins(const std::vector<unsigned int>& modIndices,
                                   const MOShared::DirectoryEntry& directoryEntry)
 {
-  auto* profile = m_Organizer.currentProfile();
+  auto profile = m_Organizer.currentProfile();
 
   for (auto& esp : m_ESPs) {
     esp.modSelected = false;

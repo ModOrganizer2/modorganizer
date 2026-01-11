@@ -482,7 +482,7 @@ void FileTreeTab::onContextMenu(const QPoint& pos)
   bool enableRunHooked = false;
 
   if (enableRun || enableOpen) {
-    if (auto* p = core().currentProfile()) {
+    if (auto p = core().currentProfile()) {
       if (mod().canBeEnabled()) {
         const auto index = ModInfo::getIndex(mod().name());
         if (index == UINT_MAX) {

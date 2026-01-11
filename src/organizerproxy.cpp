@@ -370,7 +370,7 @@ MOBase::IGameFeatures* OrganizerProxy::gameFeatures() const
   return m_GameFeaturesProxy.get();
 }
 
-MOBase::IProfile* OrganizerProxy::profile() const
+std::shared_ptr<MOBase::IProfile> OrganizerProxy::profile() const
 {
   return m_Proxied->currentProfile();
 }
