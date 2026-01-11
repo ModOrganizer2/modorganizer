@@ -70,6 +70,7 @@
 #include <string>  //for wstring
 #include <tuple>
 #include <utility>
+#include <vector>
 
 #include <libbsarch/bs_archive.h>
 
@@ -611,6 +612,24 @@ void OrganizerCore::setCurrentProfile(const QString& profileName)
 
   emit profileChanged(oldProfile.get(), m_CurrentProfile.get());
   m_ProfileChanged(oldProfile.get(), m_CurrentProfile.get());
+}
+
+QStringList OrganizerCore::profileNames() const
+{
+  QDir profilesDir(m_Settings.paths().profiles());
+  return profilesDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
+}
+
+std::shared_ptr<const MOBase::IProfile>
+OrganizerCore::getProfile(const QString& profileName) const
+{
+  QDir profileDir(m_Settings.paths().profiles());
+  profileDir.cd(profileName);
+  if (!profileDir.exists()) {
+    return nullptr;
+  }
+
+  return std::make_shared<Profile>(profileDir, managedGame(), gameFeatures());
 }
 
 MOBase::IModRepositoryBridge* OrganizerCore::createNexusBridge() const
