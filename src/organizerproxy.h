@@ -65,7 +65,7 @@ public:  // IOrganizer interface
   MOBase::IDownloadManager* downloadManager() const override;
   MOBase::IPluginList* pluginList() const override;
   MOBase::IModList* modList() const override;
-  MOBase::IProfile* profile() const override;
+  std::shared_ptr<MOBase::IProfile> profile() const override;
   QStringList profileNames() const override;
   std::shared_ptr<const MOBase::IProfile>
   getProfile(const QString& name) const override;

@@ -544,7 +544,7 @@ ProcessRunner& ProcessRunner::setFromFile(QWidget* parent, const QFileInfo& targ
 
 ProcessRunner& ProcessRunner::setFromExecutable(const Executable& exe)
 {
-  const auto* profile = m_core.currentProfile();
+  const auto profile = m_core.currentProfile();
   if (!profile) {
     throw MyException(QObject::tr("No profile set"));
   }
@@ -611,7 +611,7 @@ ProcessRunner& ProcessRunner::setFromFileOrExecutable(
     const QString& profileOverride, const QString& forcedCustomOverwrite,
     bool ignoreCustomOverwrite)
 {
-  const auto* profile = m_core.currentProfile();
+  const auto profile = m_core.currentProfile();
   if (!profile) {
     throw MyException(QObject::tr("No profile set"));
   }
@@ -757,7 +757,7 @@ std::optional<ProcessRunner::Results> ProcessRunner::runBinary()
 {
   if (m_profileName.isEmpty()) {
     // get the current profile name if it wasn't overridden
-    const auto* profile = m_core.currentProfile();
+    const auto profile = m_core.currentProfile();
     if (!profile) {
       throw MyException(QObject::tr("No profile set"));
     }

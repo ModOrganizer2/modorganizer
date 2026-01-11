@@ -270,7 +270,8 @@ public:
     m_ExecutablesList = executablesList;
   }
 
-  Profile* currentProfile() const { return m_CurrentProfile.get(); }
+  std::shared_ptr<Profile> currentProfile() const { return m_CurrentProfile; }
+
   void setCurrentProfile(const QString& profileName);
 
   QStringList profileNames() const;
@@ -540,7 +541,7 @@ private:
   MOBase::IPluginGame* m_GamePlugin;
   ModDataContentHolder m_Contents;
 
-  std::unique_ptr<Profile> m_CurrentProfile;
+  std::shared_ptr<Profile> m_CurrentProfile;
 
   Settings& m_Settings;
 

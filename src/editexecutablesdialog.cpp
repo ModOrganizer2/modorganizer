@@ -139,7 +139,7 @@ int EditExecutablesDialog::exec()
 
 void EditExecutablesDialog::loadCustomOverwrites()
 {
-  const auto* p = m_organizerCore.currentProfile();
+  const auto p = m_organizerCore.currentProfile();
 
   for (const auto& e : m_executablesList) {
     const auto s = p->setting("custom_overwrites", e.title()).toString();
@@ -152,7 +152,7 @@ void EditExecutablesDialog::loadCustomOverwrites()
 
 void EditExecutablesDialog::loadForcedLibraries()
 {
-  const auto* p = m_organizerCore.currentProfile();
+  const auto p = m_organizerCore.currentProfile();
 
   for (const auto& e : m_executablesList) {
     m_forcedLibraries.set(e.title(), p->forcedLibrariesEnabled(e.title()),
@@ -237,7 +237,7 @@ bool EditExecutablesDialog::commitChanges()
     return false;
   }
 
-  auto* profile = m_organizerCore.currentProfile();
+  auto profile = m_organizerCore.currentProfile();
 
   // remove all the custom overwrites and forced libraries
   for (const auto& e : m_originalExecutables) {

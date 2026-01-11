@@ -735,7 +735,8 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   });
 
   // proxy for various group by
-  m_byPriorityProxy = new ModListByPriorityProxy(core.currentProfile(), core, this);
+  m_byPriorityProxy =
+      new ModListByPriorityProxy(core.currentProfile().get(), core, this);
   m_byCategoryProxy = new QtGroupingProxy(QModelIndex(), ModList::COL_CATEGORY,
                                           ModList::GroupingRole, 0, ModList::AggrRole);
   m_byNexusIdProxy  = new QtGroupingProxy(
@@ -758,7 +759,7 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   });
 
   // the top-level proxy
-  m_sortProxy = new ModListSortProxy(core.currentProfile(), &core);
+  m_sortProxy = new ModListSortProxy(core.currentProfile().get(), &core);
   setModel(m_sortProxy);
   connect(m_sortProxy, &ModList::modelReset, [=] {
     refreshExpandedItems();

@@ -787,7 +787,7 @@ void PluginContainer::startPluginsImpl(const std::vector<QObject*>& plugins) con
       auto* plugin = qobject_cast<IPlugin*>(object);
       auto* oproxy = organizerProxy(plugin);
       oproxy->connectSignals();
-      oproxy->m_ProfileChanged(nullptr, m_Organizer->currentProfile());
+      oproxy->m_ProfileChanged(nullptr, m_Organizer->currentProfile().get());
 
       if (m_UserInterface) {
         oproxy->m_UserInterfaceInitialized(m_UserInterface->mainWindow());
