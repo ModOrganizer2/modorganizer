@@ -66,7 +66,10 @@ public:  // IOrganizer interface
   MOBase::IPluginList* pluginList() const override;
   MOBase::IModList* modList() const override;
   MOBase::IProfile* profile() const override;
-  std::vector<std::shared_ptr<const MOBase::IProfile>> profiles() const override;
+  QStringList profileNames() const override;
+  std::shared_ptr<const MOBase::IProfile>
+  getProfile(const QString& name) const override;
+
   MOBase::IGameFeatures* gameFeatures() const override;
 
   HANDLE startApplication(const QString& executable,

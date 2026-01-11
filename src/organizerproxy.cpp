@@ -17,7 +17,6 @@
 #include <QObject>
 
 #include <memory>
-#include <vector>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -376,9 +375,15 @@ MOBase::IProfile* OrganizerProxy::profile() const
   return m_Proxied->currentProfile();
 }
 
-std::vector<std::shared_ptr<const MOBase::IProfile>> OrganizerProxy::profiles() const
+QStringList OrganizerProxy::profileNames() const
 {
-  return m_Proxied->profiles();
+  return m_Proxied->profileNames();
+}
+
+std::shared_ptr<const MOBase::IProfile>
+OrganizerProxy::getProfile(const QString& name) const
+{
+  return m_Proxied->getProfile(name);
 }
 
 MOBase::IPluginGame const* OrganizerProxy::managedGame() const

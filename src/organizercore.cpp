@@ -614,21 +614,22 @@ void OrganizerCore::setCurrentProfile(const QString& profileName)
   m_ProfileChanged(oldProfile.get(), m_CurrentProfile.get());
 }
 
-std::vector<std::shared_ptr<const MOBase::IProfile>> OrganizerCore::profiles() const
+QStringList OrganizerCore::profileNames() const
 {
   QDir profilesDir(m_Settings.paths().profiles());
-  std::vector<std::shared_ptr<const MOBase::IProfile>> profiles;
-  for (auto info : profilesDir.entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)) {
-    try {
-      profiles.push_back(std::make_shared<const Profile>(
-          info.absoluteFilePath(), managedGame(), gameFeatures()));
-    } catch (std::exception& e) {
-      log::error("failed to load profile '{}': {}", info.fileName(), e.what());
-      continue;
-    }
+  return profilesDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
+}
+
+std::shared_ptr<const MOBase::IProfile>
+OrganizerCore::getProfile(const QString& profileName) const
+{
+  QDir profileDir(m_Settings.paths().profiles());
+  profileDir.cd(profileName);
+  if (!profileDir.exists()) {
+    return nullptr;
   }
 
-  return profiles;
+  return std::make_shared<Profile>(profileDir, managedGame(), gameFeatures());
 }
 
 MOBase::IModRepositoryBridge* OrganizerCore::createNexusBridge() const

@@ -273,7 +273,8 @@ public:
   Profile* currentProfile() const { return m_CurrentProfile.get(); }
   void setCurrentProfile(const QString& profileName);
 
-  std::vector<std::shared_ptr<const MOBase::IProfile>> profiles() const;
+  QStringList profileNames() const;
+  std::shared_ptr<const MOBase::IProfile> getProfile(const QString& profileName) const;
 
   std::vector<QString> enabledArchives();
 
