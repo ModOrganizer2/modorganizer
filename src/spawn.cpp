@@ -37,6 +37,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <uibase/utility.h>
 #include <usvfs/usvfs.h>
 
+class QMessageBox;
+
 using namespace MOBase;
 using namespace MOShared;
 

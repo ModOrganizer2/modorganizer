@@ -1095,18 +1095,11 @@
                     <height>20</height>
                    </size>
                   </property>
-                 </spacer>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="nexusManual">
-                  <property name="text">
-                   <string>Enter API Key Manually</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
+                </spacer>
+               </item>
+             </layout>
+            </widget>
+           </item>
              <item>
               <widget class="QListWidget" name="nexusLog"/>
              </item>
@@ -1339,7 +1332,6 @@
   <tabstop>overwrite</tabstop>
   <tabstop>browseOverwrite</tabstop>
   <tabstop>nexusConnect</tabstop>
-  <tabstop>nexusManual</tabstop>
   <tabstop>nexusLog</tabstop>
   <tabstop>review</tabstop>
   <tabstop>creationLog</tabstop>
