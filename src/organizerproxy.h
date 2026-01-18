@@ -11,6 +11,7 @@
 class GameFeaturesProxy;
 class PluginContainer;
 class DownloadManagerProxy;
+class ExecutablesListProxy;
 class ModListProxy;
 class PluginListProxy;
 
@@ -65,6 +66,7 @@ public:  // IOrganizer interface
   MOBase::IDownloadManager* downloadManager() const override;
   MOBase::IPluginList* pluginList() const override;
   MOBase::IModList* modList() const override;
+  MOBase::IExecutablesList* executablesList() const override;
   std::shared_ptr<MOBase::IProfile> profile() const override;
   QStringList profileNames() const override;
   std::shared_ptr<const MOBase::IProfile>
@@ -157,6 +159,7 @@ private:
   std::unique_ptr<DownloadManagerProxy> m_DownloadManagerProxy;
   std::unique_ptr<ModListProxy> m_ModListProxy;
   std::unique_ptr<PluginListProxy> m_PluginListProxy;
+  std::unique_ptr<ExecutablesListProxy> m_ExecutablesListProxy;
   std::unique_ptr<GameFeaturesProxy> m_GameFeaturesProxy;
 };
 

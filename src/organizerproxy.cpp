@@ -1,6 +1,7 @@
 #include "organizerproxy.h"
 
 #include "downloadmanagerproxy.h"
+#include "executableslistproxy.h"
 #include "gamefeaturesproxy.h"
 #include "glob_matching.h"
 #include "instancemanager.h"
@@ -28,6 +29,8 @@ OrganizerProxy::OrganizerProxy(OrganizerCore* organizer,
       m_DownloadManagerProxy(
           std::make_unique<DownloadManagerProxy>(this, organizer->downloadManager())),
       m_ModListProxy(std::make_unique<ModListProxy>(this, organizer->modList())),
+      m_ExecutablesListProxy(
+          std::make_unique<ExecutablesListProxy>(organizer->executablesList())),
       m_PluginListProxy(
           std::make_unique<PluginListProxy>(this, organizer->pluginList())),
       m_GameFeaturesProxy(
@@ -363,6 +366,11 @@ MOBase::IPluginList* OrganizerProxy::pluginList() const
 MOBase::IModList* OrganizerProxy::modList() const
 {
   return m_ModListProxy.get();
+}
+
+MOBase::IExecutablesList* OrganizerProxy::executablesList() const
+{
+  return m_ExecutablesListProxy.get();
 }
 
 MOBase::IGameFeatures* OrganizerProxy::gameFeatures() const
