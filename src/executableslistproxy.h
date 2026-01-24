@@ -22,8 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "executableslist.h"
 
-#include <memory>
-#include <vector>
+#include <generator>
 
 #include <QFileInfo>
 #include <QString>
@@ -35,12 +34,10 @@ class ExecutablesListProxy : public MOBase::IExecutablesList
 {
 public:
   ExecutablesListProxy(ExecutablesList* executablesList);
-  std::vector<std::shared_ptr<const MOBase::IExecutable>> executables() const override;
-  std::shared_ptr<const MOBase::IExecutable>
-  getByTitle(const QString& title) const override;
-  std::shared_ptr<const MOBase::IExecutable>
-  getByBinary(const QFileInfo& info) const override;
-  bool titleExists(const QString& title) const override;
+  std::generator<const MOBase::IExecutable&> executables() const override;
+  const MOBase::IExecutable* getByTitle(const QString& title) const override;
+  const MOBase::IExecutable* getByBinary(const QFileInfo& info) const override;
+  bool contains(const QString& title) const override;
 
 private:
   ExecutablesList* m_Proxied;

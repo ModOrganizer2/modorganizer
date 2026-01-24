@@ -21,8 +21,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "executableslist.h"
 
-#include <memory>
-#include <vector>
+#include <generator>
+#include <stdexcept>
 
 #include <QFileInfo>
 #include <QString>
@@ -31,40 +31,33 @@ ExecutablesListProxy::ExecutablesListProxy(ExecutablesList* executablesList)
     : m_Proxied(executablesList)
 {}
 
-std::vector<std::shared_ptr<const MOBase::IExecutable>>
-ExecutablesListProxy::executables() const
+std::generator<const MOBase::IExecutable&> ExecutablesListProxy::executables() const
 {
-  std::vector<std::shared_ptr<const MOBase::IExecutable>> executables;
   for (const auto& exe : *m_Proxied) {
-    executables.emplace_back(std::make_shared<const Executable>(exe));
+    co_yield exe;
   }
-
-  return executables;
 }
 
-std::shared_ptr<const MOBase::IExecutable>
-ExecutablesListProxy::getByTitle(const QString& title) const
+const MOBase::IExecutable* ExecutablesListProxy::getByTitle(const QString& title) const
 {
   try {
-    const auto& exe = m_Proxied->get(title);
-    return std::make_shared<const Executable>(exe);
+    return &m_Proxied->get(title);
   } catch (const std::runtime_error&) {
     return nullptr;
   }
 }
 
-std::shared_ptr<const MOBase::IExecutable>
+const MOBase::IExecutable*
 ExecutablesListProxy::getByBinary(const QFileInfo& info) const
 {
   try {
-    const auto& exe = m_Proxied->getByBinary(info);
-    return std::make_shared<const Executable>(exe);
+    return &m_Proxied->getByBinary(info);
   } catch (const std::runtime_error&) {
     return nullptr;
   }
 }
 
-bool ExecutablesListProxy::titleExists(const QString& title) const
+bool ExecutablesListProxy::contains(const QString& title) const
 {
   return m_Proxied->titleExists(title);
 }
