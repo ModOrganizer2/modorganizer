@@ -364,6 +364,10 @@ void ExecutablesList::dump() const
       flags.push_back("hide");
     }
 
+    if (e.flags() & Executable::MinimizeToSystemTray) {
+      flags.push_back("minimizeToSystemTray");
+    }
+
     log::debug(" . executable '{}'\n"
                "    binary: {}\n"
                "    arguments: {}\n"
