@@ -103,6 +103,7 @@ void Page::next()
 
 bool Page::action(CreateInstanceDialog::Actions a)
 {
+  Q_UNUSED(a);
   // no-op
   return false;
 }
@@ -1199,11 +1200,11 @@ bool PathsPage::checkPath(QString path, PlaceholderLabel& existsLabel,
 NexusPage::NexusPage(CreateInstanceDialog& dlg) : Page(dlg), m_skip(false)
 {
   m_connectionUI.reset(new NexusConnectionUI(&m_dlg, dlg.settings(), ui->nexusConnect,
-                                             nullptr, ui->nexusManual, ui->nexusLog));
+                                             nullptr, ui->nexusLog));
 
   // just check it once, or connecting and then going back and forth would skip
   // the page, which would be unexpected
-  m_skip = GlobalSettings::hasNexusApiKey();
+  m_skip = GlobalSettings::hasNexusOAuthTokens();
 }
 
 NexusPage::~NexusPage() = default;

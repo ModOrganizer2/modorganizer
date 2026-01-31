@@ -27,7 +27,7 @@ class Settings;
 //
 // pages can be disabled if they return true in skip(), which happens globally
 // for some (IntroPage has a setting in the registry), depending on context
-// (NexusPage is skipped if the API key already exists) or explicitly (when
+// (NexusPage is skipped if the Nexus authorization already exists) or explicitly (when
 // only some info about the instance is missing on startup, such as a game
 // variant)
 //
