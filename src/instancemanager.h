@@ -4,6 +4,8 @@
 #include <QSettings>
 #include <QString>
 
+#include <uibase/iinstance.h>
+
 namespace MOBase
 {
 class IPluginGame;
@@ -26,7 +28,7 @@ class PluginContainer;
 // setGame() and setVariant() can be called before retrying setup(); this
 // happens on startup if that information is missing
 //
-class Instance
+class Instance : public MOBase::IInstance
 {
 public:
   // returned by setup()
@@ -259,7 +261,7 @@ public:
   // instance name in the registry is empty or non-existent and there is no
   // portable instance set up
   //
-  std::unique_ptr<Instance> currentInstance() const;
+  std::shared_ptr<Instance> currentInstance() const;
 
   // sets the instance name in the registry so the same instance is opened next
   // time MO runs
@@ -343,7 +345,7 @@ enum class SetupInstanceResults
 // instance manager dialog and returns the selected instance or empty if the
 // user cancelled
 //
-std::unique_ptr<Instance> selectInstance();
+std::shared_ptr<Instance> selectInstance();
 
 // calls instance.setup() tries to handle problems by itself:
 //

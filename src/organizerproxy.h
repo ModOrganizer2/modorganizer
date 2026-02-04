@@ -12,6 +12,7 @@ class GameFeaturesProxy;
 class PluginContainer;
 class DownloadManagerProxy;
 class ExecutablesListProxy;
+class InstanceManagerProxy;
 class ModListProxy;
 class PluginListProxy;
 
@@ -63,6 +64,7 @@ public:  // IOrganizer interface
                 const std::function<bool(const FileInfo&)>& filter) const override;
   std::shared_ptr<const MOBase::IFileTree> virtualFileTree() const override;
 
+  MOBase::IInstanceManager* instanceManager() const override;
   MOBase::IDownloadManager* downloadManager() const override;
   MOBase::IPluginList* pluginList() const override;
   MOBase::IModList* modList() const override;
@@ -156,6 +158,7 @@ private:
 
   std::vector<boost::signals2::connection> m_Connections;
 
+  std::unique_ptr<InstanceManagerProxy> m_InstanceManagerProxy;
   std::unique_ptr<DownloadManagerProxy> m_DownloadManagerProxy;
   std::unique_ptr<ModListProxy> m_ModListProxy;
   std::unique_ptr<PluginListProxy> m_PluginListProxy;
