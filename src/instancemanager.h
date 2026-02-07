@@ -98,18 +98,6 @@ public:
   //
   Instance(QString dir, bool portable, QString profileName = {});
 
-  // reads in values from the INI if they were not given yet:
-  //  - game name
-  //  - game directory
-  //  - game variant
-  //  - profile name
-  //
-  // note that setup() already calls this
-  //
-  // returns false if the ini couldn't be read from
-  //
-  bool readFromIni();
-
   // finds the appropriate game plugin and sets it up so MO can use it; this
   // calls readFromIni() first
   //
@@ -144,7 +132,7 @@ public:
   //      called; or
   //   3) whatever was given in setGame()
   //
-  QString gameName();
+  QString gameName() const;
 
   // returns either:
   //   1) the game directory from the INI, if readFromIni() was called;
@@ -152,7 +140,7 @@ public:
   //      was called; or
   //   3) whatever was given in setGame()
   //
-  QString gameDirectory();
+  QString gameDirectory() const;
 
   // returns the instance directory as given in the constructor
   //
@@ -198,12 +186,24 @@ public:
 private:
   QString m_dir;
   bool m_portable;
-  QString m_gameName, m_gameDir, m_gameVariant, m_baseDir;
+  mutable QString m_gameName, m_gameDir, m_gameVariant, m_baseDir;
   MOBase::IPluginGame* m_plugin;
-  QString m_profile;
+  mutable QString m_profile;
 
-  std::mutex m_iniValuesMutex;
-  std::atomic<bool> m_iniValuesRead{false};
+  mutable std::mutex m_iniValuesMutex;
+  mutable std::atomic<bool> m_iniValuesRead{false};
+
+  // reads in values from the INI if they were not given yet:
+  //  - game name
+  //  - game directory
+  //  - game variant
+  //  - profile name
+  //
+  // note that setup() already calls this
+  //
+  // returns false if the ini couldn't be read from
+  //
+  bool readFromIni() const;
 
   // figures out the game plugin for this instance
   //
@@ -211,7 +211,7 @@ private:
 
   // figures out the profile name for this instance
   //
-  void getProfile(const Settings& s);
+  void getProfile(const Settings& s) const;
 
   // updates the ini with the given values and the ones found by setup()
   //

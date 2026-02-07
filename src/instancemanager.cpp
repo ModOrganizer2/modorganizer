@@ -57,7 +57,7 @@ QString Instance::displayName() const
     return QDir(m_dir).dirName();
 }
 
-QString Instance::gameName()
+QString Instance::gameName() const
 {
   if (!m_iniValuesRead && m_gameName.isEmpty()) {
     std::scoped_lock lock(m_iniValuesMutex);
@@ -69,7 +69,7 @@ QString Instance::gameName()
   return m_gameName;
 }
 
-QString Instance::gameDirectory()
+QString Instance::gameDirectory() const
 {
   if (!m_iniValuesRead && m_gameDir.isEmpty()) {
     std::scoped_lock lock(m_iniValuesMutex);
@@ -88,6 +88,13 @@ QString Instance::directory() const
 
 QString Instance::baseDirectory() const
 {
+  if (!m_iniValuesRead) {
+    std::scoped_lock lock(m_iniValuesMutex);
+    if (!m_iniValuesRead) {
+      readFromIni();
+    }
+  }
+
   return m_baseDir;
 }
 
@@ -98,6 +105,13 @@ MOBase::IPluginGame* Instance::gamePlugin() const
 
 QString Instance::profileName() const
 {
+  if (!m_iniValuesRead) {
+    std::scoped_lock lock(m_iniValuesMutex);
+    if (!m_iniValuesRead) {
+      readFromIni();
+    }
+  }
+
   return m_profile;
 }
 
@@ -126,7 +140,7 @@ bool Instance::isActive() const
   return false;
 }
 
-bool Instance::readFromIni()
+bool Instance::readFromIni() const
 {
   Settings s(iniPath());
 
@@ -331,7 +345,7 @@ Instance::SetupResults Instance::getGamePlugin(PluginContainer& plugins)
   }
 }
 
-void Instance::getProfile(const Settings& s)
+void Instance::getProfile(const Settings& s) const
 {
   if (!m_profile.isEmpty()) {
     // there's already a profile set up, probably an override
