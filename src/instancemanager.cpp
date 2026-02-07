@@ -39,6 +39,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <cstdint>
+#include <memory>
+#include <mutex>
 
 using namespace MOBase;
 
@@ -55,13 +57,27 @@ QString Instance::displayName() const
     return QDir(m_dir).dirName();
 }
 
-QString Instance::gameName() const
+QString Instance::gameName()
 {
+  if (!m_iniValuesRead && m_gameName.isEmpty()) {
+    std::scoped_lock lock(m_iniValuesMutex);
+    if (!m_iniValuesRead) {
+      readFromIni();
+    }
+  }
+
   return m_gameName;
 }
 
-QString Instance::gameDirectory() const
+QString Instance::gameDirectory()
 {
+  if (!m_iniValuesRead && m_gameDir.isEmpty()) {
+    std::scoped_lock lock(m_iniValuesMutex);
+    if (!m_iniValuesRead) {
+      readFromIni();
+    }
+  }
+
   return m_gameDir;
 }
 
@@ -116,6 +132,7 @@ bool Instance::readFromIni()
 
   if (s.iniStatus() != QSettings::NoError) {
     log::error("can't read ini {}", iniPath());
+    m_iniValuesRead = true;
     return false;
   }
 
@@ -143,14 +160,18 @@ bool Instance::readFromIni()
   // figuring out profile from ini if it's missing
   getProfile(s);
 
+  m_iniValuesRead = true;
   return true;
 }
 
 Instance::SetupResults Instance::setup(PluginContainer& plugins)
 {
-  // read initial values from the ini
-  if (!readFromIni()) {
-    return SetupResults::BadIni;
+  if (!m_iniValuesRead) {
+    std::scoped_lock lock(m_iniValuesMutex);
+    // read initial values from the ini
+    if (!m_iniValuesRead && !readFromIni()) {
+      return SetupResults::BadIni;
+    }
   }
 
   // getting game plugin

@@ -31,72 +31,12 @@ InstanceManagerProxy::InstanceManagerProxy(InstanceManager* instanceManager)
     : m_Proxied(instanceManager)
 {}
 
-void InstanceManagerProxy::overrideInstance(const QString& instanceName)
-{
-  m_Proxied->overrideInstance(instanceName);
-}
-
-void InstanceManagerProxy::overrideProfile(const QString& profileName)
-{
-  m_Proxied->overrideProfile(profileName);
-}
-
-void InstanceManagerProxy::clearOverrides()
-{
-  m_Proxied->clearOverrides();
-}
-
-void InstanceManagerProxy::clearCurrentInstance()
-{
-  m_Proxied->clearCurrentInstance();
-}
-
 std::shared_ptr<MOBase::IInstance> InstanceManagerProxy::currentInstance() const
 {
   return m_Proxied->currentInstance();
 }
 
-void InstanceManagerProxy::setCurrentInstance(const QString& instanceName)
-{
-  m_Proxied->setCurrentInstance(instanceName);
-}
-
-bool InstanceManagerProxy::allowedToChangeInstance() const
-{
-  return m_Proxied->allowedToChangeInstance();
-}
-
-bool InstanceManagerProxy::portableInstanceExists() const
-{
-  return m_Proxied->portableInstanceExists();
-}
-
-QString InstanceManagerProxy::portablePath() const
-{
-  return m_Proxied->portablePath();
-}
-
-QString InstanceManagerProxy::globalInstancesRootPath() const
-{
-  return m_Proxied->globalInstancesRootPath();
-}
-
 std::vector<QString> InstanceManagerProxy::globalInstancePaths() const
 {
   return m_Proxied->globalInstancePaths();
-}
-
-bool InstanceManagerProxy::globalInstanceExists(const QString& instanceName) const
-{
-  return m_Proxied->instanceExists(instanceName);
-}
-
-QString InstanceManagerProxy::globalInstancePath(const QString& instanceName) const
-{
-  return m_Proxied->instancePath(instanceName);
-}
-
-QString InstanceManagerProxy::iniPath(const QString& instanceDirectory) const
-{
-  return m_Proxied->iniPath(instanceDirectory);
 }

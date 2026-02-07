@@ -38,20 +38,8 @@ class InstanceManagerProxy : public MOBase::IInstanceManager
 {
 public:
   InstanceManagerProxy(InstanceManager* instanceManager);
-  void overrideInstance(const QString& instanceName) override;
-  void overrideProfile(const QString& profileName) override;
-  void clearOverrides() override;
-  void clearCurrentInstance() override;
   std::shared_ptr<MOBase::IInstance> currentInstance() const override;
-  void setCurrentInstance(const QString& instanceName) override;
-  bool allowedToChangeInstance() const override;
-  bool portableInstanceExists() const override;
-  QString portablePath() const override;
-  QString globalInstancesRootPath() const override;
   std::vector<QString> globalInstancePaths() const override;
-  bool globalInstanceExists(const QString& instanceName) const override;
-  QString globalInstancePath(const QString& instanceName) const override;
-  QString iniPath(const QString& instanceDirectory) const override;
 
 private:
   InstanceManager* m_Proxied;

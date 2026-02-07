@@ -17,7 +17,7 @@ using namespace MOBase;
 // returns the icon for the given instance or an empty 32x32 icon if the game
 // plugin couldn't be found
 //
-QIcon instanceIcon(PluginContainer& pc, const Instance& i)
+QIcon instanceIcon(PluginContainer& pc, Instance& i)
 {
   auto* game = InstanceManager::singleton().gamePluginForDirectory(i.directory(), pc);
 
@@ -275,7 +275,7 @@ void InstanceManagerDialog::updateList()
 
   // creating items for instances
   for (std::size_t i = 0; i < m_instances.size(); ++i) {
-    const auto& ii = *m_instances[i];
+    auto& ii = *m_instances[i];
 
     auto* item = new QStandardItem(ii.displayName());
     item->setIcon(instanceIcon(m_pc, ii));
@@ -477,7 +477,7 @@ void InstanceManagerDialog::exploreBaseDirectory()
 
 void InstanceManagerDialog::exploreGame()
 {
-  if (const auto* i = singleSelection()) {
+  if (auto* i = singleSelection()) {
     shell::Explore(i->gameDirectory());
   }
 }
@@ -664,7 +664,7 @@ std::size_t InstanceManagerDialog::singleSelectionIndex() const
   return static_cast<std::size_t>(sel.indexes()[0].row());
 }
 
-const Instance* InstanceManagerDialog::singleSelection() const
+Instance* InstanceManagerDialog::singleSelection() const
 {
   const auto i = singleSelectionIndex();
   if (i == NoSelection) {
@@ -674,7 +674,7 @@ const Instance* InstanceManagerDialog::singleSelection() const
   return m_instances[i].get();
 }
 
-void InstanceManagerDialog::fillData(const Instance& ii)
+void InstanceManagerDialog::fillData(Instance& ii)
 {
   ui->name->setText(ii.displayName());
   ui->location->setText(ii.directory());

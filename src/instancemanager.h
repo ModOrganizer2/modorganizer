@@ -4,6 +4,10 @@
 #include <QSettings>
 #include <QString>
 
+#include <atomic>
+#include <memory>
+#include <mutex>
+
 #include <uibase/iinstance.h>
 
 namespace MOBase
@@ -140,7 +144,7 @@ public:
   //      called; or
   //   3) whatever was given in setGame()
   //
-  QString gameName() const;
+  QString gameName();
 
   // returns either:
   //   1) the game directory from the INI, if readFromIni() was called;
@@ -148,7 +152,7 @@ public:
   //      was called; or
   //   3) whatever was given in setGame()
   //
-  QString gameDirectory() const;
+  QString gameDirectory();
 
   // returns the instance directory as given in the constructor
   //
@@ -197,6 +201,9 @@ private:
   QString m_gameName, m_gameDir, m_gameVariant, m_baseDir;
   MOBase::IPluginGame* m_plugin;
   QString m_profile;
+
+  std::mutex m_iniValuesMutex;
+  std::atomic<bool> m_iniValuesRead{false};
 
   // figures out the game plugin for this instance
   //

@@ -119,7 +119,7 @@ private:
   // returns the InstanceInfo associated with the selected instance, null if
   // none
   //
-  const Instance* singleSelection() const;
+  Instance* singleSelection() const;
 
   // fills the instance list on the ui
   //
@@ -127,7 +127,7 @@ private:
 
   // fills the ui for the selected instance
   //
-  void fillData(const Instance& ii);
+  void fillData(Instance& ii);
 
   // clears the ui when there's no selection
   //
