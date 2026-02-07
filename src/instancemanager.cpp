@@ -39,6 +39,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <cstdint>
+#include <memory>
+#include <mutex>
 
 using namespace MOBase;
 
@@ -57,11 +59,25 @@ QString Instance::displayName() const
 
 QString Instance::gameName() const
 {
+  if (!m_iniValuesRead && m_gameName.isEmpty()) {
+    std::scoped_lock lock(m_iniValuesMutex);
+    if (!m_iniValuesRead) {
+      readFromIni();
+    }
+  }
+
   return m_gameName;
 }
 
 QString Instance::gameDirectory() const
 {
+  if (!m_iniValuesRead && m_gameDir.isEmpty()) {
+    std::scoped_lock lock(m_iniValuesMutex);
+    if (!m_iniValuesRead) {
+      readFromIni();
+    }
+  }
+
   return m_gameDir;
 }
 
@@ -72,6 +88,13 @@ QString Instance::directory() const
 
 QString Instance::baseDirectory() const
 {
+  if (!m_iniValuesRead) {
+    std::scoped_lock lock(m_iniValuesMutex);
+    if (!m_iniValuesRead) {
+      readFromIni();
+    }
+  }
+
   return m_baseDir;
 }
 
@@ -82,6 +105,13 @@ MOBase::IPluginGame* Instance::gamePlugin() const
 
 QString Instance::profileName() const
 {
+  if (!m_iniValuesRead) {
+    std::scoped_lock lock(m_iniValuesMutex);
+    if (!m_iniValuesRead) {
+      readFromIni();
+    }
+  }
+
   return m_profile;
 }
 
@@ -110,12 +140,13 @@ bool Instance::isActive() const
   return false;
 }
 
-bool Instance::readFromIni()
+bool Instance::readFromIni() const
 {
   Settings s(iniPath());
 
   if (s.iniStatus() != QSettings::NoError) {
     log::error("can't read ini {}", iniPath());
+    m_iniValuesRead = true;
     return false;
   }
 
@@ -143,14 +174,18 @@ bool Instance::readFromIni()
   // figuring out profile from ini if it's missing
   getProfile(s);
 
+  m_iniValuesRead = true;
   return true;
 }
 
 Instance::SetupResults Instance::setup(PluginContainer& plugins)
 {
-  // read initial values from the ini
-  if (!readFromIni()) {
-    return SetupResults::BadIni;
+  if (!m_iniValuesRead) {
+    std::scoped_lock lock(m_iniValuesMutex);
+    // read initial values from the ini
+    if (!m_iniValuesRead && !readFromIni()) {
+      return SetupResults::BadIni;
+    }
   }
 
   // getting game plugin
@@ -310,7 +345,7 @@ Instance::SetupResults Instance::getGamePlugin(PluginContainer& plugins)
   }
 }
 
-void Instance::getProfile(const Settings& s)
+void Instance::getProfile(const Settings& s) const
 {
   if (!m_profile.isEmpty()) {
     // there's already a profile set up, probably an override
@@ -511,7 +546,7 @@ void InstanceManager::clearOverrides()
   m_overrideProfileName  = {};
 }
 
-std::unique_ptr<Instance> InstanceManager::currentInstance() const
+std::shared_ptr<Instance> InstanceManager::currentInstance() const
 {
   const QString profile = m_overrideProfileName ? *m_overrideProfileName : "";
 
@@ -520,20 +555,20 @@ std::unique_ptr<Instance> InstanceManager::currentInstance() const
 
   if (!allowedToChangeInstance()) {
     // force portable instance
-    return std::make_unique<Instance>(portablePath(), true, profile);
+    return std::make_shared<Instance>(portablePath(), true, profile);
   }
 
   if (name.isEmpty()) {
     if (portableInstanceExists()) {
       // use portable
-      return std::make_unique<Instance>(portablePath(), true, profile);
+      return std::make_shared<Instance>(portablePath(), true, profile);
     } else {
       // no instance set
       return {};
     }
   }
 
-  return std::make_unique<Instance>(instancePath(name), false, profile);
+  return std::make_shared<Instance>(instancePath(name), false, profile);
 }
 
 void InstanceManager::clearCurrentInstance()
@@ -581,6 +616,16 @@ std::vector<QString> InstanceManager::globalInstancePaths() const
   }
 
   return list;
+}
+
+std::shared_ptr<const Instance>
+InstanceManager::getGlobalInstance(const QString& instanceName) const
+{
+  if (!instanceExists(instanceName)) {
+    return nullptr;
+  }
+
+  return std::make_shared<const Instance>(instancePath(instanceName), false, "");
 }
 
 bool InstanceManager::hasAnyInstances() const
@@ -696,7 +741,7 @@ bool InstanceManager::instanceExists(const QString& instanceName) const
   return root.exists(instanceName);
 }
 
-std::unique_ptr<Instance> selectInstance()
+std::shared_ptr<Instance> selectInstance()
 {
   auto& m = InstanceManager::singleton();
 

@@ -1,8 +1,15 @@
 #ifndef MODORGANIZER_INSTANCEMANAGER_INCLUDED
 #define MODORGANIZER_INSTANCEMANAGER_INCLUDED
 
+#include <QDir>
 #include <QSettings>
 #include <QString>
+
+#include <atomic>
+#include <memory>
+#include <mutex>
+
+#include <uibase/iinstance.h>
 
 namespace MOBase
 {
@@ -26,7 +33,7 @@ class PluginContainer;
 // setGame() and setVariant() can be called before retrying setup(); this
 // happens on startup if that information is missing
 //
-class Instance
+class Instance : public MOBase::IInstance
 {
 public:
   // returned by setup()
@@ -91,18 +98,6 @@ public:
   // happens when the profile is overriden on the command line
   //
   Instance(QString dir, bool portable, QString profileName = {});
-
-  // reads in values from the INI if they were not given yet:
-  //  - game name
-  //  - game directory
-  //  - game variant
-  //  - profile name
-  //
-  // note that setup() already calls this
-  //
-  // returns false if the ini couldn't be read from
-  //
-  bool readFromIni();
 
   // finds the appropriate game plugin and sets it up so MO can use it; this
   // calls readFromIni() first
@@ -192,9 +187,24 @@ public:
 private:
   QString m_dir;
   bool m_portable;
-  QString m_gameName, m_gameDir, m_gameVariant, m_baseDir;
+  mutable QString m_gameName, m_gameDir, m_gameVariant, m_baseDir;
   MOBase::IPluginGame* m_plugin;
-  QString m_profile;
+  mutable QString m_profile;
+
+  mutable std::mutex m_iniValuesMutex;
+  mutable std::atomic<bool> m_iniValuesRead{false};
+
+  // reads in values from the INI if they were not given yet:
+  //  - game name
+  //  - game directory
+  //  - game variant
+  //  - profile name
+  //
+  // note that setup() already calls this
+  //
+  // returns false if the ini couldn't be read from
+  //
+  bool readFromIni() const;
 
   // figures out the game plugin for this instance
   //
@@ -202,7 +212,7 @@ private:
 
   // figures out the profile name for this instance
   //
-  void getProfile(const Settings& s);
+  void getProfile(const Settings& s) const;
 
   // updates the ini with the given values and the ones found by setup()
   //
@@ -259,7 +269,7 @@ public:
   // instance name in the registry is empty or non-existent and there is no
   // portable instance set up
   //
-  std::unique_ptr<Instance> currentInstance() const;
+  std::shared_ptr<Instance> currentInstance() const;
 
   // sets the instance name in the registry so the same instance is opened next
   // time MO runs
@@ -294,6 +304,10 @@ public:
   // does not include the portable instance
   //
   std::vector<QString> globalInstancePaths() const;
+
+  // returns the global Instance with the given name, or null if it doesn't exist
+  //
+  std::shared_ptr<const Instance> getGlobalInstance(const QString& instanceName) const;
 
   // sanitizes the given instance name and either
   // 1) returns it if there is no instance with this name
@@ -343,7 +357,7 @@ enum class SetupInstanceResults
 // instance manager dialog and returns the selected instance or empty if the
 // user cancelled
 //
-std::unique_ptr<Instance> selectInstance();
+std::shared_ptr<Instance> selectInstance();
 
 // calls instance.setup() tries to handle problems by itself:
 //
