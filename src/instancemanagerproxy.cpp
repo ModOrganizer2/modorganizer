@@ -24,7 +24,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include <vector>
 
+#include <QDir>
 #include <QString>
+
 #include <uibase/iinstance.h>
 
 InstanceManagerProxy::InstanceManagerProxy(InstanceManager* instanceManager)
@@ -36,7 +38,14 @@ std::shared_ptr<MOBase::IInstance> InstanceManagerProxy::currentInstance() const
   return m_Proxied->currentInstance();
 }
 
-std::vector<QString> InstanceManagerProxy::globalInstancePaths() const
+std::vector<QDir> InstanceManagerProxy::globalInstancePaths() const
 {
-  return m_Proxied->globalInstancePaths();
+  const auto globalPaths = m_Proxied->globalInstancePaths();
+  return std::vector<QDir>(globalPaths.begin(), globalPaths.end());
+}
+
+std::shared_ptr<const MOBase::IInstance>
+InstanceManagerProxy::getGlobalInstance(const QString& instanceName) const
+{
+  return m_Proxied->getGlobalInstance(instanceName);
 }

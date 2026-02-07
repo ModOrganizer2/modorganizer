@@ -1,6 +1,7 @@
 #ifndef MODORGANIZER_INSTANCEMANAGER_INCLUDED
 #define MODORGANIZER_INSTANCEMANAGER_INCLUDED
 
+#include <QDir>
 #include <QSettings>
 #include <QString>
 
@@ -303,6 +304,10 @@ public:
   // does not include the portable instance
   //
   std::vector<QString> globalInstancePaths() const;
+
+  // returns the global Instance with the given name, or null if it doesn't exist
+  //
+  std::shared_ptr<const Instance> getGlobalInstance(const QString& instanceName) const;
 
   // sanitizes the given instance name and either
   // 1) returns it if there is no instance with this name

@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include <vector>
 
+#include <QDir>
 #include <QString>
 
 #include <uibase/iinstancemanager.h>
@@ -39,7 +40,9 @@ class InstanceManagerProxy : public MOBase::IInstanceManager
 public:
   InstanceManagerProxy(InstanceManager* instanceManager);
   std::shared_ptr<MOBase::IInstance> currentInstance() const override;
-  std::vector<QString> globalInstancePaths() const override;
+  std::vector<QDir> globalInstancePaths() const override;
+  std::shared_ptr<const MOBase::IInstance>
+  getGlobalInstance(const QString& instanceName) const override;
 
 private:
   InstanceManager* m_Proxied;

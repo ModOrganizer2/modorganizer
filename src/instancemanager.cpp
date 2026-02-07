@@ -618,6 +618,16 @@ std::vector<QString> InstanceManager::globalInstancePaths() const
   return list;
 }
 
+std::shared_ptr<const Instance>
+InstanceManager::getGlobalInstance(const QString& instanceName) const
+{
+  if (!instanceExists(instanceName)) {
+    return nullptr;
+  }
+
+  return std::make_shared<const Instance>(instancePath(instanceName), false, "");
+}
+
 bool InstanceManager::hasAnyInstances() const
 {
   return portableInstanceExists() || !globalInstancePaths().empty();
