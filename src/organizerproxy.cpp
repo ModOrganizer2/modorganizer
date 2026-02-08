@@ -5,6 +5,7 @@
 #include "gamefeaturesproxy.h"
 #include "glob_matching.h"
 #include "instancemanager.h"
+#include "instancemanagerproxy.h"
 #include "modlistproxy.h"
 #include "organizercore.h"
 #include "plugincontainer.h"
@@ -26,6 +27,8 @@ OrganizerProxy::OrganizerProxy(OrganizerCore* organizer,
                                PluginContainer* pluginContainer,
                                MOBase::IPlugin* plugin)
     : m_Proxied(organizer), m_PluginContainer(pluginContainer), m_Plugin(plugin),
+      m_InstanceManagerProxy(
+          std::make_unique<InstanceManagerProxy>(&InstanceManager::singleton())),
       m_DownloadManagerProxy(
           std::make_unique<DownloadManagerProxy>(this, organizer->downloadManager())),
       m_ModListProxy(std::make_unique<ModListProxy>(this, organizer->modList())),
@@ -351,6 +354,11 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerProxy::findFileInfos(
 std::shared_ptr<const MOBase::IFileTree> OrganizerProxy::virtualFileTree() const
 {
   return m_Proxied->m_VirtualFileTree.value();
+}
+
+MOBase::IInstanceManager* OrganizerProxy::instanceManager() const
+{
+  return m_InstanceManagerProxy.get();
 }
 
 MOBase::IDownloadManager* OrganizerProxy::downloadManager() const

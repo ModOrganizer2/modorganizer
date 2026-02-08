@@ -257,11 +257,6 @@ void InstanceManagerDialog::updateInstances()
     m_instances.insert(m_instances.begin(),
                        std::make_unique<Instance>(m.portablePath(), true));
   }
-
-  // read all inis, ignore errors
-  for (auto&& i : m_instances) {
-    i->readFromIni();
-  }
 }
 
 void InstanceManagerDialog::updateList()

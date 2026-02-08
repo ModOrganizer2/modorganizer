@@ -81,14 +81,14 @@ private:
   QString m_defaultStyle;
   std::unique_ptr<env::ModuleNotification> m_modules;
 
-  std::unique_ptr<Instance> m_instance;
+  std::shared_ptr<Instance> m_instance;
   std::unique_ptr<Settings> m_settings;
   std::unique_ptr<NexusInterface> m_nexus;
   std::unique_ptr<PluginContainer> m_plugins;
   std::unique_ptr<OrganizerCore> m_core;
 
   void externalMessage(const QString& message);
-  std::unique_ptr<Instance> getCurrentInstance(bool forceSelect);
+  std::shared_ptr<Instance> getCurrentInstance(bool forceSelect);
   std::optional<int> setupInstanceLoop(Instance& currentInstance, PluginContainer& pc);
   void purgeOldFiles();
 };
