@@ -2392,6 +2392,15 @@ void DiagnosticsSettings::setLootLogLevel(lootcli::LogLevels level)
   set(m_Settings, "Settings", "loot_log_level", level);
 }
 
+bool DiagnosticsSettings::usvfsDebugMode() const
+{
+  return get<bool>(m_Settings, "Settings", "usvfs_debug_mode", false);
+}
+void DiagnosticsSettings::setUsvfsDebugMode(bool enabled)
+{
+  set(m_Settings, "Settings", "usvfs_debug_mode", enabled);
+}
+
 env::CoreDumpTypes DiagnosticsSettings::coreDumpType() const
 {
   return get<env::CoreDumpTypes>(m_Settings, "Settings", "crash_dumps_type",
