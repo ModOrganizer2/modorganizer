@@ -1199,22 +1199,12 @@ If you disable this feature, MO will only display official DLCs this way. Please
                    <property name="text">
                     <string>Connect to Nexus</string>
                    </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="nexusManualKey">
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="nexusDisconnect">
                    <property name="toolTip">
-                    <string>Manually enter the API key and try to login</string>
-                   </property>
-                   <property name="text">
-                    <string>Enter API Key Manually</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="nexusDisconnect">
-                   <property name="toolTip">
-                    <string>Clear the stored Nexus API key and force reauthorization.</string>
+                    <string>Clear the stored Nexus authorization and force reauthorization.</string>
                    </property>
                    <property name="text">
                     <string>Disconnect from Nexus</string>

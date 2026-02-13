@@ -26,8 +26,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "serverinfo.h"
 #include "settingsutilities.h"
 #include "shared/appconfig.h"
+#include <QJsonDocument>
 #include <expanderwidget.h>
 #include <iplugingame.h>
+#include <optional>
 #include <utility.h>
 
 using namespace MOBase;
@@ -2498,35 +2500,58 @@ void GlobalSettings::setHideAssignCategoriesQuestion(bool b)
   settings().setValue("HideAssignCategoriesQuestion", b);
 }
 
-bool GlobalSettings::nexusApiKey(QString& apiKey)
+namespace
 {
-  QString tempKey = getWindowsCredential("APIKEY");
-  if (tempKey.isEmpty())
-    return false;
+constexpr auto NexusOAuthCredentialKey = "NEXUS_OAUTH_TOKENS";
 
-  apiKey = tempKey;
+std::optional<NexusOAuthTokens> parseStoredTokens(const QString& raw)
+{
+  if (raw.isEmpty()) {
+    return std::nullopt;
+  }
+
+  const auto doc = QJsonDocument::fromJson(raw.toUtf8());
+  if (doc.isNull() || !doc.isObject()) {
+    return std::nullopt;
+  }
+
+  return NexusOAuthTokens::fromJson(doc.object());
+}
+}  // namespace
+
+bool GlobalSettings::nexusOAuthTokens(NexusOAuthTokens& tokens)
+{
+  const auto raw    = getWindowsCredential(NexusOAuthCredentialKey);
+  const auto parsed = parseStoredTokens(raw);
+  if (!parsed) {
+    return false;
+  }
+
+  tokens = *parsed;
   return true;
 }
 
-bool GlobalSettings::setNexusApiKey(const QString& apiKey)
+bool GlobalSettings::setNexusOAuthTokens(const NexusOAuthTokens& tokens)
 {
-  if (!setWindowsCredential("APIKEY", apiKey)) {
+  const auto payload = QJsonDocument(tokens.toJson()).toJson(QJsonDocument::Compact);
+
+  if (!setWindowsCredential(NexusOAuthCredentialKey, payload)) {
     const auto e = GetLastError();
-    log::error("Storing API key failed: {}", formatSystemMessage(e));
+    log::error("Storing OAuth tokens failed: {}", formatSystemMessage(e));
     return false;
   }
 
   return true;
 }
 
-bool GlobalSettings::clearNexusApiKey()
+bool GlobalSettings::clearNexusOAuthTokens()
 {
-  return setNexusApiKey("");
+  return setWindowsCredential(NexusOAuthCredentialKey, "");
 }
 
-bool GlobalSettings::hasNexusApiKey()
+bool GlobalSettings::hasNexusOAuthTokens()
 {
-  return !getWindowsCredential("APIKEY").isEmpty();
+  return !getWindowsCredential(NexusOAuthCredentialKey).isEmpty();
 }
 
 void GlobalSettings::resetDialogs()
