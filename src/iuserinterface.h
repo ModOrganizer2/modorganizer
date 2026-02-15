@@ -4,6 +4,7 @@
 #include "modinfodialogfwd.h"
 #include <QMainWindow>
 #include <QMenu>
+#include <QSystemTrayIcon>
 #include <delayedfilewriter.h>
 #include <ipluginmodpage.h>
 #include <iplugintool.h>
@@ -27,6 +28,10 @@ public:
   virtual MOBase::DelayedFileWriterBase& archivesWriter() = 0;
 
   virtual QMainWindow* mainWindow() = 0;
+
+  virtual void showNotification(const QString& title, const QString& message,
+                                QSystemTrayIcon::MessageIcon icon =
+                                    QSystemTrayIcon::MessageIcon::Information) = 0;
 };
 
 #endif  // IUSERINTERFACE_H

@@ -139,6 +139,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QShortcut>
 #include <QSize>
 #include <QSizePolicy>
+#include <QSystemTrayIcon>
 #include <QTime>
 #include <QTimer>
 #include <QToolButton>
@@ -2257,6 +2258,12 @@ void MainWindow::storeSettings()
 QMainWindow* MainWindow::mainWindow()
 {
   return this;
+}
+
+void MainWindow::showNotification(const QString& title, const QString& message,
+                                  QSystemTrayIcon::MessageIcon icon)
+{
+  m_SystemTrayManager->showNotification(title, message, icon);
 }
 
 void MainWindow::on_tabWidget_currentChanged(int index)

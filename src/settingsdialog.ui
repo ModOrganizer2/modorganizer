@@ -166,6 +166,19 @@
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QCheckBox" name="showDownloadNotificationsBox">
+                <property name="toolTip">
+                 <string>Show notifications when downloads complete or fail.</string>
+                </property>
+                <property name="whatsThis">
+                 <string>Show notifications when downloads complete or fail.</string>
+                </property>
+                <property name="text">
+                 <string>Show notifications for completed or failed downloads</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
            </item>
@@ -178,10 +191,10 @@
               <item>
                <widget class="QCheckBox" name="checkForUpdates">
                 <property name="toolTip">
-                 <string>Check for Mod Organizer updates on Github on startup.</string>
+                 <string>Check for Mod Organizer updates on GitHub on startup.</string>
                 </property>
                 <property name="whatsThis">
-                 <string>Check for Mod Organizer updates on Github on startup.</string>
+                 <string>Check for Mod Organizer updates on GitHub on startup.</string>
                 </property>
                 <property name="text">
                  <string>Check for updates</string>
