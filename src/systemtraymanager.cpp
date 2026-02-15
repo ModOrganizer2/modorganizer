@@ -66,9 +66,8 @@ void SystemTrayManager::restoreFromSystemTray()
   }
 }
 
-void SystemTrayManager::showNotification(
-    const QString& title, const QString& message,
-    QSystemTrayIcon::MessageIcon icon)
+void SystemTrayManager::showNotification(const QString& title, const QString& message,
+                                         QSystemTrayIcon::MessageIcon icon)
 {
   m_SystemTrayIcon->showMessage(title, message, icon);
 }
