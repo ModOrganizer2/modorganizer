@@ -42,6 +42,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QHttp2Configuration>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QSystemTrayIcon>
 #include <QTextDocument>
 #include <QTimer>
 
@@ -1403,7 +1404,11 @@ QString DownloadManager::getDisplayName(int index) const
   }
 
   DownloadInfo* info = m_ActiveDownloads.at(index);
+  return displayNameByInfo(info);
+}
 
+QString DownloadManager::displayNameByInfo(const DownloadInfo* info) const
+{
   QTextDocument doc;
   if (!info->m_FileInfo->name.isEmpty()) {
     doc.setHtml(info->m_FileInfo->name);
@@ -1817,6 +1822,11 @@ void DownloadManager::nxmDescriptionAvailable(QString, int, QVariant userData,
   info->m_FileInfo->modName = doc.toPlainText();
   if (info->m_FileInfo->fileID != 0) {
     setState(info, STATE_READY);
+    if (m_OrganizerCore->settings().interface().showDownloadNotifications()) {
+      m_OrganizerCore->showNotification(
+          tr("Download complete"),
+          tr("%1 is ready to be installed.").arg(displayNameByInfo(info)));
+    }
   } else {
     setState(info, STATE_FETCHINGFILEINFO);
   }
@@ -2392,6 +2402,12 @@ void DownloadManager::finishDownload(DownloadID id)
         emit showMessage(tr("Download failed: %1 (%2)")
                              .arg(reply->errorString())
                              .arg(reply->error()));
+        if (m_OrganizerCore->settings().interface().showDownloadNotifications()) {
+          m_OrganizerCore->showNotification(
+              tr("Download failed"),
+              tr("%1 failed to download.").arg(displayNameByInfo(info)),
+              QSystemTrayIcon::MessageIcon::Critical);
+        }
       }
       error = true;
       setState(info, STATE_ERROR);

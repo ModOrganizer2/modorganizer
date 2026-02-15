@@ -2300,6 +2300,16 @@ void InterfaceSettings::setHideDownloadsAfterInstallation(bool b)
   set(m_Settings, "Settings", "autohide_downloads", b);
 }
 
+bool InterfaceSettings::showDownloadNotifications() const
+{
+  return get<bool>(m_Settings, "Settings", "download_notifications", false);
+}
+
+void InterfaceSettings::setShowDownloadNotifications(bool b)
+{
+  set(m_Settings, "Settings", "download_notifications", b);
+}
+
 bool InterfaceSettings::hideAPICounter() const
 {
   return get<bool>(m_Settings, "Settings", "hide_api_counter", false);

@@ -78,6 +78,7 @@ class DirectoryEntry;
 #include <QProcess>
 #include <QString>
 #include <QStringList>
+#include <QSystemTrayIcon>
 #include <QTime>
 #include <QTimer>
 #include <QVariant>
@@ -155,6 +156,10 @@ public:
   {
     return m_ArchiveListWriter;
   }
+
+  void showNotification(const QString& title, const QString& message,
+                        QSystemTrayIcon::MessageIcon icon =
+                            QSystemTrayIcon::MessageIcon::Information) override;
 
 public slots:
   void refresherProgress(const DirectoryRefreshProgress* p);

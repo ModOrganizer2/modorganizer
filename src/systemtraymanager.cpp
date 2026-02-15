@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QIcon>
 #include <QMainWindow>
 #include <QMenu>
+#include <QString>
 #include <QSystemTrayIcon>
 
 SystemTrayManager::SystemTrayManager(QMainWindow* parent, QDockWidget* logDock)
@@ -42,11 +43,11 @@ SystemTrayManager::SystemTrayManager(QMainWindow* parent, QDockWidget* logDock)
   trayMenu->addAction(exitAction);
 
   m_SystemTrayIcon->setContextMenu(trayMenu);
+  m_SystemTrayIcon->show();
 }
 
 void SystemTrayManager::minimizeToSystemTray()
 {
-  m_SystemTrayIcon->show();
   m_Parent->hide();
 
   if (m_LogDock->isFloating() && m_LogDock->isVisible()) {
@@ -56,8 +57,6 @@ void SystemTrayManager::minimizeToSystemTray()
 
 void SystemTrayManager::restoreFromSystemTray()
 {
-  m_SystemTrayIcon->hide();
-
   m_Parent->showNormal();
   m_Parent->raise();
   m_Parent->activateWindow();
@@ -65,6 +64,13 @@ void SystemTrayManager::restoreFromSystemTray()
   if (m_LogDock->isFloating() && m_LogDock->isHidden()) {
     m_LogDock->show();
   }
+}
+
+void SystemTrayManager::showNotification(
+    const QString& title, const QString& message,
+    QSystemTrayIcon::MessageIcon icon)
+{
+  m_SystemTrayIcon->showMessage(title, message, icon);
 }
 
 void SystemTrayManager::on_systemTrayIcon_activated(

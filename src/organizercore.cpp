@@ -46,6 +46,7 @@
 #include <QMessageBox>
 #include <QNetworkInterface>
 #include <QProcess>
+#include <QSystemTrayIcon>
 #include <QTimer>
 #include <QUrl>
 #include <QWidget>
@@ -537,6 +538,14 @@ std::wstring OrganizerCore::getGlobalCoreDumpPath()
   }
 
   return {};
+}
+
+void OrganizerCore::showNotification(const QString& message, const QString& title,
+                                     QSystemTrayIcon::MessageIcon icon)
+{
+  if (m_UserInterface) {
+    m_UserInterface->showNotification(message, title, icon);
+  }
 }
 
 void OrganizerCore::setCurrentProfile(const QString& profileName)
