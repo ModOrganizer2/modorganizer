@@ -566,6 +566,10 @@ std::shared_ptr<Instance> InstanceManager::currentInstance() const
       // no instance set
       return {};
     }
+  } else if (name.compare("portable", Qt::CaseInsensitive) == 0 &&
+             portableInstanceExists()) {
+    // use portable
+    return std::make_shared<Instance>(portablePath(), true, profile);
   }
 
   return std::make_shared<Instance>(instancePath(name), false, profile);
