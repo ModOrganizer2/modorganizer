@@ -62,7 +62,7 @@ LogWorker::LogWorker()
   log::debug("usvfs log messages are written to {}", m_LogFile.fileName());
 }
 
-LogWorker::~LogWorker() {}
+LogWorker::~LogWorker() = default;
 
 void LogWorker::process()
 {
@@ -155,7 +155,7 @@ UsvfsConnector::UsvfsConnector()
   usvfsFreeParameters(params);
 
   usvfsClearExecutableBlacklist();
-  for (auto exec : s.executablesBlacklist().split(";")) {
+  for (auto& exec : s.executablesBlacklist().split(";")) {
     std::wstring buf = exec.toStdWString();
     usvfsBlacklistExecutable(buf.data());
   }
@@ -210,7 +210,7 @@ void UsvfsConnector::updateMapping(const MappingType& mapping)
 
   usvfsClearVirtualMappings();
 
-  for (auto map : mapping) {
+  for (const auto& map : mapping) {
     if (progress.wasCanceled()) {
       usvfsClearVirtualMappings();
       throw UsvfsConnectorException("VFS mapping canceled by user");
@@ -261,7 +261,7 @@ void UsvfsConnector::updateParams(MOBase::log::Levels logLevel,
   usvfsFreeParameters(p);
 
   usvfsClearExecutableBlacklist();
-  for (auto exec : executableBlacklist.split(";")) {
+  for (auto& exec : executableBlacklist.split(";")) {
     std::wstring buf = exec.toStdWString();
     usvfsBlacklistExecutable(buf.data());
   }
@@ -286,7 +286,7 @@ void UsvfsConnector::updateForcedLibraries(
     const QList<MOBase::ExecutableForcedLoadSetting>& forcedLibraries)
 {
   usvfsClearLibraryForceLoads();
-  for (auto setting : forcedLibraries) {
+  for (auto& setting : forcedLibraries) {
     if (setting.enabled()) {
       usvfsForceLoadLibrary(setting.process().toStdWString().data(),
                             setting.library().toStdWString().data());

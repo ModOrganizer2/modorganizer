@@ -115,7 +115,7 @@ WorkaroundsSettingsTab::changeBlacklistLater(QWidget* parent, const QString& cur
   }
 
   QStringList blacklist;
-  for (auto exec : result.split("\n")) {
+  for (const auto& exec : result.split("\n")) {
     if (exec.trimmed().endsWith(".exe", Qt::CaseInsensitive)) {
       blacklist << exec.trimmed();
     }

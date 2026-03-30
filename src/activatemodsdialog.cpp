@@ -48,7 +48,7 @@ ActivateModsDialog::ActivateModsDialog(SaveGameInfo::MissingAssets const& missin
   for (SaveGameInfo::MissingAssets::const_iterator espIter = missingAssets.begin();
        espIter != missingAssets.end(); ++espIter, ++row) {
     modsTable->setCellWidget(row, 0, new QLabel(espIter.key()));
-    if (espIter->size() == 0) {
+    if (espIter->isEmpty()) {
       modsTable->setCellWidget(row, 1, new QLabel(tr("not found")));
     } else {
       QComboBox* combo = new QComboBox();

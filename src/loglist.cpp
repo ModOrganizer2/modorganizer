@@ -31,7 +31,7 @@ static std::unique_ptr<env::Console> m_console;
 static bool m_stdout = false;
 static std::mutex m_stdoutMutex;
 
-LogModel::LogModel() {}
+LogModel::LogModel() = default;
 
 void LogModel::create()
 {
@@ -43,12 +43,12 @@ LogModel& LogModel::instance()
   return *g_instance;
 }
 
-void LogModel::add(MOBase::log::Entry e)
+void LogModel::add(const MOBase::log::Entry& e)
 {
   QMetaObject::invokeMethod(
       this,
       [this, e] {
-        onEntryAdded(std::move(e));
+        onEntryAdded(e);
       },
       Qt::QueuedConnection);
 }

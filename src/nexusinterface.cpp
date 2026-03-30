@@ -360,7 +360,7 @@ void NexusInterface::interpretNexusFileName(const QString& fileName, QString& mo
     SelectionDialog selection(tr("Please pick the mod ID for \"%1\"").arg(fileName));
     int index   = 0;
     auto splits = fileName.split(QRegularExpression("[^0-9]"), Qt::KeepEmptyParts);
-    for (auto substr : splits) {
+    for (const auto& substr : splits) {
       bool ok   = false;
       int value = substr.toInt(&ok);
       if (ok) {
@@ -435,13 +435,13 @@ std::vector<std::pair<QString, QString>>
 NexusInterface::getGameChoices(const MOBase::IPluginGame* game)
 {
   std::vector<std::pair<QString, QString>> choices;
-  choices.push_back(
-      std::pair<QString, QString>(game->gameShortName(), game->gameName()));
-  for (QString gameName : game->validShortNames()) {
+  choices.emplace_back(
+      game->gameShortName(), game->gameName());
+  for (const auto& gameName : game->validShortNames()) {
     for (auto gamePlugin : m_PluginContainer->plugins<IPluginGame>()) {
       if (gamePlugin->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
-        choices.push_back(std::pair<QString, QString>(gamePlugin->gameShortName(),
-                                                      gamePlugin->gameName()));
+        choices.emplace_back(gamePlugin->gameShortName(),
+                                                      gamePlugin->gameName());
         break;
       }
     }
@@ -617,7 +617,7 @@ int NexusInterface::requestFileInfo(QString gameName, int modID, int fileID,
                                     QObject* receiver, QVariant userData,
                                     const QString& subModule)
 {
-  IPluginGame* gamePlugin = getGame(gameName);
+  const IPluginGame* gamePlugin = getGame(gameName);
   if (gamePlugin == nullptr) {
     log::error("requestFileInfo can't find plugin for {}", gameName);
     return -1;
@@ -923,7 +923,7 @@ void NexusInterface::nextRequest()
                 .arg(info.m_FileID);
     } break;
     case NXMRequestInfo::TYPE_DOWNLOADURL: {
-      ModRepositoryFileInfo* fileInfo = qobject_cast<ModRepositoryFileInfo*>(
+      const ModRepositoryFileInfo* fileInfo = qobject_cast<ModRepositoryFileInfo*>(
           qvariant_cast<QObject*>(info.m_UserData));
       if (m_User.type() == APIUserAccountTypes::Premium) {
         url = QString("%1/games/%2/mods/%3/files/%4/download_link")
@@ -986,6 +986,8 @@ void NexusInterface::nextRequest()
     url = info.m_URL;
   }
   QNetworkRequest request(url);
+  request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                       QNetworkRequest::NoLessSafeRedirectPolicy);
   request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
   request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
                        QNetworkRequest::AlwaysNetwork);
@@ -1069,19 +1071,22 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
                           iter->m_UserData, iter->m_ID, statusCode, errorMsg);
   } else {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if (statusCode == 301) {
+    if (statusCode >= 301 && statusCode <= 308) {
       // redirect request, return request to queue
       iter->m_URL =
           reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toString();
       iter->m_Reroute = true;
       m_RequestQueue.enqueue(*iter);
       // nextRequest();
+      log::debug("redirected download of " + reply->url().toString() + " to " +
+                 iter->m_URL + " with status code " +
+                 reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString());
       return;
     }
     QByteArray data = reply->readAll();
     if (data.isNull() || data.isEmpty() || (strcmp(data.constData(), "null") == 0)) {
       QString nexusError(reply->rawHeader("NexusErrorInfo"));
-      if (nexusError.length() == 0) {
+      if (nexusError.isEmpty()) {
         nexusError = tr("empty response");
       }
       log::debug("nexus error: {}", nexusError);
@@ -1170,7 +1175,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
 
 void NexusInterface::requestFinished()
 {
-  QNetworkReply* reply = static_cast<QNetworkReply*>(sender());
+  const QNetworkReply* reply = static_cast<QNetworkReply*>(sender());
   for (std::list<NXMRequestInfo>::iterator iter = m_ActiveRequest.begin();
        iter != m_ActiveRequest.end(); ++iter) {
     if (iter->m_Reply == reply) {
@@ -1187,7 +1192,7 @@ void NexusInterface::requestFinished()
 
 void NexusInterface::requestError(QNetworkReply::NetworkError)
 {
-  QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
+  const QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
   if (reply == nullptr) {
     log::warn("invalid sender type");
     return;
@@ -1199,7 +1204,7 @@ void NexusInterface::requestError(QNetworkReply::NetworkError)
 
 void NexusInterface::requestTimeout()
 {
-  QTimer* timer = qobject_cast<QTimer*>(sender());
+  const QTimer* timer = qobject_cast<QTimer*>(sender());
   if (timer == nullptr) {
     log::warn("invalid sender type");
     return;

@@ -127,7 +127,7 @@ bool Instance::isPortable() const
 
 bool Instance::isActive() const
 {
-  auto& m = InstanceManager::singleton();
+  const auto& m = InstanceManager::singleton();
 
   if (auto i = m.currentInstance()) {
     if (m_portable) {
@@ -427,7 +427,7 @@ std::vector<Instance::Object> Instance::objectsForDeletion() const
   // don't delete that
   if (!isPortable()) {
     if (QDir(loc).exists()) {
-      roots.push_back({loc, true});
+      roots.emplace_back(loc, true);
     }
   }
 
@@ -435,7 +435,7 @@ std::vector<Instance::Object> Instance::objectsForDeletion() const
   // if it's the same
   if (canonicalDir(base) != canonicalDir(loc)) {
     if (QDir(base).exists()) {
-      roots.push_back({base, false});
+      roots.emplace_back(base, false);
     }
   }
 
@@ -474,14 +474,14 @@ std::vector<Instance::Object> Instance::objectsForDeletion() const
       // not in roots, this is a path that was changed by the user; make
       // sure it exists
       if (QDir(f.path).exists()) {
-        cleanDirs.push_back({prettyDir(f.path), f.mandatoryDelete});
+        cleanDirs.emplace_back(prettyDir(f.path), f.mandatoryDelete);
       }
     }
   }
 
   // prepending the roots
   for (auto itor = roots.rbegin(); itor != roots.rend(); ++itor) {
-    cleanDirs.insert(cleanDirs.begin(), {prettyDir(itor->path), itor->mandatoryDelete});
+    cleanDirs.emplace(cleanDirs.begin(), prettyDir(itor->path), itor->mandatoryDelete);
   }
 
   // this will contain the individual files that are not inside the roots;
@@ -503,7 +503,7 @@ std::vector<Instance::Object> Instance::objectsForDeletion() const
       // not in roots, this is a path that was changed by the user; make
       // sure it exists
       if (QFileInfo(f.path).exists()) {
-        cleanFiles.push_back({prettyFile(f.path), f.mandatoryDelete});
+        cleanFiles.emplace_back(prettyFile(f.path), f.mandatoryDelete);
       }
     }
   }
@@ -743,7 +743,7 @@ bool InstanceManager::instanceExists(const QString& instanceName) const
 
 std::shared_ptr<Instance> selectInstance()
 {
-  auto& m = InstanceManager::singleton();
+  const auto& m = InstanceManager::singleton();
 
   // since there is no instance currently active, load plugins with a null
   // OrganizerCore; see PluginContainer::initPlugin()

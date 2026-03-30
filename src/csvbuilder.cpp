@@ -10,7 +10,7 @@ CSVBuilder::CSVBuilder(QIODevice* target)
   m_QuoteMode[TYPE_STRING]  = QUOTE_ONDEMAND;
 }
 
-CSVBuilder::~CSVBuilder() {}
+CSVBuilder::~CSVBuilder() = default;
 
 void CSVBuilder::setFieldSeparator(char sep)
 {

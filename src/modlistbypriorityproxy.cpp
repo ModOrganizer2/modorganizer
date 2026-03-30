@@ -12,7 +12,7 @@ ModListByPriorityProxy::ModListByPriorityProxy(Profile* profile, OrganizerCore& 
     : QAbstractProxyModel(parent), m_core(core), m_profile(profile)
 {}
 
-ModListByPriorityProxy::~ModListByPriorityProxy() {}
+ModListByPriorityProxy::~ModListByPriorityProxy() = default;
 
 void ModListByPriorityProxy::setSourceModel(QAbstractItemModel* model)
 {

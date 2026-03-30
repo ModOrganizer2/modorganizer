@@ -121,7 +121,7 @@ void Settings::processUpdates(const QVersionNumber& currentVersion,
     }
   };
 
-  version({2, 2, 0}, [&] {
+  version({2, 2, 0}, [this] {
     remove(m_Settings, "Settings", "steam_password");
     remove(m_Settings, "Settings", "nexus_username");
     remove(m_Settings, "Settings", "nexus_password");
@@ -133,7 +133,7 @@ void Settings::processUpdates(const QVersionNumber& currentVersion,
     removeSection(m_Settings, "Servers");
   });
 
-  version({2, 2, 1}, [&] {
+  version({2, 2, 1}, [this] {
     remove(m_Settings, "General", "mod_info_tabs");
     remove(m_Settings, "General", "mod_info_conflict_expanders");
     remove(m_Settings, "General", "mod_info_conflicts");
@@ -143,7 +143,7 @@ void Settings::processUpdates(const QVersionNumber& currentVersion,
     remove(m_Settings, "General", "mod_info_conflicts_overwritten");
   });
 
-  version({2, 2, 2}, [&] {
+  version({2, 2, 2}, [this] {
     // log splitter is gone, it's a dock now
     remove(m_Settings, "General", "log_split");
 
@@ -177,7 +177,7 @@ void Settings::processUpdates(const QVersionNumber& currentVersion,
     m_Network.updateFromOldMap();
   });
 
-  version({2, 4, 0}, [&] {
+  version({2, 4, 0}, [this] {
     // removed
     remove(m_Settings, "Settings", "hide_unchecked_plugins");
     remove(m_Settings, "Settings", "load_mechanism");
@@ -302,13 +302,14 @@ QString Settings::executablesBlacklist() const
 
 bool Settings::isExecutableBlacklisted(const QString& s) const
 {
-  for (auto exec : executablesBlacklist().split(";")) {
+  /* for (auto exec : executablesBlacklist().split(";")) {
     if (exec.compare(s, Qt::CaseInsensitive) == 0) {
       return true;
     }
   }
 
-  return false;
+  return false;*/
+  return executablesBlacklist().split(";").contains(s, Qt::CaseInsensitive);
 }
 
 void Settings::setExecutablesBlacklist(const QString& s)
@@ -955,7 +956,7 @@ void GeometrySettings::centerOnParent(QWidget* w, QWidget* parent)
   }
 
   if (parent && parent->isVisible()) {
-    const auto pr = parent->geometry();
+    const auto& pr = parent->geometry();
     w->move(pr.center() - w->rect().center());
   }
 }
@@ -981,7 +982,7 @@ Qt::Orientation dockOrientation(const QMainWindow* mw, const QDockWidget* d)
     return Qt::Vertical;
   }
 }
-
+/*
 void GeometrySettings::saveDocks(const QMainWindow* mw)
 {
   // this attempts to fix https://bugreports.qt.io/browse/QTBUG-46620 where dock
@@ -1047,7 +1048,7 @@ void GeometrySettings::restoreDocks(QMainWindow* mw) const
       mw->resizeDocks({info.d}, {info.size}, info.ori);
     }
   });
-}
+}*/
 
 WidgetSettings::WidgetSettings(QSettings& s, bool globalInstance) : m_Settings(s)
 {
@@ -1068,7 +1069,7 @@ WidgetSettings::WidgetSettings(QSettings& s, bool globalInstance) : m_Settings(s
 void WidgetSettings::saveTreeCheckState(const QTreeView* tv, int role)
 {
   QVariantList data;
-  for (auto index : flatIndex(tv->model())) {
+  for (const auto& index : flatIndex(tv->model())) {
     data.append(index.data(role));
   }
   set(m_Settings, "Widgets", indexSettingName(tv), data);
@@ -1093,7 +1094,7 @@ void WidgetSettings::restoreTreeCheckState(QTreeView* tv, int role) const
 void WidgetSettings::saveTreeExpandState(const QTreeView* tv, int role)
 {
   QVariantList expanded;
-  for (auto index : flatIndex(tv->model())) {
+  for (const auto& index : flatIndex(tv->model())) {
     if (tv->isExpanded(index)) {
       expanded.append(index.data(role));
     }
@@ -1106,7 +1107,7 @@ void WidgetSettings::restoreTreeExpandState(QTreeView* tv, int role) const
   if (auto expanded =
           getOptional<QVariantList>(m_Settings, "Widgets", indexSettingName(tv))) {
     tv->collapseAll();
-    for (auto index : flatIndex(tv->model())) {
+    for (const auto& index : flatIndex(tv->model())) {
       if (expanded->contains(index.data(role))) {
         tv->expand(index);
       }
@@ -1367,7 +1368,7 @@ void PluginSettings::registerPlugin(IPlugin* plugin)
 
     if (!temp.isValid()) {
       temp = setting.defaultValue;
-    } else if (!temp.convert(setting.defaultValue.type())) {
+    } else if (!temp.convert(QMetaType(setting.defaultValue.typeId()))) {
       log::warn("failed to interpret \"{}\" as correct type for \"{}\" in plugin "
                 "\"{}\", using default",
                 temp.toString(), setting.key, plugin->name());
@@ -1598,7 +1599,7 @@ std::map<QString, QString> PathSettings::recent() const
     const QVariant dir  = sra.get<QVariant>("directory");
 
     if (name.isValid() && dir.isValid()) {
-      map.emplace(name.toString(), dir.toString());
+      map.try_emplace(name.toString(), dir.toString());
     }
   });
 
@@ -1616,11 +1617,11 @@ void PathSettings::setRecent(const std::map<QString, QString>& map)
 
   ScopedWriteArray swa(m_Settings, "recentDirectories", map.size());
 
-  for (auto&& p : map) {
+  for (auto&& [name, directory] : map) {
     swa.next();
 
-    swa.set("name", p.first);
-    swa.set("directory", p.second);
+    swa.set("name", name);
+    swa.set("directory", directory);
   }
 }
 

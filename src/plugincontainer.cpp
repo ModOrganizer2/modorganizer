@@ -472,7 +472,7 @@ bool PluginContainer::initPlugin(IPlugin* plugin, IPluginProxy* pluginProxy,
 
 void PluginContainer::registerGame(IPluginGame* game)
 {
-  m_SupportedGames.insert({game->gameName(), game});
+  m_SupportedGames.try_emplace(game->gameName(), game);
 }
 
 void PluginContainer::unregisterGame(MOBase::IPluginGame* game)

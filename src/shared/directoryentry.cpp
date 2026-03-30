@@ -180,7 +180,7 @@ void DirectoryEntry::addFromAllBSAs(const std::wstring& originName,
 
     int order = -1;
 
-    for (auto plugin : loadOrder) {
+    for (const auto& plugin : loadOrder) {
       const auto pluginNameLc =
           ToLowerCopy(std::filesystem::path(plugin).stem().native());
 
@@ -367,7 +367,7 @@ bool DirectoryEntry::hasFile(const std::wstring& name) const
   return m_Files.contains(ToLowerCopy(name));
 }
 
-bool DirectoryEntry::containsArchive(std::wstring archiveName)
+bool DirectoryEntry::containsArchive(const std::wstring& archiveName)
 {
   for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
     FileEntryPtr entry = m_FileRegister->getFile(iter->second);
@@ -790,7 +790,7 @@ DirectoryEntry* DirectoryEntry::getSubDirectoryRecursive(const std::wstring& pat
     return getSubDirectory(path, create, stats);
   } else {
     DirectoryEntry* nextChild =
-        getSubDirectory(path.substr(0, pos), create, stats, originID);
+        getSubDirectory(std::wstring_view(path).substr(0, pos), create, stats, originID);
 
     if (nextChild == nullptr) {
       return nullptr;
@@ -821,7 +821,7 @@ void DirectoryEntry::removeDirRecursive()
 void DirectoryEntry::addDirectoryToList(DirectoryEntry* e, std::wstring nameLc)
 {
   m_SubDirectories.insert(e);
-  m_SubDirectoriesLookup.emplace(std::move(nameLc), e);
+  m_SubDirectoriesLookup.try_emplace(std::move(nameLc), e);
 }
 
 void DirectoryEntry::removeDirectoryFromList(SubDirectories::iterator itor)
@@ -892,8 +892,8 @@ void DirectoryEntry::removeFilesFromList(const std::set<FileIndex>& indices)
 
 void DirectoryEntry::addFileToList(std::wstring fileNameLower, FileIndex index)
 {
-  m_FilesLookup.emplace(fileNameLower, index);
-  m_Files.emplace(std::move(fileNameLower), index);
+  m_FilesLookup.try_emplace(fileNameLower, index);
+  m_Files.try_emplace(std::move(fileNameLower), index);
   // fileNameLower has been moved from this point
 }
 

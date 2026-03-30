@@ -65,7 +65,7 @@ public
     :  // Public for make_shared (but not accessible by other since not exposed in .h):
   ArchiveFileTreeImpl(std::shared_ptr<const IFileTree> parent, QString name, int index,
                       std::vector<File> files)
-      : FileTreeEntry(parent, name), ArchiveFileEntry(parent, name, index), IFileTree(),
+      : FileTreeEntry(parent, name), IFileTree(), ArchiveFileEntry(parent, name, index),
         m_Files(std::move(files))
   {}
 

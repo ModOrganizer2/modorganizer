@@ -450,7 +450,7 @@ std::vector<Module> getLoadedModules()
   for (;;) {
     const auto path = QString::fromWCharArray(me.szExePath);
     if (!path.isEmpty()) {
-      v.push_back(Module(path, me.modBaseSize));
+      v.emplace_back(path, me.modBaseSize);
     }
 
     // next module

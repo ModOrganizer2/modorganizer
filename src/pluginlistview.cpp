@@ -231,7 +231,7 @@ void PluginListView::setSelected(const QModelIndex& current,
                                  const QModelIndexList& selected)
 {
   setCurrentIndex(indexModelToView(current));
-  for (auto idx : selected) {
+  for (const auto& idx : selected) {
     selectionModel()->select(indexModelToView(idx),
                              QItemSelectionModel::Select | QItemSelectionModel::Rows);
   }

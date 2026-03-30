@@ -607,8 +607,8 @@ std::vector<std::tuple<QString, QString, int>> Profile::getActiveMods()
   for (const auto& [priority, index] : m_ModIndexByPriority) {
     if (m_ModStatus[index].m_Enabled) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-      result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(),
-                                       m_ModStatus[index].m_Priority));
+      result.emplace_back(modInfo->internalName(), modInfo->absolutePath(),
+                                       m_ModStatus[index].m_Priority);
     }
   }
 
@@ -747,7 +747,7 @@ std::vector<std::wstring> Profile::splitDZString(const wchar_t* buffer) const
   const wchar_t* pos = buffer;
   size_t length      = wcslen(pos);
   while (length != 0U) {
-    result.push_back(pos);
+    result.emplace_back(pos);
     pos += length + 1;
     length = wcslen(pos);
   }
@@ -983,7 +983,7 @@ QString Profile::absoluteIniFilePath(QString iniFile) const
   QFileInfo targetIniFile(m_GamePlugin->documentsDirectory(), iniFile);
 
   bool isGameIni = false;
-  for (auto gameIni : m_GamePlugin->iniFiles()) {
+  for (const auto& gameIni : m_GamePlugin->iniFiles()) {
     // We compare the target file, not the actual ones:
     if (QFileInfo(m_GamePlugin->documentsDirectory(), gameIni) == targetIniFile) {
       isGameIni = true;
@@ -1060,7 +1060,7 @@ QVariantMap Profile::settingsByGroup(const QString& section) const
 {
   QVariantMap results;
   m_Settings->beginGroup(section);
-  for (auto key : m_Settings->childKeys()) {
+  for (const auto& key : m_Settings->childKeys()) {
     results[key] = m_Settings->value(key);
   }
   m_Settings->endGroup();
@@ -1070,7 +1070,7 @@ QVariantMap Profile::settingsByGroup(const QString& section) const
 void Profile::storeSettingsByGroup(const QString& section, const QVariantMap& values)
 {
   m_Settings->beginGroup(section);
-  for (auto key : values.keys()) {
+  for (const auto& key : values.keys()) {
     m_Settings->setValue(key, values[key]);
   }
   m_Settings->endGroup();
@@ -1083,7 +1083,7 @@ QList<QVariantMap> Profile::settingsByArray(const QString& prefix) const
   for (int i = 0; i < size; i++) {
     m_Settings->setArrayIndex(i);
     QVariantMap item;
-    for (auto key : m_Settings->childKeys()) {
+    for (const auto& key : m_Settings->childKeys()) {
       item[key] = m_Settings->value(key);
     }
     results.append(item);
@@ -1098,7 +1098,7 @@ void Profile::storeSettingsByArray(const QString& prefix,
   m_Settings->beginWriteArray(prefix);
   for (int i = 0; i < values.length(); i++) {
     m_Settings->setArrayIndex(i);
-    for (auto key : values.at(i).keys()) {
+    for (const auto& key : values.at(i).keys()) {
       m_Settings->setValue(key, values.at(i)[key]);
     }
   }
@@ -1126,7 +1126,7 @@ Profile::determineForcedLibraries(const QString& executable) const
   // look for enabled status on forced loads and add those
   for (auto forcedLoad : forcedLoads) {
     bool found = false;
-    for (auto rawSetting : rawSettings) {
+    for (const auto& rawSetting : rawSettings) {
       if ((rawSetting.value("process").toString().compare(forcedLoad.process(),
                                                           Qt::CaseInsensitive) == 0) &&
           (rawSetting.value("library").toString().compare(forcedLoad.library(),
@@ -1144,7 +1144,7 @@ Profile::determineForcedLibraries(const QString& executable) const
   // add everything else
   for (auto rawSetting : rawSettings) {
     bool add = true;
-    for (auto forcedLoad : forcedLoads) {
+    for (const auto& forcedLoad : forcedLoads) {
       if ((rawSetting.value("process").toString().compare(forcedLoad.process(),
                                                           Qt::CaseInsensitive) == 0) &&
           (rawSetting.value("library").toString().compare(forcedLoad.library(),
@@ -1166,7 +1166,7 @@ void Profile::storeForcedLibraries(const QString& executable,
                                    const QList<ExecutableForcedLoadSetting>& values)
 {
   QList<QVariantMap> rawSettings;
-  for (auto setting : values) {
+  for (const auto& setting : values) {
     QVariantMap rawSetting;
     rawSetting["enabled"] = setting.enabled();
     rawSetting["process"] = setting.process();

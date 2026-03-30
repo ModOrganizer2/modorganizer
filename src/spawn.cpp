@@ -173,7 +173,7 @@ QMessageBox::StandardButton badSteamReg(QWidget* parent, const QString& keyName,
           QObject::tr("The path to the Steam executable cannot be found. You might try "
                       "reinstalling Steam."))
       .details(details)
-      .icon(QMessageBox::Critical)
+      .icon(QMessageBox::Icon::Critical)
       .button({QObject::tr("Continue without starting Steam"),
                QObject::tr("The program may fail to launch."), QMessageBox::Yes})
       .button({QObject::tr("Cancel"), QMessageBox::Cancel})
@@ -197,7 +197,7 @@ QMessageBox::StandardButton startSteamFailed(QWidget* parent, const QString& key
       .main(QObject::tr("Cannot start Steam"))
       .content(makeContent(sp, e))
       .details(details)
-      .icon(QMessageBox::Critical)
+      .icon(QMessageBox::Icon::Critical)
       .button({QObject::tr("Continue without starting Steam"),
                QObject::tr("The program may fail to launch."), QMessageBox::Yes})
       .button({QObject::tr("Cancel"), QMessageBox::Cancel})
@@ -217,7 +217,7 @@ void spawnFailed(QWidget* parent, const SpawnParameters& sp, DWORD code)
       .main(mainText)
       .content(makeContent(sp, code))
       .details(details)
-      .icon(QMessageBox::Critical)
+      .icon(QMessageBox::Icon::Critical)
       .exec();
 }
 
@@ -241,7 +241,7 @@ void helperFailed(QWidget* parent, DWORD code, const QString& why,
       .main(mainText)
       .content(makeContent(sp, code))
       .details(details)
-      .icon(QMessageBox::Critical)
+      .icon(QMessageBox::Icon::Critical)
       .exec();
 }
 
@@ -270,7 +270,7 @@ bool confirmRestartAsAdmin(QWidget* parent, const SpawnParameters& sp)
           .main(mainText)
           .content(content)
           .details(details)
-          .icon(QMessageBox::Question)
+          .icon(QMessageBox::Icon::Question)
           .button({QObject::tr("Restart Mod Organizer as administrator"),
                    QObject::tr(
                        "You must allow \"helper.exe\" to make changes to the system."),
@@ -294,7 +294,7 @@ confirmStartSteam(QWidget* parent, const SpawnParameters& sp, const QString& det
       .main(mainText)
       .content(content)
       .details(details)
-      .icon(QMessageBox::Question)
+      .icon(QMessageBox::Icon::Question)
       .button({QObject::tr("Start Steam"), QMessageBox::Yes})
       .button({QObject::tr("Continue without starting Steam"),
                QObject::tr("The program might fail to run."), QMessageBox::No})
@@ -318,7 +318,7 @@ QMessageBox::StandardButton confirmRestartAsAdminForSteam(QWidget* parent,
   return MOBase::TaskDialog(parent, title)
       .main(mainText)
       .content(content)
-      .icon(QMessageBox::Question)
+      .icon(QMessageBox::Icon::Question)
       .button(
           {QObject::tr("Restart Mod Organizer as administrator"),
            QObject::tr("You must allow \"helper.exe\" to make changes to the system."),
@@ -345,7 +345,7 @@ bool eventLogNotRunning(QWidget* parent, const env::Service& s,
           .main(mainText)
           .content(content)
           .details(s.toString())
-          .icon(QMessageBox::Question)
+          .icon(QMessageBox::Icon::Question)
           .remember("eventLogService", sp.binary.fileName())
           .button({QObject::tr("Continue"), QObject::tr("Your mods might not work."),
                    QMessageBox::Yes})
@@ -375,7 +375,7 @@ confirmBlacklisted(QWidget* parent, const SpawnParameters& sp, Settings& setting
                .main(mainText)
                .content(content)
                .details(details)
-               .icon(QMessageBox::Question)
+               .icon(QMessageBox::Icon::Question)
                .remember("blacklistedExecutable", sp.binary.fileName())
                .button({QObject::tr("Continue"),
                         QObject::tr("Your mods might not work."), QMessageBox::Yes})

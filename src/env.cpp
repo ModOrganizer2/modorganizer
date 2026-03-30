@@ -128,7 +128,7 @@ void ModuleNotification::fire(QString path, std::size_t fileSize)
   }
 }
 
-Environment::Environment() {}
+Environment::Environment() = default;
 
 // anchor
 Environment::~Environment() = default;
@@ -1087,7 +1087,7 @@ std::wstring safeVersion()
   }
 }
 
-HandlePtr tempFile(const std::wstring dir)
+HandlePtr tempFile(const std::wstring& dir)
 {
   // maximum tries of incrementing the counter
   const int MaxTries = 100;
@@ -1223,7 +1223,7 @@ bool createMiniDump(const wchar_t* dir, HANDLE process, CoreDumpTypes type)
 
   const auto ret =
       MiniDumpWriteDump(process, pid, file.get(), flags, nullptr, nullptr, nullptr);
-
+  
   if (!ret) {
     const auto e = GetLastError();
 

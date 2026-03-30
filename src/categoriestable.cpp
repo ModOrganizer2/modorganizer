@@ -46,13 +46,13 @@ bool CategoriesTable::dropMimeData(int row, int column, const QMimeData* data,
       if (item->column() != 3)
         continue;
       QVariantList newData;
-      for (auto nexData : item->data(Qt::UserRole).toList()) {
+      for (const auto& nexData : item->data(Qt::UserRole).toList()) {
         if (nexData.toList()[1].toInt() != roleDataMap.value(Qt::UserRole)) {
           newData.insert(newData.length(), nexData);
         }
       }
       QStringList names;
-      for (auto nexData : newData) {
+      for (const auto& nexData : newData) {
         names.append(nexData.toList()[0].toString());
       }
       item->setData(Qt::DisplayRole, names.join(", "));
@@ -66,7 +66,7 @@ bool CategoriesTable::dropMimeData(int row, int column, const QMimeData* data,
     newData.append(roleDataMap.value(Qt::UserRole).toInt());
     itemData.insert(itemData.length(), newData);
     QStringList names;
-    for (auto cat : itemData) {
+    for (const auto& cat : itemData) {
       names.append(cat.toList()[0].toString());
     }
     nexusItem->setData(Qt::UserRole, itemData);

@@ -31,8 +31,8 @@ static bool ByName(const ModInfo::Ptr& LHS, const ModInfo::Ptr& RHS)
 ModInfoRegular::ModInfoRegular(const QDir& path, OrganizerCore& core)
     : ModInfoWithConflictInfo(core), m_Name(path.dirName()),
       m_Path(path.absolutePath()), m_Repository(),
-      m_GameName(core.managedGame()->gameShortName()), m_IsAlternate(false),
-      m_Converted(false), m_Validated(false), m_MetaInfoChanged(false),
+      m_GameName(core.managedGame()->gameShortName()), m_MetaInfoChanged(false),
+      m_IsAlternate(false), m_Converted(false), m_Validated(false),
       m_EndorsedState(EndorsedState::ENDORSED_UNKNOWN),
       m_TrackedState(TrackedState::TRACKED_UNKNOWN),
       m_NexusBridge(&core.pluginContainer())
@@ -234,9 +234,9 @@ void ModInfoRegular::readMeta()
 
   // Plugin settings:
   metaFile.beginGroup("Plugins");
-  for (auto pluginName : metaFile.childGroups()) {
+  for (const auto& pluginName : metaFile.childGroups()) {
     metaFile.beginGroup(pluginName);
-    for (auto settingKey : metaFile.childKeys()) {
+    for (const auto& settingKey : metaFile.childKeys()) {
       m_PluginSettings[pluginName][settingKey] = metaFile.value(settingKey);
     }
     metaFile.endGroup();
@@ -458,7 +458,7 @@ void ModInfoRegular::setCategory(int categoryID, bool active)
       m_Categories.erase(iter);
     }
     if (categoryID == m_PrimaryCategory) {
-      if (m_Categories.size() == 0) {
+      if (m_Categories.empty()) {
         m_PrimaryCategory = -1;
       } else {
         m_PrimaryCategory = *(m_Categories.begin());
@@ -700,7 +700,7 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
   if (!isValid() && !m_Validated) {
     result.push_back(ModInfo::FLAG_INVALID);
   }
-  if (m_Notes.length() != 0) {
+  if (!m_Notes.isEmpty()) {
     result.push_back(ModInfo::FLAG_NOTES);
   }
   if (m_PluginSelected) {
@@ -729,9 +729,7 @@ int ModInfoRegular::getHighlight() const
 {
   if (!isValid() && !m_Validated)
     return HIGHLIGHT_INVALID;
-  auto flags = getFlags();
-  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_PLUGIN_SELECTED) !=
-      flags.end())
+  if (std::ranges::contains(getFlags(), ModInfo::FLAG_PLUGIN_SELECTED))
     return HIGHLIGHT_PLUGIN;
   return HIGHLIGHT_NONE;
 }

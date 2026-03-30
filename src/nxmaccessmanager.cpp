@@ -158,29 +158,29 @@ NexusSSOLogin::NexusSSOLogin() : m_keyReceived(false), m_active(false)
   m_timeout.setInterval(10s);
   m_timeout.setSingleShot(true);
 
-  QObject::connect(&m_socket, &QWebSocket::connected, [&] {
+  QObject::connect(&m_socket, &QWebSocket::connected, [this] {
     onConnected();
   });
 
   QObject::connect(&m_socket,
-                   qOverload<QAbstractSocket::SocketError>(&QWebSocket::error),
-                   [&](auto&& e) {
+                   qOverload<QAbstractSocket::SocketError>(&QWebSocket::errorOccurred),
+                   [this](auto&& e) {
                      onError(e);
                    });
 
-  QObject::connect(&m_socket, &QWebSocket::sslErrors, [&](auto&& errors) {
+  QObject::connect(&m_socket, &QWebSocket::sslErrors, [this](const auto& errors) {
     onSslErrors(errors);
   });
 
-  QObject::connect(&m_socket, &QWebSocket::textMessageReceived, [&](auto&& s) {
+  QObject::connect(&m_socket, &QWebSocket::textMessageReceived, [this](const auto& s) {
     onMessage(s);
   });
 
-  QObject::connect(&m_socket, &QWebSocket::disconnected, [&] {
+  QObject::connect(&m_socket, &QWebSocket::disconnected, [this] {
     onDisconnected();
   });
 
-  QObject::connect(&m_timeout, &QTimer::timeout, [&] {
+  QObject::connect(&m_timeout, &QTimer::timeout, [this] {
     onTimeout();
   });
 }
@@ -481,8 +481,7 @@ void ValidationAttempt::onFinished()
   }
 
   const auto doc       = QJsonDocument::fromJson(m_reply->readAll());
-  const auto headers   = m_reply->rawHeaderPairs();
-  const auto httpError = m_reply->errorString();
+  //const auto& httpError = m_reply->errorString();
 
   const QJsonObject data = doc.object();
 
@@ -529,6 +528,8 @@ void ValidationAttempt::onFinished()
     setFailure(HardError, QObject::tr("API key is empty"));
     return;
   }
+
+  const auto& headers = m_reply->rawHeaderPairs();
 
   const auto user =
       APIUserAccount()
@@ -663,13 +664,9 @@ void NexusKeyValidator::cancel()
 
 bool NexusKeyValidator::isActive() const
 {
-  for (auto&& a : m_attempts) {
-    if (!a->done()) {
-      return true;
-    }
-  }
-
-  return false;
+  return std::ranges::any_of(m_attempts, [](auto&& a) {
+    return !a->done();
+  });
 }
 
 const ValidationAttempt* NexusKeyValidator::lastAttempt() const

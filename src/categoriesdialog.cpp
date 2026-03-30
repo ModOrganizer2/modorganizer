@@ -40,7 +40,7 @@ public:
     if (intRes == Acceptable) {
       bool ok = false;
       int id  = input.toInt(&ok);
-      if (m_UsedIDs.find(id) != m_UsedIDs.end()) {
+      if (m_UsedIDs.contains(id)) {
         return QValidator::Intermediate;
       }
     }
@@ -61,7 +61,7 @@ public:
     if (intRes == Acceptable) {
       bool ok = false;
       int id  = input.toInt(&ok);
-      if ((id == 0) || (m_UsedIDs.find(id) != m_UsedIDs.end())) {
+      if ((id == 0) || (m_UsedIDs.contains(id))) {
         return QValidator::Acceptable;
       } else {
         return QValidator::Intermediate;
@@ -157,9 +157,9 @@ void CategoriesDialog::commitChanges()
     if (ui->categoriesTable->item(index, 3) != nullptr)
       nexusData = ui->categoriesTable->item(index, 3)->data(Qt::UserRole).toList();
     std::vector<CategoryFactory::NexusCategory> nexusCats;
-    for (auto nexusCat : nexusData) {
-      nexusCats.push_back(CategoryFactory::NexusCategory(
-          nexusCat.toList()[0].toString(), nexusCat.toList()[1].toInt()));
+    for (const auto& nexusCat : nexusData) {
+      nexusCats.emplace_back(
+          nexusCat.toList()[0].toString(), nexusCat.toList()[1].toInt());
     }
 
     categories.addCategory(ui->categoriesTable->item(index, 0)->text().toInt(),
@@ -171,9 +171,9 @@ void CategoriesDialog::commitChanges()
 
   std::vector<CategoryFactory::NexusCategory> nexusCats;
   for (int i = 0; i < ui->nexusCategoryList->count(); ++i) {
-    nexusCats.push_back(CategoryFactory::NexusCategory(
+    nexusCats.emplace_back(
         ui->nexusCategoryList->item(i)->data(Qt::DisplayRole).toString(),
-        ui->nexusCategoryList->item(i)->data(Qt::UserRole).toInt()));
+        ui->nexusCategoryList->item(i)->data(Qt::UserRole).toInt());
   }
 
   categories.setNexusCategories(nexusCats);
@@ -250,7 +250,7 @@ void CategoriesDialog::fillTable()
       newData.append(nexusCat.second.ID());
       itemData.insert(itemData.length(), newData);
       QStringList names;
-      for (auto cat : itemData) {
+      for (const auto& cat : itemData) {
         names.append(cat.toList()[0].toString());
       }
       item->setData(Qt::UserRole, itemData);

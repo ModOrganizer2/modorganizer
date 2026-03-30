@@ -360,7 +360,7 @@ std::string CommandLine::usage(const Command* c) const
         continue;
       }
 
-      v.push_back({c->name(), c->description()});
+      v.emplace_back(c->name(), c->description());
     }
 
     oss << table(v, 2, 4) << "\n"
@@ -590,7 +590,7 @@ std::optional<int> CrashDumpCommand::runEarly()
 {
   env::Console console;
 
-  const auto typeString = vm()["type"].as<std::string>();
+  const auto& typeString = vm()["type"].as<std::string>();
   const auto type       = env::coreDumpTypeFromString(typeString);
 
   // dump
@@ -671,9 +671,9 @@ LaunchCommand::UntouchedCommandLineArguments(int parseArgCount,
     if (*cmd == ' ') {
       if (arg)
         if (cmd - 1 > arg && *arg == '"' && *(cmd - 1) == '"')
-          parsedArgs.push_back(std::wstring(arg + 1, cmd - 1));
+          parsedArgs.emplace_back(arg + 1, cmd - 1);
         else
-          parsedArgs.push_back(std::wstring(arg, cmd));
+          parsedArgs.emplace_back(arg, cmd);
       arg = cmd + 1;
       --parseArgCount;
     }

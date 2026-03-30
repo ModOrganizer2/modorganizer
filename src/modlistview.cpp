@@ -404,7 +404,7 @@ void ModListView::setSelected(const QModelIndex& current,
                               const QModelIndexList& selected)
 {
   setCurrentIndex(indexModelToView(current));
-  for (auto idx : selected) {
+  for (const auto& idx : selected) {
     selectionModel()->select(indexModelToView(idx),
                              QItemSelectionModel::Select | QItemSelectionModel::Rows);
   }
@@ -425,7 +425,7 @@ void ModListView::scrollToAndSelect(const QModelIndexList& indexes,
   scrollTo(current.isValid() ? current : indexes.first());
   setCurrentIndex(current.isValid() ? current : indexes.first());
   QItemSelection selection;
-  for (auto& idx : indexes) {
+  for (const auto& idx : indexes) {
     selection.select(idx, idx);
   }
   selectionModel()->select(selection,
@@ -449,7 +449,7 @@ void ModListView::refreshExpandedItems()
 void ModListView::onModPrioritiesChanged(const QModelIndexList& indices)
 {
   // expand separator whose priority has changed and parents
-  for (auto index : indices) {
+  for (const auto& index : indices) {
     auto idx = indexModelToView(index);
     if (hasCollapsibleSeparators() && model()->hasChildren(idx)) {
       setExpanded(idx, true);

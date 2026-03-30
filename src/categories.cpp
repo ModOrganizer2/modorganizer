@@ -76,7 +76,7 @@ void CategoryFactory::loadCategories()
             if (!ok) {
               log::error(tr("invalid category id {0}"), iter->constData());
             }
-            nexusCats.push_back(NexusCategory("Unknown", temp));
+            nexusCats.emplace_back("Unknown", temp);
           }
         }
         bool cell0Ok = true;
@@ -224,8 +224,8 @@ void CategoryFactory::saveCategories()
   emit categoriesSaved();
 }
 
-unsigned int
-CategoryFactory::countCategories(std::function<bool(const Category& category)> filter)
+template <std::predicate<const CategoryFactory::Category&> Filter>
+unsigned int CategoryFactory::countCategories(Filter filter)
 {
   unsigned int result = 0;
   for (const Category& cat : m_Categories) {
@@ -241,7 +241,7 @@ int CategoryFactory::addCategory(const QString& name,
                                  int parentID)
 {
   int id = 1;
-  while (m_IDMap.find(id) != m_IDMap.end()) {
+  while (m_IDMap.contains(id)) {
     ++id;
   }
   addCategory(id, name, nexusCats, parentID);
@@ -253,8 +253,8 @@ int CategoryFactory::addCategory(const QString& name,
 void CategoryFactory::addCategory(int id, const QString& name, int parentID)
 {
   int index = static_cast<int>(m_Categories.size());
-  m_Categories.push_back(
-      Category(index, id, name, parentID, std::vector<NexusCategory>()));
+  m_Categories.emplace_back(
+      index, id, name, parentID, std::vector<NexusCategory>());
   m_IDMap[id] = index;
 }
 
@@ -267,7 +267,7 @@ void CategoryFactory::addCategory(int id, const QString& name,
     m_NexusMap.at(nexusCat.ID()).setCategoryID(id);
   }
   int index = static_cast<int>(m_Categories.size());
-  m_Categories.push_back(Category(index, id, name, parentID, nexusCats));
+  m_Categories.emplace_back(index, id, name, parentID, nexusCats);
   m_IDMap[id] = index;
 }
 
@@ -275,7 +275,7 @@ void CategoryFactory::setNexusCategories(
     const std::vector<CategoryFactory::NexusCategory>& nexusCats)
 {
   for (const auto& nexusCat : nexusCats) {
-    m_NexusMap.emplace(nexusCat.ID(), nexusCat);
+    m_NexusMap.try_emplace(nexusCat.ID(), nexusCat);
   }
 
   saveCategories();
@@ -360,7 +360,7 @@ int CategoryFactory::getParentID(unsigned int index) const
 
 bool CategoryFactory::categoryExists(int id) const
 {
-  return m_IDMap.find(id) != m_IDMap.end();
+  return m_IDMap.contains(id);
 }
 
 bool CategoryFactory::isDescendantOf(int id, int parentID) const
@@ -508,7 +508,7 @@ unsigned int CategoryFactory::resolveNexusID(int nexusID) const
 {
   auto result = m_NexusMap.find(nexusID);
   if (result != m_NexusMap.end()) {
-    if (m_IDMap.count(result->second.categoryID())) {
+    if (m_IDMap.contains(result->second.categoryID())) {
       log::debug(tr("nexus category id {0} maps to internal {1}"), nexusID,
                  m_IDMap.at(result->second.categoryID()));
       return m_IDMap.at(result->second.categoryID());

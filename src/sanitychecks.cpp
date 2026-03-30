@@ -329,7 +329,7 @@ std::vector<std::pair<QString, QString>> getSystemDirectories()
         path += "\\";
       }
 
-      systemDirs.push_back({path, p.second});
+      systemDirs.emplace_back(path, p.second);
     }
   }
 
@@ -365,7 +365,7 @@ int checkMicrosoftStore(const QDir& gameDir)
       "/ModifiableWindowsApps/",
       "/WindowsApps/",
   };
-  for (auto badPath : pathsToCheck) {
+  for (const auto& badPath : pathsToCheck) {
     if (gameDir.path().contains(badPath)) {
       log::error("This game is not supported by Mod Organizer.");
       log::error("Games installed through the Microsoft Store will not work properly.");

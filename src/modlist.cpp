@@ -987,7 +987,7 @@ void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const
   for (auto modIndex : modIndices) {
     indices.append(index(modIndex, 0));
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-    mods.emplace(modInfo->name(), state(modIndex));
+    mods.try_emplace(modInfo->name(), modIndex);
   }
 
   emit modStatesChanged(indices);
@@ -1035,12 +1035,12 @@ bool ModList::dropLocalFiles(const ModListDropInfo& dropInfo, int row,
   QStringList targetList;
   QList<QPair<QString, QString>> relativePathList;
 
-  for (auto localUrl : dropInfo.localUrls()) {
+  for (const auto& localUrl : dropInfo.localUrls()) {
     QFileInfo sourceInfo(localUrl.url.toLocalFile());
     if (localUrl.originName.compare("overwrite", Qt::CaseInsensitive) == 0) {
       bool needsMove = true;
       if (sourceInfo.isDir()) {
-        for (auto dir : m_Organizer->managedGame()->getModMappings().keys()) {
+        for (const auto& dir : m_Organizer->managedGame()->getModMappings().keys()) {
           QDir overDir(m_Organizer->overwritePath());
           if (sourceInfo.canonicalFilePath().compare(overDir.absoluteFilePath(dir),
                                                      Qt::CaseInsensitive) == 0) {
@@ -1089,7 +1089,7 @@ bool ModList::dropLocalFiles(const ModListDropInfo& dropInfo, int row,
     }
   }
 
-  for (auto iter : relativePathList) {
+  for (const auto& iter : relativePathList) {
     emit fileMoved(iter.first, iter.second, modInfo->name());
   }
 
@@ -1448,7 +1448,7 @@ bool ModList::toggleState(const QModelIndexList& indices)
 
   QList<unsigned int> modsToEnable;
   QList<unsigned int> modsToDisable;
-  for (auto index : indices) {
+  for (const auto& index : indices) {
     auto idx = index.data(IndexRole).toInt();
     if (m_Profile->modEnabled(idx)) {
       modsToDisable.append(idx);

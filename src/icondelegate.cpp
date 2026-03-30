@@ -47,7 +47,7 @@ void IconDelegate::paintIcons(QPainter* painter, const QStyleOptionViewItem& opt
   int x = 4;
   painter->save();
 
-  int iconWidth = icons.size() > 0 ? ((option.rect.width() / icons.size()) - 4) : 16;
+  int iconWidth = !icons.isEmpty() ? ((option.rect.width() / icons.size()) - 4) : 16;
   iconWidth     = std::min(16, iconWidth);
 
   const int margin = (option.rect.height() - iconWidth) / 2;

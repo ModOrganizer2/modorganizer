@@ -160,11 +160,9 @@ GameFeatures::GameFeatures(OrganizerCore* core, PluginContainer* plugins)
           [this, updateFeatures](MOBase::IPlugin* plugin) {
             // remove features from the current plugin
             for (auto& [_, features] : m_allFeatures) {
-              features.erase(std::remove_if(features.begin(), features.end(),
-                                            [plugin](const auto& feature) {
+              std::erase_if(features, [plugin](const auto& feature) {
                                               return feature.plugin() == plugin;
-                                            }),
-                             features.end());
+                                            });
             }
 
             // update current features
@@ -172,7 +170,7 @@ GameFeatures::GameFeatures(OrganizerCore* core, PluginContainer* plugins)
           });
 }
 
-GameFeatures::~GameFeatures() {}
+GameFeatures::~GameFeatures() = default;
 
 GameFeatures::CombinedModDataChecker& GameFeatures::modDataChecker() const
 {
@@ -185,7 +183,7 @@ GameFeatures::CombinedModDataContent& GameFeatures::modDataContent() const
 
 void GameFeatures::updateCurrentFeatures(std::type_index const& index)
 {
-  auto& features = m_allFeatures[index];
+  const auto& features = m_allFeatures[index];
 
   m_currentFeatures[index].clear();
 
@@ -246,7 +244,7 @@ void GameFeatures::updateCurrentFeatures()
   // plugin is disabled or unregistered)
   //
 
-  for (auto& [info, _] : m_allFeatures) {
+  for (const auto& [info, _] : m_allFeatures) {
     updateCurrentFeatures(info);
   }
 }
@@ -316,11 +314,9 @@ int GameFeatures::unregisterGameFeatures(MOBase::IPlugin* plugin,
 
   const auto initialSize = features.size();
 
-  features.erase(std::remove_if(features.begin(), features.end(),
-                                [plugin](const auto& feature) {
+  std::erase_if(features, [plugin](const auto& feature) {
                                   return feature.plugin() == plugin;
-                                }),
-                 features.end());
+                                });
 
   const int removed = features.size() - initialSize;
 

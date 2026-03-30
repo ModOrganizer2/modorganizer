@@ -223,7 +223,7 @@ private:
   void fixCategories();
 
   bool extractProgress(QProgressDialog& extractProgress, int percentage,
-                       std::string fileName);
+                       const std::string& fileName);
 
   // Performs checks, sets the m_NumberOfProblems and signals checkForProblemsDone().
   void checkForProblemsImpl();

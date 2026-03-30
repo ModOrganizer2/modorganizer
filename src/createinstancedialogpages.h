@@ -282,7 +282,7 @@ private:
 
   // finds the game struct associated with the given game
   //
-  Game* findGame(MOBase::IPluginGame* game);
+  Game* findGame(const MOBase::IPluginGame* game);
 
   // creates the ui for the given game button
   //

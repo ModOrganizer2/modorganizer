@@ -137,6 +137,8 @@ private:
   QWidget* findTarget()
   {
     auto isValidTarget = [](QWidget* w) {
+      if (w == nullptr)
+        return false;
       // skip message boxes
       if (dynamic_cast<QMessageBox*>(w)) {
         return false;

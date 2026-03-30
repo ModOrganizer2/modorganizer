@@ -36,7 +36,7 @@ public:
   static void create();
   static LogModel& instance();
 
-  void add(MOBase::log::Entry e);
+  void add(const MOBase::log::Entry& e);
   void clear();
 
   const std::deque<MOBase::log::Entry>& entries() const;

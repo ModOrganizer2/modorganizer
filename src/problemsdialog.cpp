@@ -100,7 +100,7 @@ void ProblemsDialog::selectionChanged()
 void ProblemsDialog::startFix()
 {
   QObject* fixButton = QObject::sender();
-  if (fixButton == NULL) {
+  if (fixButton == nullptr) {
     log::warn("no button");
     return;
   }

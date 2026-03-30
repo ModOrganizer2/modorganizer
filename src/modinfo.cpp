@@ -143,7 +143,7 @@ std::vector<ModInfo::Ptr> ModInfo::getByModID(QString game, int modID)
   QMutexLocker locker(&s_Mutex);
 
   std::vector<unsigned int> match;
-  for (auto iter : s_ModsByModID) {
+  for (const auto& iter : s_ModsByModID) {
     if (iter.first.second == modID) {
       if (iter.first.first.compare(game, Qt::CaseInsensitive) == 0) {
         match.insert(match.end(), iter.second.begin(), iter.second.end());
@@ -195,7 +195,7 @@ bool ModInfo::removeMod(unsigned int index)
       std::pair<QString, int>(modInfo->gameName(), modInfo->nexusId()));
   if (iter != s_ModsByModID.end()) {
     std::vector<unsigned int> indices = iter->second;
-    indices.erase(std::remove(indices.begin(), indices.end(), index), indices.end());
+    std::erase(indices, index);
     s_ModsByModID[std::pair<QString, int>(modInfo->gameName(), modInfo->nexusId())] =
         indices;
   }
@@ -294,7 +294,7 @@ void ModInfo::updateIndices()
   }
 }
 
-ModInfo::ModInfo(OrganizerCore& core) : m_PrimaryCategory(-1), m_Core(core) {}
+ModInfo::ModInfo(OrganizerCore& core) : m_Core(core), m_PrimaryCategory(-1) {}
 
 bool ModInfo::checkAllForUpdate(PluginContainer* pluginContainer, QObject* receiver)
 {
@@ -358,26 +358,26 @@ bool ModInfo::checkAllForUpdate(PluginContainer* pluginContainer, QObject* recei
                          "in order to parse the remaining mods."));
     }
 
-    for (auto game : organizedGames)
+    for (const auto& game : organizedGames)
       NexusInterface::instance().requestUpdates(game.second, receiver, QVariant(),
                                                 game.first, QString());
   } else if (earliest < QDateTime::currentDateTimeUtc().addMonths(-1)) {
-    for (auto gameName : games)
+    for (const auto& gameName : games)
       NexusInterface::instance().requestUpdateInfo(gameName,
                                                    NexusInterface::UpdatePeriod::MONTH,
                                                    receiver, QVariant(true), QString());
   } else if (earliest < QDateTime::currentDateTimeUtc().addDays(-7)) {
-    for (auto gameName : games)
+    for (const auto& gameName : games)
       NexusInterface::instance().requestUpdateInfo(
           gameName, NexusInterface::UpdatePeriod::MONTH, receiver, QVariant(false),
           QString());
   } else if (earliest < QDateTime::currentDateTimeUtc().addDays(-1)) {
-    for (auto gameName : games)
+    for (const auto& gameName : games)
       NexusInterface::instance().requestUpdateInfo(
           gameName, NexusInterface::UpdatePeriod::WEEK, receiver, QVariant(false),
           QString());
   } else {
-    for (auto gameName : games)
+    for (const auto& gameName : games)
       NexusInterface::instance().requestUpdateInfo(
           gameName, NexusInterface::UpdatePeriod::DAY, receiver, QVariant(false),
           QString());
@@ -426,22 +426,22 @@ std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName,
     std::set<QSharedPointer<ModInfo>> diff;
     std::set_difference(updates.begin(), updates.end(), finalMods.begin(),
                         finalMods.end(), std::inserter(diff, diff.end()));
-    for (auto skipped : diff) {
+    for (const auto& skipped : diff) {
       skipped->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
     }
   }
   return finalMods;
 }
 
-void ModInfo::manualUpdateCheck(QObject* receiver, std::multimap<QString, int> IDs)
+void ModInfo::manualUpdateCheck(QObject* receiver, const std::multimap<QString, int>& IDs)
 {
   std::vector<QSharedPointer<ModInfo>> mods;
   std::set<std::pair<QString, int>> organizedGames;
 
-  for (auto ID : IDs) {
-    for (auto matchedMod : getByModID(ID.first, ID.second)) {
+  for (const auto& ID : IDs) {
+    for (const auto& matchedMod : getByModID(ID.first, ID.second)) {
       bool alreadyMatched = false;
-      for (auto mod : mods) {
+      for (const auto& mod : mods) {
         if (mod == matchedMod) {
           alreadyMatched = true;
           break;
@@ -451,12 +451,10 @@ void ModInfo::manualUpdateCheck(QObject* receiver, std::multimap<QString, int> I
         mods.push_back(matchedMod);
     }
   }
-  mods.erase(std::remove_if(mods.begin(), mods.end(),
-                            [](ModInfo::Ptr mod) -> bool {
+  std::erase_if(mods, [](ModInfo::Ptr mod) -> bool {
                               return mod->nexusId() <= 0;
-                            }),
-             mods.end());
-  for (auto mod : mods) {
+                            });
+  for (const auto& mod : mods) {
     mod->setLastNexusUpdate(QDateTime());
   }
 
@@ -465,15 +463,15 @@ void ModInfo::manualUpdateCheck(QObject* receiver, std::multimap<QString, int> I
               return a->getLastNexusUpdate() < b->getLastNexusUpdate();
             });
 
-  if (mods.size()) {
+  if (!mods.empty()) {
     log::info("Checking updates for {} mods...", mods.size());
 
-    for (auto mod : mods) {
+    for (const auto& mod : mods) {
       organizedGames.insert(
           std::make_pair<QString, int>(mod->gameName().toLower(), mod->nexusId()));
     }
 
-    for (auto game : organizedGames) {
+    for (const auto& game : organizedGames) {
       NexusInterface::instance().requestUpdates(game.second, receiver, QVariant(),
                                                 game.first, QString());
     }
@@ -527,13 +525,12 @@ QStringList ModInfo::categories() const
   return result;
 }
 
-bool ModInfo::hasFlag(ModInfo::EFlag flag) const
+bool ModInfo::hasFlag(const ModInfo::EFlag& flag) const
 {
-  std::vector<EFlag> flags = getFlags();
-  return std::find(flags.begin(), flags.end(), flag) != flags.end();
+  return std::ranges::contains(getFlags(), flag);
 }
 
-bool ModInfo::hasAnyOfTheseFlags(std::vector<ModInfo::EFlag> flags) const
+bool ModInfo::hasAnyOfTheseFlags(const std::vector<ModInfo::EFlag>& flags) const
 {
   std::vector<EFlag> modFlags = getFlags();
   for (auto modFlag : modFlags) {

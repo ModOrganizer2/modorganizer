@@ -13,7 +13,7 @@ class ServerItem : public QListWidgetItem
 {
 public:
   ServerItem(const QString& text, int sortRole = Qt::DisplayRole,
-             QListWidget* parent = 0, int type = Type)
+             QListWidget* parent = nullptr, int type = Type)
       : QListWidgetItem(text, parent, type), m_SortRole(sortRole)
   {}
 
@@ -35,13 +35,13 @@ public:
     ui->setupUi(this);
     ui->key->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
 
-    connect(ui->openBrowser, &QPushButton::clicked, [&] {
+    connect(ui->openBrowser, &QPushButton::clicked, [this] {
       openBrowser();
     });
-    connect(ui->paste, &QPushButton::clicked, [&] {
+    connect(ui->paste, &QPushButton::clicked, [this] {
       paste();
     });
-    connect(ui->clear, &QPushButton::clicked, [&] {
+    connect(ui->clear, &QPushButton::clicked, [this] {
       clear();
     });
   }
@@ -83,19 +83,19 @@ NexusConnectionUI::NexusConnectionUI(QWidget* parent, Settings* s,
       m_disconnect(disconnectButton), m_manual(manualButton), m_log(logList)
 {
   if (m_connect) {
-    QObject::connect(m_connect, &QPushButton::clicked, [&] {
+    QObject::connect(m_connect, &QPushButton::clicked, [this] {
       connect();
     });
   }
 
   if (m_disconnect) {
-    QObject::connect(m_disconnect, &QPushButton::clicked, [&] {
+    QObject::connect(m_disconnect, &QPushButton::clicked, [this] {
       disconnect();
     });
   }
 
   if (m_manual) {
-    QObject::connect(manualButton, &QPushButton::clicked, [&] {
+    QObject::connect(manualButton, &QPushButton::clicked, [this] {
       manual();
     });
   }
@@ -119,11 +119,11 @@ void NexusConnectionUI::connect()
   if (!m_nexusLogin) {
     m_nexusLogin.reset(new NexusSSOLogin);
 
-    m_nexusLogin->keyChanged = [&](auto&& s) {
+    m_nexusLogin->keyChanged = [this](auto&& s) {
       onSSOKeyChanged(s);
     };
 
-    m_nexusLogin->stateChanged = [&](auto&& s, auto&& e) {
+    m_nexusLogin->stateChanged = [this](auto&& s, auto&& e) {
       onSSOStateChanged(s, e);
     };
   }
@@ -168,7 +168,7 @@ void NexusConnectionUI::validateKey(const QString& key)
     m_nexusValidator.reset(new NexusKeyValidator(
         m_settings, *NexusInterface::instance().getAccessManager()));
 
-    m_nexusValidator->finished = [&](auto&& r, auto&& m, auto&& u) {
+    m_nexusValidator->finished = [this](auto&& r, auto&& m, auto&& u) {
       onValidatorFinished(r, m, u);
     };
   }
@@ -330,25 +330,25 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d) : SettingsTab
 
   QObject::connect(
       m_connectionUI.get(), &NexusConnectionUI::stateChanged, &d,
-      [&] {
+      [this] {
         updateNexusData();
       },
       Qt::QueuedConnection);
 
-  QObject::connect(m_connectionUI.get(), &NexusConnectionUI::keyChanged, &d, [&] {
+  QObject::connect(m_connectionUI.get(), &NexusConnectionUI::keyChanged, &d, [this] {
     dialog().setExitNeeded(Exit::Restart);
   });
 
-  QObject::connect(ui->clearCacheButton, &QPushButton::clicked, [&] {
+  QObject::connect(ui->clearCacheButton, &QPushButton::clicked, [this] {
     clearCache();
   });
-  QObject::connect(ui->associateButton, &QPushButton::clicked, [&] {
+  QObject::connect(ui->associateButton, &QPushButton::clicked, [this] {
     associate();
   });
-  QObject::connect(ui->useCustomBrowser, &QCheckBox::clicked, [&] {
+  QObject::connect(ui->useCustomBrowser, &QCheckBox::clicked, [this] {
     updateCustomBrowser();
   });
-  QObject::connect(ui->browseCustomBrowser, &QPushButton::clicked, [&] {
+  QObject::connect(ui->browseCustomBrowser, &QPushButton::clicked, [this] {
     browseCustomBrowser();
   });
 

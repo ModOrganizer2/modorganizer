@@ -154,7 +154,7 @@ void SelfUpdater::startUpdate()
   // the button can't be pressed if there isn't an update candidate
   Q_ASSERT(!m_UpdateCandidates.empty());
 
-  auto latestRelease = m_UpdateCandidates.begin()->second;
+  const auto& latestRelease = m_UpdateCandidates.begin()->second;
 
   UpdateDialog dialog(m_Parent);
   dialog.setVersions(MOShared::createVersionInfo().string(),

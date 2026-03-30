@@ -102,7 +102,7 @@ void FilesOrigin::removeFile(FileIndex index)
   }
 }
 
-bool FilesOrigin::containsArchive(std::wstring archiveName)
+bool FilesOrigin::containsArchive(std::wstring_view archiveName)
 {
   std::scoped_lock lock(m_Mutex);
 

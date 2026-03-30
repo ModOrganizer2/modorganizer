@@ -44,7 +44,7 @@ void adjustForVirtualized(const IPluginGame* game, spawn::SpawnParameters& sp,
         binPath += adjustedBin;
     }
 
-    QString cmdline = QString("launch \"%1\" \"%2\" %3")
+    QString cmdline = QString(R"(launch "%1" "%2" %3)")
                           .arg(QDir::toNativeSeparators(cwdPath),
                                QDir::toNativeSeparators(binPath), sp.arguments);
 
@@ -407,7 +407,7 @@ ProcessRunner::Results waitForProcesses(const std::vector<HANDLE>& initialProces
                             std::ref(interrupt));
 
   QEventLoop events;
-  QObject::connect(t, &QThread::finished, [&] {
+  QObject::connect(t, &QThread::finished, [&events] {
     events.quit();
   });
 
@@ -897,7 +897,7 @@ ProcessRunner::Results ProcessRunner::postRun()
     // how it is
     r = waitForProcess(m_handle.get(), &m_exitCode, nullptr);
   } else {
-    withLock([&](auto& ls) {
+    withLock([this, &r](UILocker::Session& ls) {
       r = waitForProcess(m_handle.get(), &m_exitCode, &ls);
     });
   }
@@ -959,7 +959,7 @@ ProcessRunner::waitForAllUSVFSProcessesWithLock(UILocker::Reasons reason)
   auto r = Error;
 
   for (;;) {
-    withLock([&](auto& ls) {
+    withLock([&r](auto& ls) {
       const auto processes = getRunningUSVFSProcesses();
       if (processes.empty()) {
         r = Completed;

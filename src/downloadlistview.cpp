@@ -139,7 +139,7 @@ DownloadListView::DownloadListView(QWidget* parent) : QTreeView(parent)
           SLOT(onCustomContextMenu(QPoint)));
 }
 
-DownloadListView::~DownloadListView() {}
+DownloadListView::~DownloadListView() = default;
 
 void DownloadListView::setManager(DownloadManager* manager)
 {
@@ -228,64 +228,64 @@ void DownloadListView::onCustomContextMenu(const QPoint& point)
       hidden = m_Manager->isHidden(row);
 
       if (state >= DownloadManager::STATE_READY) {
-        menu.addAction(tr("Install"), [=] {
+        menu.addAction(tr("Install"), [this, row] {
           issueInstall(row);
         });
         if (m_Manager->isInfoIncomplete(row)) {
-          menu.addAction(tr("Query Info"), [=] {
+          menu.addAction(tr("Query Info"), [this, row] {
             issueQueryInfoMd5(row);
           });
         } else {
-          menu.addAction(tr("Visit on Nexus"), [=] {
+          menu.addAction(tr("Visit on Nexus"), [this, row] {
             issueVisitOnNexus(row);
           });
-          menu.addAction(tr("Visit the uploader's profile"), [=] {
+          menu.addAction(tr("Visit the uploader's profile"), [this, row] {
             issueVisitUploaderProfile(row);
           });
         }
-        menu.addAction(tr("Open File"), [=] {
+        menu.addAction(tr("Open File"), [this, row] {
           issueOpenFile(row);
         });
-        menu.addAction(tr("Open Meta File"), [=] {
+        menu.addAction(tr("Open Meta File"), [this, row] {
           issueOpenMetaFile(row);
         });
-        menu.addAction(tr("Reveal in Explorer"), [=] {
+        menu.addAction(tr("Reveal in Explorer"), [this, row] {
           issueOpenInDownloadsFolder(row);
         });
 
         menu.addSeparator();
 
-        menu.addAction(tr("Delete..."), [=] {
+        menu.addAction(tr("Delete..."), [this, row] {
           issueDelete(row);
         });
         if (hidden)
-          menu.addAction(tr("Un-Hide"), [=] {
+          menu.addAction(tr("Un-Hide"), [this, row] {
             issueRestoreToView(row);
           });
         else
-          menu.addAction(tr("Hide"), [=] {
+          menu.addAction(tr("Hide"), [this, row] {
             issueRemoveFromView(row);
           });
       } else if (state == DownloadManager::STATE_DOWNLOADING) {
-        menu.addAction(tr("Cancel"), [=] {
+        menu.addAction(tr("Cancel"), [this, row] {
           issueCancel(row);
         });
-        menu.addAction(tr("Pause"), [=] {
+        menu.addAction(tr("Pause"), [this, row] {
           issuePause(row);
         });
-        menu.addAction(tr("Reveal in Explorer"), [=] {
+        menu.addAction(tr("Reveal in Explorer"), [this, row] {
           issueOpenInDownloadsFolder(row);
         });
       } else if ((state == DownloadManager::STATE_PAUSED) ||
                  (state == DownloadManager::STATE_ERROR) ||
                  (state == DownloadManager::STATE_PAUSING)) {
-        menu.addAction(tr("Delete..."), [=] {
+        menu.addAction(tr("Delete..."), [this, row] {
           issueDelete(row);
         });
-        menu.addAction(tr("Resume"), [=] {
+        menu.addAction(tr("Resume"), [this, row] {
           issueResume(row);
         });
-        menu.addAction(tr("Reveal in Explorer"), [=] {
+        menu.addAction(tr("Reveal in Explorer"), [this, row] {
           issueOpenInDownloadsFolder(row);
         });
       }
@@ -297,29 +297,29 @@ void DownloadListView::onCustomContextMenu(const QPoint& point)
     // display download-specific actions
   }
 
-  menu.addAction(tr("Delete Installed Downloads..."), [=] {
+  menu.addAction(tr("Delete Installed Downloads..."), [this] {
     issueDeleteCompleted();
   });
-  menu.addAction(tr("Delete Uninstalled Downloads..."), [=] {
+  menu.addAction(tr("Delete Uninstalled Downloads..."), [this] {
     issueDeleteUninstalled();
   });
-  menu.addAction(tr("Delete All Downloads..."), [=] {
+  menu.addAction(tr("Delete All Downloads..."), [this] {
     issueDeleteAll();
   });
 
   menu.addSeparator();
   if (!hidden) {
-    menu.addAction(tr("Hide Installed..."), [=] {
+    menu.addAction(tr("Hide Installed..."), [this] {
       issueRemoveFromViewCompleted();
     });
-    menu.addAction(tr("Hide Uninstalled..."), [=] {
+    menu.addAction(tr("Hide Uninstalled..."), [this] {
       issueRemoveFromViewUninstalled();
     });
-    menu.addAction(tr("Hide All..."), [=] {
+    menu.addAction(tr("Hide All..."), [this] {
       issueRemoveFromViewAll();
     });
   } else {
-    menu.addAction(tr("Un-Hide All..."), [=] {
+    menu.addAction(tr("Un-Hide All..."), [this] {
       issueRestoreToViewAll();
     });
   }

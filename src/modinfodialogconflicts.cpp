@@ -19,7 +19,7 @@ const std::size_t max_small_selection = 50;
 
 std::size_t smallSelectionSize(const QTreeView* tree)
 {
-  const std::size_t too_many = std::numeric_limits<std::size_t>::max();
+  constexpr std::size_t too_many = std::numeric_limits<std::size_t>::max();
 
   std::size_t n   = 0;
   const auto* sel = tree->selectionModel();
@@ -205,7 +205,7 @@ void ConflictsTab::activateItems(QTreeView* tree)
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
   forEachInSelection(tree, [&](const ConflictItem* item) {
-    const auto path = item->fileName();
+    const auto& path = item->fileName();
 
     if (tryPreview && canPreviewFile(plugin(), item->isArchive(), path)) {
       previewItem(item);

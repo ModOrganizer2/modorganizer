@@ -41,7 +41,7 @@ bool canUnhideFile(const FileEntry& file);
 class MenuItem
 {
 public:
-  MenuItem(QString s = {}) : m_action(new QAction(std::move(s))) {}
+  MenuItem(QString s = {}) : m_action(new QAction(s)) {}
 
   MenuItem& caption(const QString& s)
   {
@@ -319,7 +319,7 @@ void FileTree::exploreOrigin(FileTreeItem* item)
     return;
   }
 
-  const auto path = item->realPath();
+  const auto& path = item->realPath();
 
   log::debug("opening in explorer: {}", path);
   shell::Explore(path);
@@ -538,7 +538,7 @@ bool FileTree::showShellMenu(QPoint pos)
 
     auto itor = menus.find(item->originID());
     if (itor == menus.end()) {
-      itor = menus.emplace(item->originID(), mw).first;
+      itor = menus.try_emplace(item->originID(), mw).first;
     }
 
     if (!QFile::exists(item->realPath())) {
@@ -560,7 +560,7 @@ bool FileTree::showShellMenu(QPoint pos)
         continue;
       }
 
-      const auto alts = file->getAlternatives();
+      const auto& alts = file->getAlternatives();
       if (alts.empty()) {
         log::warn("file '{}' has no alternative origins but is marked as conflicted",
                   item->dataRelativeFilePath());
@@ -569,7 +569,7 @@ bool FileTree::showShellMenu(QPoint pos)
       for (auto&& alt : alts) {
         auto itor = menus.find(alt.originID());
         if (itor == menus.end()) {
-          itor = menus.emplace(alt.originID(), mw).first;
+          itor = menus.try_emplace(alt.originID(), mw).first;
         }
 
         const auto fullPath = file->getFullPath(alt.originID());

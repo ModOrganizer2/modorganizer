@@ -44,7 +44,7 @@ void FileEntry::addOrigin(OriginID origin, FILETIME fileTime, std::wstring_view 
         });
 
     if (itor == m_Alternatives.end()) {
-      m_Alternatives.push_back({m_Origin, m_Archive});
+      m_Alternatives.emplace_back(m_Origin, m_Archive);
     }
 
     m_Origin   = origin;
@@ -142,7 +142,7 @@ void FileEntry::sortOrigins()
 {
   std::scoped_lock lock(m_OriginsMutex);
 
-  m_Alternatives.push_back({m_Origin, m_Archive});
+  m_Alternatives.emplace_back(m_Origin, m_Archive);
 
   std::sort(m_Alternatives.begin(), m_Alternatives.end(), [&](auto&& LHS, auto&& RHS) {
     if (!LHS.isFromArchive() && !RHS.isFromArchive()) {
@@ -184,7 +184,7 @@ void FileEntry::sortOrigins()
   }
 }
 
-bool FileEntry::isFromArchive(std::wstring archiveName) const
+bool FileEntry::isFromArchive(std::wstring_view archiveName) const
 {
   std::scoped_lock lock(m_OriginsMutex);
 

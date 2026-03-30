@@ -61,7 +61,7 @@ void ForcedLoadDialog::on_addRowButton_clicked()
 
 void ForcedLoadDialog::on_deleteRowButton_clicked()
 {
-  for (auto rowIndex : ui->tableWidget->selectionModel()->selectedRows()) {
+  for (const auto& rowIndex : ui->tableWidget->selectionModel()->selectedRows()) {
     int row     = rowIndex.row();
     auto widget = (ForcedLoadDialogWidget*)ui->tableWidget->cellWidget(row, 0);
     if (!widget->getForced()) {

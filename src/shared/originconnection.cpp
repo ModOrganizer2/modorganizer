@@ -48,7 +48,7 @@ OriginConnection::createOrigin(const std::wstring& originName,
 bool OriginConnection::exists(const std::wstring& name)
 {
   std::scoped_lock lock(m_Mutex);
-  return m_OriginsNameMap.find(name) != m_OriginsNameMap.end();
+  return m_OriginsNameMap.contains(name);
 }
 
 FilesOrigin& OriginConnection::getByID(OriginID ID)
@@ -121,7 +121,7 @@ FilesOrigin& OriginConnection::createOriginNoLock(
                                                  fileRegister, originConnection))
                   .first;
 
-  m_OriginsNameMap.insert({originName, newID});
+  m_OriginsNameMap.try_emplace(originName, newID);
 
   return itor->second;
 }

@@ -94,7 +94,7 @@ private:
     QElapsedTimer m_StartTime;
     qint64 m_PreResumeSize;
     std::pair<int, QString> m_Progress;
-    bool m_HasData;
+    //bool m_HasData;
     DownloadState m_State;
     int m_CurrentUrl;
     QStringList m_Urls;
@@ -132,7 +132,7 @@ private:
      **/
     void setName(QString newName, bool renameFile);
 
-    unsigned int downloadID() { return m_DownloadID; }
+    unsigned int downloadID() const { return m_DownloadID; }
 
     bool isPausedState();
 
@@ -143,7 +143,7 @@ private:
 
   private:
     DownloadInfo()
-        : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_HasData(false),
+        : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), //m_HasData(false),
           m_AskIfNotFound(true), m_DownloadTimeLast(0), m_DownloadLast(0),
           m_DownloadAcc(tag::rolling_window::window_size = 200),
           m_DownloadTimeAcc(tag::rolling_window::window_size = 200)
@@ -408,10 +408,11 @@ public:
    */
   void queryDownloadListInfo();
 
-public:  // IDownloadManager interface:
+public:
+  // IDownloadManager interface:
   int startDownloadURLs(const QStringList& urls);
   int startDownloadNexusFile(const QString& gameName, int modID, int fileID);
-  QString downloadPath(int id);
+  QString downloadPath(int id) const;
 
   boost::signals2::connection
   onDownloadComplete(const std::function<void(int)>& callback);
@@ -535,6 +536,7 @@ private slots:
 
   void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
   void downloadReadyRead();
+  void downloadFinished(const DownloadInfo* info);
   void downloadFinished(int index = 0);
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
@@ -543,6 +545,7 @@ private slots:
 
 private:
   void createMetaFile(DownloadInfo* info);
+  int generateRandomDownloadID();
   DownloadManager::DownloadInfo* getDownloadInfo(QString fileName);
 
 public:

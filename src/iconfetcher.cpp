@@ -111,7 +111,7 @@ void IconFetcher::checkCache(Cache& cache)
 
   std::map<QString, QPixmap> map;
   for (auto&& ext : queue) {
-    map.emplace(std::move(ext), getPixmapIcon(QFileInfo(ext)));
+    map.try_emplace(ext, getPixmapIcon(QFileInfo(ext)));
   }
 
   {

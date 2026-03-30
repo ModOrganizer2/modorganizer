@@ -119,10 +119,10 @@ OrganizerCore::OrganizerCore(Settings& settings)
           &OrganizerCore::onDirectoryRefreshed);
 
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this, SLOT(removeOrigin(QString)));
-  connect(&m_ModList, &ModList::modStatesChanged, [=] {
+  connect(&m_ModList, &ModList::modStatesChanged, [this] {
     currentProfile()->writeModlist();
   });
-  connect(&m_ModList, &ModList::modPrioritiesChanged, [this](auto&& indexes) {
+  connect(&m_ModList, &ModList::modPrioritiesChanged, [this](const auto& indexes) {
     modPrioritiesChanged(indexes);
   });
 
@@ -466,7 +466,7 @@ void OrganizerCore::createDefaultProfile()
 void OrganizerCore::createOverwriteDirectories()
 {
   QString overwritePath = settings().paths().overwrite();
-  for (auto modDirectory : managedGame()->getModMappings().keys()) {
+  for (const auto& modDirectory : managedGame()->getModMappings().keys()) {
     if (!modDirectory.isEmpty()) {
       QDir(overwritePath).mkdir(modDirectory);
     }
@@ -1084,7 +1084,7 @@ bool OrganizerCore::previewFileWithAlternatives(QWidget* parent, QString fileNam
   // set up preview dialog
   PreviewDialog preview(fileName, parent);
 
-  auto addFunc = [&](int originId, std::wstring archiveName = L"") {
+  auto addFunc = [&](int originId, const std::wstring& archiveName = L"") {
     FilesOrigin& origin = directoryStructure()->getOriginByID(originId);
     QString filePath =
         QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
@@ -1805,7 +1805,7 @@ void OrganizerCore::loginSuccessful(bool necessary)
     downloadRequestedNXM(url);
   }
   m_PendingDownloads.clear();
-  for (auto task : m_PostLoginTasks) {
+  for (const auto& task : m_PostLoginTasks) {
     task();
   }
 
@@ -2089,9 +2089,9 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
       for (auto dataMap : dataMaps.asKeyValueRange()) {
         auto mapDir = QDir(modDir.absoluteFilePath(dataMap.first));
         if (mapDir.exists()) {
-          for (auto dir : dataMap.second) {
-            result.insert(result.end(),
-                          {mapDir.absolutePath(), dir, true, createTarget});
+          for (const auto& dir : dataMap.second) {
+            result.emplace(result.end(),
+                          mapDir.absolutePath(), dir, true, createTarget);
           }
         }
       }
@@ -2119,9 +2119,9 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
   for (auto dataMap : dataMaps.asKeyValueRange()) {
     auto overwriteSubpath = overwriteDir.absoluteFilePath(dataMap.first);
     if (QDir(overwriteSubpath).exists()) {
-      for (auto dir : dataMap.second) {
-        result.insert(result.end(),
-                      {overwriteSubpath, dir, true, customOverwrite.isEmpty()});
+      for (const auto& dir : dataMap.second) {
+        result.emplace(result.end(),
+                      overwriteSubpath, dir, true, customOverwrite.isEmpty());
       }
     }
   }
@@ -2160,7 +2160,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& dataPath,
     QString source = originPath + relPath + fileName;
     QString target = dataPath + relPath + fileName;
     if (source != target) {
-      result.push_back({source, target, false, false});
+      result.emplace_back(source, target, false, false);
     }
   }
 
@@ -2175,7 +2175,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& dataPath,
 
     bool writeDestination = (base == directoryEntry) && (origin == createDestination);
 
-    result.push_back({source, target, true, writeDestination});
+    result.emplace_back(source, target, true, writeDestination);
     std::vector<Mapping> subRes =
         fileMapping(dataPath, relPath + dirName + "\\", base, d, createDestination);
     result.insert(result.end(), subRes.begin(), subRes.end());

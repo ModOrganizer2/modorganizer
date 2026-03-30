@@ -151,7 +151,9 @@ public:
    * @param filter the filter to test
    * @return number of matching categories
    */
-  unsigned int countCategories(std::function<bool(const Category& category)> filter);
+  //unsigned int countCategories(const std::function<bool(const Category& category)> &filter);
+  template <std::predicate < const CategoryFactory::Category& > Filter >
+  unsigned int countCategories(Filter filter);
 
   /**
    * @brief get the id of the parent category

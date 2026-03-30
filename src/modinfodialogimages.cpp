@@ -780,7 +780,7 @@ void ScalableImage::paintEvent(QPaintEvent* e)
 }
 
 Metrics::Metrics()
-    : margins(3), border(1), padding(0), spacing(5), textSpacing(2), textHeight(0)
+    : margins(3), border(1), padding(0), textSpacing(2), textHeight(0), spacing(5)
 {}
 
 Geometry::Geometry(QSize widgetSize, Metrics metrics)

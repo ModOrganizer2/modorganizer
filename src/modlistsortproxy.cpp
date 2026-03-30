@@ -88,7 +88,7 @@ unsigned long ModListSortProxy::conflictFlagsId(
 {
   unsigned long result = 0;
   for (ModInfo::EConflictFlag flag : flags) {
-    if ((flag != ModInfo::FLAG_OVERWRITE_CONFLICT)) {
+    if (flag != ModInfo::FLAG_OVERWRITE_CONFLICT) {
       result += 1 << (int)flag;
     }
   }
@@ -499,7 +499,7 @@ bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
 
         // Search by categories
         if (!foundKeyword && m_EnabledColumns[ModList::COL_CATEGORY]) {
-          for (auto category : info->categories()) {
+          for (const auto& category : info->categories()) {
             if (category.contains(currentKeyword, Qt::CaseInsensitive)) {
               foundKeyword = true;
               break;

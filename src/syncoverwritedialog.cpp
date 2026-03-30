@@ -165,7 +165,7 @@ void SyncOverwriteDialog::applyTo(QTreeWidgetItem* item, const QString& path,
   }
 
   QDir dir(m_SourcePath + "/" + path);
-  if ((path.length() > 0) && (dir.count() == 2)) {
+  if (!path.isEmpty() && (dir.count() == 2)) {
     dir.rmpath(".");
   }
 }

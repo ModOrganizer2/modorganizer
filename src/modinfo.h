@@ -207,7 +207,7 @@ public:  // Static functions:
    * @brief Run a limited batch of mod update checks for "newest version" information.
    *
    */
-  static void manualUpdateCheck(QObject* receiver, std::multimap<QString, int> IDs);
+  static void manualUpdateCheck(QObject* receiver, const std::multimap<QString, int>& IDs);
 
   /**
    * @brief Query nexus information for every mod and update the "newest version"
@@ -704,7 +704,7 @@ public:  // Methods after this do not come from IModInterface:
    *
    * @return true if the flag is set, false otherwise.
    */
-  bool hasFlag(EFlag flag) const;
+  bool hasFlag(const EFlag& flag) const;
 
   /**
    * @brief Check if any of the provided flags are set for this mod.
@@ -713,7 +713,7 @@ public:  // Methods after this do not come from IModInterface:
    *
    * @return true if any of the flags are set, false otherwise.
    */
-  bool hasAnyOfTheseFlags(std::vector<ModInfo::EFlag> flags) const;
+  bool hasAnyOfTheseFlags(const std::vector<ModInfo::EFlag>& flags) const;
 
   /**
    * @brief Check if this mod contains the specified content.

@@ -49,7 +49,7 @@ public:
 
   void removeFile(FileIndex index);
 
-  bool containsArchive(std::wstring archiveName);
+  bool containsArchive(std::wstring_view archiveName);
 
 private:
   OriginID m_ID;

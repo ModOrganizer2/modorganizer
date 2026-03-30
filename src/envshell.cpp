@@ -496,7 +496,7 @@ void ShellMenuCollection::addDetails(QString s)
 
 void ShellMenuCollection::add(QString name, ShellMenu m)
 {
-  m_menus.push_back({name, std::move(m)});
+  m_menus.emplace_back(name, std::move(m));
 }
 
 void ShellMenuCollection::exec(const QPoint& pos)

@@ -170,7 +170,7 @@ public:
   const FileEntryPtr findFile(const DirectoryEntryFileKey& key) const;
 
   bool hasFile(const std::wstring& name) const;
-  bool containsArchive(std::wstring archiveName);
+  bool containsArchive(const std::wstring& archiveName);
 
   // search through this directory and all subdirectories for a file by the
   // specified name (relative path).

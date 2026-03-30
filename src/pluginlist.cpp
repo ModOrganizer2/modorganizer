@@ -161,7 +161,7 @@ void PluginList::highlightPlugins(const std::vector<unsigned int>& modIndices,
       const MOShared::FilesOrigin& origin =
           directoryEntry.getOriginByName(selectedMod->internalName().toStdWString());
       if (plugins.size() > 0) {
-        for (auto plugin : plugins) {
+        for (const auto& plugin : plugins) {
           MOShared::FileEntryPtr file = directoryEntry.findFile(plugin.toStdWString());
           if (file && file->getOrigin() != origin.getID()) {
             const auto alternatives = file->getAlternatives();
@@ -241,7 +241,7 @@ void PluginList::refresh(const QString& profileName,
     if (filename.endsWith(".esp", Qt::CaseInsensitive) ||
         filename.endsWith(".esm", Qt::CaseInsensitive) ||
         filename.endsWith(".esl", Qt::CaseInsensitive)) {
-      availablePlugins.insert(std::make_pair(filename, current));
+      availablePlugins.try_emplace(filename, current);
     } else if (filename.endsWith(".bsa", Qt::CaseInsensitive) ||
                filename.endsWith("ba2", Qt::CaseInsensitive)) {
       archiveCandidates.append(filename);
@@ -348,7 +348,7 @@ void PluginList::fixPrimaryPlugins()
   int prio                   = 0;
   int prioBlueprint          = 0;
   bool somethingChanged      = false;
-  for (auto esp : m_ESPs) {
+  for (const auto& esp : m_ESPs) {
     if (!esp.isBlueprintFlagged)
       prioBlueprint++;
   }
@@ -389,7 +389,7 @@ void PluginList::fixPluginRelationships()
   int standardCount        = 0;
   int masterCount          = 0;
   int blueprintMasterCount = 0;
-  for (auto plugin : m_ESPs) {
+  for (const auto& plugin : m_ESPs) {
     if (plugin.hasLightExtension || plugin.hasMasterExtension ||
         plugin.isMasterFlagged) {
       if (plugin.isBlueprintFlagged) {
@@ -1809,7 +1809,7 @@ void PluginList::setPluginPriority(int row, int& newPriority, bool isForced)
     newPriorityTemp = static_cast<int>(m_ESPsByPriority.size()) - 1;
 
   int blueprintStartPos = 0;
-  for (auto esp : m_ESPs) {
+  for (const auto& esp : m_ESPs) {
     if (!esp.isBlueprintFlagged) {
       blueprintStartPos++;
     }
@@ -1858,7 +1858,7 @@ void PluginList::setPluginPriority(int row, int& newPriority, bool isForced)
   int oldPriority = m_ESPs.at(row).priority;
   if (newPriorityTemp < oldPriority) {  // moving up
     // don't allow plugins to be moved above their masters
-    for (auto master : m_ESPs[row].masters) {
+    for (const auto& master : m_ESPs[row].masters) {
       auto iter = m_ESPsByName.find(master);
       if (iter != m_ESPsByName.end()) {
         if (m_ESPs[iter->second].isBlueprintFlagged ==
@@ -1874,7 +1874,7 @@ void PluginList::setPluginPriority(int row, int& newPriority, bool isForced)
     // don't allow masters to be moved below their children
     for (int i = oldPriority + 1; i <= newPriorityTemp; i++) {
       PluginList::ESPInfo* otherInfo = &m_ESPs.at(m_ESPsByPriority[i]);
-      for (auto master : otherInfo->masters) {
+      for (const auto& master : otherInfo->masters) {
         auto iter = m_ESPsByName.find(master);
         if (iter != m_ESPsByName.end()) {
           if (m_ESPs[iter->second].isBlueprintFlagged ==
@@ -2005,9 +2005,9 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
                              bool mediumSupported, bool blueprintSupported)
     : name(name), fullPath(fullPath), enabled(forceLoaded), forceLoaded(forceLoaded),
       forceEnabled(forceEnabled), forceDisabled(forceDisabled), priority(0),
-      loadOrder(-1), originName(originName), hasIni(hasIni),
-      archives(archives.begin(), archives.end()), modSelected(false),
-      isMasterOfSelectedPlugin(false)
+      loadOrder(-1), originName(originName), modSelected(false),
+      isMasterOfSelectedPlugin(false), hasIni(hasIni),
+      archives(archives.begin(), archives.end())
 {
   try {
     ESP::File file(ToWString(fullPath));

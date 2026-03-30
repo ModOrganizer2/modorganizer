@@ -42,7 +42,7 @@ QtGroupingProxy::QtGroupingProxy(QModelIndex rootNode, int groupedColumn,
   }
 }
 
-QtGroupingProxy::~QtGroupingProxy() {}
+QtGroupingProxy::~QtGroupingProxy() = default;
 
 void QtGroupingProxy::setSourceModel(QAbstractItemModel* model)
 {
@@ -108,7 +108,7 @@ QList<RowData> QtGroupingProxy::belongsTo(const QModelIndex& idx)
     int role         = i.key();
     QVariant variant = i.value();
 
-    if (variant.type() == QVariant::List) {
+    if (variant.typeId() == QMetaType::QVariantList) {
       // a list of variants get's expanded to multiple rows
       QVariantList list = variant.toList();
       for (int i = 0; i < list.length(); i++) {

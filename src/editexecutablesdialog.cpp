@@ -309,7 +309,7 @@ Executable* EditExecutablesDialog::selectedExe()
     return nullptr;
   }
 
-  return &*itor;
+  return std::to_address(itor);
 }
 
 void EditExecutablesDialog::fillList()

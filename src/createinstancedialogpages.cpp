@@ -361,7 +361,7 @@ void GamePage::selectCustom()
   }
 
   // try to find a plugin that likes this directory
-  for (auto& g : m_games) {
+  for (const auto& g : m_games) {
     if (g->game->looksValid(path)) {
       // found one
       g->dir       = path;
@@ -388,7 +388,7 @@ void GamePage::warnUnrecognized(const QString& path)
 {
   // put the list of supported games in the details textbox
   QString supportedGames;
-  for (auto* game : sortedGamePlugins()) {
+  for (const auto* game : sortedGamePlugins()) {
     supportedGames += game->displayGameName() + "\n";
   }
 
@@ -433,9 +433,9 @@ void GamePage::createGames()
   }
 }
 
-GamePage::Game* GamePage::findGame(IPluginGame* game)
+GamePage::Game* GamePage::findGame(const IPluginGame* game)
 {
-  for (auto& g : m_games) {
+  for (const auto& g : m_games) {
     if (g->game == game) {
       return g.get();
     }
@@ -537,7 +537,7 @@ void GamePage::clearButtons()
 
   ui->games->setUpdatesEnabled(true);
 
-  for (auto& g : m_games) {
+  for (const auto& g : m_games) {
     // all buttons have been deleted
     g->button = nullptr;
   }
@@ -565,7 +565,7 @@ void GamePage::fillList()
 
   Game* firstButton = nullptr;
 
-  for (auto& g : m_games) {
+  for (const auto& g : m_games) {
     if (!showAll && !g->installed) {
       // not installed
       continue;
@@ -622,7 +622,7 @@ GamePage::Game* GamePage::checkInstallation(const QString& path, Game* g)
 
   if (otherGame) {
     // an alternative was found, ask the user about it
-    auto* confirmedGame = confirmOtherGame(path, g->game, otherGame);
+    const auto* confirmedGame = confirmOtherGame(path, g->game, otherGame);
 
     if (!confirmedGame) {
       // cancelled
@@ -751,7 +751,7 @@ bool VariantsPage::ready() const
 
 bool VariantsPage::doSkip() const
 {
-  auto* g = m_dlg.rawCreationInfo().game;
+  const auto* g = m_dlg.rawCreationInfo().game;
   if (!g) {
     // shouldn't happen
     return true;
@@ -811,14 +811,14 @@ void VariantsPage::fillList()
   ui->editions->clear();
   m_buttons.clear();
 
-  auto* g = m_dlg.rawCreationInfo().game;
+  const auto* g = m_dlg.rawCreationInfo().game;
   if (!g) {
     // shouldn't happen
     return;
   }
 
   // for each variant, create a checkable button and add it
-  for (auto& v : g->gameVariants()) {
+  for (const auto& v : g->gameVariants()) {
     auto* b = new QCommandLinkButton(v);
     b->setCheckable(true);
 
@@ -836,8 +836,8 @@ void VariantsPage::fillList()
 }
 
 NamePage::NamePage(CreateInstanceDialog& dlg)
-    : Page(dlg), m_modified(false), m_okay(false), m_label(ui->instanceNameLabel),
-      m_exists(ui->instanceNameExists), m_invalid(ui->instanceNameInvalid)
+    : Page(dlg), m_label(ui->instanceNameLabel), m_exists(ui->instanceNameExists), m_invalid(ui->instanceNameInvalid),
+      m_modified(false), m_okay(false)
 {
   QObject::connect(ui->instanceName, &QLineEdit::textEdited, [&] {
     onChanged();
@@ -862,7 +862,7 @@ bool NamePage::doSkip() const
 
 void NamePage::doActivated(bool)
 {
-  auto* g = m_dlg.rawCreationInfo().game;
+  const auto* g = m_dlg.rawCreationInfo().game;
   if (!g) {
     // shouldn't happen, next should be disabled
     return;
@@ -950,7 +950,7 @@ bool ProfilePage::ready() const
 
 CreateInstanceDialog::ProfileSettings ProfilePage::profileSettings() const
 {
-  CreateInstanceDialog::ProfileSettings profileSettings;
+  CreateInstanceDialog::ProfileSettings profileSettings{};
   profileSettings.localInis           = ui->profileInisCheckbox->isChecked();
   profileSettings.localSaves          = ui->profileSavesCheckbox->isChecked();
   profileSettings.archiveInvalidation = ui->archiveInvalidationCheckbox->isChecked();
@@ -1143,7 +1143,7 @@ void PathsPage::setIfEmpty(QLineEdit* e, const QString& path, bool force)
 bool PathsPage::checkPath(QString path, PlaceholderLabel& existsLabel,
                           PlaceholderLabel& invalidLabel)
 {
-  auto& m = InstanceManager::singleton();
+  const auto& m = InstanceManager::singleton();
 
   bool exists  = false;
   bool invalid = false;

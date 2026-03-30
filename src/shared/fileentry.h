@@ -47,7 +47,7 @@ public:
 
   const DataArchiveOrigin& getArchive() const { return m_Archive; }
 
-  bool isFromArchive(std::wstring archiveName = L"") const;
+  bool isFromArchive(std::wstring_view archiveName = L"") const;
 
   // if originID is -1, uses the main origin; if this file doesn't exist in the
   // given origin, returns an empty string

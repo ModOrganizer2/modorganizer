@@ -109,7 +109,7 @@ InstallationManager::InstallationManager() : m_ParentWidget(nullptr), m_IsRunnin
           &InstallationManager::queryPassword, Qt::BlockingQueuedConnection);
 }
 
-InstallationManager::~InstallationManager() {}
+InstallationManager::~InstallationManager() = default;
 
 void InstallationManager::setParentWidget(QWidget* widget)
 {
@@ -279,7 +279,7 @@ QStringList InstallationManager::extractFiles(
   // Retrieve the file path:
   QStringList result;
 
-  for (auto& entry : files) {
+  for (const auto& entry : files) {
     auto path = entry->path();
     result.append(QDir::tempPath().append("/").append(path));
     m_TempFilesToDelete.insert(path);
@@ -820,7 +820,7 @@ InstallationResult InstallationManager::install(const QString& fileName,
              ((filesTree == nullptr) &&
               installerCustom->isArchiveSupported(fileName)))) {
           std::set<QString> installerExt = installerCustom->supportedExtensions();
-          if (installerExt.find(fileInfo.suffix()) != installerExt.end()) {
+          if (installerExt.contains(fileInfo.suffix())) {
             installResult.m_result =
                 installerCustom->install(modName, gameName, fileName, version, modID);
             unsigned int idx = ModInfo::getIndex(modName);

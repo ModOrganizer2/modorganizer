@@ -379,7 +379,7 @@ Directory getFilesAndDirs(const std::wstring& path)
       [](void* pcx, std::wstring_view path) {
         Context* cx = (Context*)pcx;
 
-        cx->current.top()->dirs.push_back(Directory(path));
+        cx->current.top()->dirs.emplace_back(path);
         cx->current.push(&cx->current.top()->dirs.back());
       },
 
@@ -391,7 +391,7 @@ Directory getFilesAndDirs(const std::wstring& path)
       [](void* pcx, std::wstring_view path, FILETIME ft, uint64_t s) {
         Context* cx = (Context*)pcx;
 
-        cx->current.top()->files.push_back(File(path, ft, s));
+        cx->current.top()->files.emplace_back(path, ft, s);
       });
 
   return root;
@@ -426,14 +426,14 @@ void getFilesAndDirsWithFindImpl(const std::wstring& path, Directory& d)
         if ((wcscmp(findData.cFileName, L".") != 0) &&
             (wcscmp(findData.cFileName, L"..") != 0)) {
           const std::wstring newPath = path + L"\\" + findData.cFileName;
-          d.dirs.push_back(Directory(findData.cFileName));
+          d.dirs.emplace_back(findData.cFileName);
           getFilesAndDirsWithFindImpl(newPath, d.dirs.back());
         }
       } else {
         const auto size =
             (findData.nFileSizeHigh * (MAXDWORD + 1)) + findData.nFileSizeLow;
 
-        d.files.push_back(File(findData.cFileName, findData.ftLastWriteTime, size));
+        d.files.emplace_back(findData.cFileName, findData.ftLastWriteTime, size);
       }
 
       result = ::FindNextFileW(searchHandle, &findData);

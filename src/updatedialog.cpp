@@ -12,10 +12,10 @@ UpdateDialog::UpdateDialog(QWidget* parent)
 {
   // Basic UI stuff
   ui->setupUi(this);
-  connect(ui->installButton, &QPushButton::pressed, this, [&] {
+  connect(ui->installButton, &QPushButton::pressed, this, [this] {
     done(QDialog::Accepted);
   });
-  connect(ui->cancelButton, &QPushButton::pressed, this, [&] {
+  connect(ui->cancelButton, &QPushButton::pressed, this, [this] {
     done(QDialog::Rejected);
   });
 
@@ -49,7 +49,7 @@ UpdateDialog::UpdateDialog(QWidget* parent)
 
   // Setting up the expander
   m_expander.set(ui->detailsButton, ui->detailsWidget);
-  connect(&m_expander, &ExpanderWidget::toggled, this, [&] {
+  connect(&m_expander, &ExpanderWidget::toggled, this, [this] {
     adjustSize();
   });
 
