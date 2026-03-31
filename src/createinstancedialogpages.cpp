@@ -836,8 +836,8 @@ void VariantsPage::fillList()
 }
 
 NamePage::NamePage(CreateInstanceDialog& dlg)
-    : Page(dlg), m_label(ui->instanceNameLabel), m_exists(ui->instanceNameExists), m_invalid(ui->instanceNameInvalid),
-      m_modified(false), m_okay(false)
+    : Page(dlg), m_label(ui->instanceNameLabel), m_exists(ui->instanceNameExists),
+      m_invalid(ui->instanceNameInvalid), m_modified(false), m_okay(false)
 {
   QObject::connect(ui->instanceName, &QLineEdit::textEdited, [this] {
     onChanged();

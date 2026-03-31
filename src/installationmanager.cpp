@@ -214,11 +214,13 @@ bool InstallationManager::extractFiles(QString extractPath, QString title,
     QFutureWatcher<bool> futureWatcher;
     connect(&futureWatcher, &QFutureWatcher<bool>::finished, &loop, &QEventLoop::wakeUp,
             Qt::QueuedConnection);
-    futureWatcher.setFuture(QtConcurrent::run([this, &extractPath, &progressCallback, &showFilenames, &fileChangeCallback, &errorCallback]() -> bool {
-      return m_ArchiveHandler->extract(extractPath.toStdWString(), progressCallback,
-                                       showFilenames ? fileChangeCallback : nullptr,
-                                       errorCallback);
-    }));
+    futureWatcher.setFuture(
+        QtConcurrent::run([this, &extractPath, &progressCallback, &showFilenames,
+                           &fileChangeCallback, &errorCallback]() -> bool {
+          return m_ArchiveHandler->extract(extractPath.toStdWString(), progressCallback,
+                                           showFilenames ? fileChangeCallback : nullptr,
+                                           errorCallback);
+        }));
 
     installationProgress->setModal(true);
     installationProgress->show();
@@ -754,9 +756,9 @@ InstallationResult InstallationManager::install(const QString& fileName,
   auto installers = m_PluginContainer->plugins<IPluginInstaller>();
 
   std::ranges::sort(installers,
-            [](const IPluginInstaller* lhs, const IPluginInstaller* rhs) {
-              return lhs->priority() > rhs->priority();
-            });
+                    [](const IPluginInstaller* lhs, const IPluginInstaller* rhs) {
+                      return lhs->priority() > rhs->priority();
+                    });
 
   InstallationResult installResult(IPluginInstaller::RESULT_NOTATTEMPTED);
 

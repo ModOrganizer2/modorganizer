@@ -9,7 +9,8 @@
 using namespace MOBase;
 
 SavesTab::SavesTab(QWidget* window, OrganizerCore& core, Ui::MainWindow* mwui)
-    : m_window(window), m_core(core), ui{mwui->tabWidget, mwui->savesTab, mwui->savegameList},
+    : m_window(window), m_core(core),
+      ui{mwui->tabWidget, mwui->savesTab, mwui->savegameList},
       m_CurrentSaveView(nullptr)
 {
   m_SavesWatcherTimer.setSingleShot(true);

@@ -133,8 +133,8 @@ public:
   void saveToolbars(const QMainWindow* w);
   void restoreToolbars(QMainWindow* w) const;
 
-  //void saveDocks(const QMainWindow* w);
-  //void restoreDocks(QMainWindow* w) const;
+  // void saveDocks(const QMainWindow* w);
+  // void restoreDocks(QMainWindow* w) const;
 
   // this should be a generic "tab order" setting, but it only happens for the
   // mod info dialog right now

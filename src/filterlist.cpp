@@ -214,8 +214,8 @@ FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore& core,
 
   connect(ui->filtersSeparators, qOverload<int>(&QComboBox::currentIndexChanged),
           [this] {
-    onOptionsChanged();
-  });
+            onOptionsChanged();
+          });
 
   ui->filters->header()->setMinimumSectionSize(0);
   ui->filters->header()->resizeSection(0, 23);

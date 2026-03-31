@@ -184,8 +184,8 @@ void DirectoryRefresher::setMods(
     QString path       = std::get<1>(*mod);
     QString modDataDir = m_Core.managedGame()->modDataDirectory();
     path               = modDataDir.isEmpty() ? path : path + "/" + modDataDir;
-    m_Mods.emplace_back(
-        name, path, info->stealFiles(), info->archives(), std::get<2>(*mod));
+    m_Mods.emplace_back(name, path, info->stealFiles(), info->archives(),
+                        std::get<2>(*mod));
   }
 
   m_EnabledArchives = managedArchives;

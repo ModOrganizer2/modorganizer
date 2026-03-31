@@ -158,8 +158,8 @@ void CategoriesDialog::commitChanges()
       nexusData = ui->categoriesTable->item(index, 3)->data(Qt::UserRole).toList();
     std::vector<CategoryFactory::NexusCategory> nexusCats;
     for (const auto& nexusCat : nexusData) {
-      nexusCats.emplace_back(
-          nexusCat.toList()[0].toString(), nexusCat.toList()[1].toInt());
+      nexusCats.emplace_back(nexusCat.toList()[0].toString(),
+                             nexusCat.toList()[1].toInt());
     }
 
     categories.addCategory(ui->categoriesTable->item(index, 0)->text().toInt(),

@@ -435,13 +435,11 @@ std::vector<std::pair<QString, QString>>
 NexusInterface::getGameChoices(const MOBase::IPluginGame* game)
 {
   std::vector<std::pair<QString, QString>> choices;
-  choices.emplace_back(
-      game->gameShortName(), game->gameName());
+  choices.emplace_back(game->gameShortName(), game->gameName());
   for (const auto& gameName : game->validShortNames()) {
     for (auto gamePlugin : m_PluginContainer->plugins<IPluginGame>()) {
       if (gamePlugin->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
-        choices.emplace_back(gamePlugin->gameShortName(),
-                                                      gamePlugin->gameName());
+        choices.emplace_back(gamePlugin->gameShortName(), gamePlugin->gameName());
         break;
       }
     }

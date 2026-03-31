@@ -591,7 +591,7 @@ std::optional<int> CrashDumpCommand::runEarly()
   env::Console console;
 
   const auto& typeString = vm()["type"].as<std::string>();
-  const auto type       = env::coreDumpTypeFromString(typeString);
+  const auto type        = env::coreDumpTypeFromString(typeString);
 
   // dump
   const auto b = env::coredumpOther(type);

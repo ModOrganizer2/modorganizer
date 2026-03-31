@@ -1084,7 +1084,8 @@ bool OrganizerCore::previewFileWithAlternatives(QWidget* parent, QString fileNam
   // set up preview dialog
   PreviewDialog preview(fileName, parent);
 
-  auto addFunc = [this, &fileName, &preview](int originId, const std::wstring& archiveName = L"") {
+  auto addFunc = [this, &fileName, &preview](int originId,
+                                             const std::wstring& archiveName = L"") {
     FilesOrigin& origin = directoryStructure()->getOriginByID(originId);
     QString filePath =
         QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
@@ -2090,8 +2091,8 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
         auto mapDir = QDir(modDir.absoluteFilePath(dataMap.first));
         if (mapDir.exists()) {
           for (const auto& dir : dataMap.second) {
-            result.emplace(result.end(),
-                          mapDir.absolutePath(), dir, true, createTarget);
+            result.emplace(result.end(), mapDir.absolutePath(), dir, true,
+                           createTarget);
           }
         }
       }
@@ -2120,8 +2121,8 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
     auto overwriteSubpath = overwriteDir.absoluteFilePath(dataMap.first);
     if (QDir(overwriteSubpath).exists()) {
       for (const auto& dir : dataMap.second) {
-        result.emplace(result.end(),
-                      overwriteSubpath, dir, true, customOverwrite.isEmpty());
+        result.emplace(result.end(), overwriteSubpath, dir, true,
+                       customOverwrite.isEmpty());
       }
     }
   }

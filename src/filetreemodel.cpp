@@ -816,7 +816,8 @@ bool FileTreeModel::addNewFiles(FileTreeItem& parentItem,
   bool added = false;
 
   // for each directory on the filesystem
-  parentEntry.forEachFileIndex([this, &seen, &range, &toAdd, &parentEntry, &parentPath, &parentItem, &added](auto&& fileIndex) {
+  parentEntry.forEachFileIndex([this, &seen, &range, &toAdd, &parentEntry, &parentPath,
+                                &parentItem, &added](auto&& fileIndex) {
     if (seen.contains(fileIndex)) {
       // already seen in the parent item
 

@@ -480,8 +480,8 @@ void ValidationAttempt::onFinished()
     return;
   }
 
-  const auto doc       = QJsonDocument::fromJson(m_reply->readAll());
-  //const auto& httpError = m_reply->errorString();
+  const auto doc = QJsonDocument::fromJson(m_reply->readAll());
+  // const auto& httpError = m_reply->errorString();
 
   const QJsonObject data = doc.object();
 

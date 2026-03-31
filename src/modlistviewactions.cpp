@@ -429,42 +429,31 @@ void ModListViewActions::exportModListCSV() const
       builder.setEscapeMode(CSVBuilder::TYPE_STRING, CSVBuilder::QUOTE_ALWAYS);
       std::vector<std::pair<QString, CSVBuilder::EFieldType>> fields;
       if (mod_Priority->isChecked())
-        fields.emplace_back(
-            QString("#Mod_Priority"), CSVBuilder::TYPE_STRING);
+        fields.emplace_back(QString("#Mod_Priority"), CSVBuilder::TYPE_STRING);
       if (mod_Status->isChecked())
-        fields.emplace_back(
-            QString("#Mod_Status"), CSVBuilder::TYPE_STRING);
+        fields.emplace_back(QString("#Mod_Status"), CSVBuilder::TYPE_STRING);
       if (mod_Name->isChecked())
         fields.emplace_back(QString("#Mod_Name"), CSVBuilder::TYPE_STRING);
       if (mod_Note->isChecked())
         fields.emplace_back(QString("#Note"), CSVBuilder::TYPE_STRING);
       if (primary_Category->isChecked())
-        fields.emplace_back(
-            QString("#Primary_Category"), CSVBuilder::TYPE_STRING);
+        fields.emplace_back(QString("#Primary_Category"), CSVBuilder::TYPE_STRING);
       if (mod_Author->isChecked())
-        fields.emplace_back(
-            QString("#Mod_Author"), CSVBuilder::TYPE_STRING);
+        fields.emplace_back(QString("#Mod_Author"), CSVBuilder::TYPE_STRING);
       if (mod_Uploader->isChecked())
-        fields.emplace_back(
-            QString("#Mod_Uploader"), CSVBuilder::TYPE_STRING);
+        fields.emplace_back(QString("#Mod_Uploader"), CSVBuilder::TYPE_STRING);
       if (nexus_ID->isChecked())
-        fields.emplace_back(
-            QString("#Nexus_ID"), CSVBuilder::TYPE_INTEGER);
+        fields.emplace_back(QString("#Nexus_ID"), CSVBuilder::TYPE_INTEGER);
       if (mod_Nexus_URL->isChecked())
-        fields.emplace_back(
-            QString("#Mod_Nexus_URL"), CSVBuilder::TYPE_STRING);
+        fields.emplace_back(QString("#Mod_Nexus_URL"), CSVBuilder::TYPE_STRING);
       if (mod_Uploader_URL->isChecked())
-        fields.emplace_back(
-            QString("#Mod_Uploader_URL"), CSVBuilder::TYPE_STRING);
+        fields.emplace_back(QString("#Mod_Uploader_URL"), CSVBuilder::TYPE_STRING);
       if (mod_Version->isChecked())
-        fields.emplace_back(
-            QString("#Mod_Version"), CSVBuilder::TYPE_STRING);
+        fields.emplace_back(QString("#Mod_Version"), CSVBuilder::TYPE_STRING);
       if (install_Date->isChecked())
-        fields.emplace_back(
-            QString("#Install_Date"), CSVBuilder::TYPE_STRING);
+        fields.emplace_back(QString("#Install_Date"), CSVBuilder::TYPE_STRING);
       if (download_File_Name->isChecked())
-        fields.emplace_back(
-            QString("#Download_File_Name"), CSVBuilder::TYPE_STRING);
+        fields.emplace_back(QString("#Download_File_Name"), CSVBuilder::TYPE_STRING);
 
       builder.setFields(fields);
 

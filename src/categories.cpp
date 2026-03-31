@@ -253,8 +253,7 @@ int CategoryFactory::addCategory(const QString& name,
 void CategoryFactory::addCategory(int id, const QString& name, int parentID)
 {
   int index = static_cast<int>(m_Categories.size());
-  m_Categories.emplace_back(
-      index, id, name, parentID, std::vector<NexusCategory>());
+  m_Categories.emplace_back(index, id, name, parentID, std::vector<NexusCategory>());
   m_IDMap[id] = index;
 }
 

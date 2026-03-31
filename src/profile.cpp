@@ -608,7 +608,7 @@ std::vector<std::tuple<QString, QString, int>> Profile::getActiveMods()
     if (m_ModStatus[index].m_Enabled) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
       result.emplace_back(modInfo->internalName(), modInfo->absolutePath(),
-                                       m_ModStatus[index].m_Priority);
+                          m_ModStatus[index].m_Priority);
     }
   }
 

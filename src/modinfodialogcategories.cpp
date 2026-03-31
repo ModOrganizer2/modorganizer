@@ -60,10 +60,8 @@ void CategoriesTab::add(const CategoryFactory& factory,
 
     newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
 
-    newItem->setCheckState(0,
-                           enabledCategories.contains(categoryID)
-                               ? Qt::Checked
-                               : Qt::Unchecked);
+    newItem->setCheckState(0, enabledCategories.contains(categoryID) ? Qt::Checked
+                                                                     : Qt::Unchecked);
 
     newItem->setData(0, Qt::UserRole, categoryID);
 

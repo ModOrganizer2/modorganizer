@@ -66,8 +66,8 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
 
   connect(ui->filetree, &QTreeView::customContextMenuRequested,
           [this](const QPoint& pos) {
-    onContextMenu(pos);
-  });
+            onContextMenu(pos);
+          });
 
   // disable renaming on double click, open the file instead
   ui->filetree->setEditTriggers(ui->filetree->editTriggers() &
@@ -435,7 +435,7 @@ void FileTreeTab::onContextMenu(const QPoint& pos)
     enableDelete    = true;
 
     // only enable open action if a file is selected
-    //bool hasFiles = false;
+    // bool hasFiles = false;
 
     const QString fileName = m_fs->fileName(selection[0]);
 

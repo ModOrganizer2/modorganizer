@@ -789,8 +789,8 @@ DirectoryEntry* DirectoryEntry::getSubDirectoryRecursive(const std::wstring& pat
   if (pos == std::wstring::npos) {
     return getSubDirectory(path, create, stats);
   } else {
-    DirectoryEntry* nextChild =
-        getSubDirectory(std::wstring_view(path).substr(0, pos), create, stats, originID);
+    DirectoryEntry* nextChild = getSubDirectory(std::wstring_view(path).substr(0, pos),
+                                                create, stats, originID);
 
     if (nextChild == nullptr) {
       return nullptr;
