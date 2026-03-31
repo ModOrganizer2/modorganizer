@@ -75,7 +75,7 @@ void ModListByPriorityProxy::buildTree()
   TreeItem* overwrite;
   std::vector<TreeItem*> backups;
 
-  auto fn = [&](const auto& p) {
+  auto fn = [this, &root, &overwrite, &backups](const auto& p) {
     auto& [priority, index] = p;
     ModInfo::Ptr modInfo    = ModInfo::getByIndex(index);
     TreeItem* item          = m_IndexToItem[index].get();

@@ -133,23 +133,23 @@ CreateInstanceDialog::CreateInstanceDialog(const PluginContainer& pc, Settings* 
 
   addShortcutAction(QKeySequence::Find, Actions::Find);
 
-  addShortcut(Qt::ALT + Qt::Key_Left, [&] {
+  addShortcut(Qt::ALT + Qt::Key_Left, [this] {
     back();
   });
-  addShortcut(Qt::ALT + Qt::Key_Right, [&] {
+  addShortcut(Qt::ALT + Qt::Key_Right, [this] {
     next(false);
   });
-  addShortcut(Qt::CTRL + Qt::Key_Return, [&] {
+  addShortcut(Qt::CTRL + Qt::Key_Return, [this] {
     next();
   });
 
-  connect(ui->next, &QPushButton::clicked, [&] {
+  connect(ui->next, &QPushButton::clicked, [this] {
     next();
   });
-  connect(ui->back, &QPushButton::clicked, [&] {
+  connect(ui->back, &QPushButton::clicked, [this] {
     back();
   });
-  connect(ui->cancel, &QPushButton::clicked, [&] {
+  connect(ui->cancel, &QPushButton::clicked, [this] {
     reject();
   });
 }

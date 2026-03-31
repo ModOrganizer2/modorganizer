@@ -6,13 +6,13 @@
 CategoriesTab::CategoriesTab(ModInfoDialogTabContext cx)
     : ModInfoDialogTab(std::move(cx))
 {
-  connect(ui->categories, &QTreeWidget::itemChanged, [&](auto* item, int col) {
+  connect(ui->categories, &QTreeWidget::itemChanged, [this](auto* item, int col) {
     onCategoryChanged(item, col);
   });
 
   connect(ui->primaryCategories,
           static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-          [&](int index) {
+          [this](int index) {
             onPrimaryChanged(index);
           });
 }

@@ -306,7 +306,7 @@ std::vector<SecurityProduct> getSecurityProductsFromWMI()
   // that to avoid duplicating entries
   std::map<QUuid, SecurityProduct> map;
 
-  auto f = [&](auto* o) {
+  auto f = [&map](auto* o) {
     if (auto p = handleProduct(o)) {
       map.emplace(p->guid(), std::move(*p));
     }

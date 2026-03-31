@@ -79,19 +79,19 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
   m_filter.setEdit(ui->pluginFilterEdit);
 
   QObject::connect(ui->pluginsList, &QTreeWidget::currentItemChanged,
-                   [&](auto* current, auto* previous) {
+                   [this](auto* current, auto* previous) {
                      on_pluginsList_currentItemChanged(current, previous);
                    });
-  QObject::connect(ui->enabledCheckbox, &QCheckBox::clicked, [&](bool checked) {
+  QObject::connect(ui->enabledCheckbox, &QCheckBox::clicked, [this](bool checked) {
     on_checkboxEnabled_clicked(checked);
   });
 
   QShortcut* delShortcut =
       new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
-  QObject::connect(delShortcut, &QShortcut::activated, &dialog(), [&] {
+  QObject::connect(delShortcut, &QShortcut::activated, &dialog(), [this] {
     deleteBlacklistItem();
   });
-  QObject::connect(&m_filter, &FilterWidget::changed, [&] {
+  QObject::connect(&m_filter, &FilterWidget::changed, [this] {
     filterPluginList();
   });
 

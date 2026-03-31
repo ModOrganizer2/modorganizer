@@ -352,7 +352,7 @@ struct ModThread
   void run()
   {
     std::unique_lock lock(mutex);
-    cv.wait(lock, [&] {
+    cv.wait(lock, [this] {
       return ready;
     });
 

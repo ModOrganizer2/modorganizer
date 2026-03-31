@@ -161,8 +161,8 @@ GameFeatures::GameFeatures(OrganizerCore* core, PluginContainer* plugins)
             // remove features from the current plugin
             for (auto& [_, features] : m_allFeatures) {
               std::erase_if(features, [plugin](const auto& feature) {
-                                              return feature.plugin() == plugin;
-                                            });
+                return feature.plugin() == plugin;
+              });
             }
 
             // update current features
@@ -315,8 +315,8 @@ int GameFeatures::unregisterGameFeatures(MOBase::IPlugin* plugin,
   const auto initialSize = features.size();
 
   std::erase_if(features, [plugin](const auto& feature) {
-                                  return feature.plugin() == plugin;
-                                });
+    return feature.plugin() == plugin;
+  });
 
   const int removed = features.size() - initialSize;
 

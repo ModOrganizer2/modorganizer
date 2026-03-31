@@ -24,10 +24,10 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
     return sourceModel->lessThanPredicate(left, right);
   });
 
-  connect(ui.refresh, &QPushButton::clicked, [&] {
+  connect(ui.refresh, &QPushButton::clicked, [this] {
     refresh();
   });
-  connect(ui.queryInfos, &QPushButton::clicked, [&] {
+  connect(ui.queryInfos, &QPushButton::clicked, [this] {
     queryInfos();
   });
   connect(ui.list, SIGNAL(installDownload(int)), &m_core, SLOT(installDownload(int)));
@@ -53,7 +53,7 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
           SLOT(cancelDownload(int)));
   connect(ui.list, SIGNAL(pauseDownload(int)), m_core.downloadManager(),
           SLOT(pauseDownload(int)));
-  connect(ui.list, &DownloadListView::resumeDownload, [&](int i) {
+  connect(ui.list, &DownloadListView::resumeDownload, [this](int i) {
     resumeDownload(i);
   });
 }

@@ -68,11 +68,11 @@ ConflictsTab::ConflictsTab(ModInfoDialogTabContext cx)
     : ModInfoDialogTab(cx),  // don't move, cx is used again
       m_general(this, cx.ui, cx.core), m_advanced(this, cx.ui, cx.core)
 {
-  connect(&m_general, &GeneralConflictsTab::modOpen, [&](const QString& name) {
+  connect(&m_general, &GeneralConflictsTab::modOpen, [this](const QString& name) {
     emitModOpen(name);
   });
 
-  connect(&m_advanced, &AdvancedConflictsTab::modOpen, [&](const QString& name) {
+  connect(&m_advanced, &AdvancedConflictsTab::modOpen, [this](const QString& name) {
     emitModOpen(name);
   });
 }
@@ -151,7 +151,7 @@ void ConflictsTab::hideItems(QTreeView* tree)
     return;
   }
 
-  forEachInSelection(tree, [&](const ConflictItem* item) {
+  forEachInSelection(tree, [&stop, &renamer, &changed](const ConflictItem* item) {
     if (stop) {
       return false;
     }
@@ -204,7 +204,7 @@ void ConflictsTab::activateItems(QTreeView* tree)
 
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
-  forEachInSelection(tree, [&](const ConflictItem* item) {
+  forEachInSelection(tree, [this, &tryPreview](const ConflictItem* item) {
     const auto& path = item->fileName();
 
     if (tryPreview && canPreviewFile(plugin(), item->isArchive(), path)) {
@@ -221,7 +221,7 @@ void ConflictsTab::openItems(QTreeView* tree, bool hooked)
 {
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
-  forEachInSelection(tree, [&](const ConflictItem* item) {
+  forEachInSelection(tree, [this, &hooked](const ConflictItem* item) {
     openItem(item, hooked);
     return true;
   });
@@ -241,7 +241,7 @@ void ConflictsTab::previewItems(QTreeView* tree)
 {
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
-  forEachInSelection(tree, [&](const ConflictItem* item) {
+  forEachInSelection(tree, [this](const ConflictItem* item) {
     previewItem(item);
     return true;
   });
@@ -256,7 +256,7 @@ void ConflictsTab::exploreItems(QTreeView* tree)
 {
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
-  forEachInSelection(tree, [&](const ConflictItem* item) {
+  forEachInSelection(tree, [](const ConflictItem* item) {
     shell::Explore(item->fileName());
     return true;
   });
@@ -270,14 +270,14 @@ void ConflictsTab::showContextMenu(const QPoint& pos, QTreeView* tree)
 
   // open
   if (actions.open) {
-    connect(actions.open, &QAction::triggered, [&] {
+    connect(actions.open, &QAction::triggered, [this, &tree] {
       openItems(tree, false);
     });
   }
 
   // preview
   if (actions.preview) {
-    connect(actions.preview, &QAction::triggered, [&] {
+    connect(actions.preview, &QAction::triggered, [this, &tree] {
       previewItems(tree);
     });
   }
@@ -303,7 +303,7 @@ void ConflictsTab::showContextMenu(const QPoint& pos, QTreeView* tree)
 
   // run hooked
   if (actions.runHooked) {
-    connect(actions.runHooked, &QAction::triggered, [&] {
+    connect(actions.runHooked, &QAction::triggered, [this, &tree] {
       openItems(tree, true);
     });
 
@@ -315,7 +315,7 @@ void ConflictsTab::showContextMenu(const QPoint& pos, QTreeView* tree)
     menu.addMenu(actions.gotoMenu);
 
     for (auto* a : actions.gotoActions) {
-      connect(a, &QAction::triggered, [&, name = a->text()] {
+      connect(a, &QAction::triggered, [this, name = a->text()] {
         emitModOpen(name);
       });
 
@@ -325,7 +325,7 @@ void ConflictsTab::showContextMenu(const QPoint& pos, QTreeView* tree)
 
   // explore
   if (actions.explore) {
-    connect(actions.explore, &QAction::triggered, [&] {
+    connect(actions.explore, &QAction::triggered, [this, &tree] {
       exploreItems(tree);
     });
 
@@ -336,7 +336,7 @@ void ConflictsTab::showContextMenu(const QPoint& pos, QTreeView* tree)
 
   // hide
   if (actions.hide) {
-    connect(actions.hide, &QAction::triggered, [&] {
+    connect(actions.hide, &QAction::triggered, [this, &tree] {
       hideItems(tree);
     });
 
@@ -420,7 +420,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
       // show the menu items is worth it
       enableHide = false;
 
-      forEachInSelection(tree, [&](const ConflictItem* item) {
+      forEachInSelection(tree, [&enableHide, &enableGoto](const ConflictItem* item) {
         if (item->canHide()) {
           enableHide = true;
         }
@@ -531,30 +531,30 @@ GeneralConflictsTab::GeneralConflictsTab(ConflictsTab* tab, Ui::ModInfoDialog* p
   m_filterNoConflicts.setList(ui->noConflictTree);
   m_filterNoConflicts.setUseSourceSort(true);
 
-  QObject::connect(ui->overwriteTree, &QTreeView::doubleClicked, [&](auto&&) {
+  QObject::connect(ui->overwriteTree, &QTreeView::doubleClicked, [this](auto&&) {
     m_tab->activateItems(ui->overwriteTree);
   });
 
-  QObject::connect(ui->overwrittenTree, &QTreeView::doubleClicked, [&](auto&& item) {
+  QObject::connect(ui->overwrittenTree, &QTreeView::doubleClicked, [this](auto&& item) {
     m_tab->activateItems(ui->overwrittenTree);
   });
 
-  QObject::connect(ui->noConflictTree, &QTreeView::doubleClicked, [&](auto&& item) {
+  QObject::connect(ui->noConflictTree, &QTreeView::doubleClicked, [this](auto&& item) {
     m_tab->activateItems(ui->noConflictTree);
   });
 
   QObject::connect(ui->overwriteTree, &QTreeView::customContextMenuRequested,
-                   [&](const QPoint& p) {
+                   [this](const QPoint& p) {
                      m_tab->showContextMenu(p, ui->overwriteTree);
                    });
 
   QObject::connect(ui->overwrittenTree, &QTreeView::customContextMenuRequested,
-                   [&](const QPoint& p) {
+                   [this](const QPoint& p) {
                      m_tab->showContextMenu(p, ui->overwrittenTree);
                    });
 
   QObject::connect(ui->noConflictTree, &QTreeView::customContextMenuRequested,
-                   [&](const QPoint& p) {
+                   [this](const QPoint& p) {
                      m_tab->showContextMenu(p, ui->noConflictTree);
                    });
 }
@@ -898,24 +898,24 @@ AdvancedConflictsTab::AdvancedConflictsTab(ConflictsTab* tab, Ui::ModInfoDialog*
 
   // don't elide the overwritten by column so that the nearest are visible
 
-  QObject::connect(ui->conflictsAdvancedShowNoConflict, &QCheckBox::clicked, [&] {
+  QObject::connect(ui->conflictsAdvancedShowNoConflict, &QCheckBox::clicked, [this] {
     update();
   });
 
-  QObject::connect(ui->conflictsAdvancedShowAll, &QRadioButton::clicked, [&] {
+  QObject::connect(ui->conflictsAdvancedShowAll, &QRadioButton::clicked, [this] {
     update();
   });
 
-  QObject::connect(ui->conflictsAdvancedShowNearest, &QRadioButton::clicked, [&] {
+  QObject::connect(ui->conflictsAdvancedShowNearest, &QRadioButton::clicked, [this] {
     update();
   });
 
-  QObject::connect(ui->conflictsAdvancedList, &QTreeView::activated, [&] {
+  QObject::connect(ui->conflictsAdvancedList, &QTreeView::activated, [this] {
     m_tab->activateItems(ui->conflictsAdvancedList);
   });
 
   QObject::connect(ui->conflictsAdvancedList, &QTreeView::customContextMenuRequested,
-                   [&](const QPoint& p) {
+                   [this](const QPoint& p) {
                      m_tab->showContextMenu(p, ui->conflictsAdvancedList);
                    });
 }

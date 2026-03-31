@@ -202,11 +202,11 @@ ESPsTab::ESPsTab(ModInfoDialogTabContext cx)
   ui->inactiveESPList->setModel(m_inactiveModel);
   ui->activeESPList->setModel(m_activeModel);
 
-  QObject::connect(ui->activateESP, &QToolButton::clicked, [&] {
+  QObject::connect(ui->activateESP, &QToolButton::clicked, [this] {
     onActivate();
   });
 
-  QObject::connect(ui->deactivateESP, &QToolButton::clicked, [&] {
+  QObject::connect(ui->deactivateESP, &QToolButton::clicked, [this] {
     onDeactivate();
   });
 }

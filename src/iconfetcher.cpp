@@ -5,7 +5,7 @@
 void IconFetcher::Waiter::wait()
 {
   std::unique_lock lock(m_wakeUpMutex);
-  m_wakeUp.wait(lock, [&] {
+  m_wakeUp.wait(lock, [this] {
     return m_queueAvailable;
   });
   m_queueAvailable = false;
@@ -26,7 +26,7 @@ IconFetcher::IconFetcher() : m_iconSize(GetSystemMetrics(SM_CXSMICON)), m_stop(f
   m_quickCache.file      = getPixmapIcon(QFileIconProvider::File);
   m_quickCache.directory = getPixmapIcon(QFileIconProvider::Folder);
 
-  m_thread = MOShared::startSafeThread([&] {
+  m_thread = MOShared::startSafeThread([this] {
     threadFun();
   });
 }

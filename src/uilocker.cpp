@@ -12,7 +12,7 @@ public:
         m_buttons(nullptr), m_reason(UILocker::NoReason)
   {
     m_timer.reset(new QTimer);
-    QObject::connect(m_timer.get(), &QTimer::timeout, [&] {
+    QObject::connect(m_timer.get(), &QTimer::timeout, [this] {
       checkTarget();
     });
     m_timer->start(200);
@@ -331,7 +331,7 @@ private:
     case UILocker::OutputRequired: {
       auto* unlock = new QPushButton(QObject::tr("Unlock"));
 
-      QObject::connect(unlock, &QPushButton::clicked, [&] {
+      QObject::connect(unlock, &QPushButton::clicked, [] {
         UILocker::instance().onForceUnlock();
       });
 
@@ -342,14 +342,14 @@ private:
 
     case UILocker::PreventExit: {
       auto* exit = new QPushButton(QObject::tr("Exit Now"));
-      QObject::connect(exit, &QPushButton::clicked, [&] {
+      QObject::connect(exit, &QPushButton::clicked, [] {
         UILocker::instance().onForceUnlock();
       });
 
       ly->addWidget(exit);
 
       auto* cancel = new QPushButton(QObject::tr("Cancel"));
-      QObject::connect(cancel, &QPushButton::clicked, [&] {
+      QObject::connect(cancel, &QPushButton::clicked, [] {
         UILocker::instance().onCancel();
       });
 

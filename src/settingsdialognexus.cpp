@@ -256,7 +256,7 @@ bool NexusConnectionUI::clearKey()
 
 void NexusConnectionUI::updateState()
 {
-  auto setButton = [&](QAbstractButton* b, bool enabled, QString caption = {}) {
+  auto setButton = [](QAbstractButton* b, bool enabled, QString caption = {}) {
     if (b) {
       b->setEnabled(enabled);
       if (!caption.isEmpty()) {

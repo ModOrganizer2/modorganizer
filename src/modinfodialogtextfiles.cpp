@@ -111,7 +111,7 @@ GenericFilesTab::GenericFilesTab(ModInfoDialogTabContext cx, QListView* list,
   m_filter.setList(m_list);
 
   QObject::connect(m_list->selectionModel(), &QItemSelectionModel::currentRowChanged,
-                   [&](auto current, auto previous) {
+                   [this](auto current, auto previous) {
                      onSelection(current, previous);
                    });
 }

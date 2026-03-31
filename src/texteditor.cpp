@@ -18,11 +18,11 @@ TextEditor::TextEditor(QWidget* parent)
 
   emit modified(false);
 
-  connect(document(), &QTextDocument::modificationChanged, [&](bool b) {
+  connect(document(), &QTextDocument::modificationChanged, [this](bool b) {
     onModified(b);
   });
 
-  connect(this, &QPlainTextEdit::cursorPositionChanged, [&] {
+  connect(this, &QPlainTextEdit::cursorPositionChanged, [this] {
     highlightCurrentLine();
   });
 }
@@ -380,10 +380,10 @@ TextEditorLineNumbers::TextEditorLineNumbers(TextEditor& editor)
 {
   setFont(editor.font());
 
-  connect(&m_editor, &QPlainTextEdit::blockCountChanged, [&] {
+  connect(&m_editor, &QPlainTextEdit::blockCountChanged, [this] {
     updateAreaWidth();
   });
-  connect(&m_editor, &QPlainTextEdit::updateRequest, [&](auto&& rect, int dy) {
+  connect(&m_editor, &QPlainTextEdit::updateRequest, [this](auto&& rect, int dy) {
     updateArea(rect, dy);
   });
 
@@ -481,13 +481,13 @@ TextEditorToolbar::TextEditorToolbar(TextEditor& editor)
   m_path = new QLineEdit;
   m_path->setReadOnly(true);
 
-  QObject::connect(m_save, &QAction::triggered, [&] {
+  QObject::connect(m_save, &QAction::triggered, [this] {
     m_editor.save();
   });
-  QObject::connect(m_wordWrap, &QAction::triggered, [&] {
+  QObject::connect(m_wordWrap, &QAction::triggered, [this] {
     m_editor.toggleWordWrap();
   });
-  QObject::connect(m_explore, &QAction::triggered, [&] {
+  QObject::connect(m_explore, &QAction::triggered, [this] {
     m_editor.explore();
   });
 
@@ -509,13 +509,13 @@ TextEditorToolbar::TextEditorToolbar(TextEditor& editor)
 
   layout->addWidget(m_path);
 
-  QObject::connect(&m_editor, &TextEditor::modified, [&](bool b) {
+  QObject::connect(&m_editor, &TextEditor::modified, [this](bool b) {
     onTextModified(b);
   });
-  QObject::connect(&m_editor, &TextEditor::wordWrapChanged, [&](bool b) {
+  QObject::connect(&m_editor, &TextEditor::wordWrapChanged, [this](bool b) {
     onWordWrap(b);
   });
-  QObject::connect(&m_editor, &TextEditor::loaded, [&](QString f) {
+  QObject::connect(&m_editor, &TextEditor::loaded, [this](QString f) {
     onLoaded(f);
   });
 }

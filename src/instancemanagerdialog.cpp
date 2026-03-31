@@ -103,7 +103,7 @@ QString getInstanceName(QWidget* parent, const QString& title, const QString& mo
   ly->addStretch();
   ly->addWidget(bb);
 
-  auto check = [&] {
+  auto check = [&text, &error, &oldName, &bb, &m] {
     bool okay = false;
 
     if (text->text().isEmpty()) {
@@ -124,13 +124,13 @@ QString getInstanceName(QWidget* parent, const QString& title, const QString& mo
     bb->button(QDialogButtonBox::Ok)->setEnabled(okay);
   };
 
-  QObject::connect(text, &QLineEdit::textChanged, [&] {
+  QObject::connect(text, &QLineEdit::textChanged, [&check] {
     check();
   });
-  QObject::connect(bb, &QDialogButtonBox::accepted, [&] {
+  QObject::connect(bb, &QDialogButtonBox::accepted, [&dlg] {
     dlg.accept();
   });
-  QObject::connect(bb, &QDialogButtonBox::rejected, [&] {
+  QObject::connect(bb, &QDialogButtonBox::rejected, [&dlg] {
     dlg.reject();
   });
 
@@ -167,47 +167,47 @@ InstanceManagerDialog::InstanceManagerDialog(PluginContainer& pc, QWidget* paren
   updateList();
   selectActiveInstance();
 
-  connect(ui->createNew, &QPushButton::clicked, [&] {
+  connect(ui->createNew, &QPushButton::clicked, [this] {
     createNew();
   });
 
-  connect(ui->list->selectionModel(), &QItemSelectionModel::selectionChanged, [&] {
+  connect(ui->list->selectionModel(), &QItemSelectionModel::selectionChanged, [this] {
     onSelection();
   });
-  connect(ui->list, &QListView::activated, [&] {
+  connect(ui->list, &QListView::activated, [this] {
     openSelectedInstance();
   });
 
-  connect(ui->rename, &QPushButton::clicked, [&] {
+  connect(ui->rename, &QPushButton::clicked, [this] {
     rename();
   });
-  connect(ui->exploreLocation, &QPushButton::clicked, [&] {
+  connect(ui->exploreLocation, &QPushButton::clicked, [this] {
     exploreLocation();
   });
-  connect(ui->exploreBaseDirectory, &QPushButton::clicked, [&] {
+  connect(ui->exploreBaseDirectory, &QPushButton::clicked, [this] {
     exploreBaseDirectory();
   });
-  connect(ui->exploreGame, &QPushButton::clicked, [&] {
+  connect(ui->exploreGame, &QPushButton::clicked, [this] {
     exploreGame();
   });
 
-  connect(ui->convertToGlobal, &QPushButton::clicked, [&] {
+  connect(ui->convertToGlobal, &QPushButton::clicked, [this] {
     convertToGlobal();
   });
-  connect(ui->convertToPortable, &QPushButton::clicked, [&] {
+  connect(ui->convertToPortable, &QPushButton::clicked, [this] {
     convertToPortable();
   });
-  connect(ui->openINI, &QPushButton::clicked, [&] {
+  connect(ui->openINI, &QPushButton::clicked, [this] {
     openINI();
   });
-  connect(ui->deleteInstance, &QPushButton::clicked, [&] {
+  connect(ui->deleteInstance, &QPushButton::clicked, [this] {
     deleteInstance();
   });
 
-  connect(ui->switchToInstance, &QPushButton::clicked, [&] {
+  connect(ui->switchToInstance, &QPushButton::clicked, [this] {
     openSelectedInstance();
   });
-  connect(ui->close, &QPushButton::clicked, [&] {
+  connect(ui->close, &QPushButton::clicked, [this] {
     close();
   });
 }

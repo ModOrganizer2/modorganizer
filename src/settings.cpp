@@ -370,7 +370,7 @@ std::vector<std::map<QString, QVariant>> Settings::executables() const
   ScopedReadArray sra(m_Settings, "customExecutables");
   std::vector<std::map<QString, QVariant>> v;
 
-  sra.for_each([&] {
+  sra.for_each([&sra, &v] {
     std::map<QString, QVariant> map;
 
     for (auto&& key : sra.keys()) {
@@ -1577,7 +1577,7 @@ QSet<QString> PluginSettings::readBlacklist() const
   QSet<QString> set;
 
   ScopedReadArray sra(m_Settings, "pluginBlacklist");
-  sra.for_each([&] {
+  sra.for_each([&set, &sra] {
     set.insert(sra.get<QString>("name"));
   });
 
@@ -1594,7 +1594,7 @@ std::map<QString, QString> PathSettings::recent() const
 
   ScopedReadArray sra(m_Settings, "recentDirectories");
 
-  sra.for_each([&] {
+  sra.for_each([&sra, &map] {
     const QVariant name = sra.get<QVariant>("name");
     const QVariant dir  = sra.get<QVariant>("directory");
 
@@ -1791,7 +1791,7 @@ ServerList NetworkSettings::servers() const
   {
     ScopedReadArray sra(m_Settings, "Servers");
 
-    sra.for_each([&] {
+    sra.for_each([&sra, &list] {
       ServerInfo::SpeedList lastDownloads;
 
       const auto lastDownloadsString = sra.get<QString>("lastDownloads", "");
@@ -1902,7 +1902,7 @@ ServerList NetworkSettings::serversFromOldMap() const
   ServerList list;
   const ScopedGroup sg(m_Settings, "Servers");
 
-  sg.for_each([&](auto&& serverKey) {
+  sg.for_each([&sg, &list](auto&& serverKey) {
     QVariantMap data = sg.get<QVariantMap>(serverKey);
 
     ServerInfo server(serverKey, data["premium"].toBool(), data["lastSeen"].toDate(),
@@ -2071,7 +2071,7 @@ void NexusSettings::dump() const
 
   ScopedReadArray sra(s, "handlers");
 
-  sra.for_each([&] {
+  sra.for_each([&sra] {
     const auto games      = sra.get<QVariant>("games");
     const auto executable = sra.get<QVariant>("executable");
     const auto arguments  = sra.get<QVariant>("arguments");

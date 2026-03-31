@@ -175,19 +175,19 @@ ModInfoDialog::ModInfoDialog(OrganizerCore& core, PluginContainer& plugin,
 
   {
     auto* sc = new QShortcut(QKeySequence::Delete, this);
-    connect(sc, &QShortcut::activated, [&] {
+    connect(sc, &QShortcut::activated, [this] {
       onDeleteShortcut();
     });
   }
   {
     auto* sc = new QShortcut(QKeySequence::MoveToNextPage, this);
-    connect(sc, &QShortcut::activated, [&] {
+    connect(sc, &QShortcut::activated, [this] {
       onNextMod();
     });
   }
   {
     auto* sc = new QShortcut(QKeySequence::MoveToPreviousPage, this);
-    connect(sc, &QShortcut::activated, [&] {
+    connect(sc, &QShortcut::activated, [this] {
       onPreviousMod();
     });
   }
@@ -195,19 +195,19 @@ ModInfoDialog::ModInfoDialog(OrganizerCore& core, PluginContainer& plugin,
   setMod(mod);
   createTabs();
 
-  connect(ui->tabWidget, &QTabWidget::currentChanged, [&] {
+  connect(ui->tabWidget, &QTabWidget::currentChanged, [this] {
     onTabSelectionChanged();
   });
-  connect(ui->tabWidget->tabBar(), &QTabBar::tabMoved, [&] {
+  connect(ui->tabWidget->tabBar(), &QTabBar::tabMoved, [this] {
     onTabMoved();
   });
-  connect(ui->close, &QPushButton::clicked, [&] {
+  connect(ui->close, &QPushButton::clicked, [this] {
     onCloseButton();
   });
-  connect(ui->previousMod, &QPushButton::clicked, [&] {
+  connect(ui->previousMod, &QPushButton::clicked, [this] {
     onPreviousMod();
   });
-  connect(ui->nextMod, &QPushButton::clicked, [&] {
+  connect(ui->nextMod, &QPushButton::clicked, [this] {
     onNextMod();
   });
 }
@@ -256,17 +256,17 @@ void ModInfoDialog::createTabs()
       onOriginModified(originID);
     });
 
-    connect(tabInfo.tab.get(), &ModInfoDialogTab::modOpen, [&](const QString& name) {
+    connect(tabInfo.tab.get(), &ModInfoDialogTab::modOpen, [this](const QString& name) {
       setMod(name);
       update();
     });
 
-    connect(tabInfo.tab.get(), &ModInfoDialogTab::hasDataChanged, [&] {
+    connect(tabInfo.tab.get(), &ModInfoDialogTab::hasDataChanged, [this] {
       setTabsColors();
     });
 
     connect(tabInfo.tab.get(), &ModInfoDialogTab::wantsFocus,
-            [&, id = tabInfo.tab->tabID()] {
+            [this, id = tabInfo.tab->tabID()] {
               switchToTab(id);
             });
   }

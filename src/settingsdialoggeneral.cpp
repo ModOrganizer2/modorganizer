@@ -38,11 +38,11 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   ui->doubleClickPreviews->setChecked(
       settings().interface().doubleClicksOpenPreviews());
 
-  QObject::connect(ui->categoriesBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->categoriesBtn, &QPushButton::clicked, [this] {
     onEditCategories();
   });
 
-  QObject::connect(ui->resetDialogsButton, &QPushButton::clicked, [&] {
+  QObject::connect(ui->resetDialogsButton, &QPushButton::clicked, [this] {
     onResetDialogs();
   });
 }

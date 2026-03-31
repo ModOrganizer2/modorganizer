@@ -79,7 +79,7 @@ void DiagnosticsSettingsTab::setCrashDumpTypesBox()
 {
   ui->dumpsTypeBox->clear();
 
-  auto add = [&](auto&& text, auto&& type) {
+  auto add = [this](auto&& text, auto&& type) {
     ui->dumpsTypeBox->addItem(text, static_cast<int>(type));
   };
 

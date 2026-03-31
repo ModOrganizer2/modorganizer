@@ -149,16 +149,16 @@ void ModInfoDialogTab::setFocus()
 
 NotesTab::NotesTab(ModInfoDialogTabContext cx) : ModInfoDialogTab(std::move(cx))
 {
-  connect(ui->comments, &QLineEdit::editingFinished, [&] {
+  connect(ui->comments, &QLineEdit::editingFinished, [this] {
     onComments();
   });
-  connect(ui->notes, &HTMLEditor::editingFinished, [&] {
+  connect(ui->notes, &HTMLEditor::editingFinished, [this] {
     onNotes();
   });
-  connect(ui->setColorButton, &QPushButton::clicked, [&] {
+  connect(ui->setColorButton, &QPushButton::clicked, [this] {
     onSetColor();
   });
-  connect(ui->resetColorButton, &QPushButton::clicked, [&] {
+  connect(ui->resetColorButton, &QPushButton::clicked, [this] {
     onResetColor();
   });
 }

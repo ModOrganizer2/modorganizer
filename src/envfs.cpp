@@ -173,7 +173,7 @@ public:
     MOShared::SetThisThreadName("HandleCloserThread");
 
     std::unique_lock lock(m_mutex);
-    m_cv.wait(lock, [&] {
+    m_cv.wait(lock, [this] {
       return m_ready;
     });
 

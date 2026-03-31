@@ -88,43 +88,43 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel,
   }
 
   auto* m = new QMenu;
-  m->addAction(tr("Add from file..."), [&] {
+  m->addAction(tr("Add from file..."), [this] {
     addFromFile();
   });
-  m->addAction(tr("Add empty"), [&] {
+  m->addAction(tr("Add empty"), [this] {
     addEmpty();
   });
-  m->addAction(tr("Clone selected"), [&] {
+  m->addAction(tr("Clone selected"), [this] {
     clone();
   });
   ui->add->setMenu(m);
 
   // some widgets need to do more than just save() and have their own handler
-  connect(ui->binary, &QLineEdit::textChanged, [&] {
+  connect(ui->binary, &QLineEdit::textChanged, [this] {
     save();
   });
-  connect(ui->workingDirectory, &QLineEdit::textChanged, [&] {
+  connect(ui->workingDirectory, &QLineEdit::textChanged, [this] {
     save();
   });
-  connect(ui->arguments, &QLineEdit::textChanged, [&] {
+  connect(ui->arguments, &QLineEdit::textChanged, [this] {
     save();
   });
-  connect(ui->steamAppID, &QLineEdit::textChanged, [&] {
+  connect(ui->steamAppID, &QLineEdit::textChanged, [this] {
     save();
   });
-  connect(ui->mods, &QComboBox::currentTextChanged, [&] {
+  connect(ui->mods, &QComboBox::currentTextChanged, [this] {
     save();
   });
-  connect(ui->useApplicationIcon, &QCheckBox::toggled, [&] {
+  connect(ui->useApplicationIcon, &QCheckBox::toggled, [this] {
     save();
   });
-  connect(ui->minimizeToSystemTray, &QCheckBox::toggled, [&] {
+  connect(ui->minimizeToSystemTray, &QCheckBox::toggled, [this] {
     save();
   });
-  connect(ui->hide, &QCheckBox::toggled, [&] {
+  connect(ui->hide, &QCheckBox::toggled, [this] {
     save();
   });
-  connect(ui->list->model(), &QAbstractItemModel::rowsMoved, [&] {
+  connect(ui->list->model(), &QAbstractItemModel::rowsMoved, [this] {
     saveOrder();
   });
 }

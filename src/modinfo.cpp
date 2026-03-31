@@ -303,7 +303,7 @@ bool ModInfo::checkAllForUpdate(PluginContainer* pluginContainer, QObject* recei
   QDateTime earliest = QDateTime::currentDateTimeUtc();
   QDateTime latest   = QDateTime::fromMSecsSinceEpoch(0);
   std::set<QString> games;
-  for (auto mod : s_Collection) {
+  for (const auto& mod : s_Collection) {
     if (mod->canBeUpdated()) {
       if (mod->getLastNexusUpdate() < earliest)
         earliest = mod->getLastNexusUpdate();
@@ -336,11 +336,10 @@ bool ModInfo::checkAllForUpdate(PluginContainer* pluginContainer, QObject* recei
 
   if (latest < QDateTime::currentDateTimeUtc().addMonths(-1)) {
     std::set<std::pair<QString, int>> organizedGames;
-    for (auto mod : s_Collection) {
+    for (const auto& mod : s_Collection) {
       if (mod->canBeUpdated() &&
           mod->getLastNexusUpdate() < QDateTime::currentDateTimeUtc().addMonths(-1)) {
-        organizedGames.insert(
-            std::make_pair<QString, int>(mod->gameName().toLower(), mod->nexusId()));
+        organizedGames.emplace(mod->gameName().toLower(), mod->nexusId());
       }
     }
 
@@ -392,7 +391,7 @@ std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName,
                                                         bool markUpdated)
 {
   std::set<QSharedPointer<ModInfo>> finalMods;
-  for (QVariant result : updateData) {
+  for (const QVariant& result : updateData) {
     QVariantMap update = result.toMap();
     std::copy_if(s_Collection.begin(), s_Collection.end(),
                  std::inserter(finalMods, finalMods.end()),
@@ -433,7 +432,8 @@ std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName,
   return finalMods;
 }
 
-void ModInfo::manualUpdateCheck(QObject* receiver, const std::multimap<QString, int>& IDs)
+void ModInfo::manualUpdateCheck(QObject* receiver,
+                                const std::multimap<QString, int>& IDs)
 {
   std::vector<QSharedPointer<ModInfo>> mods;
   std::set<std::pair<QString, int>> organizedGames;
@@ -452,8 +452,8 @@ void ModInfo::manualUpdateCheck(QObject* receiver, const std::multimap<QString, 
     }
   }
   std::erase_if(mods, [](ModInfo::Ptr mod) -> bool {
-                              return mod->nexusId() <= 0;
-                            });
+    return mod->nexusId() <= 0;
+  });
   for (const auto& mod : mods) {
     mod->setLastNexusUpdate(QDateTime());
   }
@@ -517,7 +517,7 @@ QStringList ModInfo::categories() const
 {
   QStringList result;
 
-  CategoryFactory& catFac = CategoryFactory::instance();
+  const CategoryFactory& catFac = CategoryFactory::instance();
   for (int id : m_Categories) {
     result.append(catFac.getCategoryName(catFac.getCategoryIndex(id)));
   }

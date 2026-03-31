@@ -657,15 +657,8 @@ void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
       }
     }
   }
-  // always connect finished - avoid missing the finished signal in certain flows
+  // always connect finished to avoid missing the finished signal in certain flows
   connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
-
-  // If the reply already has data in its buffer (signals may have been emitted
-  // before we connected), process it immediately to avoid getting stuck.
-  if (newDownload->m_Reply->bytesAvailable() > 0) {
-    // newDownload->m_HasData = true;
-    writeData(newDownload);
-  }
 
   QCoreApplication::processEvents();
 
@@ -2295,9 +2288,7 @@ void DownloadManager::downloadFinished(int index)
   if (info != nullptr) {
     QNetworkReply* reply = info->m_Reply;
     if (reply->isFinished()) {
-      if (reply->isOpen() && reply->bytesAvailable() > 0) {
-        writeData(info);
-      }
+      writeData(info);
       info->m_Output.close();
       TaskProgressManager::instance().forgetMe(info->m_TaskProgressId);
     } else {
@@ -2335,9 +2326,7 @@ void DownloadManager::downloadFinished(int index)
     if (info->m_State == STATE_CANCELING) {
       setState(info, STATE_CANCELED);
     } else if (info->m_State == STATE_PAUSING) {
-      if (reply->isOpen() && reply->bytesAvailable() > 0) {
-        writeData(info);
-      }
+      writeData(info);
       setState(info, STATE_PAUSED);
     }
 
@@ -2477,7 +2466,8 @@ void DownloadManager::checkDownloadTimeout()
 
 void DownloadManager::writeData(DownloadInfo* info)
 {
-  if (info != nullptr && info->m_Reply != nullptr && info->m_Reply->isOpen()) {
+  if (info != nullptr && info->m_Reply != nullptr && info->m_Reply->isOpen() &&
+      info->m_Reply->bytesAvailable() > 0) {
     QByteArray data = info->m_Reply->readAll();
     if (data.isEmpty()) {
       return;

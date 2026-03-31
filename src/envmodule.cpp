@@ -518,7 +518,7 @@ std::vector<Process> getRunningProcesses()
 {
   std::vector<Process> v;
 
-  forEachRunningProcess([&](auto&& entry) {
+  forEachRunningProcess([&v](auto&& entry) {
     v.push_back(Process(entry.th32ProcessID, entry.th32ParentProcessID,
                         QString::fromStdWString(entry.szExeFile)));
 
@@ -640,7 +640,7 @@ Process getProcessTreeFromJob(HANDLE h)
 
   std::vector<Process> ps;
 
-  forEachRunningProcess([&](auto&& entry) {
+  forEachRunningProcess([&ids, &ps](auto&& entry) {
     for (auto&& id : ids) {
       if (entry.th32ProcessID == id) {
         ps.push_back(Process(entry.th32ProcessID, entry.th32ParentProcessID,
@@ -771,7 +771,7 @@ DWORD getProcessParentID(DWORD pid)
 {
   DWORD ppid = 0;
 
-  forEachRunningProcess([&](auto&& entry) {
+  forEachRunningProcess([&pid, &ppid](auto&& entry) {
     if (entry.th32ProcessID == pid) {
       ppid = entry.th32ParentProcessID;
       return false;

@@ -189,13 +189,13 @@ FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent)
   m_root->setExpanded(true);
   m_sortTimer.setSingleShot(true);
 
-  connect(&m_removeTimer, &QTimer::timeout, [&] {
+  connect(&m_removeTimer, &QTimer::timeout, [this] {
     removeItems();
   });
-  connect(&m_sortTimer, &QTimer::timeout, [&] {
+  connect(&m_sortTimer, &QTimer::timeout, [this] {
     sortItems();
   });
-  connect(&m_iconPendingTimer, &QTimer::timeout, [&] {
+  connect(&m_iconPendingTimer, &QTimer::timeout, [this] {
     updatePendingIcons();
   });
 }
@@ -816,7 +816,7 @@ bool FileTreeModel::addNewFiles(FileTreeItem& parentItem,
   bool added = false;
 
   // for each directory on the filesystem
-  parentEntry.forEachFileIndex([&](auto&& fileIndex) {
+  parentEntry.forEachFileIndex([this, &seen, &range, &toAdd, &parentEntry, &parentPath, &parentItem, &added](auto&& fileIndex) {
     if (seen.contains(fileIndex)) {
       // already seen in the parent item
 
@@ -1034,7 +1034,7 @@ bool FileTreeModel::shouldShowFolder(const DirectoryEntry& dir,
   bool foundFile = false;
 
   // check all files in this directory, return early if a file should be shown
-  dir.forEachFile([&](auto&& f) {
+  dir.forEachFile([this, &foundFile](auto&& f) {
     if (shouldShowFile(f)) {
       foundFile = true;
 

@@ -448,7 +448,7 @@ bool Loot::start(QWidget* parent, bool didUpdateMasterList)
 
   // starting thread
   log::debug("starting loot thread");
-  m_thread.reset(QThread::create([&] {
+  m_thread.reset(QThread::create([this] {
     lootThread();
   }));
   m_thread->start();

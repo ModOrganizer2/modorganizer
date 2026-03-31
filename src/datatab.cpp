@@ -38,23 +38,23 @@ DataTab::DataTab(OrganizerCore& core, PluginContainer& pc, QWidget* parent,
     m->setDynamicSortFilter(false);
   }
 
-  connect(&m_filter, &FilterWidget::aboutToChange, [&] {
+  connect(&m_filter, &FilterWidget::aboutToChange, [this] {
     ensureFullyLoaded();
   });
 
-  connect(ui.refresh, &QPushButton::clicked, [&] {
+  connect(ui.refresh, &QPushButton::clicked, [this] {
     onRefresh();
   });
 
-  connect(ui.conflicts, &QCheckBox::toggled, [&] {
+  connect(ui.conflicts, &QCheckBox::toggled, [this] {
     onConflicts();
   });
 
-  connect(ui.archives, &QCheckBox::toggled, [&] {
+  connect(ui.archives, &QCheckBox::toggled, [this] {
     onArchives();
   });
 
-  connect(ui.hiddenFiles, &QCheckBox::toggled, [&] {
+  connect(ui.hiddenFiles, &QCheckBox::toggled, [this] {
     onHiddenFiles();
   });
 

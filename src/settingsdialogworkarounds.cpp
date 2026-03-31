@@ -37,19 +37,19 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
   m_SkipFileSuffixes    = settings().skipFileSuffixes();
   m_SkipDirectories     = settings().skipDirectories();
 
-  QObject::connect(ui->bsaDateBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->bsaDateBtn, &QPushButton::clicked, [this] {
     on_bsaDateBtn_clicked();
   });
-  QObject::connect(ui->execBlacklistBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->execBlacklistBtn, &QPushButton::clicked, [this] {
     on_execBlacklistBtn_clicked();
   });
-  QObject::connect(ui->skipFileSuffixBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->skipFileSuffixBtn, &QPushButton::clicked, [this] {
     on_skipFileSuffixBtn_clicked();
   });
-  QObject::connect(ui->skipDirectoriesBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->skipDirectoriesBtn, &QPushButton::clicked, [this] {
     on_skipDirectoriesBtn_clicked();
   });
-  QObject::connect(ui->resetGeometryBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->resetGeometryBtn, &QPushButton::clicked, [this] {
     on_resetGeometryBtn_clicked();
   });
 }

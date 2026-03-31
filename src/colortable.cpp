@@ -187,7 +187,7 @@ ColorTable::ColorTable(QWidget* parent) : QTableWidget(parent), m_settings(nullp
   setItemDelegateForColumn(2, new FakeModConflictIconDelegate(this));
   setItemDelegateForColumn(3, new FakeModFlagIconDelegate(this));
 
-  connect(this, &QTableWidget::cellActivated, [&] {
+  connect(this, &QTableWidget::cellActivated, [this] {
     onColorActivated();
   });
 }
@@ -264,7 +264,7 @@ void ColorTable::resetColors()
 {
   bool changed = false;
 
-  forEachColorItem(this, [&](auto* item) {
+  forEachColorItem(this, [&changed](auto* item) {
     if (item->reset()) {
       changed = true;
     }

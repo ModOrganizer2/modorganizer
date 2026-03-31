@@ -26,44 +26,44 @@ PathsSettingsTab::PathsSettingsTab(Settings& s, SettingsDialog& d)
     dir.first->setText(storePath);
   }
 
-  QObject::connect(ui->browseBaseDirBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->browseBaseDirBtn, &QPushButton::clicked, [this] {
     on_browseBaseDirBtn_clicked();
   });
-  QObject::connect(ui->browseCacheDirBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->browseCacheDirBtn, &QPushButton::clicked, [this] {
     on_browseCacheDirBtn_clicked();
   });
-  QObject::connect(ui->browseDownloadDirBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->browseDownloadDirBtn, &QPushButton::clicked, [this] {
     on_browseDownloadDirBtn_clicked();
   });
-  QObject::connect(ui->browseGameDirBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->browseGameDirBtn, &QPushButton::clicked, [this] {
     on_browseGameDirBtn_clicked();
   });
-  QObject::connect(ui->browseModDirBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->browseModDirBtn, &QPushButton::clicked, [this] {
     on_browseModDirBtn_clicked();
   });
-  QObject::connect(ui->browseOverwriteDirBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->browseOverwriteDirBtn, &QPushButton::clicked, [this] {
     on_browseOverwriteDirBtn_clicked();
   });
-  QObject::connect(ui->browseProfilesDirBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->browseProfilesDirBtn, &QPushButton::clicked, [this] {
     on_browseProfilesDirBtn_clicked();
   });
 
-  QObject::connect(ui->baseDirEdit, &QLineEdit::editingFinished, [&] {
+  QObject::connect(ui->baseDirEdit, &QLineEdit::editingFinished, [this] {
     on_baseDirEdit_editingFinished();
   });
-  QObject::connect(ui->cacheDirEdit, &QLineEdit::editingFinished, [&] {
+  QObject::connect(ui->cacheDirEdit, &QLineEdit::editingFinished, [this] {
     on_cacheDirEdit_editingFinished();
   });
-  QObject::connect(ui->downloadDirEdit, &QLineEdit::editingFinished, [&] {
+  QObject::connect(ui->downloadDirEdit, &QLineEdit::editingFinished, [this] {
     on_downloadDirEdit_editingFinished();
   });
-  QObject::connect(ui->modDirEdit, &QLineEdit::editingFinished, [&] {
+  QObject::connect(ui->modDirEdit, &QLineEdit::editingFinished, [this] {
     on_modDirEdit_editingFinished();
   });
-  QObject::connect(ui->overwriteDirEdit, &QLineEdit::editingFinished, [&] {
+  QObject::connect(ui->overwriteDirEdit, &QLineEdit::editingFinished, [this] {
     on_overwriteDirEdit_editingFinished();
   });
-  QObject::connect(ui->profilesDirEdit, &QLineEdit::editingFinished, [&] {
+  QObject::connect(ui->profilesDirEdit, &QLineEdit::editingFinished, [this] {
     on_profilesDirEdit_editingFinished();
   });
 }

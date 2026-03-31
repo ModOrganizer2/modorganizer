@@ -186,19 +186,19 @@ LogList::LogList(QWidget* parent)
   setAutoScroll(true);
   scrollToBottom();
 
-  connect(this, &QWidget::customContextMenuRequested, [&](auto&& pos) {
+  connect(this, &QWidget::customContextMenuRequested, [this](auto&& pos) {
     onContextMenu(pos);
   });
 
-  connect(model(), &LogModel::rowsInserted, this, [&] {
+  connect(model(), &LogModel::rowsInserted, this, [this] {
     onNewEntry();
   });
-  connect(model(), &LogModel::dataChanged, this, [&] {
+  connect(model(), &LogModel::dataChanged, this, [this] {
     onNewEntry();
   });
 
   m_timer.setSingleShot(true);
-  connect(&m_timer, &QTimer::timeout, [&] {
+  connect(&m_timer, &QTimer::timeout, [this] {
     scrollToBottom();
   });
 
@@ -247,17 +247,17 @@ QMenu* LogList::createMenu(QWidget* parent)
 {
   auto* menu = new QMenu(parent);
 
-  menu->addAction(tr("Copy"), [&] {
+  menu->addAction(tr("Copy"), [this] {
     m_copyFilter.copySelection();
   });
-  menu->addAction(tr("&Copy all"), [&] {
+  menu->addAction(tr("&Copy all"), [this] {
     copyToClipboard();
   });
   menu->addSeparator();
-  menu->addAction(tr("C&lear all"), [&] {
+  menu->addAction(tr("C&lear all"), [this] {
     clear();
   });
-  menu->addAction(tr("&Open logs folder"), [&] {
+  menu->addAction(tr("&Open logs folder"), [this] {
     openLogsFolder();
   });
 

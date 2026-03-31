@@ -192,27 +192,28 @@ FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore& core,
                        CategoryFactory& factory)
     : ui(ui), m_core(core), m_factory(factory)
 {
-  auto* eventFilter = new CriteriaItemFilter(ui->filters, [&](auto* item, int dir) {
+  auto* eventFilter = new CriteriaItemFilter(ui->filters, [this](auto* item, int dir) {
     return cycleItem(item, dir);
   });
 
   ui->filters->installEventFilter(eventFilter);
   ui->filters->viewport()->installEventFilter(eventFilter);
 
-  connect(ui->filtersClear, &QPushButton::clicked, [&] {
+  connect(ui->filtersClear, &QPushButton::clicked, [this] {
     clearSelection();
   });
-  connect(ui->filtersEdit, &QPushButton::clicked, [&] {
+  connect(ui->filtersEdit, &QPushButton::clicked, [this] {
     editCategories();
   });
-  connect(ui->filtersAnd, &QCheckBox::toggled, [&] {
+  connect(ui->filtersAnd, &QCheckBox::toggled, [this] {
     onOptionsChanged();
   });
-  connect(ui->filtersOr, &QCheckBox::toggled, [&] {
+  connect(ui->filtersOr, &QCheckBox::toggled, [this] {
     onOptionsChanged();
   });
 
-  connect(ui->filtersSeparators, qOverload<int>(&QComboBox::currentIndexChanged), [&] {
+  connect(ui->filtersSeparators, qOverload<int>(&QComboBox::currentIndexChanged),
+          [this] {
     onOptionsChanged();
   });
 

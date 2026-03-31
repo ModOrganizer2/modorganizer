@@ -152,7 +152,7 @@ CreateInstanceDialog::ProfileSettings Page::profileSettings() const
 IntroPage::IntroPage(CreateInstanceDialog& dlg)
     : Page(dlg), m_skip(GlobalSettings::hideCreateInstanceIntro())
 {
-  QObject::connect(ui->hideIntro, &QCheckBox::toggled, [&] {
+  QObject::connect(ui->hideIntro, &QCheckBox::toggled, [this] {
     GlobalSettings::setHideCreateInstanceIntro(ui->hideIntro->isChecked());
   });
 }
@@ -181,11 +181,11 @@ TypePage::TypePage(CreateInstanceDialog& dlg)
     ui->portableExistsLabel->setVisible(false);
   }
 
-  QObject::connect(ui->createGlobal, &QAbstractButton::clicked, [&] {
+  QObject::connect(ui->createGlobal, &QAbstractButton::clicked, [this] {
     global();
   });
 
-  QObject::connect(ui->createPortable, &QAbstractButton::clicked, [&] {
+  QObject::connect(ui->createPortable, &QAbstractButton::clicked, [this] {
     portable();
   });
 }
@@ -241,10 +241,10 @@ GamePage::GamePage(CreateInstanceDialog& dlg) : Page(dlg), m_selection(nullptr)
 
   m_filter.setEdit(ui->gamesFilter);
 
-  QObject::connect(&m_filter, &FilterWidget::changed, [&] {
+  QObject::connect(&m_filter, &FilterWidget::changed, [this] {
     fillList();
   });
-  QObject::connect(ui->showAllGames, &QCheckBox::clicked, [&] {
+  QObject::connect(ui->showAllGames, &QCheckBox::clicked, [this] {
     fillList();
   });
 }
@@ -550,7 +550,7 @@ QCommandLinkButton* GamePage::createCustomButton()
   b->setText(QObject::tr("Browse..."));
   b->setDescription(QObject::tr("The folder must contain a valid game installation"));
 
-  QObject::connect(b, &QAbstractButton::clicked, [&] {
+  QObject::connect(b, &QAbstractButton::clicked, [this] {
     selectCustom();
   });
 
@@ -839,11 +839,11 @@ NamePage::NamePage(CreateInstanceDialog& dlg)
     : Page(dlg), m_label(ui->instanceNameLabel), m_exists(ui->instanceNameExists), m_invalid(ui->instanceNameInvalid),
       m_modified(false), m_okay(false)
 {
-  QObject::connect(ui->instanceName, &QLineEdit::textEdited, [&] {
+  QObject::connect(ui->instanceName, &QLineEdit::textEdited, [this] {
     onChanged();
   });
 
-  QObject::connect(ui->instanceName, &QLineEdit::returnPressed, [&] {
+  QObject::connect(ui->instanceName, &QLineEdit::returnPressed, [this] {
     next();
   });
 }
@@ -964,10 +964,10 @@ PathsPage::PathsPage(CreateInstanceDialog& dlg)
       m_advancedInvalid(ui->advancedDirInvalid), m_okay(false)
 {
   auto setEdit = [&](QLineEdit* e) {
-    QObject::connect(e, &QLineEdit::textEdited, [&] {
+    QObject::connect(e, &QLineEdit::textEdited, [this] {
       onChanged();
     });
-    QObject::connect(e, &QLineEdit::returnPressed, [&] {
+    QObject::connect(e, &QLineEdit::returnPressed, [this] {
       next();
     });
   };
@@ -992,7 +992,7 @@ PathsPage::PathsPage(CreateInstanceDialog& dlg)
   setBrowse(ui->browseProfiles, ui->profiles);
   setBrowse(ui->browseOverwrite, ui->overwrite);
 
-  QObject::connect(ui->advancedPathOptions, &QCheckBox::clicked, [&] {
+  QObject::connect(ui->advancedPathOptions, &QCheckBox::clicked, [this] {
     onAdvanced();
   });
 

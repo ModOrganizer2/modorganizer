@@ -316,16 +316,16 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
   m_DataTab.reset(new DataTab(m_OrganizerCore, m_PluginContainer, this, ui));
   m_DataTab->restoreState(settings);
 
-  connect(m_DataTab.get(), &DataTab::executablesChanged, [&] {
+  connect(m_DataTab.get(), &DataTab::executablesChanged, [this] {
     refreshExecutablesList();
   });
 
-  connect(m_DataTab.get(), &DataTab::originModified, [&](int id) {
+  connect(m_DataTab.get(), &DataTab::originModified, [this](int id) {
     originModified(id);
   });
 
   connect(m_DataTab.get(), &DataTab::displayModInformation,
-          [&](auto&& m, auto&& i, auto&& tab) {
+          [this](auto&& m, auto&& i, auto&& tab) {
             displayModInformation(m, i, tab);
           });
 
@@ -421,13 +421,13 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
           SIGNAL(tabChanged(int)));
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this,
           SLOT(toolBar_customContextMenuRequested(QPoint)));
-  connect(ui->menuToolbars, &QMenu::aboutToShow, [&] {
+  connect(ui->menuToolbars, &QMenu::aboutToShow, [this] {
     updateToolbarMenu();
   });
-  connect(ui->menuView, &QMenu::aboutToShow, [&] {
+  connect(ui->menuView, &QMenu::aboutToShow, [this] {
     updateViewMenu();
   });
-  connect(ui->actionTool->menu(), &QMenu::aboutToShow, [&] {
+  connect(ui->actionTool->menu(), &QMenu::aboutToShow, [this] {
     updateToolMenu();
   });
   connect(&m_PluginContainer, &PluginContainer::pluginEnabled, this,
@@ -552,7 +552,7 @@ void MainWindow::setupModList()
   connect(&ui->modList->actions(), &ModListViewActions::modInfoDisplayed, this,
           &MainWindow::modInfoDisplayed);
 
-  connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [&]() {
+  connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [this]() {
     m_ArchiveListWriter.write();
   });
 }
@@ -1534,8 +1534,8 @@ void MainWindow::updateToolMenu()
 
   // Remove disabled plugins:
   std::erase_if(toolPlugins, [this](auto* tool) {
-                                     return !m_PluginContainer.isEnabled(tool);
-                                   });
+    return !m_PluginContainer.isEnabled(tool);
+  });
 
   // Group the plugins into submenus
   QMap<QString, QList<QPair<QString, IPluginTool*>>> submenuMap;
@@ -1634,9 +1634,9 @@ void MainWindow::updateModPageMenu()
             });
 
   // Remove disabled plugins
-  std::erase_if(modPagePlugins, [&](auto* tool) {
-                                        return !m_PluginContainer.isEnabled(tool);
-                                      });
+  std::erase_if(modPagePlugins, [this](auto* tool) {
+    return !m_PluginContainer.isEnabled(tool);
+  });
 
   for (auto* modPagePlugin : modPagePlugins) {
     registerModPage(modPagePlugin);
@@ -1668,8 +1668,7 @@ void MainWindow::updateModPageMenu()
   }
 
   // No mod page plugin and the menu was visible
-  bool keepOriginalAction =
-      modPagePlugins.empty() && registeredSources.length() <= 1;
+  bool keepOriginalAction = modPagePlugins.empty() && registeredSources.length() <= 1;
   if (keepOriginalAction) {
     ui->toolBar->insertAction(ui->actionAdd_Profile, ui->actionNexus);
   } else {
@@ -2137,7 +2136,7 @@ void MainWindow::readSettings()
   }
 
   s.geometry().restoreState(this);
-  //s.geometry().restoreDocks(this);
+  // s.geometry().restoreDocks(this);
   s.geometry().restoreToolbars(this);
   s.geometry().restoreState(ui->splitter);
   s.geometry().restoreState(ui->categoriesSplitter);
@@ -2222,7 +2221,7 @@ void MainWindow::storeSettings()
 
   s.geometry().saveState(this);
   s.geometry().saveGeometry(this);
-  //s.geometry().saveDocks(this);
+  // s.geometry().saveDocks(this);
 
   s.geometry().saveVisibility(ui->menuBar);
   s.geometry().saveVisibility(ui->statusBar);
@@ -3661,7 +3660,7 @@ void MainWindow::extractBSATriggered(QTreeWidgetItem* item)
 void MainWindow::on_bsaList_customContextMenuRequested(const QPoint& pos)
 {
   QMenu menu;
-  menu.addAction(tr("Extract..."), [=, item = ui->bsaList->itemAt(pos)]() {
+  menu.addAction(tr("Extract..."), [this, item = ui->bsaList->itemAt(pos)]() {
     extractBSATriggered(item);
   });
 

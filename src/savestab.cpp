@@ -18,19 +18,19 @@ SavesTab::SavesTab(QWidget* window, OrganizerCore& core, Ui::MainWindow* mwui)
   ui.list->installEventFilter(this);
   ui.list->setMouseTracking(true);
 
-  connect(&m_SavesWatcher, &QFileSystemWatcher::directoryChanged, [&] {
+  connect(&m_SavesWatcher, &QFileSystemWatcher::directoryChanged, [this] {
     m_SavesWatcherTimer.start();
   });
 
-  connect(&m_SavesWatcherTimer, &QTimer::timeout, [&] {
+  connect(&m_SavesWatcherTimer, &QTimer::timeout, [this] {
     refreshSavesIfOpen();
   });
 
-  connect(ui.list, &QWidget::customContextMenuRequested, [&](auto pos) {
+  connect(ui.list, &QWidget::customContextMenuRequested, [this](auto pos) {
     onContextMenu(pos);
   });
 
-  connect(ui.list, &QTreeWidget::itemEntered, [&](auto* item) {
+  connect(ui.list, &QTreeWidget::itemEntered, [this](auto* item) {
     saveSelectionChanged(item);
   });
 }
@@ -266,11 +266,11 @@ void SavesTab::onContextMenu(const QPoint& pos)
 
   QString deleteMenuLabel =
       tr("Delete %n save(s)", "", selection->selectedRows().count());
-  menu.addAction(deleteMenuLabel, [&] {
+  menu.addAction(deleteMenuLabel, [this] {
     deleteSavegame();
   });
 
-  menu.addAction(tr("Open in Explorer..."), [&] {
+  menu.addAction(tr("Open in Explorer..."), [this] {
     openInExplorer();
   });
 

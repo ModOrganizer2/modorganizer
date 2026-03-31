@@ -125,19 +125,19 @@ FileTree::FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree)
 
   MOBase::setCustomizableColumns(m_tree);
 
-  connect(m_tree, &QTreeView::customContextMenuRequested, [&](auto pos) {
+  connect(m_tree, &QTreeView::customContextMenuRequested, [this](auto pos) {
     onContextMenu(pos);
   });
 
-  connect(m_tree, &QTreeView::expanded, [&](auto&& index) {
+  connect(m_tree, &QTreeView::expanded, [this](auto&& index) {
     onExpandedChanged(index, true);
   });
 
-  connect(m_tree, &QTreeView::collapsed, [&](auto&& index) {
+  connect(m_tree, &QTreeView::collapsed, [this](auto&& index) {
     onExpandedChanged(index, false);
   });
 
-  connect(m_tree, &QTreeView::activated, [&](auto&& index) {
+  connect(m_tree, &QTreeView::activated, [this](auto&& index) {
     onItemActivated(index);
   });
 }
@@ -649,7 +649,7 @@ void FileTree::addFileMenus(QMenu& menu, const FileEntry& file, int originID)
   const QFileInfo target(QString::fromStdWString(file.getFullPath()));
 
   MenuItem(tr("&Add as Executable"))
-      .callback([&] {
+      .callback([this] {
         addAsExecutable();
       })
       .hint(tr("Add this file to the executables list"))
@@ -658,7 +658,7 @@ void FileTree::addFileMenus(QMenu& menu, const FileEntry& file, int originID)
       .addTo(menu);
 
   MenuItem(tr("Reveal in E&xplorer"))
-      .callback([&] {
+      .callback([this] {
         exploreOrigin();
       })
       .hint(tr("Opens the file in Explorer"))
@@ -667,7 +667,7 @@ void FileTree::addFileMenus(QMenu& menu, const FileEntry& file, int originID)
       .addTo(menu);
 
   MenuItem(tr("Open &Mod Info"))
-      .callback([&] {
+      .callback([this] {
         openModInfo();
       })
       .hint(tr("Opens the Mod Info Window"))
@@ -677,7 +677,7 @@ void FileTree::addFileMenus(QMenu& menu, const FileEntry& file, int originID)
 
   if (isHidden(file)) {
     MenuItem(tr("&Un-Hide"))
-        .callback([&] {
+        .callback([this] {
           unhide();
         })
         .hint(tr("Un-hides the file"))
@@ -686,7 +686,7 @@ void FileTree::addFileMenus(QMenu& menu, const FileEntry& file, int originID)
         .addTo(menu);
   } else {
     MenuItem(tr("&Hide"))
-        .callback([&] {
+        .callback([this] {
           hide();
         })
         .hint(tr("Hides the file"))
@@ -706,7 +706,7 @@ void FileTree::addOpenMenus(QMenu& menu, const MOShared::FileEntry& file)
 
   if (getFileExecutionType(target) == FileExecutionTypes::Executable) {
     openMenu.caption(tr("&Execute"))
-        .callback([&] {
+        .callback([this] {
           open();
         })
         .hint(tr("Launches this program"))
@@ -714,7 +714,7 @@ void FileTree::addOpenMenus(QMenu& menu, const MOShared::FileEntry& file)
         .enabled(!file.isFromArchive());
 
     openHookedMenu.caption(tr("Execute with &VFS"))
-        .callback([&] {
+        .callback([this] {
           openHooked();
         })
         .hint(tr("Launches this program hooked to the VFS"))
@@ -722,7 +722,7 @@ void FileTree::addOpenMenus(QMenu& menu, const MOShared::FileEntry& file)
         .enabled(!file.isFromArchive());
   } else {
     openMenu.caption(tr("&Open"))
-        .callback([&] {
+        .callback([this] {
           open();
         })
         .hint(tr("Opens this file with its default handler"))
@@ -730,7 +730,7 @@ void FileTree::addOpenMenus(QMenu& menu, const MOShared::FileEntry& file)
         .enabled(!file.isFromArchive());
 
     openHookedMenu.caption(tr("Open with &VFS"))
-        .callback([&] {
+        .callback([this] {
           openHooked();
         })
         .hint(tr("Opens this file with its default handler hooked to the VFS"))
@@ -740,7 +740,7 @@ void FileTree::addOpenMenus(QMenu& menu, const MOShared::FileEntry& file)
 
   MenuItem previewMenu(tr("&Preview"));
   previewMenu
-      .callback([&] {
+      .callback([this] {
         preview();
       })
       .hint(tr("Previews this file within Mod Organizer"))
@@ -780,27 +780,27 @@ void FileTree::addCommonMenus(QMenu& menu)
   menu.addSeparator();
 
   MenuItem(tr("&Save Tree to Text File..."))
-      .callback([&] {
+      .callback([this] {
         dumpToFile();
       })
       .hint(tr("Writes the list of files to a text file"))
       .addTo(menu);
 
   MenuItem(tr("&Refresh"))
-      .callback([&] {
+      .callback([this] {
         refresh();
       })
       .hint(tr("Refreshes the list"))
       .addTo(menu);
 
   MenuItem(tr("Ex&pand All"))
-      .callback([&] {
+      .callback([this] {
         expandAll();
       })
       .addTo(menu);
 
   MenuItem(tr("&Collapse All"))
-      .callback([&] {
+      .callback([this] {
         collapseAll();
       })
       .addTo(menu);

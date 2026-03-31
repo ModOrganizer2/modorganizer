@@ -32,39 +32,40 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   m_actions.hide      = new QAction(tr("&Hide"), ui->filetree);
   m_actions.unhide    = new QAction(tr("&Unhide"), ui->filetree);
 
-  connect(m_actions.newFolder, &QAction::triggered, [&] {
+  connect(m_actions.newFolder, &QAction::triggered, [this] {
     onCreateDirectory();
   });
-  connect(m_actions.open, &QAction::triggered, [&] {
+  connect(m_actions.open, &QAction::triggered, [this] {
     onOpen();
   });
-  connect(m_actions.runHooked, &QAction::triggered, [&] {
+  connect(m_actions.runHooked, &QAction::triggered, [this] {
     onRunHooked();
   });
-  connect(m_actions.preview, &QAction::triggered, [&] {
+  connect(m_actions.preview, &QAction::triggered, [this] {
     onPreview();
   });
-  connect(m_actions.explore, &QAction::triggered, [&] {
+  connect(m_actions.explore, &QAction::triggered, [this] {
     onExplore();
   });
-  connect(m_actions.rename, &QAction::triggered, [&] {
+  connect(m_actions.rename, &QAction::triggered, [this] {
     onRename();
   });
-  connect(m_actions.del, &QAction::triggered, [&] {
+  connect(m_actions.del, &QAction::triggered, [this] {
     onDelete();
   });
-  connect(m_actions.hide, &QAction::triggered, [&] {
+  connect(m_actions.hide, &QAction::triggered, [this] {
     onHide();
   });
-  connect(m_actions.unhide, &QAction::triggered, [&] {
+  connect(m_actions.unhide, &QAction::triggered, [this] {
     onUnhide();
   });
 
-  connect(ui->openInExplorer, &QToolButton::clicked, [&] {
+  connect(ui->openInExplorer, &QToolButton::clicked, [this] {
     onOpenInExplorer();
   });
 
-  connect(ui->filetree, &QTreeView::customContextMenuRequested, [&](const QPoint& pos) {
+  connect(ui->filetree, &QTreeView::customContextMenuRequested,
+          [this](const QPoint& pos) {
     onContextMenu(pos);
   });
 
@@ -72,7 +73,7 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   ui->filetree->setEditTriggers(ui->filetree->editTriggers() &
                                 (~QAbstractItemView::DoubleClicked));
 
-  connect(ui->filetree, &QTreeView::activated, [&](auto&&) {
+  connect(ui->filetree, &QTreeView::activated, [this](auto&&) {
     onActivated();
   });
 }
@@ -434,7 +435,7 @@ void FileTreeTab::onContextMenu(const QPoint& pos)
     enableDelete    = true;
 
     // only enable open action if a file is selected
-    bool hasFiles = false;
+    //bool hasFiles = false;
 
     const QString fileName = m_fs->fileName(selection[0]);
 

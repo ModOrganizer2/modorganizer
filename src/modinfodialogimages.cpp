@@ -52,24 +52,24 @@ ImagesTab::ImagesTab(ModInfoDialogTabContext cx)
   ui->imagesThumbnails->setTab(this);
 
   ui->imagesScrollerVBar->setTab(this);
-  connect(ui->imagesScrollerVBar, &QScrollBar::valueChanged, [&] {
+  connect(ui->imagesScrollerVBar, &QScrollBar::valueChanged, [this] {
     onScrolled();
   });
 
   ui->imagesShowDDS->setEnabled(m_ddsAvailable);
 
   m_filter.setEdit(ui->imagesFilter);
-  connect(&m_filter, &FilterWidget::changed, [&] {
+  connect(&m_filter, &FilterWidget::changed, [this] {
     onFilterChanged();
   });
 
-  connect(ui->imagesExplore, &QAbstractButton::clicked, [&] {
+  connect(ui->imagesExplore, &QAbstractButton::clicked, [this] {
     onExplore();
   });
-  connect(ui->imagesShowDDS, &QCheckBox::toggled, [&] {
+  connect(ui->imagesShowDDS, &QCheckBox::toggled, [this] {
     onShowDDS();
   });
-  connect(ui->previewPluginButton, &QAbstractButton::clicked, [&] {
+  connect(ui->previewPluginButton, &QAbstractButton::clicked, [this] {
     onPreviewButton();
   });
 
@@ -196,7 +196,7 @@ void ImagesTab::switchToFiltered()
   for (File& f : m_files.allFiles()) {
     if (hasTextFilter) {
       // check filter widget
-      const auto m = m_filter.matches([&](const QRegularExpression& regex) {
+      const auto m = m_filter.matches([&f](const QRegularExpression& regex) {
         return regex.match(f.filename()).hasMatch();
       });
 

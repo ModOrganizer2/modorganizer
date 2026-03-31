@@ -18,11 +18,11 @@ ThemeSettingsTab::ThemeSettingsTab(Settings& s, SettingsDialog& d) : SettingsTab
   // colors
   ui->colorTable->load(s);
 
-  QObject::connect(ui->resetColorsBtn, &QPushButton::clicked, [&] {
+  QObject::connect(ui->resetColorsBtn, &QPushButton::clicked, [this] {
     ui->colorTable->resetColors();
   });
 
-  QObject::connect(ui->exploreStyles, &QPushButton::clicked, [&] {
+  QObject::connect(ui->exploreStyles, &QPushButton::clicked, [this] {
     onExploreStyles();
   });
 }

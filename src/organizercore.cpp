@@ -261,10 +261,10 @@ void OrganizerCore::connectPlugins(PluginContainer* container)
     emit managedGameChanged(m_GamePlugin);
   }
 
-  connect(m_PluginContainer, &PluginContainer::pluginEnabled, [&](IPlugin* plugin) {
+  connect(m_PluginContainer, &PluginContainer::pluginEnabled, [this](IPlugin* plugin) {
     m_PluginEnabled(plugin);
   });
-  connect(m_PluginContainer, &PluginContainer::pluginDisabled, [&](IPlugin* plugin) {
+  connect(m_PluginContainer, &PluginContainer::pluginDisabled, [this](IPlugin* plugin) {
     m_PluginDisabled(plugin);
   });
 
@@ -316,7 +316,7 @@ bool OrganizerCore::nexusApi(bool retry)
 void OrganizerCore::startMOUpdate()
 {
   if (nexusApi()) {
-    m_PostLoginTasks.append([&]() {
+    m_PostLoginTasks.append([this]() {
       m_Updater.startUpdate();
     });
   } else {
@@ -1084,7 +1084,7 @@ bool OrganizerCore::previewFileWithAlternatives(QWidget* parent, QString fileNam
   // set up preview dialog
   PreviewDialog preview(fileName, parent);
 
-  auto addFunc = [&](int originId, const std::wstring& archiveName = L"") {
+  auto addFunc = [this, &fileName, &preview](int originId, const std::wstring& archiveName = L"") {
     FilesOrigin& origin = directoryStructure()->getOriginByID(originId);
     QString filePath =
         QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;

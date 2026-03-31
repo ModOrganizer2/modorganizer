@@ -886,7 +886,7 @@ bool isKeyEmpty(HKEY key)
     return false;
   }
 
-  auto r = forEachSubKey(key, [&](const wchar_t* name) {
+  auto r = forEachSubKey(key, [&key](const wchar_t* name) {
     // a subkey exists, recursively check if it's empty
     auto subkey = openRegistryKey(key, name);
 
@@ -1223,7 +1223,7 @@ bool createMiniDump(const wchar_t* dir, HANDLE process, CoreDumpTypes type)
 
   const auto ret =
       MiniDumpWriteDump(process, pid, file.get(), flags, nullptr, nullptr, nullptr);
-  
+
   if (!ret) {
     const auto e = GetLastError();
 

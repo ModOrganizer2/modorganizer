@@ -53,10 +53,10 @@ ValidationProgressDialog::ValidationProgressDialog(Settings* s, NexusKeyValidato
   ui.reset(new Ui::ValidationProgressDialog);
   ui->setupUi(this);
 
-  connect(ui->hide, &QPushButton::clicked, [&] {
+  connect(ui->hide, &QPushButton::clicked, [this] {
     onHide();
   });
-  connect(ui->cancel, &QPushButton::clicked, [&] {
+  connect(ui->cancel, &QPushButton::clicked, [this] {
     onCancel();
   });
 }
@@ -79,7 +79,7 @@ void ValidationProgressDialog::start()
 {
   if (!m_updateTimer) {
     m_updateTimer = new QTimer(this);
-    connect(m_updateTimer, &QTimer::timeout, [&] {
+    connect(m_updateTimer, &QTimer::timeout, [this] {
       onTimer();
     });
     m_updateTimer->setInterval(100ms);
@@ -364,7 +364,7 @@ ValidationAttempt::ValidationAttempt(std::chrono::seconds timeout)
   m_timeout.setSingleShot(true);
   m_timeout.setInterval(timeout);
 
-  QObject::connect(&m_timeout, &QTimer::timeout, [&] {
+  QObject::connect(&m_timeout, &QTimer::timeout, [this] {
     onTimeout();
   });
 }
@@ -402,11 +402,11 @@ bool ValidationAttempt::sendRequest(NXMAccessManager& m, const QString& key)
     return false;
   }
 
-  QObject::connect(m_reply, &QNetworkReply::finished, [&] {
+  QObject::connect(m_reply, &QNetworkReply::finished, [this] {
     onFinished();
   });
 
-  QObject::connect(m_reply, &QNetworkReply::sslErrors, [&](auto&& errors) {
+  QObject::connect(m_reply, &QNetworkReply::sslErrors, [this](auto&& errors) {
     onSslErrors(errors);
   });
 
@@ -699,10 +699,10 @@ bool NexusKeyValidator::nextTry()
 {
   for (auto&& a : m_attempts) {
     if (!a->done()) {
-      a->success = [&](auto&& user) {
+      a->success = [this, &a](auto&& user) {
         onAttemptSuccess(*a, user);
       };
-      a->failure = [&] {
+      a->failure = [this, &a] {
         onAttemptFailure(*a);
       };
 
@@ -766,11 +766,11 @@ NXMAccessManager::NXMAccessManager(QObject* parent, Settings* s,
     : QNetworkAccessManager(parent), m_Settings(s), m_MOVersion(moVersion),
       m_validator(s, *this), m_validationState(NotChecked)
 {
-  m_validator.finished = [&](auto&& r, auto&& m, auto&& u) {
+  m_validator.finished = [this](auto&& r, auto&& m, auto&& u) {
     onValidatorFinished(r, m, u);
   };
 
-  m_validator.attemptFinished = [&](auto&& a) {
+  m_validator.attemptFinished = [this](auto&& a) {
     onValidatorAttemptFinished(a);
   };
 

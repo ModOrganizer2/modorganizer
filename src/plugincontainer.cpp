@@ -540,7 +540,7 @@ IPlugin* PluginContainer::registerPlugin(QObject* plugin, const QString& filepat
     if (diagnose != nullptr) {
       bf::at_key<IPluginDiagnose>(m_Plugins).push_back(diagnose);
       bf::at_key<IPluginDiagnose>(m_AccessPlugins)[diagnose] = pluginObj;
-      diagnose->onInvalidated([&]() {
+      diagnose->onInvalidated([this]() {
         emit diagnosisUpdate();
       });
     }

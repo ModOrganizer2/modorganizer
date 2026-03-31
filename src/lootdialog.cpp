@@ -62,28 +62,28 @@ LootDialog::LootDialog(QWidget* parent, OrganizerCore& core, Loot& loot)
 
   QObject::connect(
       &m_loot, &Loot::output, this,
-      [&](auto&& s) {
+      [this](auto&& s) {
         addOutput(s);
       },
       Qt::QueuedConnection);
 
   QObject::connect(
       &m_loot, &Loot::progress, this,
-      [&](auto&& p) {
+      [this](auto&& p) {
         setProgress(p);
       },
       Qt::QueuedConnection);
 
   QObject::connect(
       &m_loot, &Loot::log, this,
-      [&](auto&& lv, auto&& s) {
+      [this](auto&& lv, auto&& s) {
         log(lv, s);
       },
       Qt::QueuedConnection);
 
   QObject::connect(
       &m_loot, &Loot::finished, this,
-      [&] {
+      [this] {
         onFinished();
       },
       Qt::QueuedConnection);
@@ -210,7 +210,7 @@ void LootDialog::createUI()
 
   m_expander.set(ui->details, ui->detailsPanel);
   ui->openJsonReport->setEnabled(false);
-  connect(ui->openJsonReport, &QPushButton::clicked, [&] {
+  connect(ui->openJsonReport, &QPushButton::clicked, [this] {
     openReport();
   });
 

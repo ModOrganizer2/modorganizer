@@ -22,40 +22,41 @@ NexusTab::NexusTab(ModInfoDialogTabContext cx)
   ui->endorse->setVisible(core().settings().nexus().endorsementIntegration());
   ui->track->setVisible(core().settings().nexus().trackedIntegration());
 
-  connect(ui->modID, &QLineEdit::editingFinished, [&] {
+  connect(ui->modID, &QLineEdit::editingFinished, [this] {
     onModIDChanged();
   });
   connect(ui->sourceGame,
-          static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [&] {
+          static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+          [this] {
             onSourceGameChanged();
           });
-  connect(ui->version, &QLineEdit::editingFinished, [&] {
+  connect(ui->version, &QLineEdit::editingFinished, [this] {
     onVersionChanged();
   });
-  connect(ui->category, &QLineEdit::editingFinished, [&] {
+  connect(ui->category, &QLineEdit::editingFinished, [this] {
     onCategoryChanged();
   });
 
-  connect(ui->refresh, &QPushButton::clicked, [&] {
+  connect(ui->refresh, &QPushButton::clicked, [this] {
     onRefreshBrowser();
   });
-  connect(ui->visitNexus, &QPushButton::clicked, [&] {
+  connect(ui->visitNexus, &QPushButton::clicked, [this] {
     onVisitNexus();
   });
-  connect(ui->endorse, &QPushButton::clicked, [&] {
+  connect(ui->endorse, &QPushButton::clicked, [this] {
     onEndorse();
   });
-  connect(ui->track, &QPushButton::clicked, [&] {
+  connect(ui->track, &QPushButton::clicked, [this] {
     onTrack();
   });
 
-  connect(ui->hasCustomURL, &QCheckBox::toggled, [&] {
+  connect(ui->hasCustomURL, &QCheckBox::toggled, [this] {
     onCustomURLToggled();
   });
-  connect(ui->customURL, &QLineEdit::editingFinished, [&] {
+  connect(ui->customURL, &QLineEdit::editingFinished, [this] {
     onCustomURLChanged();
   });
-  connect(ui->visitCustomURL, &QPushButton::clicked, [&] {
+  connect(ui->visitCustomURL, &QPushButton::clicked, [this] {
     onVisitCustomURL();
   });
 }
@@ -117,7 +118,7 @@ void NexusTab::update()
   auto* page = new NexusTabWebpage(ui->browser);
   ui->browser->setPage(page);
 
-  connect(page, &NexusTabWebpage::linkClicked, [&](const QUrl& url) {
+  connect(page, &NexusTabWebpage::linkClicked, [](const QUrl& url) {
     shell::Open(url);
   });
 
@@ -138,7 +139,7 @@ void NexusTab::setMod(ModInfoPtr mod, MOShared::FilesOrigin* origin)
 
   ModInfoDialogTab::setMod(mod, origin);
 
-  m_modConnection = connect(mod.data(), &ModInfo::modDetailsUpdated, [&] {
+  m_modConnection = connect(mod.data(), &ModInfo::modDetailsUpdated, [this] {
     onModChanged();
   });
 }

@@ -180,7 +180,7 @@ void ShellMenu::exec(const QPoint& pos)
     const auto hwnd = getHWND(m_mw);
 
     auto filter = std::make_unique<WndProcFilter>(
-        [&](HWND h, UINT m, WPARAM wp, LPARAM lp, LRESULT* out) {
+        [this](HWND h, UINT m, WPARAM wp, LPARAM lp, LRESULT* out) {
           return wndProc(h, m, wp, lp, out);
         });
 
@@ -552,7 +552,7 @@ void ShellMenuCollection::exec(const QPoint& pos)
   auto hwnd = getHWND(m_mw);
 
   auto filter = std::make_unique<WndProcFilter>(
-      [&](HWND h, UINT m, WPARAM wp, LPARAM lp, LRESULT* out) {
+      [this](HWND h, UINT m, WPARAM wp, LPARAM lp, LRESULT* out) {
         return wndProc(h, m, wp, lp, out);
       });
 
