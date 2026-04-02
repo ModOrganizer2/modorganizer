@@ -3,6 +3,7 @@ name: build-qt5-244
 on:
   push:
     branches:
+      - master
       - codex/backport-244-download-install-fixes
   workflow_dispatch:
 
