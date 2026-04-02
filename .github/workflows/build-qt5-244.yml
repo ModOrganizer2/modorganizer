@@ -1,0 +1,180 @@
+name: build-qt5-244
+
+on:
+  push:
+    branches:
+      - codex/backport-244-download-install-fixes
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 360
+    env:
+      MOB_COMMIT: 066001efb1a4cfd1b1de6ff22c6061a2851df32d
+      MO_BRANCH: 2_4_x
+      MO_ORG: ModOrganizer2
+      MODORGANIZER_BRANCH: codex/backport-244-download-install-fixes
+      MODORGANIZER_ORG: nwn900
+      QT_VERSION: 5.15.2
+      QT_ARCH: win64_msvc2019_64
+      USVFS_BRANCH: 2_4_x
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.8"
+
+      - name: Install build prerequisites
+        shell: pwsh
+        run: |
+          choco install 7zip nasm strawberryperl nuget.commandline jom -y --no-progress
+
+      - name: Install Qt 5.15.2
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install aqtinstall
+          python -m aqt install-qt windows desktop $env:QT_VERSION $env:QT_ARCH --outputdir C:\Qt -m qtwebengine qttools
+
+      - name: Detect Visual Studio and Windows SDK
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+          if (!(Test-Path $vswhere)) {
+            throw "vswhere.exe not found"
+          }
+
+          $vs = & $vswhere -products * -nologo -latest -version "[17.0,18.0)" -property installationPath
+          if (-not $vs) {
+            throw "Visual Studio 2022 not found"
+          }
+
+          $sdk = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\Include" -Directory |
+            Sort-Object Name -Descending |
+            Select-Object -First 1 -ExpandProperty Name
+          if (-not $sdk) {
+            throw "Windows 10 SDK not found"
+          }
+
+          "MO2_VS=$vs" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "MO2_SDK=$sdk" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "MO2_QT_SEARCH_ROOT=C:\Qt" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Bootstrap mob
+        shell: pwsh
+        run: |
+          $mobRoot = Join-Path $env:RUNNER_TEMP "mob"
+          git clone https://github.com/ModOrganizer2/mob $mobRoot
+          git -C $mobRoot checkout $env:MOB_COMMIT
+          & (Join-Path $mobRoot "bootstrap.ps1")
+
+      - name: Generate mob CI config
+        shell: pwsh
+        run: |
+          $prefix = Join-Path $env:RUNNER_TEMP "mo2-prefix"
+          New-Item -ItemType Directory -Path $prefix -Force | Out-Null
+
+          $iniPath = Join-Path $env:RUNNER_TEMP "ci.mob.ini"
+          $logPath = Join-Path $prefix "mob-ci.log"
+
+          $content = @"
+[global]
+output_log_level   = 4
+file_log_level     = 5
+log_file           = $logPath
+ignore_uncommitted = true
+
+[task]
+mo_org        = $env:MO_ORG
+mo_branch     = $env:MO_BRANCH
+no_pull       = false
+ignore_ts     = false
+revert_ts     = false
+git_shallow   = true
+
+[modorganizer:task]
+mo_org    = $env:MODORGANIZER_ORG
+mo_branch = $env:MODORGANIZER_BRANCH
+
+[organizer:task]
+mo_org    = $env:MODORGANIZER_ORG
+mo_branch = $env:MODORGANIZER_BRANCH
+
+[versions]
+vs         = 17
+vs_year    = 2022
+vs_toolset = 14.3
+sdk        = $env:MO2_SDK
+qt         = $env:QT_VERSION
+qt_vs      = 2019
+pyqt       = 5.15.2
+pyqt_builder = 1.7.0
+pyqt_sip   = 12.8.1
+python     = v3.8.7
+usvfs      = $env:USVFS_BRANCH
+
+[paths]
+prefix     = $prefix
+qt_install = $env:MO2_QT_SEARCH_ROOT
+vs         = $env:MO2_VS
+"@
+
+          Set-Content -LiteralPath $iniPath -Value $content -Encoding ascii
+
+          "MO2_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "MO2_INI=$iniPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "MO2_MOB_ROOT=$(Join-Path $env:RUNNER_TEMP 'mob')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Build with mob
+        shell: pwsh
+        run: |
+          $mobExe = Join-Path $env:MO2_MOB_ROOT "mob.exe"
+          if (!(Test-Path $mobExe)) {
+            throw "mob.exe not found at $mobExe"
+          }
+
+          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build
+
+      - name: Smoke test executable
+        shell: pwsh
+        run: |
+          $exe = Join-Path $env:MO2_PREFIX "install\\bin\\ModOrganizer.exe"
+          if (!(Test-Path $exe)) {
+            throw "ModOrganizer.exe not found"
+          }
+
+          $help = & $exe --help 2>&1 | Out-String
+          if ($help -notmatch "(?i)usage") {
+            $help | Write-Host
+            throw "Help output did not contain usage text"
+          }
+
+      - name: Upload build artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mo2-install
+          path: ${{ env.MO2_PREFIX }}\install
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload mob logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mob-logs
+          path: |
+            ${{ env.MO2_PREFIX }}\mob-ci.log
+            ${{ env.MO2_MOB_ROOT }}\mob.log
+          if-no-files-found: warn
+          retention-days: 14

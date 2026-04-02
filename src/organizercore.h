@@ -33,6 +33,7 @@
 #include <QStringList>
 #include <QThread>
 #include <QVariant>
+#include <utility>
 
 class ModListSortProxy;
 class PluginListSortProxy;
@@ -399,6 +400,10 @@ signals:
   void directoryStructureReady();
 
 private:
+
+  std::pair<unsigned int, ModInfo::Ptr> doInstall(
+    const QString& archivePath, MOBase::GuessedValue<QString> modName,
+    ModInfo::Ptr currentMod, int priority, bool reinstallation);
 
   void saveCurrentProfile();
   void storeSettings();

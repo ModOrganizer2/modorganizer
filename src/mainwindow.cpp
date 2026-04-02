@@ -409,12 +409,6 @@ MainWindow::MainWindow(Settings &settings
     SLOT(updateWindowTitle(const APIUserAccount&)));
 
   connect(
-    NexusInterface::instance().getAccessManager(),
-    SIGNAL(credentialsReceived(const APIUserAccount&)),
-    &NexusInterface::instance(),
-    SLOT(setUserAccount(const APIUserAccount&)));
-
-  connect(
     &NexusInterface::instance(),
     SIGNAL(requestsChanged(const APIStats&, const APIUserAccount&)),
     this,

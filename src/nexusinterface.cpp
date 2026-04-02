@@ -253,6 +253,7 @@ NexusInterface::NexusInterface(Settings* s)
   m_DiskCache = new QNetworkDiskCache(this);
 
   connect(m_AccessManager, SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
+  connect(m_AccessManager, SIGNAL(credentialsReceived(const APIUserAccount&)), this, SLOT(setUserAccount(const APIUserAccount&)));
 }
 
 NexusInterface::~NexusInterface()
