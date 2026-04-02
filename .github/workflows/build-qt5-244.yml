@@ -88,47 +88,47 @@ jobs:
           $iniPath = Join-Path $env:RUNNER_TEMP "ci.mob.ini"
           $logPath = Join-Path $prefix "mob-ci.log"
 
-          $content = @"
-[global]
-output_log_level   = 4
-file_log_level     = 5
-log_file           = $logPath
-ignore_uncommitted = true
-
-[task]
-mo_org        = $env:MO_ORG
-mo_branch     = $env:MO_BRANCH
-no_pull       = false
-ignore_ts     = false
-revert_ts     = false
-git_shallow   = true
-
-[modorganizer:task]
-mo_org    = $env:MODORGANIZER_ORG
-mo_branch = $env:MODORGANIZER_BRANCH
-
-[organizer:task]
-mo_org    = $env:MODORGANIZER_ORG
-mo_branch = $env:MODORGANIZER_BRANCH
-
-[versions]
-vs         = 17
-vs_year    = 2022
-vs_toolset = 14.3
-sdk        = $env:MO2_SDK
-qt         = $env:QT_VERSION
-qt_vs      = 2019
-pyqt       = 5.15.2
-pyqt_builder = 1.7.0
-pyqt_sip   = 12.8.1
-python     = v3.8.7
-usvfs      = $env:USVFS_BRANCH
-
-[paths]
-prefix     = $prefix
-qt_install = $env:MO2_QT_SEARCH_ROOT
-vs         = $env:MO2_VS
-"@
+          $content = @(
+            "[global]"
+            "output_log_level   = 4"
+            "file_log_level     = 5"
+            "log_file           = $logPath"
+            "ignore_uncommitted = true"
+            ""
+            "[task]"
+            "mo_org        = $env:MO_ORG"
+            "mo_branch     = $env:MO_BRANCH"
+            "no_pull       = false"
+            "ignore_ts     = false"
+            "revert_ts     = false"
+            "git_shallow   = true"
+            ""
+            "[modorganizer:task]"
+            "mo_org    = $env:MODORGANIZER_ORG"
+            "mo_branch = $env:MODORGANIZER_BRANCH"
+            ""
+            "[organizer:task]"
+            "mo_org    = $env:MODORGANIZER_ORG"
+            "mo_branch = $env:MODORGANIZER_BRANCH"
+            ""
+            "[versions]"
+            "vs         = 17"
+            "vs_year    = 2022"
+            "vs_toolset = 14.3"
+            "sdk        = $env:MO2_SDK"
+            "qt         = $env:QT_VERSION"
+            "qt_vs      = 2019"
+            "pyqt       = 5.15.2"
+            "pyqt_builder = 1.7.0"
+            "pyqt_sip   = 12.8.1"
+            "python     = v3.8.7"
+            "usvfs      = $env:USVFS_BRANCH"
+            ""
+            "[paths]"
+            "prefix     = $prefix"
+            "qt_install = $env:MO2_QT_SEARCH_ROOT"
+            "vs         = $env:MO2_VS"
+          ) -join "`r`n"
 
           Set-Content -LiteralPath $iniPath -Value $content -Encoding ascii
 
