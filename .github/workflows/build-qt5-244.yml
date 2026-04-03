@@ -15,6 +15,7 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 360
     env:
+      BAIN_WIZARD_INTERPRETER_COMMIT: df3372b03b867e58551b63657a99202299e0c9d8
       MOB_COMMIT: 066001efb1a4cfd1b1de6ff22c6061a2851df32d
       MO_BRANCH: 2_4_x
       MO_ORG: ModOrganizer2
@@ -173,6 +174,33 @@ jobs:
           "MO2_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "MO2_INI=$iniPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "MO2_MOB_ROOT=$(Join-Path $env:RUNNER_TEMP 'mob')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Preseed legacy Python plugin dependencies
+        shell: pwsh
+        run: |
+          $superRoot = Join-Path $env:MO2_PREFIX "build\\modorganizer_super"
+          $wizardRoot = Join-Path $superRoot "installer_wizard"
+          $wizardUrl = "https://github.com/ModOrganizer2/modorganizer-installer_wizard"
+
+          New-Item -ItemType Directory -Path $superRoot -Force | Out-Null
+
+          if (!(Test-Path (Join-Path $wizardRoot ".git"))) {
+            git clone --branch $env:MO_BRANCH $wizardUrl $wizardRoot
+          } else {
+            git -C $wizardRoot pull --ff-only $wizardUrl $env:MO_BRANCH
+          }
+
+          $requirements = Join-Path $wizardRoot "plugin-requirements.txt"
+          $content = Get-Content $requirements -Raw
+          $needle = 'git+https://github.com/Holt59/bain-wizard-interpreter'
+          $replacement = "git+https://github.com/Holt59/bain-wizard-interpreter@$env:BAIN_WIZARD_INTERPRETER_COMMIT"
+
+          if (-not $content.Contains($needle)) {
+            throw "Failed to patch $requirements"
+          }
+
+          $content = $content.Replace($needle, $replacement)
+          Set-Content -LiteralPath $requirements -Value $content -Encoding ascii
 
       - name: Seed legacy source archives
         shell: pwsh
