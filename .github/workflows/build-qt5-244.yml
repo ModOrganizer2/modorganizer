@@ -200,6 +200,11 @@ jobs:
             "https://www.sourceware.org/pub/bzip2/bzip2-1.0.6.tar.gz"
           ) -Validate $archiveValidator
 
+          Get-LegacyArchive -OutFile (Join-Path $downloads "explorer++_1.3.5_x64.zip") -Urls @(
+            "https://master.dl.sourceforge.net/project/explorerplus/Explorer++/1.3.5/explorer++_1.3.5_x64.zip?viasf=1",
+            "https://downloads.sourceforge.net/project/explorerplus/Explorer++/1.3.5/explorer++_1.3.5_x64.zip"
+          ) -Validate $archiveValidator
+
       - name: Build with mob
         shell: pwsh
         run: |
