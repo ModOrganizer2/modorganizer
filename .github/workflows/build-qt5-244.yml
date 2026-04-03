@@ -83,10 +83,10 @@ jobs:
           $modTask = Join-Path $mobRoot "src\\tasks\\modorganizer.cpp"
           $content = Get-Content $modTask -Raw
           $needle = '.def("GTEST_ROOT",                gtest::source_path())'
-          $replacement = @'
-.def("GTEST_ROOT",                gtest::source_path())
-		.def("BUILD_TESTING",             "OFF")
-'@
+          $replacement = @(
+            '.def("GTEST_ROOT",                gtest::source_path())'
+            '        .def("BUILD_TESTING",             "OFF")'
+          ) -join "`r`n"
 
           if (-not $content.Contains($needle)) {
             throw "Failed to patch modorganizer.cpp in mob bootstrap"
