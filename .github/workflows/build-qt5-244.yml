@@ -39,7 +39,7 @@ jobs:
       - name: Install build prerequisites
         shell: pwsh
         run: |
-          choco install 7zip nasm strawberryperl nuget.commandline jom -y --no-progress
+          choco install 7zip cmake nasm strawberryperl nuget.commandline jom -y --no-progress
 
       - name: Install Qt 5.15.2
         shell: pwsh
@@ -150,6 +150,9 @@ jobs:
             "mo_org    = $env:MODORGANIZER_ORG"
             "mo_branch = $env:MODORGANIZER_BRANCH"
             ""
+            "[installer_omod:task]"
+            "enabled = false"
+            ""
             "[versions]"
             "vs         = 17"
             "vs_year    = 2022"
@@ -181,6 +184,8 @@ jobs:
           $superRoot = Join-Path $env:MO2_PREFIX "build\\modorganizer_super"
           $wizardRoot = Join-Path $superRoot "installer_wizard"
           $wizardUrl = "https://github.com/ModOrganizer2/modorganizer-installer_wizard"
+          $installerOmodRoot = Join-Path $superRoot "installer_omod"
+          $installerOmodUrl = "https://github.com/ModOrganizer2/modorganizer-installer_omod"
           $pluginPythonRoot = Join-Path $superRoot "plugin_python"
           $pluginPythonUrl = "https://github.com/ModOrganizer2/modorganizer-plugin_python"
 
@@ -190,6 +195,12 @@ jobs:
             git clone --branch $env:MO_BRANCH $wizardUrl $wizardRoot
           } else {
             git -C $wizardRoot pull --ff-only $wizardUrl $env:MO_BRANCH
+          }
+
+          if (!(Test-Path (Join-Path $installerOmodRoot ".git"))) {
+            git clone --branch $env:MO_BRANCH $installerOmodUrl $installerOmodRoot
+          } else {
+            git -C $installerOmodRoot pull --ff-only $installerOmodUrl $env:MO_BRANCH
           }
 
           $requirements = Join-Path $wizardRoot "plugin-requirements.txt"
@@ -305,6 +316,93 @@ jobs:
           $mobText = $mobOutput | Out-String
           if ($mobText -match '(?m)^there were problems:') {
             throw "mob reported problems"
+          }
+
+      - name: Build installer_omod manually
+        shell: pwsh
+        run: |
+          $installerOmodRoot = Join-Path $env:MO2_PREFIX "build\\modorganizer_super\\installer_omod"
+          $installerOmodBuild = Join-Path $installerOmodRoot "vsbuild-manual"
+          $msbuild = Join-Path $env:MO2_VS "MSBuild\\Current\\Bin\\MSBuild.exe"
+
+          if (!(Test-Path $installerOmodRoot)) {
+            throw "installer_omod source not found at $installerOmodRoot"
+          }
+
+          if (!(Test-Path $msbuild)) {
+            throw "MSBuild.exe not found at $msbuild"
+          }
+
+          $boostRoot = Get-Item (Join-Path $env:MO2_PREFIX "build\\boost_*") | Select-Object -First 1 -ExpandProperty FullName
+          $boostLibDir = Get-Item (Join-Path $boostRoot "lib64-msvc-*\\lib") | Select-Object -First 1 -ExpandProperty FullName
+          $fmtRoot = Get-Item (Join-Path $env:MO2_PREFIX "build\\fmt-*") | Select-Object -First 1 -ExpandProperty FullName
+          $spdlogRoot = Get-Item (Join-Path $env:MO2_PREFIX "build\\spdlog-*") | Select-Object -First 1 -ExpandProperty FullName
+          $lootPath = Get-Item (Join-Path $env:MO2_PREFIX "build\\libloot-*") | Select-Object -First 1 -ExpandProperty FullName
+          $lz4Root = Get-Item (Join-Path $env:MO2_PREFIX "build\\lz4-*") | Select-Object -First 1 -ExpandProperty FullName
+          $zlibRoot = Get-Item (Join-Path $env:MO2_PREFIX "build\\zlib-*") | Select-Object -First 1 -ExpandProperty FullName
+          $pythonRoot = Get-Item (Join-Path $env:MO2_PREFIX "build\\python-*") | Select-Object -First 1 -ExpandProperty FullName
+          $sevenzRoot = Get-Item (Join-Path $env:MO2_PREFIX "build\\7zip-*") | Select-Object -First 1 -ExpandProperty FullName
+          $libbsarchRoot = Get-Item (Join-Path $env:MO2_PREFIX "build\\libbsarch-*") | Select-Object -First 1 -ExpandProperty FullName
+          $gtestRoot = Get-Item (Join-Path $env:MO2_PREFIX "build\\googletest") | Select-Object -First 1 -ExpandProperty FullName
+
+          if (Test-Path $installerOmodBuild) {
+            Remove-Item $installerOmodBuild -Recurse -Force
+          }
+
+          cmake -S $installerOmodRoot -B $installerOmodBuild -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_INSTALL_PREFIX:PATH="$env:MO2_PREFIX\\install" `
+            -DDEPENDENCIES_DIR="$env:MO2_PREFIX\\build" `
+            -DBOOST_ROOT="$boostRoot" `
+            -DBOOST_LIBRARYDIR="$boostLibDir" `
+            -DFMT_ROOT="$fmtRoot" `
+            -DSPDLOG_ROOT="$spdlogRoot" `
+            -DLOOT_PATH="$lootPath" `
+            -DLZ4_ROOT="$lz4Root" `
+            -DQT_ROOT="$env:MO2_QT_INSTALL" `
+            -DZLIB_ROOT="$zlibRoot" `
+            -DPYTHON_ROOT="$pythonRoot" `
+            -DSEVENZ_ROOT="$sevenzRoot" `
+            -DLIBBSARCH_ROOT="$libbsarchRoot" `
+            -DGTEST_ROOT="$gtestRoot" `
+            -DCMAKE_INSTALL_MESSAGE=NEVER `
+            --log-level=ERROR `
+            --no-warn-unused-cli
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "CMake configure for installer_omod failed"
+          }
+
+          & $msbuild (Join-Path $installerOmodBuild "installer_omod.sln") `
+            -nologo `
+            -t:restore `
+            -property:Configuration=RelWithDebInfo `
+            -property:Platform=x64 `
+            -property:PlatformToolset=v143 `
+            -property:WindowsTargetPlatformVersion=$env:MO2_SDK `
+            -verbosity:minimal
+          if ($LASTEXITCODE -ne 0) {
+            throw "NuGet restore for installer_omod failed"
+          }
+
+          & $msbuild (Join-Path $installerOmodBuild "src\\installer_omod.vcxproj") `
+            -nologo `
+            -maxCpuCount `
+            -property:UseMultiToolTask=true `
+            -property:EnforceProcessCountAcrossBuilds=true `
+            -property:Configuration=RelWithDebInfo `
+            -property:Platform=x64 `
+            -property:PlatformToolset=v143 `
+            -property:WindowsTargetPlatformVersion=$env:MO2_SDK `
+            -property:RunCodeAnalysis=false `
+            -verbosity:minimal `
+            -consoleLoggerParameters:ErrorsOnly
+          if ($LASTEXITCODE -ne 0) {
+            throw "installer_omod build failed"
+          }
+
+          cmake --install $installerOmodBuild --config RelWithDebInfo
+          if ($LASTEXITCODE -ne 0) {
+            throw "installer_omod install failed"
           }
 
       - name: Smoke test executable
