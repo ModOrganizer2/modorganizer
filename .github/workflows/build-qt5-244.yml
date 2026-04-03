@@ -137,6 +137,17 @@ jobs:
           "MO2_INI=$iniPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "MO2_MOB_ROOT=$(Join-Path $env:RUNNER_TEMP 'mob')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
+      - name: Seed legacy source archives
+        shell: pwsh
+        run: |
+          $downloads = Join-Path $env:MO2_PREFIX "downloads"
+          New-Item -ItemType Directory -Path $downloads -Force | Out-Null
+
+          $zlibArchive = Join-Path $downloads "zlib-1.2.11.tar.gz"
+          if (!(Test-Path $zlibArchive)) {
+            Invoke-WebRequest "https://www.zlib.net/fossils/zlib-1.2.11.tar.gz" -OutFile $zlibArchive
+          }
+
       - name: Build with mob
         shell: pwsh
         run: |
