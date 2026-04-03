@@ -175,12 +175,14 @@ jobs:
           "MO2_INI=$iniPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "MO2_MOB_ROOT=$(Join-Path $env:RUNNER_TEMP 'mob')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Preseed legacy Python plugin dependencies
+      - name: Preseed legacy plugin sources
         shell: pwsh
         run: |
           $superRoot = Join-Path $env:MO2_PREFIX "build\\modorganizer_super"
           $wizardRoot = Join-Path $superRoot "installer_wizard"
           $wizardUrl = "https://github.com/ModOrganizer2/modorganizer-installer_wizard"
+          $pluginPythonRoot = Join-Path $superRoot "plugin_python"
+          $pluginPythonUrl = "https://github.com/ModOrganizer2/modorganizer-plugin_python"
 
           New-Item -ItemType Directory -Path $superRoot -Force | Out-Null
 
@@ -201,6 +203,24 @@ jobs:
 
           $content = $content.Replace($needle, $replacement)
           Set-Content -LiteralPath $requirements -Value $content -Encoding ascii
+
+          if (!(Test-Path (Join-Path $pluginPythonRoot ".git"))) {
+            git clone --branch $env:MO_BRANCH $pluginPythonUrl $pluginPythonRoot
+          } else {
+            git -C $pluginPythonRoot pull --ff-only $pluginPythonUrl $env:MO_BRANCH
+          }
+
+          $converters = Join-Path $pluginPythonRoot "src\\runner\\converters.h"
+          $content = Get-Content $converters -Raw
+          $needle = '        return wrap<Ws... >::apply(std::forward<T>(t));'
+          $replacement = '        return wrap_impl<Ws... >::apply(std::forward<T>(t));'
+
+          if (-not $content.Contains($needle)) {
+            throw "Failed to patch $converters"
+          }
+
+          $content = $content.Replace($needle, $replacement)
+          Set-Content -LiteralPath $converters -Value $content -Encoding ascii
 
       - name: Seed legacy source archives
         shell: pwsh
