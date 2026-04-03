@@ -39,7 +39,7 @@ jobs:
       - name: Install build prerequisites
         shell: pwsh
         run: |
-          choco install 7zip cmake nasm strawberryperl nuget.commandline jom -y --no-progress
+          choco install 7zip nasm strawberryperl nuget.commandline jom -y --no-progress
 
       - name: Install Qt 5.15.2
         shell: pwsh
@@ -323,10 +323,15 @@ jobs:
         run: |
           $installerOmodRoot = Join-Path $env:MO2_PREFIX "build\\modorganizer_super\\installer_omod"
           $installerOmodBuild = Join-Path $installerOmodRoot "vsbuild-manual"
+          $cmake = Join-Path $env:MO2_VS "Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe"
           $msbuild = Join-Path $env:MO2_VS "MSBuild\\Current\\Bin\\MSBuild.exe"
 
           if (!(Test-Path $installerOmodRoot)) {
             throw "installer_omod source not found at $installerOmodRoot"
+          }
+
+          if (!(Test-Path $cmake)) {
+            throw "cmake.exe not found at $cmake"
           }
 
           if (!(Test-Path $msbuild)) {
@@ -349,7 +354,7 @@ jobs:
             Remove-Item $installerOmodBuild -Recurse -Force
           }
 
-          cmake -S $installerOmodRoot -B $installerOmodBuild -G "Visual Studio 17 2022" -A x64 `
+          & $cmake -S $installerOmodRoot -B $installerOmodBuild -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_INSTALL_PREFIX:PATH="$env:MO2_PREFIX\\install" `
             -DDEPENDENCIES_DIR="$env:MO2_PREFIX\\build" `
             -DBOOST_ROOT="$boostRoot" `
@@ -400,7 +405,7 @@ jobs:
             throw "installer_omod build failed"
           }
 
-          cmake --install $installerOmodBuild --config RelWithDebInfo
+          & $cmake --install $installerOmodBuild --config RelWithDebInfo
           if ($LASTEXITCODE -ne 0) {
             throw "installer_omod install failed"
           }
