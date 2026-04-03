@@ -79,6 +79,22 @@ jobs:
           $mobRoot = Join-Path $env:RUNNER_TEMP "mob"
           git clone https://github.com/ModOrganizer2/mob $mobRoot
           git -C $mobRoot checkout $env:MOB_COMMIT
+
+          $modTask = Join-Path $mobRoot "src\\tasks\\modorganizer.cpp"
+          $content = Get-Content $modTask -Raw
+          $needle = '.def("GTEST_ROOT",                gtest::source_path())'
+          $replacement = @'
+.def("GTEST_ROOT",                gtest::source_path())
+		.def("BUILD_TESTING",             "OFF")
+'@
+
+          if (-not $content.Contains($needle)) {
+            throw "Failed to patch modorganizer.cpp in mob bootstrap"
+          }
+
+          $content = $content.Replace($needle, $replacement)
+          Set-Content -LiteralPath $modTask -Value $content -Encoding ascii
+
           & (Join-Path $mobRoot "bootstrap.ps1")
 
       - name: Generate mob CI config
