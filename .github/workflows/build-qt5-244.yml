@@ -111,7 +111,7 @@ jobs:
           $gtestNeedle = '.arg("-Wno-deprecated")'
           $gtestReplacement = @(
             '.arg("-Wno-deprecated")'
-            '        .def("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreaded$<$<CONFIG:Debug>:Debug>")'
+            '        .def("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreaded")'
           ) -join "`r`n"
           Replace-InFile -Path $gtestTask -Needle $gtestNeedle -Replacement $gtestReplacement
 
