@@ -58,6 +58,7 @@
 #include <tchar.h> // for _tcsicmp
 
 #include <limits.h>
+#include <memory>
 #include <stddef.h>
 #include <string.h> // for memset, wcsrchr
 
@@ -756,13 +757,17 @@ std::pair<unsigned int, ModInfo::Ptr> OrganizerCore::doInstall(
 
     // Some plugins react immediately to newly installed mods, so delay the
     // notification until the refreshed directory structure is ready.
-    connect(this, &OrganizerCore::directoryStructureReady, this, [=] {
-      const unsigned int modIndex = ModInfo::getIndex(modName);
-      if (modIndex != UINT_MAX) {
-        const auto modInfo = ModInfo::getByIndex(modIndex);
-        m_ModList.notifyModInstalled(modInfo.get());
-      }
-    }, Qt::SingleShotConnection);
+    auto readyConnection = std::make_shared<QMetaObject::Connection>();
+    *readyConnection = connect(this, &OrganizerCore::directoryStructureReady, this,
+                               [this, modName, readyConnection] {
+                                 QObject::disconnect(*readyConnection);
+
+                                 const unsigned int modIndex = ModInfo::getIndex(modName);
+                                 if (modIndex != UINT_MAX) {
+                                   const auto modInfo = ModInfo::getByIndex(modIndex);
+                                   m_ModList.notifyModInstalled(modInfo.get());
+                                 }
+                               });
 
     refresh();
 
