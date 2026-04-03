@@ -61,7 +61,8 @@ jobs:
           }
 
           $sdk = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\Include" -Directory |
-            Sort-Object Name -Descending |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' } |
+            Sort-Object { [version]$_.Name } -Descending |
             Select-Object -First 1 -ExpandProperty Name
           if (-not $sdk) {
             throw "Windows 10 SDK not found"
@@ -140,13 +141,52 @@ jobs:
       - name: Seed legacy source archives
         shell: pwsh
         run: |
+          function Get-LegacyArchive {
+            param(
+              [Parameter(Mandatory = $true)]
+              [string]$OutFile,
+              [Parameter(Mandatory = $true)]
+              [string[]]$Urls
+            )
+
+            if (Test-Path $OutFile) {
+              return
+            }
+
+            foreach ($url in $Urls) {
+              try {
+                Invoke-WebRequest $url -MaximumRedirection 5 -OutFile $OutFile
+                if ((Get-Item $OutFile).Length -gt 0) {
+                  return
+                }
+              } catch {
+                Write-Warning "Failed to download $url: $($_.Exception.Message)"
+              }
+
+              if (Test-Path $OutFile) {
+                Remove-Item $OutFile -Force -ErrorAction SilentlyContinue
+              }
+            }
+
+            throw "Unable to seed legacy archive $OutFile"
+          }
+
           $downloads = Join-Path $env:MO2_PREFIX "downloads"
           New-Item -ItemType Directory -Path $downloads -Force | Out-Null
 
-          $zlibArchive = Join-Path $downloads "zlib-1.2.11.tar.gz"
-          if (!(Test-Path $zlibArchive)) {
-            Invoke-WebRequest "https://www.zlib.net/fossils/zlib-1.2.11.tar.gz" -OutFile $zlibArchive
-          }
+          Get-LegacyArchive -OutFile (Join-Path $downloads "zlib-1.2.11.tar.gz") -Urls @(
+            "https://www.zlib.net/fossils/zlib-1.2.11.tar.gz"
+          )
+
+          Get-LegacyArchive -OutFile (Join-Path $downloads "7z1900-src.7z") -Urls @(
+            "https://downloads.sourceforge.net/project/sevenzip/7-Zip/19.00/7z1900-src.7z",
+            "https://master.dl.sourceforge.net/project/sevenzip/7-Zip/19.00/7z1900-src.7z?viasf=1"
+          )
+
+          Get-LegacyArchive -OutFile (Join-Path $downloads "bzip2-1.0.6.tar.gz") -Urls @(
+            "https://sourceware.org/pub/bzip2/bzip2-1.0.6.tar.gz",
+            "https://www.sourceware.org/pub/bzip2/bzip2-1.0.6.tar.gz"
+          )
 
       - name: Build with mob
         shell: pwsh
@@ -157,6 +197,18 @@ jobs:
           }
 
           & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build
+          if ($LASTEXITCODE -ne 0) {
+            throw "mob exited with code $LASTEXITCODE"
+          }
+
+          $mobLog = Join-Path $env:MO2_PREFIX "mob-ci.log"
+          if (Test-Path $mobLog) {
+            $mobTail = Get-Content $mobLog -Tail 200 | Out-String
+            if ($mobTail -match '(?m)^there were problems:') {
+              $mobTail | Write-Host
+              throw "mob reported problems"
+            }
+          }
 
       - name: Smoke test executable
         shell: pwsh
