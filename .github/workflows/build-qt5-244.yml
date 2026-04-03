@@ -146,17 +146,22 @@ jobs:
               [Parameter(Mandatory = $true)]
               [string]$OutFile,
               [Parameter(Mandatory = $true)]
-              [string[]]$Urls
+              [string[]]$Urls,
+              [scriptblock]$Validate = { param($Path) Test-Path $Path }
             )
 
             if (Test-Path $OutFile) {
-              return
+              if (& $Validate $OutFile) {
+                return
+              }
+
+              Remove-Item $OutFile -Force -ErrorAction SilentlyContinue
             }
 
             foreach ($url in $Urls) {
               try {
                 Invoke-WebRequest $url -MaximumRedirection 5 -OutFile $OutFile
-                if ((Get-Item $OutFile).Length -gt 0) {
+                if ((Get-Item $OutFile).Length -gt 0 -and (& $Validate $OutFile)) {
                   return
                 }
               } catch {
@@ -174,19 +179,26 @@ jobs:
           $downloads = Join-Path $env:MO2_PREFIX "downloads"
           New-Item -ItemType Directory -Path $downloads -Force | Out-Null
 
+          $archiveValidator = {
+            param($Path)
+
+            & 7z.exe t -bd $Path > $null 2>&1
+            return ($LASTEXITCODE -eq 0)
+          }
+
           Get-LegacyArchive -OutFile (Join-Path $downloads "zlib-1.2.11.tar.gz") -Urls @(
             "https://www.zlib.net/fossils/zlib-1.2.11.tar.gz"
-          )
+          ) -Validate $archiveValidator
 
           Get-LegacyArchive -OutFile (Join-Path $downloads "7z1900-src.7z") -Urls @(
-            "https://downloads.sourceforge.net/project/sevenzip/7-Zip/19.00/7z1900-src.7z",
-            "https://master.dl.sourceforge.net/project/sevenzip/7-Zip/19.00/7z1900-src.7z?viasf=1"
-          )
+            "https://master.dl.sourceforge.net/project/sevenzip/7-Zip/19.00/7z1900-src.7z?viasf=1",
+            "https://downloads.sourceforge.net/project/sevenzip/7-Zip/19.00/7z1900-src.7z"
+          ) -Validate $archiveValidator
 
           Get-LegacyArchive -OutFile (Join-Path $downloads "bzip2-1.0.6.tar.gz") -Urls @(
             "https://sourceware.org/pub/bzip2/bzip2-1.0.6.tar.gz",
             "https://www.sourceware.org/pub/bzip2/bzip2-1.0.6.tar.gz"
-          )
+          ) -Validate $archiveValidator
 
       - name: Build with mob
         shell: pwsh
@@ -196,18 +208,14 @@ jobs:
             throw "mob.exe not found at $mobExe"
           }
 
-          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build
+          $mobOutput = & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build 2>&1 | Tee-Object -Variable mobOutput
           if ($LASTEXITCODE -ne 0) {
             throw "mob exited with code $LASTEXITCODE"
           }
 
-          $mobLog = Join-Path $env:MO2_PREFIX "mob-ci.log"
-          if (Test-Path $mobLog) {
-            $mobTail = Get-Content $mobLog -Tail 200 | Out-String
-            if ($mobTail -match '(?m)^there were problems:') {
-              $mobTail | Write-Host
-              throw "mob reported problems"
-            }
+          $mobText = $mobOutput | Out-String
+          if ($mobText -match '(?m)^there were problems:') {
+            throw "mob reported problems"
           }
 
       - name: Smoke test executable
