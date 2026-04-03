@@ -69,7 +69,8 @@ jobs:
 
           "MO2_VS=$vs" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "MO2_SDK=$sdk" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "MO2_QT_SEARCH_ROOT=C:\Qt" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $qtInstall = Join-Path (Join-Path "C:\Qt" $env:QT_VERSION) "msvc2019_64"
+          "MO2_QT_INSTALL=$qtInstall" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Bootstrap mob
         shell: pwsh
@@ -126,7 +127,7 @@ jobs:
             ""
             "[paths]"
             "prefix     = $prefix"
-            "qt_install = $env:MO2_QT_SEARCH_ROOT"
+            "qt_install = $env:MO2_QT_INSTALL"
             "vs         = $env:MO2_VS"
           ) -join "`r`n"
 
