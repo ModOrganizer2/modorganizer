@@ -160,7 +160,7 @@ jobs:
                   return
                 }
               } catch {
-                Write-Warning "Failed to download $url: $($_.Exception.Message)"
+                Write-Warning ("Failed to download {0}: {1}" -f $url, $_.Exception.Message)
               }
 
               if (Test-Path $OutFile) {
