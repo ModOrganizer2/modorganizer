@@ -430,10 +430,9 @@ jobs:
             throw "ModOrganizer.exe not found"
           }
 
-          $help = & $exe --help 2>&1 | Out-String
-          if ($help -notmatch "(?i)usage") {
-            $help | Write-Host
-            throw "Help output did not contain usage text"
+          & $exe --instance 2>&1 | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            throw "ModOrganizer.exe --instance smoke test failed with exit code $LASTEXITCODE"
           }
 
       - name: Upload build artifact
