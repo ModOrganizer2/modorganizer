@@ -7,6 +7,15 @@ src/Modorganizer.*
 src/*.bak
 CMakeLists.txt.user
 edit
+
+# ASSEMBLER
+ASSEMBLER/boost-compat-*/
+ASSEMBLER/generated/
+ASSEMBLER/tools/*.exe
+ASSEMBLER/include/
+ASSEMBLER/{src,include}/
+
+# Git
 /CMakeFiles
 .idea
 /msbuild.log

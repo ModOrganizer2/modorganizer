@@ -1,0 +1,517 @@
+diff --git a/src/shared/shmlogger.cpp b/src/shared/shmlogger.cpp
+index e28c55a..4ce7c76 100644
+--- a/src/shared/shmlogger.cpp
++++ b/src/shared/shmlogger.cpp
+@@ -22,6 +22,7 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
+ #pragma warning(disable : 4503)
+ #pragma warning(push, 3)
+ #include "shmlogger.h"
++#include <boost/date_time/posix_time/posix_time.hpp>
+ #pragma warning(pop)
+ 
+ #pragma warning(disable : 4996)
+@@ -181,7 +182,7 @@ void spdlog::sinks::shm_sink::output(level::level_enum lev,
+       m_LogQueue.send(message.c_str(), static_cast<unsigned int>(count), 0);
+     } break;
+     default: {
+-      boost::posix_time::ptime time = microsec_clock::universal_time()
++      boost::posix_time::ptime time = boost::posix_time::microsec_clock::universal_time()
+                                       + boost::posix_time::milliseconds(200);
+       sent = m_LogQueue.timed_send(message.c_str(),
+                                    static_cast<unsigned int>(count), 0, time);
+diff --git a/src/usvfs_dll/hookcallcontext.cpp b/src/usvfs_dll/hookcallcontext.cpp
+index 950f01d..6d67152 100644
+--- a/src/usvfs_dll/hookcallcontext.cpp
++++ b/src/usvfs_dll/hookcallcontext.cpp
+@@ -22,6 +22,7 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
+ #include <logging.h>
+ #include "hookcontext.h"
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ namespace usvfs
+ {
+ 
+@@ -115,3 +116,4 @@ FunctionGroupLock::~FunctionGroupLock() {
+ }
+ 
+ } // namespace usvfs
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+diff --git a/src/usvfs_dll/hookcontext.cpp b/src/usvfs_dll/hookcontext.cpp
+index 15a763a..cdbf7e9 100644
+--- a/src/usvfs_dll/hookcontext.cpp
++++ b/src/usvfs_dll/hookcontext.cpp
+@@ -28,6 +28,8 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
+ #include <shared_memory.h>
+ #include "loghelpers.h"
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
++
+ namespace bi = boost::interprocess;
+ using usvfs::shared::SharedMemoryT;
+ using usvfs::shared::VoidAllocatorT;
+@@ -273,6 +275,7 @@ void HookContext::unlockShared(const HookContext *instance)
+ 
+ // deprecated
+ //
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ extern "C" DLLEXPORT HookContext *__cdecl CreateHookContext(
+   const USVFSParameters &oldParams, HMODULE module)
+ {
+@@ -285,3 +288,6 @@ extern "C" DLLEXPORT usvfs::HookContext* WINAPI usvfsCreateHookContext(
+ {
+   return new HookContext(params, module);
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
++
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+diff --git a/src/usvfs_dll/hookmanager.cpp b/src/usvfs_dll/hookmanager.cpp
+index eccceea..2a5225c 100644
+--- a/src/usvfs_dll/hookmanager.cpp
++++ b/src/usvfs_dll/hookmanager.cpp
+@@ -32,6 +32,8 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
+ #include <winapi.h>
+ #include <VersionHelpers.h>
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
++
+ using namespace HookLib;
+ namespace bf = boost::filesystem;
+ 
+@@ -299,3 +301,5 @@ void HookManager::removeHooks()
+ }
+ 
+ } // namespace usvfs
++
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+diff --git a/src/usvfs_dll/hooks/kernel32.cpp b/src/usvfs_dll/hooks/kernel32.cpp
+index d2fe639..30fceb5 100644
+--- a/src/usvfs_dll/hooks/kernel32.cpp
++++ b/src/usvfs_dll/hooks/kernel32.cpp
+@@ -12,6 +12,8 @@
+ #include <stringutils.h>
+ #include <stringcast.h>
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
++
+ namespace ush = usvfs::shared;
+ using ush::string_cast;
+ using ush::CodePage;
+@@ -1644,3 +1646,5 @@ VOID WINAPI usvfs::hook_ExitProcess(UINT exitCode)
+ 
+   HOOK_END
+ }
++
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+diff --git a/src/usvfs_dll/hooks/ntdll.cpp b/src/usvfs_dll/hooks/ntdll.cpp
+index ebef41f..5b12d38 100644
+--- a/src/usvfs_dll/hooks/ntdll.cpp
++++ b/src/usvfs_dll/hooks/ntdll.cpp
+@@ -11,6 +11,8 @@
+ #include <addrtools.h>
+ #include <unicodestring.h>
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
++
+ namespace ulog = usvfs::log;
+ namespace ush  = usvfs::shared;
+ namespace bfs  = boost::filesystem;
+@@ -1475,3 +1477,5 @@ NTSTATUS WINAPI usvfs::hook_NtTerminateProcess(
+ 
+   return res;
+ }
++
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+diff --git a/src/usvfs_dll/redirectiontree.cpp b/src/usvfs_dll/redirectiontree.cpp
+index feb7793..5a19f51 100644
+--- a/src/usvfs_dll/redirectiontree.cpp
++++ b/src/usvfs_dll/redirectiontree.cpp
+@@ -20,8 +20,10 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
+ */
+ #include "redirectiontree.h"
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ std::ostream &usvfs::operator<<(std::ostream &stream, const RedirectionData &data)
+ {
+   stream << data.linkTarget;
+   return stream;
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+diff --git a/src/usvfs_dll/semaphore.cpp b/src/usvfs_dll/semaphore.cpp
+index f689271..c6da8a1 100644
+--- a/src/usvfs_dll/semaphore.cpp
++++ b/src/usvfs_dll/semaphore.cpp
+@@ -1,6 +1,7 @@
+ #include "semaphore.h"
+ #include "exceptionex.h"
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ RecursiveBenaphore::RecursiveBenaphore()
+   : m_Counter(0)
+   , m_OwnerId(0UL)
+@@ -58,3 +59,4 @@ void RecursiveBenaphore::signal()
+     }
+   }
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+diff --git a/src/usvfs_dll/sharedparameters.cpp b/src/usvfs_dll/sharedparameters.cpp
+index d37f9bd..73a1cdf 100644
+--- a/src/usvfs_dll/sharedparameters.cpp
++++ b/src/usvfs_dll/sharedparameters.cpp
+@@ -2,6 +2,8 @@
+ #include <usvfsparametersprivate.h>
+ #include <logging.h>
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
++
+ namespace usvfs
+ {
+ 
+@@ -232,3 +234,5 @@ void SharedParameters::clearForcedLibraries()
+ }
+ 
+ } // namespace
++
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+diff --git a/src/usvfs_dll/usvfs.cpp b/src/usvfs_dll/usvfs.cpp
+index 652d2e4..a6afe95 100644
+--- a/src/usvfs_dll/usvfs.cpp
++++ b/src/usvfs_dll/usvfs.cpp
+@@ -34,6 +34,8 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
+ // that they're not completely compatible
+ #include <filesystem>
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
++
+ namespace bfs = boost::filesystem;
+ namespace ush = usvfs::shared;
+ namespace bip = boost::interprocess;
+@@ -194,6 +196,7 @@ void InitLoggingInternal(bool toConsole, bool connectExistingSHM)
+ }
+ 
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ void WINAPI InitLogging(bool toConsole)
+ {
+   InitLoggingInternal(toConsole, false);
+@@ -216,6 +219,7 @@ extern "C" DLLEXPORT bool WINAPI GetLogMessages(LPSTR buffer, size_t size,
+     return false;
+   }
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ void SetLogLevel(LogLevel level)
+ {
+@@ -225,6 +229,7 @@ void SetLogLevel(LogLevel level)
+ 
+ // deprecated
+ //
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ void WINAPI USVFSUpdateParams(LogLevel level, CrashDumpsType type)
+ {
+   auto* p = usvfsCreateParameters();
+@@ -260,6 +265,7 @@ void WINAPI usvfsUpdateParameters(usvfsParameters* p)
+     p->logLevel, p->crashDumpsType, p->crashDumpsPath,
+     std::chrono::milliseconds(p->delayProcessMs));
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ 
+ //
+@@ -329,6 +335,7 @@ int createMiniDumpImpl(PEXCEPTION_POINTERS exceptionPtrs, CrashDumpsType type, c
+     return 6;
+ }
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ int WINAPI CreateMiniDump(PEXCEPTION_POINTERS exceptionPtrs, CrashDumpsType type, const wchar_t* dumpPath)
+ {
+   if (type == CrashDumpsType::None)
+@@ -347,6 +354,7 @@ int WINAPI CreateMiniDump(PEXCEPTION_POINTERS exceptionPtrs, CrashDumpsType type
+   }
+   return res;
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ static bool exceptionInUSVFS(PEXCEPTION_POINTERS exceptionPtrs) {
+   if (!dllModule) // shouldn't happen, check just in case
+@@ -403,6 +411,7 @@ LONG WINAPI VEHandler(PEXCEPTION_POINTERS exceptionPtrs)
+ // Exported functions
+ //
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ void __cdecl InitHooks(LPVOID parameters, size_t)
+ {
+   InitLoggingInternal(false, true);
+@@ -460,8 +469,10 @@ void __cdecl InitHooks(LPVOID parameters, size_t)
+     spdlog::get("usvfs")->debug("failed to initialise hooks: {0}", e.what());
+   }
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ void WINAPI GetCurrentVFSName(char *buffer, size_t size)
+ {
+   ush::strncpy_sz(buffer, context->callParameters().currentSHMName, size);
+@@ -483,10 +494,12 @@ BOOL WINAPI usvfsCreateVFS(const usvfsParameters* p)
+   usvfs::HookContext::remove(p->instanceName);
+   return usvfsConnectVFS(p);
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ 
+ // deprecated
+ //
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ BOOL WINAPI ConnectVFS(const USVFSParameters *oldParams)
+ {
+   const usvfsParameters p(*oldParams);
+@@ -512,8 +525,10 @@ BOOL WINAPI usvfsConnectVFS(const usvfsParameters* params)
+     return FALSE;
+   }
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ void WINAPI DisconnectVFS()
+ {
+   if (spdlog::get("usvfs").get() == nullptr) {
+@@ -534,6 +549,7 @@ void WINAPI DisconnectVFS()
+     spdlog::get("usvfs")->debug("vfs unloaded");
+   }
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ 
+ bool processStillActive(DWORD pid)
+@@ -560,6 +576,7 @@ bool processStillActive(DWORD pid)
+ }
+ 
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ BOOL WINAPI GetVFSProcessList(size_t *count, LPDWORD processIDs)
+ {
+   if (count == nullptr) {
+@@ -614,12 +631,15 @@ BOOL WINAPI GetVFSProcessList2(size_t* count, DWORD** buffer)
+ 
+   return TRUE;
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ void WINAPI ClearVirtualMappings()
+ {
+   context->redirectionTable()->clear();
+   context->inverseTable()->clear();
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ /// ensure the specified path exists. If a physical path of the same name
+ /// exists, it is inserted into the virtual directory as an empty reference. If
+@@ -672,6 +692,7 @@ bool assertPathExists(usvfs::RedirectionTreeContainer &table, LPCWSTR path)
+   return true;
+ }
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ BOOL WINAPI VirtualLinkFile(LPCWSTR source, LPCWSTR destination,
+                             unsigned int flags)
+ {
+@@ -715,6 +736,7 @@ BOOL WINAPI VirtualLinkFile(LPCWSTR source, LPCWSTR destination,
+     return FALSE;
+   }
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ /**
+  * @brief extract the flags relevant to redirection
+@@ -729,6 +751,7 @@ static usvfs::shared::TreeFlags convertRedirectionFlags(unsigned int flags)
+ }
+ 
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ BOOL WINAPI VirtualLinkDirectoryStatic(LPCWSTR source, LPCWSTR destination, unsigned int flags)
+ {
+   // TODO change notification not yet implemented
+@@ -800,8 +823,10 @@ BOOL WINAPI VirtualLinkDirectoryStatic(LPCWSTR source, LPCWSTR destination, unsi
+     return FALSE;
+   }
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ BOOL WINAPI CreateProcessHooked(LPCWSTR lpApplicationName
+                                 , LPWSTR lpCommandLine
+                                 , LPSECURITY_ATTRIBUTES lpProcessAttributes
+@@ -849,8 +874,10 @@ BOOL WINAPI CreateProcessHooked(LPCWSTR lpApplicationName
+ 
+   return TRUE;
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ BOOL WINAPI CreateVFSDump(LPSTR buffer, size_t *size)
+ {
+   assert(size != nullptr);
+@@ -948,6 +975,7 @@ const char* WINAPI USVFSVersionString()
+ {
+   return USVFS_VERSION_STRING;
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ //
+ // DllMain
+@@ -973,3 +1001,5 @@ BOOL APIENTRY DllMain(HMODULE module,
+ 
+   return TRUE;
+ }
++
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+diff --git a/src/usvfs_dll/usvfsparameters.cpp b/src/usvfs_dll/usvfsparameters.cpp
+index de8a996..eac72be 100644
+--- a/src/usvfs_dll/usvfsparameters.cpp
++++ b/src/usvfs_dll/usvfsparameters.cpp
+@@ -1,6 +1,8 @@
+ #include "usvfsparametersprivate.h"
+ #include <algorithm>
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
++
+ usvfsParameters::usvfsParameters() :
+   debugMode(false), logLevel(LogLevel::Debug),
+   crashDumpsType(CrashDumpsType::None), delayProcessMs(0)
+@@ -89,6 +91,7 @@ void usvfsParameters::setProcessDelay(int milliseconds)
+ extern "C"
+ {
+ 
++#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ const char* usvfsLogLevelToString(LogLevel lv)
+ {
+   switch (lv)
+@@ -204,5 +207,8 @@ void usvfsSetProcessDelay(usvfsParameters* p, int milliseconds)
+     p->setProcessDelay(milliseconds);
+   }
+ }
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+ 
+ } // extern "C"
++
++#endif  // USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+diff --git a/vsbuild/usvfs_common.props b/vsbuild/usvfs_common.props
+index ef19373..4c2c818 100644
+--- a/vsbuild/usvfs_common.props
++++ b/vsbuild/usvfs_common.props
+@@ -7,9 +7,9 @@
+   <PropertyGroup />
+   <ItemDefinitionGroup>
+     <ClCompile>
+-      <AdditionalIncludeDirectories>..\src\shared;..\src\thooklib;..\src\tinjectlib;..\src\usvfs_helper;..\asmjit\src\asmjit;..\udis86;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>..\src\shared;..\src\thooklib;..\src\tinjectlib;..\src\usvfs_helper;..\src\usvfs_dll;..\asmjit\src\asmjit;..\udis86;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>ASMJIT_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+     </ClCompile>
+   </ItemDefinitionGroup>
+   <ItemGroup />
+-</Project>
+\ No newline at end of file
++</Project>
+diff --git a/vsbuild/usvfs_dll.vcxproj b/vsbuild/usvfs_dll.vcxproj
+index 70c7247..d00755c 100644
+--- a/vsbuild/usvfs_dll.vcxproj
++++ b/vsbuild/usvfs_dll.vcxproj
+@@ -53,6 +53,7 @@
+   </PropertyGroup>
+   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+   <ImportGroup Label="ExtensionSettings">
++    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+   </ImportGroup>
+   <ImportGroup Label="Shared">
+   </ImportGroup>
+@@ -130,13 +131,14 @@
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+     <ClCompile>
+       <Optimization>Disabled</Optimization>
+-      <PreprocessorDefinitions>BUILDING_USVFS_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>BUILDING_USVFS_DLL;USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS;DLLEXPORT=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <PrecompiledHeader>Use</PrecompiledHeader>
+       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
+     </ClCompile>
+     <Link>
+       <AdditionalDependencies>Shlwapi.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
++      <ModuleDefinitionFile>..\..\..\ASSEMBLER\src\usvfs_x64.def</ModuleDefinitionFile>
+     </Link>
+     <CustomBuildStep>
+       <Command>stage_helper.cmd "$(TargetName)" "$(TargetPath)" "$(STAGING_DLL)\$(TargetFileName)" "$(TargetDir)$(TargetName).lib" "$(STAGING_LIB)\$(TargetName).lib" "$(TargetDir)$(TargetName).pdb" "$(STAGING_PDB)\$(TargetName).pdb"</Command>
+@@ -186,7 +188,7 @@
+     <ClCompile>
+       <Optimization>MaxSpeed</Optimization>
+       <FunctionLevelLinking>true</FunctionLevelLinking>
+-      <PreprocessorDefinitions>BUILDING_USVFS_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>BUILDING_USVFS_DLL;USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS;DLLEXPORT=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+       <IntrinsicFunctions>true</IntrinsicFunctions>
+       <WholeProgramOptimization>false</WholeProgramOptimization>
+@@ -199,6 +201,7 @@
+       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+       <OptimizeReferences>true</OptimizeReferences>
+       <AdditionalDependencies>Shlwapi.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
++      <ModuleDefinitionFile>..\..\..\ASSEMBLER\src\usvfs_x64.def</ModuleDefinitionFile>
+     </Link>
+     <CustomBuildStep>
+       <Command>stage_helper.cmd "$(TargetName)" "$(TargetPath)" "$(STAGING_DLL)\$(TargetFileName)" "$(TargetDir)$(TargetName).lib" "$(STAGING_LIB)\$(TargetName).lib" "$(TargetDir)$(TargetName).pdb" "$(STAGING_PDB)\$(TargetName).pdb"</Command>
+@@ -217,11 +220,28 @@
+     <ResourceCompile Include="..\src\usvfs_dll\version.rc" />
+   </ItemGroup>
+   <ItemGroup>
+-    <ClCompile Include="..\src\usvfs_dll\hookcallcontext.cpp" />
+-    <ClCompile Include="..\src\usvfs_dll\hookcontext.cpp" />
+-    <ClCompile Include="..\src\usvfs_dll\hookmanager.cpp" />
+-    <ClCompile Include="..\src\usvfs_dll\hooks\kernel32.cpp" />
+-    <ClCompile Include="..\src\usvfs_dll\hooks\ntdll.cpp" />
++    <MASM Include="..\..\..\ASSEMBLER\src\usvfs_parameter_exports_x64.asm">
++      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
++      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
++    </MASM>
++    <MASM Include="..\..\..\ASSEMBLER\src\usvfs_exports_x64.asm">
++      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
++      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
++    </MASM>
++    <MASM Include="..\..\..\ASSEMBLER\src\usvfs_runtime_x64.asm">
++      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
++      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
++    </MASM>
++    <MASM Include="..\..\..\ASSEMBLER\src\usvfs_context_x64.asm">
++      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
++      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
++    </MASM>
++  </ItemGroup>
++  <ItemGroup>
++    <ClCompile Include="..\..\..\ASSEMBLER\src\usvfs_exports_bridge.cpp" />
++    <ClCompile Include="..\..\..\ASSEMBLER\src\usvfs_context_bridge.cpp" />
++    <ClCompile Include="..\..\..\ASSEMBLER\src\usvfs_kernel32_bridge.cpp" />
++    <ClCompile Include="..\..\..\ASSEMBLER\src\usvfs_ntdll_bridge.cpp" />
+     <ClCompile Include="..\src\usvfs_dll\pch.cpp">
+       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
+@@ -232,11 +252,6 @@
+       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
+     </ClCompile>
+-    <ClCompile Include="..\src\usvfs_dll\redirectiontree.cpp" />
+-    <ClCompile Include="..\src\usvfs_dll\semaphore.cpp" />
+-    <ClCompile Include="..\src\usvfs_dll\sharedparameters.cpp" />
+-    <ClCompile Include="..\src\usvfs_dll\usvfs.cpp" />
+-    <ClCompile Include="..\src\usvfs_dll\usvfsparameters.cpp" />
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="..\include\dllimport.h" />
+@@ -285,5 +300,6 @@
+   </ItemGroup>
+   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+   <ImportGroup Label="ExtensionTargets">
++    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+   </ImportGroup>
+-</Project>
+\ No newline at end of file
++</Project>

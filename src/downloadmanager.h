@@ -38,6 +38,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileSystemWatcher>
 #include <QSettings>
 #include <boost/signals2.hpp>
+#include <mutex>
+
 
 namespace MOBase { class IPluginGame; }
 
@@ -579,6 +581,8 @@ private:
   MOBase::IPluginGame const *m_ManagedGame;
 
   QTimer m_TimeoutTimer;
+
+  mutable std::recursive_mutex m_ListMutex;
 };
 
 class ScopedDisableDirWatcher

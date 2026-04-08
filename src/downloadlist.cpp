@@ -106,6 +106,9 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
   if (role == Qt::DisplayRole) {
     if (pendingDownload) {
       std::tuple<QString, int, int> nexusids = m_manager.getPendingDownload(index.row() - m_manager.numTotalDownloads());
+      if (std::get<1>(nexusids) == -1) {
+        return QVariant();
+      }
       switch (index.column()) {
         case COL_NAME: return tr("< game %1 mod %2 file %3 >").arg(std::get<0>(nexusids)).arg(std::get<1>(nexusids)).arg(std::get<2>(nexusids));
         case COL_SIZE: return tr("Unknown");
@@ -119,7 +122,7 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
             return {};
           } else {
             const MOBase::ModRepositoryFileInfo *info = m_manager.getFileInfo(index.row());
-            return info->modName;
+            return info != nullptr ? info->modName : QVariant();
           }
         }
         case COL_VERSION: {
@@ -127,7 +130,7 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
             return {};
           } else {
             const MOBase::ModRepositoryFileInfo *info = m_manager.getFileInfo(index.row());
-            return info->version.canonicalString();
+            return info != nullptr ? info->version.canonicalString() : QVariant();
           }
         }
         case COL_ID: {
@@ -185,6 +188,9 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
         text += tr("Information missing, please select \"Query Info\" from the context menu to re-retrieve.");
       } else {
         const MOBase::ModRepositoryFileInfo *info = m_manager.getFileInfo(index.row());
+        if (info == nullptr) {
+          return QVariant();
+        }
         return QString("%1 (ID %2) %3<br><span>%4</span>").arg(info->modName).arg(m_manager.getModID(index.row())).arg(info->version.canonicalString()).arg(info->description.chopped(4096));
       }
       return text;

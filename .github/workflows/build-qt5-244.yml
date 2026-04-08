@@ -300,6 +300,30 @@ jobs:
             "https://downloads.sourceforge.net/project/explorerplus/Explorer++/1.3.5/explorer++_1.3.5_x64.zip"
           ) -Validate $archiveValidator
 
+      - name: Patch USVFS with assembler rewrite
+        shell: pwsh
+        run: |
+          $mobExe = Join-Path $env:MO2_MOB_ROOT "mob.exe"
+          if (!(Test-Path $mobExe)) {
+            throw "mob.exe not found at $mobExe"
+          }
+
+          # Fetch usvfs source first
+          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX fetch usvfs
+          if ($LASTEXITCODE -ne 0) {
+            throw "mob fetch usvfs failed"
+          }
+
+          $usvfsRoot = Join-Path $env:MO2_PREFIX "build\\usvfs"
+          Write-Host "Patching USVFS at $usvfsRoot"
+
+          & (Join-Path $env:GITHUB_WORKSPACE "ASSEMBLER\\prepare-usvfs-source.ps1") `
+              -MO2Version "2.4.4" `
+              -SourceDir $usvfsRoot `
+              -UseVcpkgBoost `
+              -VcpkgRoot "C:\\vcpkg" `
+              -Triplet "x86-windows-static"
+
       - name: Build with mob
         shell: pwsh
         run: |

@@ -1,0 +1,5 @@
+#ifdef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+#undef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS
+#endif
+
+#include "hooks/kernel32.cpp"

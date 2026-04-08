@@ -1,0 +1,128 @@
+﻿Microsoft (R) COFF/PE Dumper Version 14.44.35225.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file E:\Games\LoreOut\usvfs_x86.dll
+
+File Type: DLL
+
+  Section contains the following exports for usvfs_x86.dll
+
+    00000000 characteristics
+    FFFFFFFF time date stamp
+        0.00 version
+           1 ordinal base
+         101 number of functions
+         101 number of names
+
+    ordinal hint RVA      name
+
+          1    0 00077B90 ??0SharedParameters@usvfs@@QAE@ABUusvfsParameters@@ABV?$scoped_allocator_adaptor@V?$allocator@XV?$segment_manager@DV?$rbtree_best_fit@Umutex_family@interprocess@boost@@V?$offset_ptr@XH_K$0A@@23@$07@interprocess@boost@@Viset_index@23@@interprocess@boost@@@interprocess@boost@@$$V@container@boost@@@Z
+          2    1 000285A0 ??1HookContext@usvfs@@QAE@XZ
+          3    2 00028900 ??1SharedParameters@usvfs@@QAE@XZ
+          4    3 00078360 ?addForcedLibrary@SharedParameters@usvfs@@QAEXABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@0@Z
+          5    4 000786C0 ?blacklistExecutable@SharedParameters@usvfs@@QAEXABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z
+          6    5 00078860 ?clearExecutableBlacklist@SharedParameters@usvfs@@QAEXXZ
+          7    6 000788C0 ?clearForcedLibraries@SharedParameters@usvfs@@QAEXXZ
+          8    7 000789E0 ?currentInverseSHMName@SharedParameters@usvfs@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@XZ
+          9    8 00078D30 ?currentSHMName@SharedParameters@usvfs@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@XZ
+         10    9 00079230 ?executableBlacklisted@SharedParameters@usvfs@@QBE_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@0@Z
+         11    A 00079FD0 ?forcedLibraries@SharedParameters@usvfs@@QAE?AV?$vector@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@V?$allocator@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@@std@@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@4@@Z
+         12    B 00057940 ?hook_CopyFile2@usvfs@@YGJPB_W0PAUCOPYFILE2_EXTENDED_PARAMETERS@@@Z
+         13    C 00057D60 ?hook_CopyFileExW@usvfs@@YGHPB_W0P6GKT_LARGE_INTEGER@@111KKPAX22@Z2PAHK@Z
+         14    D 00058180 ?hook_CreateDirectoryW@usvfs@@YGHPB_WPAU_SECURITY_ATTRIBUTES@@@Z
+         15    E 000584D0 ?hook_CreateProcessInternalW@usvfs@@YGHPAXPB_WPA_WPAU_SECURITY_ATTRIBUTES@@3HK01PAU_STARTUPINFOW@@PAU_PROCESS_INFORMATION@@0@Z
+         16    F 00059090 ?hook_DeleteFileW@usvfs@@YGHPB_W@Z
+         17   10 00059430 ?hook_ExitProcess@usvfs@@YGXI@Z
+         18   11 000595D0 ?hook_FindFirstFileExW@usvfs@@YGPAXPB_WW4_FINDEX_INFO_LEVELS@@PAXW4_FINDEX_SEARCH_OPS@@2K@Z
+         19   12 00059FE0 ?hook_GetCurrentDirectoryA@usvfs@@YGKKPAD@Z
+         20   13 0005A1C0 ?hook_GetCurrentDirectoryW@usvfs@@YGKKPA_W@Z
+         21   14 0005A4C0 ?hook_GetFileAttributesExW@usvfs@@YGHPB_WW4_GET_FILEEX_INFO_LEVELS@@PAX@Z
+         22   15 0005A930 ?hook_GetFileAttributesW@usvfs@@YGKPB_W@Z
+         23   16 0005AD40 ?hook_GetFullPathNameA@usvfs@@YGKPBDKPADPAPAD@Z
+         24   17 0005B230 ?hook_GetFullPathNameW@usvfs@@YGKPB_WKPA_WPAPA_W@Z
+         25   18 0005B680 ?hook_GetModuleFileNameW@usvfs@@YGKPAUHINSTANCE__@@PA_WK@Z
+         26   19 0005BA00 ?hook_GetPrivateProfileSectionA@usvfs@@YGKPBDPADK0@Z
+         27   1A 0005BD20 ?hook_GetPrivateProfileSectionW@usvfs@@YGKPB_WPA_WK0@Z
+         28   1B 0005BFE0 ?hook_GetPrivateProfileStringA@usvfs@@YGKPBD00PADK0@Z
+         29   1C 0005C320 ?hook_GetPrivateProfileStringW@usvfs@@YGKPB_W00PA_WK0@Z
+         30   1D 0005C600 ?hook_LoadLibraryExW@usvfs@@YGPAUHINSTANCE__@@PB_WPAXK@Z
+         31   1E 0005C800 ?hook_MoveFileA@usvfs@@YGHPBD0@Z
+         32   1F 0005CA90 ?hook_MoveFileExA@usvfs@@YGHPBD0K@Z
+         33   20 0005CE10 ?hook_MoveFileExW@usvfs@@YGHPB_W0K@Z
+         34   21 0005D4B0 ?hook_MoveFileW@usvfs@@YGHPB_W0@Z
+         35   22 0005DB40 ?hook_MoveFileWithProgressA@usvfs@@YGHPBD0P6GKT_LARGE_INTEGER@@111KKPAX22@Z2K@Z
+         36   23 0005DED0 ?hook_MoveFileWithProgressW@usvfs@@YGHPB_W0P6GKT_LARGE_INTEGER@@111KKPAX22@Z2K@Z
+         37   24 0006CB40 ?hook_NtClose@usvfs@@YGJPAX@Z
+         38   25 0006CEF0 ?hook_NtCreateFile@usvfs@@YGJPAPAXKPAU_OBJECT_ATTRIBUTES@@PAU_IO_STATUS_BLOCK@@PAT_LARGE_INTEGER@@KKKKPAXK@Z
+         39   26 0006CFA0 ?hook_NtOpenFile@usvfs@@YGJPAPAXKPAU_OBJECT_ATTRIBUTES@@PAU_IO_STATUS_BLOCK@@KK@Z
+         40   27 0006D040 ?hook_NtQueryAttributesFile@usvfs@@YGJPAU_OBJECT_ATTRIBUTES@@PAU_FILE_BASIC_INFORMATION@@@Z
+         41   28 0006D340 ?hook_NtQueryDirectoryFile@usvfs@@YGJPAX0P6GX0PAU_IO_STATUS_BLOCK@@K@Z010KW4_FILE_INFORMATION_CLASS@@EPAU_UNICODE_STRING@@E@Z
+         42   29 0006DB00 ?hook_NtQueryDirectoryFileEx@usvfs@@YGJPAX0P6GX0PAU_IO_STATUS_BLOCK@@K@Z010KW4_FILE_INFORMATION_CLASS@@KPAU_UNICODE_STRING@@@Z
+         43   2A 0006E2E0 ?hook_NtQueryFullAttributesFile@usvfs@@YGJPAU_OBJECT_ATTRIBUTES@@PAU_FILE_NETWORK_OPEN_INFORMATION@@@Z
+         44   2B 0006E710 ?hook_NtTerminateProcess@usvfs@@YGJPAXJ@Z
+         45   2C 0005E580 ?hook_RemoveDirectoryW@usvfs@@YGHPB_W@Z
+         46   2D 0005E7D0 ?hook_SetCurrentDirectoryA@usvfs@@YGHPBD@Z
+         47   2E 0005E850 ?hook_SetCurrentDirectoryW@usvfs@@YGHPB_W@Z
+         48   2F 0005F130 ?hook_SetFileAttributesW@usvfs@@YGKPB_WK@Z
+         49   30 0005F320 ?hook_WritePrivateProfileStringA@usvfs@@YGHPBD000@Z
+         50   31 0005F7A0 ?hook_WritePrivateProfileStringW@usvfs@@YGHPB_W000@Z
+         51   32 0007BA50 ?instanceName@SharedParameters@usvfs@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@XZ
+         52   33 0007C0C0 ?makeLocal@SharedParameters@usvfs@@QBE?AUusvfsParameters@@XZ
+         53   34 0007D0C0 ?registerProcess@SharedParameters@usvfs@@QAEXK@Z
+         54   35 0007D120 ?registeredProcessCount@SharedParameters@usvfs@@QBEIXZ
+         55   36 0007D150 ?registeredProcesses@SharedParameters@usvfs@@QBE?AV?$vector@KV?$allocator@K@std@@@std@@XZ
+         56   37 0007D4C0 ?setDebugParameters@SharedParameters@usvfs@@QAEXW4LogLevel@@W4CrashDumpsType@@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@V?$duration@_JU?$ratio@$00$0DOI@@std@@@chrono@6@@Z
+         57   38 0007D550 ?setSHMNames@SharedParameters@usvfs@@QAEXABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@0@Z
+         58   39 0007D870 ?unregisterProcess@SharedParameters@usvfs@@QAEXK@Z
+         59   3A 0007DB80 ?userConnected@SharedParameters@usvfs@@QAEIXZ
+         60   3B 0007DBB0 ?userCount@SharedParameters@usvfs@@QAEIXZ
+         61   3C 0007DBE0 ?userDisconnected@SharedParameters@usvfs@@QAEIXZ
+         67   3D 00049DF0 CreateHookContext
+         78   3E 0008B0F0 InitHooks
+         62   3F 0008A280 _BlacklistExecutable@4
+         63   40 0008A310 _ClearExecutableBlacklist@0
+         64   41 0008A320 _ClearLibraryForceLoads@0
+         65   42 0008A330 _ClearVirtualMappings@0
+         66   43 0008A470 _ConnectVFS@4
+         68   44 0008A4A0 _CreateMiniDump@12
+         69   45 0008A550 _CreateProcessHooked@40
+         70   46 0008A830 _CreateVFS@4
+         71   47 0008A870 _CreateVFSDump@8
+         72   48 0008AA00 _DisconnectVFS@0
+         73   49 0008ACB0 _ForceLoadLibrary@8
+         74   4A 0008ADD0 _GetCurrentVFSName@8
+         75   4B 0008AE10 _GetLogMessages@12
+         76   4C 0008AF10 _GetVFSProcessList2@8
+         77   4D 0008B000 _GetVFSProcessList@8
+         79   4E 0008BD50 _InitLogging@4
+         80   4F 0008BD70 _PrintDebugInfo@0
+         81   50 0008C4B0 _USVFSInitParameters@24
+         82   51 0008C590 _USVFSUpdateParams@8
+         83   52 0008C5D0 _USVFSVersionString@0
+         84   53 0008C5E0 _VirtualLinkDirectoryStatic@12
+         85   54 0008D460 _VirtualLinkFile@12
+         86   55 0008D910 _usvfsConnectVFS@4
+         89   56 00049E70 _usvfsCreateHookContext@8
+         91   57 0008DB50 _usvfsCreateVFS@4
+        101   58 0008DB70 _usvfsUpdateParameters@4
+         87   59 0008DF90 usvfsCopyParameters
+         88   5A 0008DFB0 usvfsCrashDumpTypeToString
+         90   5B 0008E000 usvfsCreateParameters
+         92   5C 0008E020 usvfsDupeParameters
+         93   5D 0008E060 usvfsFreeParameters
+         94   5E 0008E080 usvfsLogLevelToString
+         95   5F 0008E0D0 usvfsSetCrashDumpPath
+         96   60 0008E140 usvfsSetCrashDumpType
+         97   61 0008E160 usvfsSetDebugMode
+         98   62 0008E180 usvfsSetInstanceName
+         99   63 0008E1D0 usvfsSetLogLevel
+        100   64 0008E1F0 usvfsSetProcessDelay
+
+  Summary
+
+       1C000 .data
+       38000 .rdata
+        D000 .reloc
+        1000 .rsrc
+       FD000 .text
