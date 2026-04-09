@@ -318,6 +318,8 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     if (Test-Path $sharedParametersPath) {
         $spContent = Get-Content $sharedParametersPath -Raw
         $spPatched = "#ifndef $assemblyMacro`n" + $spContent + "`n#endif`n`n"
+        $spPatched += "#include `"pch.h`"`n"
+        $spPatched += "#include `"sharedparameters.h`"`n"
         $spPatched += "namespace usvfs {`n"
         $spPatched += "SharedParameters::~SharedParameters() {}`n"
         $spPatched += "ForcedLibrary::~ForcedLibrary() {}`n"
