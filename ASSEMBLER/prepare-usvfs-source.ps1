@@ -131,8 +131,11 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
             $assemblyMacro += ';USVFS_TARGET_V252'
         }
     }
+    # Create a sanitized version of the macro for use in #ifndef guards (no semicolons)
+    $guardMacro = $assemblyMacro.Replace(';', '_')
+
     $parametersPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\usvfsparameters.cpp'
-    $parametersText = Ensure-WholeFileMacroGuard $parametersPath $assemblyMacro
+    Ensure-WholeFileMacroGuard $parametersPath $guardMacro | Out-Null
 
     $projectPath = Join-Path $PatchedSourceDir 'vsbuild\usvfs_dll.vcxproj'
     Write-Host "[patch-xml] Patching project file $projectPath"
@@ -311,33 +314,47 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     }
 
     $usvfsPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\usvfs.cpp'
-    $usvfsText = Ensure-WholeFileMacroGuard $usvfsPath $assemblyMacro
+    $usvfsText = Ensure-WholeFileMacroGuard $usvfsPath $guardMacro
 
     # Patch the header to declare destructors so we can define them in our bridge
     $sharedParametersHeaderPath = Join-Path $PatchedSourceDir 'include\usvfs\sharedparameters.h'
+    Write-Info "Checking header for destructor injection: $sharedParametersHeaderPath"
     if (Test-Path $sharedParametersHeaderPath) {
-        Write-Host "[prepare-usvfs] Patching sharedparameters.h declarations..."
         $hContent = Get-Content $sharedParametersHeaderPath -Raw
-        # Declare destructors
-        $hContent = $hContent -replace 'std::string libraryPath\(\) const;', 'std::string libraryPath() const; ~ForcedLibrary();'
-        $hContent = $hContent -replace 'usvfsParameters makeLocal\(\) const;', 'usvfsParameters makeLocal() const; ~SharedParameters();'
-        Set-Content $sharedParametersHeaderPath $hContent -NoNewline
+        $originalHContent = $hContent
+
+        # Declare destructors using flexible regex to handle spacing
+        $hContent = $hContent -replace 'std::string\s+libraryPath\(\)\s+const\s*;', 'std::string libraryPath() const; ~ForcedLibrary();'
+        $hContent = $hContent -replace 'usvfsParameters\s+makeLocal\(\)\s+const\s*;', 'usvfsParameters makeLocal() const; ~SharedParameters();'
+
+        if ($hContent -ne $originalHContent) {
+            Write-Host "[prepare-usvfs] Successfully patched sharedparameters.h declarations."
+            Set-Content $sharedParametersHeaderPath $hContent -NoNewline
+        } else {
+            if ($hContent -match '~SharedParameters') {
+                Write-Host "[prepare-usvfs] Header already patched; skipping."
+            } else {
+                Write-Warning "[prepare-usvfs] Failed to find target signatures in sharedparameters.h - destructors NOT declared!"
+            }
+        }
+    } else {
+        Write-Error "[prepare-usvfs] SharedParameters header NOT FOUND at $sharedParametersHeaderPath"
     }
 
     # Now we can safely guard the whole sharedparameters.cpp
     $sharedParametersPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\sharedparameters.cpp'
     if (Test-Path $sharedParametersPath) {
-        Ensure-WholeFileMacroGuard $sharedParametersPath $assemblyMacro
+        Ensure-WholeFileMacroGuard $sharedParametersPath $guardMacro | Out-Null
     }
 
     $hookCallContextPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\hookcallcontext.cpp'
-    Ensure-WholeFileMacroGuard $hookCallContextPath $assemblyMacro | Out-Null
+    Ensure-WholeFileMacroGuard $hookCallContextPath $guardMacro | Out-Null
 
     $hookContextPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\hookcontext.cpp'
-    Ensure-WholeFileMacroGuard $hookContextPath $assemblyMacro | Out-Null
+    Ensure-WholeFileMacroGuard $hookContextPath $guardMacro | Out-Null
 
     $hookManagerPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\hookmanager.cpp'
-    Ensure-WholeFileMacroGuard $hookManagerPath $assemblyMacro | Out-Null
+    Ensure-WholeFileMacroGuard $hookManagerPath $guardMacro | Out-Null
     $initLoggingBlock = @"
 void WINAPI InitLogging(bool toConsole)
 {
@@ -634,14 +651,14 @@ const char* WINAPI USVFSVersionString()
 }
 "@ -replace "`n", $projectNl
 
-    $usvfsText = Wrap-PreprocessorBlock $usvfsText $initLoggingBlock $assemblyMacro $projectNl
-    $usvfsText = Wrap-PreprocessorBlock $usvfsText $updateParamsBlock $assemblyMacro $projectNl
-    $usvfsText = Wrap-PreprocessorBlock $usvfsText $createVfsBlock $assemblyMacro $projectNl
-    $usvfsText = Wrap-PreprocessorBlock $usvfsText $connectVfsBlock $assemblyMacro $projectNl
-    $usvfsText = Wrap-PreprocessorBlock $usvfsText $disconnectVfsBlock $assemblyMacro $projectNl
-    $usvfsText = Wrap-PreprocessorBlock $usvfsText $processListBlock $assemblyMacro $projectNl
-    $usvfsText = Wrap-PreprocessorBlock $usvfsText $clearMappingsBlock $assemblyMacro $projectNl
-    $usvfsText = Wrap-PreprocessorBlock $usvfsText $tailExportsBlock $assemblyMacro $projectNl
+    $usvfsText = Wrap-PreprocessorBlock $usvfsText $initLoggingBlock $guardMacro $projectNl
+    $usvfsText = Wrap-PreprocessorBlock $usvfsText $updateParamsBlock $guardMacro $projectNl
+    $usvfsText = Wrap-PreprocessorBlock $usvfsText $createVfsBlock $guardMacro $projectNl
+    $usvfsText = Wrap-PreprocessorBlock $usvfsText $connectVfsBlock $guardMacro $projectNl
+    $usvfsText = Wrap-PreprocessorBlock $usvfsText $disconnectVfsBlock $guardMacro $projectNl
+    $usvfsText = Wrap-PreprocessorBlock $usvfsText $processListBlock $guardMacro $projectNl
+    $usvfsText = Wrap-PreprocessorBlock $usvfsText $clearMappingsBlock $guardMacro $projectNl
+    $usvfsText = Wrap-PreprocessorBlock $usvfsText $tailExportsBlock $guardMacro $projectNl
     Write-Utf8NoBom $usvfsPath $usvfsText
 
     $loggerPath = Join-Path $PatchedSourceDir 'src\shared\shmlogger.cpp'
@@ -772,7 +789,6 @@ if (($parametersText -notmatch '#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS') -
     ($projectText -match '\.\.\\src\\usvfs_dll\\semaphore\.cpp') -or
     ($projectText -match '\.\.\\src\\usvfs_dll\\sharedparameters\.cpp') -or
     ($projectText -match '\.\.\\src\\usvfs_dll\\usvfs\.cpp') -or
-    ($MO2Version -eq '2.4.4') -or
     ([regex]::Matches($projectText, 'USVFS_TARGET_V2').Count -lt 4) -or
     ($projectText -notmatch 'BuildCustomizations\\masm.props') -or
     ($commonPropsText -notmatch '\.\.\\src\\usvfs_dll;') -or
