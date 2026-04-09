@@ -272,8 +272,7 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     $toRemove = @(
         'hookcallcontext.cpp', 'hookcontext.cpp', 'hookmanager.cpp',
         'kernel32.cpp', 'ntdll.cpp', 'redirectiontree.cpp',
-        'semaphore.cpp', 'sharedparameters.cpp', 'usvfs.cpp',
-        'usvfsparameters.cpp'
+        'semaphore.cpp', 'usvfs.cpp', 'usvfsparameters.cpp'
     )
     foreach ($name in $toRemove) {
         $nodes = $xml.SelectNodes("//ms:ClCompile[contains(@Include, '$name')]", $ns)
@@ -314,22 +313,17 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     $usvfsPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\usvfs.cpp'
     $usvfsText = Ensure-WholeFileMacroGuard $usvfsPath $assemblyMacro
 
-    # Patch sharedparameters.h to declare destructors so we can implement them in bridge
-    $sharedParamsHeaderPath = Join-Path $PatchedSourceDir 'include\usvfs\sharedparameters.h'
-    if (!(Test-Path $sharedParamsHeaderPath)) {
-        $sharedParamsHeaderPath = Join-Path $PatchedSourceDir 'include\sharedparameters.h'
-    }
-    if (Test-Path $sharedParamsHeaderPath) {
-        $headerContent = Get-Content $sharedParamsHeaderPath -Raw
-        if ($headerContent -notmatch '~SharedParameters\(\)') {
-            $headerContent = $headerContent -replace 'SharedParameters\(const usvfsParameters& reference,', "`n  virtual `~SharedParameters();`n`n  SharedParameters(const usvfsParameters& reference,"
-            $headerContent = $headerContent -replace 'std::string libraryPath\(\) const;', "std::string libraryPath() const;`n  `~ForcedLibrary();"
-            Set-Content $sharedParamsHeaderPath $headerContent -NoNewline
-        }
-    }
-
+    # Restore sharedparameters.cpp but only for the destructor to avoid unresolved symbols
     $sharedParametersPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\sharedparameters.cpp'
-    Ensure-WholeFileMacroGuard $sharedParametersPath $assemblyMacro | Out-Null
+    if (Test-Path $sharedParametersPath) {
+        $spContent = Get-Content $sharedParametersPath -Raw
+        $spPatched = "#ifndef $assemblyMacro`n" + $spContent + "`n#endif`n`n"
+        $spPatched += "namespace usvfs {`n"
+        $spPatched += "SharedParameters::~SharedParameters() {}`n"
+        $spPatched += "ForcedLibrary::~ForcedLibrary() {}`n"
+        $spPatched += "}`n"
+        Set-Content $sharedParametersPath $spPatched -NoNewline
+    }
 
     $hookCallContextPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\hookcallcontext.cpp'
     Ensure-WholeFileMacroGuard $hookCallContextPath $assemblyMacro | Out-Null

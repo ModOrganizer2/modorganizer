@@ -86,10 +86,6 @@ SharedParameters::SharedParameters(const usvfsParameters& reference,
     , m_forcedLibraries(ForcedLibraryAllocatorT(allocator))
 {}
 
-SharedParameters::~SharedParameters() {}
-
-ForcedLibrary::~ForcedLibrary() {}
-
 usvfsParameters SharedParameters::makeLocal() const
 {
   bi::scoped_lock lock(m_mutex);
