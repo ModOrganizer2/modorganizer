@@ -317,9 +317,21 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     $usvfsText = Ensure-WholeFileMacroGuard $usvfsPath $guardMacro
 
     # Patch the header to declare destructors so we can define them in our bridge
-    $sharedParametersHeaderPath = Join-Path $PatchedSourceDir 'include\usvfs\sharedparameters.h'
-    Write-Info "Checking header for destructor injection: $sharedParametersHeaderPath"
-    if (Test-Path $sharedParametersHeaderPath) {
+    $possibleHeaderPaths = @(
+        'include\sharedparameters.h',
+        'include\usvfs\sharedparameters.h'
+    )
+    $sharedParametersHeaderPath = $null
+    foreach ($p in $possibleHeaderPaths) {
+        $candidate = Join-Path $PatchedSourceDir $p
+        if (Test-Path $candidate) {
+            $sharedParametersHeaderPath = $candidate
+            break
+        }
+    }
+
+    if ($sharedParametersHeaderPath) {
+        Write-Info "Checking header for destructor injection: $sharedParametersHeaderPath"
         $hContent = Get-Content $sharedParametersHeaderPath -Raw
         $originalHContent = $hContent
 
@@ -338,7 +350,7 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
             }
         }
     } else {
-        Write-Error "[prepare-usvfs] SharedParameters header NOT FOUND at $sharedParametersHeaderPath"
+        Write-Error "[prepare-usvfs] SharedParameters header NOT FOUND in any expected location!"
     }
 
     # Now we can safely guard the whole sharedparameters.cpp
