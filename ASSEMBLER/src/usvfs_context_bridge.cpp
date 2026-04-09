@@ -55,6 +55,7 @@ ForcedLibrary::ForcedLibrary(const std::string& process,
     : m_processName(process.c_str(), shared::CharAllocatorT(alloc))
     , m_libraryPath(path.c_str(), shared::CharAllocatorT(alloc))
 {}
+ForcedLibrary::~ForcedLibrary() {}
 
 std::string ForcedLibrary::processName() const
 {
@@ -85,6 +86,8 @@ SharedParameters::SharedParameters(const usvfsParameters& reference,
 #endif
     , m_forcedLibraries(ForcedLibraryAllocatorT(allocator))
 {}
+
+SharedParameters::~SharedParameters() {}
 
 usvfsParameters SharedParameters::makeLocal() const
 {

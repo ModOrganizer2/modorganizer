@@ -313,13 +313,13 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     $usvfsPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\usvfs.cpp'
     $usvfsText = Ensure-WholeFileMacroGuard $usvfsPath $assemblyMacro
 
-    # Patch the header to provide inline destructors so we don't need to define them in the .cpp
+    # Patch the header to declare destructors so we can define them in our bridge
     $sharedParametersHeaderPath = Join-Path $PatchedSourceDir 'include\usvfs\sharedparameters.h'
     if (Test-Path $sharedParametersHeaderPath) {
         $hContent = Get-Content $sharedParametersHeaderPath -Raw
-        # Add Inline destructors
-        $hContent = $hContent -replace '(\s+)std::string libraryPath\(\) const;', '$1std::string libraryPath() const;$1~ForcedLibrary() {}'
-        $hContent = $hContent -replace '(\s+)usvfsParameters makeLocal\(\) const;', '$1usvfsParameters makeLocal() const;$1~SharedParameters() {}'
+        # Declare destructors
+        $hContent = $hContent -replace '(\s+)std::string libraryPath\(\) const;', '$1std::string libraryPath() const;$1~ForcedLibrary();'
+        $hContent = $hContent -replace '(\s+)usvfsParameters makeLocal\(\) const;', '$1usvfsParameters makeLocal() const;$1~SharedParameters();'
         Set-Content $sharedParametersHeaderPath $hContent -NoNewline
     }
 
