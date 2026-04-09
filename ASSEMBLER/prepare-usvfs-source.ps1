@@ -151,7 +151,7 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
             $existing = $clCompile.PreprocessorDefinitions
             if ($existing -and ($existing -notmatch [regex]::Escape($assemblyMacro))) {
                 Write-Host "[patch-xml]   Applying preprocessor patch to $condition"
-                $clCompile.PreprocessorDefinitions = "BUILDING_USVFS_DLL;BOOST_ALL_NO_LIB;$assemblyMacro;DLLEXPORT=;" + $existing
+                $clCompile.PreprocessorDefinitions = "BUILDING_USVFS_DLL;BOOST_ALL_NO_LIB;$assemblyMacro;" + $existing
             }
         }
     }
@@ -316,10 +316,11 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     # Patch the header to declare destructors so we can define them in our bridge
     $sharedParametersHeaderPath = Join-Path $PatchedSourceDir 'include\usvfs\sharedparameters.h'
     if (Test-Path $sharedParametersHeaderPath) {
+        Write-Host "[prepare-usvfs] Patching sharedparameters.h declarations..."
         $hContent = Get-Content $sharedParametersHeaderPath -Raw
         # Declare destructors
-        $hContent = $hContent -replace '(\s+)std::string libraryPath\(\) const;', '$1std::string libraryPath() const;$1~ForcedLibrary();'
-        $hContent = $hContent -replace '(\s+)usvfsParameters makeLocal\(\) const;', '$1usvfsParameters makeLocal() const;$1~SharedParameters();'
+        $hContent = $hContent -replace 'std::string libraryPath\(\) const;', 'std::string libraryPath() const; ~ForcedLibrary();'
+        $hContent = $hContent -replace 'usvfsParameters makeLocal\(\) const;', 'usvfsParameters makeLocal() const; ~SharedParameters();'
         Set-Content $sharedParametersHeaderPath $hContent -NoNewline
     }
 
