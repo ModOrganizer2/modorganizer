@@ -323,10 +323,7 @@ jobs:
 
           & (Join-Path $env:GITHUB_WORKSPACE "ASSEMBLER\\prepare-usvfs-source.ps1") `
               -MO2Version "2.4.4" `
-              -SourceDir $usvfsRoot `
-              -UseVcpkgBoost `
-              -VcpkgRoot "C:\\vcpkg" `
-              -Triplet "x86-windows-static"
+              -SourceDir $usvfsRoot
 
       - name: Build with mob
         shell: pwsh
