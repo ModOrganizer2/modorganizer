@@ -270,7 +270,7 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
 
     # 5. Remove original files that are replaced by bridge
     $toRemove = @(
-        'hookcontext.cpp', 'hookmanager.cpp',
+        'hookcallcontext.cpp', 'hookcontext.cpp', 'hookmanager.cpp',
         'kernel32.cpp', 'ntdll.cpp', 'redirectiontree.cpp',
         'semaphore.cpp', 'usvfs.cpp', 'usvfsparameters.cpp'
     )
@@ -315,6 +315,9 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
 
     $sharedParametersPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\sharedparameters.cpp'
     # We no longer guard sharedparameters.cpp as it contains the required destructor.
+
+    $hookCallContextPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\hookcallcontext.cpp'
+    Ensure-WholeFileMacroGuard $hookCallContextPath $assemblyMacro | Out-Null
 
     $hookContextPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\hookcontext.cpp'
     Ensure-WholeFileMacroGuard $hookContextPath $assemblyMacro | Out-Null
