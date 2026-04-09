@@ -353,27 +353,51 @@ jobs:
             throw "mob.exe not found at $mobExe"
           }
 
-          $mobOutput = & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build --no-fetch-task 2>&1 | Tee-Object -Variable mobOutput
-          if ($LASTEXITCODE -ne 0) {
-            throw "mob exited with code $LASTEXITCODE"
+          Write-Host "Listing mob tasks..."
+          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX list
+
+          Write-Host "Starting build (targeting usvfs and modorganizer)..."
+          # Run without Tee-Object to ensure stdout is captured correctly by GitHub
+          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build usvfs modorganizer --no-fetch-task
+          
+          $buildExtCode = $LASTEXITCODE
+          if ($buildExtCode -ne 0) {
+            Write-Host "::error::mob build failed with code $buildExtCode"
+            $logPath = Join-Path $env:MO2_PREFIX "mob-ci.log"
+            if (Test-Path $logPath) {
+                Write-Host "Dumping end of $logPath"
+                Get-Content $logPath -Tail 500
+            }
+            throw "mob exited with code $buildExtCode"
           }
 
-          $mobText = $mobOutput | Out-String
           $exe = Join-Path $env:MO2_PREFIX "install\\bin\\ModOrganizer.exe"
           if (!(Test-Path $exe)) {
-            throw "mob completed without producing $exe"
-          }
-
-          if ($mobText -match '(?m)^there were problems:') {
-            $problemLines = $mobText -split '\r?\n' |
-              Where-Object { $_ -match 'there were problems:|task is disabled|installer_omod|translations|installer' }
-
-            if ($problemLines) {
-              Write-Host "::warning::mob reported non-fatal problems:`n$($problemLines -join "`n")"
+            $altExe = Join-Path $env:MO2_PREFIX "install\\ModOrganizer.exe"
+            if (Test-Path $altExe) {
+              $exe = $altExe
+              Write-Host "Found ModOrganizer.exe at alternative location: $exe"
             } else {
-              Write-Host "::warning::mob reported non-fatal problems, but produced ModOrganizer.exe; continuing to manual installer_omod build and smoke test"
+              Write-Host "::warning::ModOrganizer.exe not found in standard locations. Searching..."
+              $searchResult = Get-ChildItem -Path (Join-Path $env:MO2_PREFIX "install") -Filter "ModOrganizer.exe" -Recurse | Select-Object -First 1
+              if ($searchResult) {
+                $exe = $searchResult.FullName
+                Write-Host "Found ModOrganizer.exe at: $exe"
+              } else {
+                Write-Host "::error::ModOrganizer.exe not found anywhere in install directory!"
+                Write-Host "Contents of install directory:"
+                Get-ChildItem -Path (Join-Path $env:MO2_PREFIX "install") -Recurse | Select-Object -ExpandProperty FullName
+                $logPath = Join-Path $env:MO2_PREFIX "mob-ci.log"
+                if (Test-Path $logPath) {
+                    Write-Host "Dumping end of $logPath for clues"
+                    Get-Content $logPath -Tail 200
+                }
+                throw "mob completed without producing ModOrganizer.exe"
+              }
             }
           }
+
+          Write-Host "Build successful: Found $exe"
 
       - name: Build installer_omod manually
         shell: pwsh
