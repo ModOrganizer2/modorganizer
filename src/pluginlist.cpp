@@ -253,8 +253,8 @@ void PluginList::refresh(const QString& profileName,
       continue;
     }
 
-    bool forceLoaded = Settings::instance().game().forceEnableCoreFiles() &&
-                       primaryPlugins.contains(filename, Qt::CaseInsensitive);
+    bool forceLoaded   = Settings::instance().game().forceEnableCoreFiles() &&
+                         primaryPlugins.contains(filename, Qt::CaseInsensitive);
     bool forceEnabled  = enabledPlugins.contains(filename, Qt::CaseInsensitive);
     bool forceDisabled = loadOrderMechanismNone && !forceLoaded && !forceEnabled;
     if (!lightPluginsAreSupported && filename.endsWith(".esl")) {
@@ -2020,7 +2020,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     isBlueprintFlagged = blueprintSupported &&
                          (isMasterFlagged || hasMasterExtension || hasLightExtension) &&
                          file.isBlueprint();
-    hasNoRecords = file.isDummy();
+    hasNoRecords       = file.isDummy();
 
     formVersion   = file.formVersion();
     headerVersion = file.headerVersion();

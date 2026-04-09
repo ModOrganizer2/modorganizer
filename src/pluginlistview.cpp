@@ -112,7 +112,7 @@ void PluginListView::updatePluginCount()
 
   int activeCount = activeMasterCount + activeMediumMasterCount +
                     activeLightMasterCount + activeRegularCount;
-  int totalCount = masterCount + mediumMasterCount + lightMasterCount + regularCount;
+  int totalCount  = masterCount + mediumMasterCount + lightMasterCount + regularCount;
 
   auto toolTip =
       tr("<table cellspacing=\"6\">"
