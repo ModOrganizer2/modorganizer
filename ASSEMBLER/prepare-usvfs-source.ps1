@@ -314,6 +314,20 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     $usvfsPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\usvfs.cpp'
     $usvfsText = Ensure-WholeFileMacroGuard $usvfsPath $assemblyMacro
 
+    # Patch sharedparameters.h to declare destructors so we can implement them in bridge
+    $sharedParamsHeaderPath = Join-Path $PatchedSourceDir 'include\usvfs\sharedparameters.h'
+    if (!(Test-Path $sharedParamsHeaderPath)) {
+        $sharedParamsHeaderPath = Join-Path $PatchedSourceDir 'include\sharedparameters.h'
+    }
+    if (Test-Path $sharedParamsHeaderPath) {
+        $headerContent = Get-Content $sharedParamsHeaderPath -Raw
+        if ($headerContent -notmatch '~SharedParameters\(\)') {
+            $headerContent = $headerContent -replace 'SharedParameters\(const usvfsParameters& reference,', "`n  virtual `~SharedParameters();`n`n  SharedParameters(const usvfsParameters& reference,"
+            $headerContent = $headerContent -replace 'std::string libraryPath\(\) const;', "std::string libraryPath() const;`n  `~ForcedLibrary();"
+            Set-Content $sharedParamsHeaderPath $headerContent -NoNewline
+        }
+    }
+
     $sharedParametersPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\sharedparameters.cpp'
     Ensure-WholeFileMacroGuard $sharedParametersPath $assemblyMacro | Out-Null
 
