@@ -95,6 +95,12 @@ usvfs::HookContext* asHookContext(T* self) {
   return reinterpret_cast<usvfs::HookContext*>(self);
 }
 
+// Implement the destructor for SharedParameters which is missing because we
+// excluded sharedparameters.cpp from the project to avoid conflicts.
+namespace usvfs {
+  SharedParameters::~SharedParameters() {}
+}
+
 bool extensionMatchesCI(std::string_view name, std::string_view extension)
 {
   const std::size_t extensionLengthWithDot = extension.size() + 1;
