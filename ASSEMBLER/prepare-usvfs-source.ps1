@@ -333,18 +333,21 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     if ($sharedParametersHeaderPath) {
         Write-Info "Checking header for destructor injection: $sharedParametersHeaderPath"
         $hContent = Get-Content $sharedParametersHeaderPath -Raw
-        $originalHContent = $hContent
-
-        # Declare destructors using flexible regex to handle spacing
-        $hContent = $hContent -replace 'std::string\s+libraryPath\(\)\s+const\s*;', 'std::string libraryPath() const; ~ForcedLibrary();'
-        $hContent = $hContent -replace 'usvfsParameters\s+makeLocal\(\)\s+const\s*;', 'usvfsParameters makeLocal() const; ~SharedParameters();'
-
-        if ($hContent -ne $originalHContent) {
-            Write-Host "[prepare-usvfs] Successfully patched sharedparameters.h declarations."
-            Set-Content $sharedParametersHeaderPath $hContent -NoNewline
+        
+        # Check if already patched to avoid double declaration if script runs twice
+        if ($hContent -match '~SharedParameters') {
+            Write-Host "[prepare-usvfs] Header already patched (destructors found); skipping injection."
         } else {
-            if ($hContent -match '~SharedParameters') {
-                Write-Host "[prepare-usvfs] Header already patched; skipping."
+            $originalHContent = $hContent
+
+            # Declare destructors using flexible regex to handle spacing
+            # Only match if the destructor followed by a semicolon is NOT already present
+            $hContent = $hContent -replace 'std::string\s+libraryPath\(\)\s+const\s*;', 'std::string libraryPath() const; ~ForcedLibrary();'
+            $hContent = $hContent -replace 'usvfsParameters\s+makeLocal\(\)\s+const\s*;', 'usvfsParameters makeLocal() const; ~SharedParameters();'
+
+            if ($hContent -ne $originalHContent) {
+                Write-Host "[prepare-usvfs] Successfully patched sharedparameters.h declarations."
+                Set-Content $sharedParametersHeaderPath $hContent -NoNewline
             } else {
                 Write-Warning "[prepare-usvfs] Failed to find target signatures in sharedparameters.h - destructors NOT declared!"
             }
