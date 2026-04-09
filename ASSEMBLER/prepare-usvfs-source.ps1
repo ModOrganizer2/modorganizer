@@ -908,3 +908,6 @@ Get-ChildItem -Path $sourceDir -Include '*.vcxproj', '*.props' -Recurse | ForEac
 }
 
 Write-Info "Prepared source tree at $sourceDir"
+
+$global:LASTEXITCODE = 0
+exit 0
