@@ -321,7 +321,7 @@ jobs:
           # 2. Inject pip
           Write-Host "Injecting pip into Python environment..."
           $pipScript = Join-Path $env:RUNNER_TEMP "get-pip.py"
-          Invoke-WebRequest -Uri "https://bootstrap.pypa.io/get-pip.py" -OutFile $pipScript
+          Invoke-WebRequest -Uri "https://bootstrap.pypa.io/pip/3.8/get-pip.py" -OutFile $pipScript
           & $pythonExe $pipScript
           if ($LASTEXITCODE -ne 0) {
             throw "Failed to install pip"
