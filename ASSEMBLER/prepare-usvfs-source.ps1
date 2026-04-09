@@ -272,7 +272,8 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     $toRemove = @(
         'hookcallcontext.cpp', 'hookcontext.cpp', 'hookmanager.cpp',
         'kernel32.cpp', 'ntdll.cpp', 'redirectiontree.cpp',
-        'semaphore.cpp', 'usvfs.cpp', 'usvfsparameters.cpp'
+        'semaphore.cpp', 'sharedparameters.cpp', 'usvfs.cpp',
+        'usvfsparameters.cpp'
     )
     foreach ($name in $toRemove) {
         $nodes = $xml.SelectNodes("//ms:ClCompile[contains(@Include, '$name')]", $ns)
@@ -314,7 +315,7 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     $usvfsText = Ensure-WholeFileMacroGuard $usvfsPath $assemblyMacro
 
     $sharedParametersPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\sharedparameters.cpp'
-    # We no longer guard sharedparameters.cpp as it contains the required destructor.
+    Ensure-WholeFileMacroGuard $sharedParametersPath $assemblyMacro | Out-Null
 
     $hookCallContextPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\hookcallcontext.cpp'
     Ensure-WholeFileMacroGuard $hookCallContextPath $assemblyMacro | Out-Null
