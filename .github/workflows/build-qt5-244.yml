@@ -308,13 +308,17 @@ jobs:
             throw "mob.exe not found at $mobExe"
           }
 
-          # Fetch usvfs source first
-          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX fetch usvfs
+          # Prime all task sources first so we can patch usvfs before the build.
+          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build --no-build-task
           if ($LASTEXITCODE -ne 0) {
-            throw "mob fetch usvfs failed"
+            throw "mob source fetch failed"
           }
 
           $usvfsRoot = Join-Path $env:MO2_PREFIX "build\\usvfs"
+          if (!(Test-Path $usvfsRoot)) {
+            throw "usvfs source not found at $usvfsRoot"
+          }
+
           Write-Host "Patching USVFS at $usvfsRoot"
 
           & (Join-Path $env:GITHUB_WORKSPACE "ASSEMBLER\\prepare-usvfs-source.ps1") `
@@ -332,7 +336,7 @@ jobs:
             throw "mob.exe not found at $mobExe"
           }
 
-          $mobOutput = & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build 2>&1 | Tee-Object -Variable mobOutput
+          $mobOutput = & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build --no-fetch-task 2>&1 | Tee-Object -Variable mobOutput
           if ($LASTEXITCODE -ne 0) {
             throw "mob exited with code $LASTEXITCODE"
           }

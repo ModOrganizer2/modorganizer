@@ -14,8 +14,11 @@ EXTERN __imp_TlsGetValue:QWORD
 EXTERN __imp_TlsSetValue:QWORD
 EXTERN __imp_WaitForSingleObject:QWORD
 
-EXTERN _usvfsAsmRecursiveBenaphoreOwnerDiedLogImpl:PROC
-EXTERN _usvfsAsmStreamRedirectionDataImpl:PROC
+EXTERN usvfsAsmRecursiveBenaphoreOwnerDiedLogImpl:PROC
+EXTERN usvfsAsmStreamRedirectionDataImpl:PROC
+
+_usvfsAsmRecursiveBenaphoreOwnerDiedLogImpl TEXTEQU <usvfsAsmRecursiveBenaphoreOwnerDiedLogImpl>
+_usvfsAsmStreamRedirectionDataImpl TEXTEQU <usvfsAsmStreamRedirectionDataImpl>
 
 .DATA
 ALIGN 4

@@ -56,6 +56,42 @@ function Ensure-WholeFileMacroGuard([string]$Path, [string]$Macro) {
     return $text
 }
 
+function Get-AssemblyDefName([string]$Arch, [string]$MO2Version) {
+    return "usvfs_{0}_v{1}.def" -f $Arch, $MO2Version.Replace('.', '')
+}
+
+function Get-AssemblerSourcePath([string]$ChildPath) {
+    return [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "src\$ChildPath"))
+}
+
+function Get-VcpkgTripletForPlatform([string]$BaseTriplet, [string]$Platform) {
+    $archPrefix = if ($Platform -eq 'x64') { 'x64' } else { 'x86' }
+
+    if ($BaseTriplet -match '^(x86|x64)-') {
+        return ($BaseTriplet -replace '^(x86|x64)-', "$archPrefix-")
+    }
+
+    return $BaseTriplet
+}
+
+function Get-BoostCompatLibRootName([string]$Platform, [string]$MO2Version) {
+    $libSuffix = if ($Platform -eq 'x64') { '64' } else { '32' }
+    $msvcVersion = if ($MO2Version -eq '2.4.4') { '14.2' } else { '14.3' }
+    return "lib$($libSuffix)-msvc-$msvcVersion"
+}
+
+function Get-BoostLinkLibraries([string]$LibDir) {
+    if (!(Test-Path $LibDir)) {
+        return @()
+    }
+
+    return @(
+        Get-ChildItem -LiteralPath $LibDir -Filter 'boost_*.lib' -ErrorAction SilentlyContinue |
+            Sort-Object Name |
+            Select-Object -ExpandProperty Name
+    )
+}
+
 function Invoke-GitProcess([string[]]$Arguments, [switch]$Quiet) {
     $stdoutPath = [System.IO.Path]::GetTempFileName()
 
@@ -95,8 +131,6 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
             $assemblyMacro += ';USVFS_TARGET_V252'
         }
     }
-    $defName = "usvfs_x64_v$($MO2Version.Replace('.','')).def"
-
     $parametersPath = Join-Path $PatchedSourceDir 'src\usvfs_dll\usvfsparameters.cpp'
     $parametersText = Ensure-WholeFileMacroGuard $parametersPath $assemblyMacro
 
@@ -123,14 +157,14 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     }
 
     # 3. Update ModuleDefinitionFile
-    $defX64 = "usvfs_x64_v$MO2Version.def"
-    $defX86 = "usvfs_x86_v$MO2Version.def"
+    $defX64 = Get-AssemblyDefName 'x64' $MO2Version
+    $defX86 = Get-AssemblyDefName 'x86' $MO2Version
     
     $linkGroups = $xml.SelectNodes("//ms:ItemDefinitionGroup/ms:Link", $ns)
     foreach ($link in $linkGroups) {
         $parent = $link.ParentNode
         $condition = $parent.Condition
-        $defFile = if ($condition -match 'x64') { "..\..\..\ASSEMBLER\src\$defX64" } else { "..\..\..\ASSEMBLER\src\$defX86" }
+        $defFile = if ($condition -match 'x64') { Get-AssemblerSourcePath $defX64 } else { Get-AssemblerSourcePath $defX86 }
         
         if (!$link.ModuleDefinitionFile) {
             $node = $xml.CreateElement('ModuleDefinitionFile', $ns.LookupNamespace('ms'))
@@ -153,17 +187,18 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
     # 4. Add MASM and Bridge files
     $itemGroups = $xml.SelectNodes("//ms:ItemGroup", $ns)
     
+    $bridgeFileMap = [ordered]@{
+        'usvfs_exports_bridge.cpp'  = (Get-AssemblerSourcePath 'usvfs_exports_bridge.cpp')
+        'usvfs_context_bridge.cpp'  = (Get-AssemblerSourcePath 'usvfs_context_bridge.cpp')
+        'usvfs_kernel32_bridge.cpp' = (Get-AssemblerSourcePath 'usvfs_kernel32_bridge.cpp')
+        'usvfs_ntdll_bridge.cpp'    = (Get-AssemblerSourcePath 'usvfs_ntdll_bridge.cpp')
+    }
+
     # Check if files are already added
     $bridgeAdded = $xml.SelectSingleNode("//ms:ClCompile[contains(@Include, 'usvfs_context_bridge.cpp')]", $ns)
     if (!$bridgeAdded) {
         $ig = $xml.CreateElement('ItemGroup', $ns.LookupNamespace('ms'))
-        $files = @(
-            '..\..\..\ASSEMBLER\src\usvfs_exports_bridge.cpp',
-            '..\..\..\ASSEMBLER\src\usvfs_context_bridge.cpp',
-            '..\..\..\ASSEMBLER\src\usvfs_kernel32_bridge.cpp',
-            '..\..\..\ASSEMBLER\src\usvfs_ntdll_bridge.cpp'
-        )
-        foreach ($f in $files) {
+        foreach ($f in $bridgeFileMap.Values) {
             $node = $xml.CreateElement('ClCompile', $ns.LookupNamespace('ms'))
             $node.SetAttribute('Include', $f)
             $ig.AppendChild($node) | Out-Null
@@ -171,14 +206,32 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
         $xml.Project.AppendChild($ig) | Out-Null
     }
 
+    foreach ($name in $bridgeFileMap.Keys) {
+        $nodes = $xml.SelectNodes("//ms:ClCompile[contains(@Include, '$name')]", $ns)
+        foreach ($node in $nodes) {
+            $node.SetAttribute('Include', $bridgeFileMap[$name])
+        }
+    }
+
+    $asmPathMap = [ordered]@{
+        'usvfs_parameter_exports_x86.asm' = (Get-AssemblerSourcePath 'usvfs_parameter_exports_x86.asm')
+        'usvfs_exports_x86.asm'           = (Get-AssemblerSourcePath 'usvfs_exports_x86.asm')
+        'usvfs_runtime_x86.asm'           = (Get-AssemblerSourcePath 'usvfs_runtime_x86.asm')
+        'usvfs_context_x86.asm'           = (Get-AssemblerSourcePath 'usvfs_context_x86.asm')
+        'usvfs_parameter_exports_x64.asm' = (Get-AssemblerSourcePath 'usvfs_parameter_exports_x64.asm')
+        'usvfs_exports_x64.asm'           = (Get-AssemblerSourcePath 'usvfs_exports_x64.asm')
+        'usvfs_runtime_x64.asm'           = (Get-AssemblerSourcePath 'usvfs_runtime_x64.asm')
+        'usvfs_context_x64.asm'           = (Get-AssemblerSourcePath 'usvfs_context_x64.asm')
+    }
+
     $masmAdded = $xml.SelectSingleNode("//ms:MASM[contains(@Include, 'usvfs_context_x86.asm')]", $ns)
     if (!$masmAdded) {
         $ig = $xml.CreateElement('ItemGroup', $ns.LookupNamespace('ms'))
         $asmX86 = @(
-            '..\..\..\ASSEMBLER\src\usvfs_parameter_exports_x86.asm',
-            '..\..\..\ASSEMBLER\src\usvfs_exports_x86.asm',
-            '..\..\..\ASSEMBLER\src\usvfs_runtime_x86.asm',
-            '..\..\..\ASSEMBLER\src\usvfs_context_x86.asm'
+            $asmPathMap['usvfs_parameter_exports_x86.asm'],
+            $asmPathMap['usvfs_exports_x86.asm'],
+            $asmPathMap['usvfs_runtime_x86.asm'],
+            $asmPathMap['usvfs_context_x86.asm']
         )
         foreach ($f in $asmX86) {
             $node = $xml.CreateElement('MASM', $ns.LookupNamespace('ms'))
@@ -191,10 +244,10 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
         }
         
         $asmX64 = @(
-            '..\..\..\ASSEMBLER\src\usvfs_parameter_exports_x64.asm',
-            '..\..\..\ASSEMBLER\src\usvfs_exports_x64.asm',
-            '..\..\..\ASSEMBLER\src\usvfs_runtime_x64.asm',
-            '..\..\..\ASSEMBLER\src\usvfs_context_x64.asm'
+            $asmPathMap['usvfs_parameter_exports_x64.asm'],
+            $asmPathMap['usvfs_exports_x64.asm'],
+            $asmPathMap['usvfs_runtime_x64.asm'],
+            $asmPathMap['usvfs_context_x64.asm']
         )
         foreach ($f in $asmX64) {
             $node = $xml.CreateElement('MASM', $ns.LookupNamespace('ms'))
@@ -206,6 +259,13 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
             $ig.AppendChild($node) | Out-Null
         }
         $xml.Project.AppendChild($ig) | Out-Null
+    }
+
+    foreach ($name in $asmPathMap.Keys) {
+        $nodes = $xml.SelectNodes("//ms:MASM[contains(@Include, '$name')]", $ns)
+        foreach ($node in $nodes) {
+            $node.SetAttribute('Include', $asmPathMap[$name])
+        }
     }
 
     # 5. Remove original files that are replaced by bridge
@@ -594,7 +654,10 @@ if ([System.IO.Path]::IsPathRooted($SourceDir)) {
     $sourceDir = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $SourceDir))
 }
 $patchPath = Join-Path $PSScriptRoot 'patches\usvfs-0.5.6.0-asm-parameter-exports.patch'
-$boostLinkLibraries = @()
+$boostLinkLibrariesByPlatform = [ordered]@{
+    'Win32' = @()
+    'x64' = @()
+}
 
 if (!(Test-Path $sourceDir)) {
     $parent = Split-Path -Parent $sourceDir
@@ -703,33 +766,49 @@ if (($parametersText -notmatch '#ifndef USVFS_USE_ASSEMBLY_PARAMETER_EXPORTS') -
 }
 
 if (!$BoostPath -and $UseVcpkgBoost) {
-    $vcpkgInclude = Join-Path $VcpkgRoot "installed\$Triplet\include\boost"
-    $vcpkgLib = Join-Path $VcpkgRoot "installed\$Triplet\lib"
-
-    if (!(Test-Path $vcpkgInclude) -or !(Test-Path $vcpkgLib)) {
-        throw "Vcpkg Boost was not found under $VcpkgRoot for triplet $Triplet"
-    }
-
-    $boostLinkLibraries = Get-ChildItem -LiteralPath $vcpkgLib -Filter 'boost_*.lib' |
-        Sort-Object Name |
-        Select-Object -ExpandProperty Name
-
     $compatRoot = Join-Path $PSScriptRoot "boost-compat-$MO2Version-$Triplet"
-    $isX64 = ($Triplet -match 'x64')
-    $libSuffix = if ($isX64) { "64" } else { "32" }
-    $msvcVersion = if ($MO2Version -eq '2.4.4') { '14.2' } else { '14.3' }
-    $compatLibRootName = "lib$($libSuffix)-msvc-$msvcVersion"
-    $compatLibRoot = Join-Path $compatRoot $compatLibRootName
-    $compatLib = Join-Path $compatLibRoot 'lib'
+    $tripletsByPlatform = [ordered]@{
+        'Win32' = (Get-VcpkgTripletForPlatform $Triplet 'Win32')
+        'x64' = (Get-VcpkgTripletForPlatform $Triplet 'x64')
+    }
+    $primaryPlatform = if ($Triplet -match '^x64-') { 'x64' } else { 'Win32' }
+    $primaryLibDir = $null
+    $primaryIncludeDir = $null
 
     if (Test-Path $compatRoot) {
         Remove-Item -LiteralPath $compatRoot -Recurse -Force
     }
 
-    New-Item -ItemType Directory -Path $compatLibRoot | Out-Null
-    New-Item -ItemType Junction -Path (Join-Path $compatRoot 'boost') -Target $vcpkgInclude | Out-Null
-    New-Item -ItemType Junction -Path $compatLib -Target $vcpkgLib | Out-Null
-    New-Item -ItemType Junction -Path (Join-Path $compatRoot 'lib') -Target $vcpkgLib | Out-Null
+    New-Item -ItemType Directory -Path $compatRoot | Out-Null
+
+    foreach ($platform in $tripletsByPlatform.Keys) {
+        $platformTriplet = $tripletsByPlatform[$platform]
+        $vcpkgInclude = Join-Path $VcpkgRoot "installed\$platformTriplet\include\boost"
+        $vcpkgLib = Join-Path $VcpkgRoot "installed\$platformTriplet\lib"
+
+        if (!(Test-Path $vcpkgInclude) -or !(Test-Path $vcpkgLib)) {
+            throw "Vcpkg Boost was not found under $VcpkgRoot for triplet $platformTriplet"
+        }
+
+        if ($platform -eq $primaryPlatform) {
+            $primaryIncludeDir = $vcpkgInclude
+            $primaryLibDir = $vcpkgLib
+        }
+
+        $boostLinkLibrariesByPlatform[$platform] = Get-BoostLinkLibraries $vcpkgLib
+
+        $compatLibRootName = Get-BoostCompatLibRootName $platform $MO2Version
+        $compatLibRoot = Join-Path $compatRoot $compatLibRootName
+        New-Item -ItemType Directory -Path $compatLibRoot | Out-Null
+        New-Item -ItemType Junction -Path (Join-Path $compatLibRoot 'lib') -Target $vcpkgLib | Out-Null
+    }
+
+    if ($null -eq $primaryIncludeDir -or $null -eq $primaryLibDir) {
+        throw "Unable to determine primary Boost paths for triplet $Triplet"
+    }
+
+    New-Item -ItemType Junction -Path (Join-Path $compatRoot 'boost') -Target $primaryIncludeDir | Out-Null
+    New-Item -ItemType Junction -Path (Join-Path $compatRoot 'lib') -Target $primaryLibDir | Out-Null
 
     $BoostPath = $compatRoot
 }
@@ -737,35 +816,36 @@ if (!$BoostPath -and $UseVcpkgBoost) {
 if ($BoostPath) {
     $BoostPath = (Resolve-Path -LiteralPath $BoostPath).Path
 
-    if ($boostLinkLibraries.Count -eq 0) {
-        $candidateLibDirs = @(
-            (Join-Path $BoostPath "$compatLibRootName\lib"),
-            (Join-Path $BoostPath 'lib')
-        ) | Where-Object { Test-Path $_ }
-
-        foreach ($libDir in $candidateLibDirs) {
-            $boostLinkLibraries = Get-ChildItem -LiteralPath $libDir -Filter 'boost_*.lib' -ErrorAction SilentlyContinue |
-                Sort-Object Name |
-                Select-Object -ExpandProperty Name
-            if ($boostLinkLibraries.Count -gt 0) {
-                break
-            }
-        }
-    }
-
     $propsPath = Join-Path $sourceDir 'vsbuild\external_dependencies_local.props'
     $escapedBoostPath = $BoostPath.Replace('&', '&amp;')
     $boostLinkXml = ''
 
-    if ($boostLinkLibraries.Count -gt 0) {
-        $escapedBoostLibraries = (($boostLinkLibraries -join ';') + ';%(AdditionalDependencies)').Replace('&', '&amp;')
-        $boostLinkXml = @"
-  <ItemDefinitionGroup>
+    foreach ($platform in $boostLinkLibrariesByPlatform.Keys) {
+        if ($boostLinkLibrariesByPlatform[$platform].Count -eq 0) {
+            $compatLibRootName = Get-BoostCompatLibRootName $platform $MO2Version
+            $candidateLibDirs = @(
+                (Join-Path $BoostPath "$compatLibRootName\lib"),
+                (Join-Path $BoostPath 'lib')
+            ) | Where-Object { Test-Path $_ } | Select-Object -Unique
+
+            foreach ($libDir in $candidateLibDirs) {
+                $boostLinkLibrariesByPlatform[$platform] = Get-BoostLinkLibraries $libDir
+                if ($boostLinkLibrariesByPlatform[$platform].Count -gt 0) {
+                    break
+                }
+            }
+        }
+
+        if ($boostLinkLibrariesByPlatform[$platform].Count -gt 0) {
+            $escapedBoostLibraries = (($boostLinkLibrariesByPlatform[$platform] -join ';') + ';%(AdditionalDependencies)').Replace('&', '&amp;')
+            $boostLinkXml += @"
+  <ItemDefinitionGroup Condition="'`$(Platform)'=='$platform'">
     <Link>
       <AdditionalDependencies>$escapedBoostLibraries</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 "@
+        }
     }
 
     Write-Info "Writing $propsPath"
@@ -791,7 +871,7 @@ $boostLinkXml
 $projectPathObj = Join-Path $sourceDir 'vsbuild\usvfs_dll.vcxproj'
 if (Test-Path $projectPathObj) {
     $projectTextObj = Get-Content -LiteralPath $projectPathObj -Raw
-    $defNameObj = "usvfs_x64_v$($MO2Version.Replace('.','')).def"
+    $defNameObj = Get-AssemblyDefName 'x64' $MO2Version
     $projectTextObj = [regex]::Replace($projectTextObj, 'usvfs_x64(?:_v\d+)?\.def', $defNameObj)
     Write-Utf8NoBom $projectPathObj $projectTextObj
 }

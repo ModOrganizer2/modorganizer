@@ -347,11 +347,14 @@ extern "C" std::ostream& __cdecl usvfsAsmStreamRedirectionDataImpl(
   return stream;
 }
 
+#ifndef _WIN64
 namespace usvfs {
-std::ostream& operator<<(std::ostream& stream, const RedirectionData& data) {
-    return usvfsAsmStreamRedirectionDataImpl(stream, data);
+std::ostream& operator<<(std::ostream& stream, const RedirectionData& data)
+{
+  return usvfsAsmStreamRedirectionDataImpl(stream, data);
 }
 }
+#endif
 
 extern "C" void __cdecl usvfsAsmRecursiveBenaphoreOwnerDiedLogImpl(
     DWORD ownerId)
@@ -560,9 +563,11 @@ std::string windows_error::constructMessage(const std::string& msg, int code) {
 }
 }
 
+#ifndef _WIN64
 void usvfsParameters::setCrashDumpPath(const char* path) {
     strncpy_s(this->crashDumpsPath, path, _TRUNCATE);
 }
+#endif
 
 extern "C" void WINAPI usvfsAsmUsvfsUpdateParametersImpl(usvfsParameters* p)
 {
