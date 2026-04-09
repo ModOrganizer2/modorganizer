@@ -308,10 +308,10 @@ jobs:
             throw "mob.exe not found at $mobExe"
           }
 
-          # Prime all task sources first so we can patch usvfs before the build.
-          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build --no-build-task
+          # Fetch usvfs source first so we can patch it before the full build.
+          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build usvfs --no-build-task
           if ($LASTEXITCODE -ne 0) {
-            throw "mob source fetch failed"
+            throw "mob usvfs source fetch failed"
           }
 
           $usvfsRoot = Join-Path $env:MO2_PREFIX "build\\usvfs"
