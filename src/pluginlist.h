@@ -425,6 +425,7 @@ private:
   QElapsedTimer m_LastCheck;
 
   const MOBase::IPluginGame* m_GamePlugin;
+  bool m_BlueprintPlugins = false;
 
   QVariant displayData(const QModelIndex& modelIndex) const;
   QVariant checkstateData(const QModelIndex& modelIndex) const;

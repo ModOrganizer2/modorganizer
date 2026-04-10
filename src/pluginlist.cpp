@@ -228,6 +228,7 @@ void PluginList::refresh(const QString& profileName,
       m_GamePlugin->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::None;
 
   m_CurrentProfile = profileName;
+  m_BlueprintPlugins = blueprintPluginsAreSupported;
 
   std::unordered_map<QString, FileEntryPtr> availablePlugins;
   QStringList archiveCandidates;
@@ -484,6 +485,24 @@ void PluginList::enableESP(const QString& name, bool enable)
                                    m_ESPs[iter->second].forceLoaded ||
                                    m_ESPs[iter->second].forceEnabled;
 
+    if (m_BlueprintPlugins &&
+        !name.startsWith("blueprintships-", Qt::CaseInsensitive)) {
+      QString blueprint("blueprintships-");
+      blueprint += name.left(name.size() - 4) + ".esm";
+      auto blueprintPlugin = m_ESPsByName.find(blueprint);
+      if (blueprintPlugin != m_ESPsByName.end()) {
+        if (enable) {
+          m_ESPs[blueprintPlugin->second].forceDisabled = false;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = true;
+          m_ESPs[blueprintPlugin->second].enabled       = true;
+        } else {
+          m_ESPs[blueprintPlugin->second].forceDisabled = true;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = false;
+          m_ESPs[blueprintPlugin->second].enabled       = false;
+        }
+      }
+    }
+
     emit writePluginsList();
     if (enabled != m_ESPs[iter->second].enabled) {
       pluginStatesChanged({name}, state(name));
@@ -514,6 +533,19 @@ void PluginList::setEnabled(const QModelIndexList& indices, bool enabled)
     if (m_ESPs[idx.row()].enabled != enabled) {
       m_ESPs[idx.row()].enabled = enabled;
       dirty.append(m_ESPs[idx.row()].name);
+      if (m_BlueprintPlugins &&
+          !m_ESPs[idx.row()].name.startsWith("blueprintships-", Qt::CaseInsensitive)) {
+        QString blueprint("blueprintships-");
+        blueprint +=
+            m_ESPs[idx.row()].name.left(m_ESPs[idx.row()].name.size() - 4) + ".esm";
+        auto blueprintPlugin = m_ESPsByName.find(blueprint);
+        if (blueprintPlugin != m_ESPsByName.end()) {
+          m_ESPs[blueprintPlugin->second].forceDisabled = false;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = true;
+          m_ESPs[blueprintPlugin->second].enabled       = true;
+          dirty.append(m_ESPs[blueprintPlugin->second].name);
+        }
+      }
     }
   }
   if (!dirty.isEmpty()) {
@@ -532,6 +564,18 @@ void PluginList::setEnabledAll(bool enabled)
     if (info.enabled != enabled) {
       info.enabled = enabled;
       dirty.append(info.name);
+      if (m_BlueprintPlugins &&
+          !info.name.startsWith("blueprintships-", Qt::CaseInsensitive)) {
+        QString blueprint("blueprintships-");
+        blueprint += info.name.left(info.name.size() - 4) + ".esm";
+        auto blueprintPlugin = m_ESPsByName.find(blueprint);
+        if (blueprintPlugin != m_ESPsByName.end()) {
+          m_ESPs[blueprintPlugin->second].forceDisabled = false;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = true;
+          m_ESPs[blueprintPlugin->second].enabled       = true;
+          dirty.append(m_ESPs[blueprintPlugin->second].name);
+        }
+      }
     }
   }
   if (!dirty.isEmpty()) {
@@ -955,6 +999,25 @@ void PluginList::setState(const QString& name, PluginStates state)
     m_ESPs[iter->second].enabled =
         (state == IPluginList::STATE_ACTIVE && !m_ESPs[iter->second].forceDisabled) ||
         m_ESPs[iter->second].forceLoaded || m_ESPs[iter->second].forceEnabled;
+
+    if (m_BlueprintPlugins &&
+        !m_ESPs[iter->second].name.startsWith("blueprintships-", Qt::CaseInsensitive)) {
+      QString blueprint("blueprintships-");
+      blueprint +=
+          m_ESPs[iter->second].name.left(m_ESPs[iter->second].name.size() - 4) + ".esm";
+      auto blueprintPlugin = m_ESPsByName.find(blueprint);
+      if (blueprintPlugin != m_ESPsByName.end()) {
+        if (m_ESPs[iter->second].enabled) {
+          m_ESPs[blueprintPlugin->second].forceDisabled = false;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = true;
+          m_ESPs[blueprintPlugin->second].enabled       = true;
+        } else {
+          m_ESPs[blueprintPlugin->second].forceDisabled = true;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = false;
+          m_ESPs[blueprintPlugin->second].enabled       = false;
+        }
+      }
+    }
   } else {
     log::warn("Plugin not found: {}", name);
   }
@@ -1730,6 +1793,25 @@ bool PluginList::setData(const QModelIndex& modIndex, const QVariant& value, int
     m_LastCheck.restart();
     emit dataChanged(modIndex, modIndex);
 
+    if (m_BlueprintPlugins && !m_ESPs[modIndex.row()].name.startsWith(
+                                  "blueprintships-", Qt::CaseInsensitive)) {
+      QString blueprint("blueprintships-");
+      blueprint +=
+          m_ESPs[modIndex.row()].name.left(m_ESPs[modIndex.row()].name.size() - 4) +
+          ".esm";
+      auto blueprintPlugin = m_ESPsByName.find(blueprint);
+      if (blueprintPlugin != m_ESPsByName.end()) {
+        if (m_ESPs[modIndex.row()].enabled) {
+          m_ESPs[blueprintPlugin->second].forceDisabled = false;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = true;
+          m_ESPs[blueprintPlugin->second].enabled       = true;
+        } else {
+          m_ESPs[blueprintPlugin->second].forceDisabled = true;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = false;
+          m_ESPs[blueprintPlugin->second].enabled       = false;
+        }
+      }
+    }
     refreshLoadOrder();
     emit writePluginsList();
 
@@ -2020,6 +2102,11 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     isBlueprintFlagged = blueprintSupported &&
                          (isMasterFlagged || hasMasterExtension || hasLightExtension) &&
                          file.isBlueprint();
+
+    if (isBlueprintFlagged && !forceEnabled) {
+      forceDisabled = true;
+    }
+
     hasNoRecords = file.isDummy();
 
     formVersion   = file.formVersion();
