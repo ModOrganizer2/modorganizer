@@ -129,8 +129,10 @@ _usvfsAsmHookStackFallback:
     lea rax, _usvfsAsmHookStackFallbackMask
 
 _usvfsAsmHookStackRestore:
+    mov qword ptr [rsp+30h], rax
     mov ecx, dword ptr [rsp+20h]
     call qword ptr [__imp_SetLastError]
+    mov rax, qword ptr [rsp+30h]
 
     add rsp, 38h
     ret

@@ -18,6 +18,7 @@ USVFS_CRASH_DUMPS_TYPE_OFFSET       EQU 197
 USVFS_CRASH_DUMPS_PATH_OFFSET       EQU 198
 USVFS_DELAY_PROCESS_MS_OFFSET       EQU 460
 USVFS_PARAMETERS_DWORD_COUNT        EQU (USVFS_PARAMETERS_SIZE / 4)
+USVFS_LEGACY_PARAMETERS_SIZE        EQU (USVFS_CRASH_DUMPS_PATH_OFFSET + USVFS_CRASH_DUMPS_PATH_SIZE)
 
 USVFS_INSTANCE_NAME_SIZE            EQU 65
 USVFS_CURRENT_SHM_NAME_SIZE         EQU 65
@@ -201,18 +202,23 @@ PUBLIC ??0usvfsParameters@@QAE@ABUUSVFSParameters@@@Z
 ??0usvfsParameters@@QAE@ABUUSVFSParameters@@@Z PROC
     push edi
     push esi
+    push ebx
+    mov ebx, ecx ; save this
     mov edi, ecx ; dest
-    mov esi, [esp+12] ; source
-    
-    ; Copy everything (it's slightly smaller or same size)
-    ; USVFSParameters is roughly the same as usvfsParameters
+
+    ; The legacy USVFSParameters struct has no delayProcessMs field.
+    ; Zero the full destination first so the tail stays initialized.
+    xor eax, eax
     mov ecx, USVFS_PARAMETERS_DWORD_COUNT
-    rep movsd
-    
-    mov eax, edi ; Actually edi was modified by rep movsd. 
-    ; It should return this.
-    mov eax, [esp+12] ; Wait! NO. ecx was this.
-    ; I should have saved this.
+    rep stosd
+
+    mov edi, ebx
+    mov esi, [esp+16] ; source
+    mov ecx, USVFS_LEGACY_PARAMETERS_SIZE
+    rep movsb
+
+    mov eax, ebx
+    pop ebx
     pop esi
     pop edi
     ret 4

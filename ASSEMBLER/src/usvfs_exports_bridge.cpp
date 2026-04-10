@@ -1,3 +1,5 @@
+#include <cstddef>
+
 #define private public
 #include "hookmanager.h"
 #undef private
@@ -8,6 +10,17 @@
 #include "usvfs.h"
 #include "usvfs_version.h"
 #include "usvfsparametersprivate.h"
+
+static_assert(sizeof(USVFSParameters) == 458,
+              "USVFSParameters size drifted");
+static_assert(sizeof(usvfsParameters) == 464,
+              "usvfsParameters size drifted");
+static_assert(offsetof(USVFSParameters, crashDumpsPath) == 198,
+              "USVFSParameters crashDumpsPath offset drifted");
+static_assert(offsetof(usvfsParameters, crashDumpsPath) == 198,
+              "usvfsParameters crashDumpsPath offset drifted");
+static_assert(offsetof(usvfsParameters, delayProcessMs) == 460,
+              "usvfsParameters delayProcessMs offset drifted");
 
 #ifdef USVFS_TARGET_V244
 #include <sinks/stdout_sinks.h>

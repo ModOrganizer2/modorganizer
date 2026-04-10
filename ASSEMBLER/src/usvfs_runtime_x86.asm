@@ -333,7 +333,7 @@ PUBLIC ??0RecursiveBenaphore@@QAE@XZ
     push 0 ; attr
     call dword ptr [__imp__CreateSemaphoreW@16]
     
-    mov dword ptr [edi+10h], eax
+    mov dword ptr [edi+0Ch], eax
     mov eax, edi
     
     pop edi
@@ -343,7 +343,7 @@ PUBLIC ??0RecursiveBenaphore@@QAE@XZ
 
 PUBLIC ??1RecursiveBenaphore@@QAE@XZ
 ??1RecursiveBenaphore@@QAE@XZ PROC
-    push dword ptr [ecx+10h]
+    push dword ptr [ecx+0Ch]
     call dword ptr [__imp__CloseHandle@4]
     ret
 ??1RecursiveBenaphore@@QAE@XZ ENDP
@@ -377,7 +377,7 @@ PUBLIC ?wait@RecursiveBenaphore@@QAEXK@Z
     
 _usvfsAsmRecursiveBenaphoreWaitLoop:
     push esi ; timeout
-    push dword ptr [edi+10h] ; sem
+    push dword ptr [edi+0Ch] ; sem
     call dword ptr [__imp__WaitForSingleObject@8]
     test eax, eax
     je _usvfsAsmRecursiveBenaphoreWaitDone
@@ -447,7 +447,7 @@ _usvfsAsmRecursiveBenaphoreSignalDecrement:
     
     push 0 ; relCount
     push 1 ; count
-    push dword ptr [ecx+10h] ; sem
+    push dword ptr [ecx+0Ch] ; sem
     call dword ptr [__imp__ReleaseSemaphore@12]
     
 _usvfsAsmRecursiveBenaphoreSignalDone:

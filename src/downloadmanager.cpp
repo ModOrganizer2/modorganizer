@@ -2104,10 +2104,14 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, 
 void DownloadManager::downloadFinished(int index)
 {
   DownloadInfo *info;
-  if (index)
+  if (index > 0)
     info = m_ActiveDownloads[index];
-  else
+  else {
     info = findDownload(this->sender(), &index);
+    if (info == nullptr && index == 0 && !m_ActiveDownloads.isEmpty()) {
+      info = m_ActiveDownloads[index];
+    }
+  }
 
   if (info != nullptr) {
     QNetworkReply *reply = info->m_Reply;

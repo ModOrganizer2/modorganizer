@@ -327,9 +327,9 @@ jobs:
             throw "Failed to install pip"
           }
 
-          # 3. Fetch the rest of the workspace
+          # 3. Fetch the remaining projects needed to link Mod Organizer itself.
           Write-Host "Fetching remaining workspace components..."
-          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build --no-build-task
+          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build uibase game_features githubpp bsatk esptk archive usvfs modorganizer --no-build-task
           if ($LASTEXITCODE -ne 0) {
             throw "mob source fetch failed"
           }
@@ -356,9 +356,9 @@ jobs:
           Write-Host "Listing mob tasks..."
           & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX list
 
-          Write-Host "Starting build (targeting usvfs and modorganizer)..."
+          Write-Host "Starting build (targeting Mod Organizer and its required sibling projects)..."
           # Run without Tee-Object to ensure stdout is captured correctly by GitHub
-          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build usvfs modorganizer --no-fetch-task
+          & $mobExe --ini $env:MO2_INI --destination $env:MO2_PREFIX build uibase game_features githubpp bsatk esptk archive usvfs modorganizer --no-fetch-task
           
           $buildExtCode = $LASTEXITCODE
           if ($buildExtCode -ne 0) {

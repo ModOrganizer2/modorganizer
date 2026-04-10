@@ -108,9 +108,6 @@ function Invoke-GitProcess([string[]]$Arguments, [switch]$Quiet) {
             if ($stdout) {
                 Write-Host -NoNewline $stdout
             }
-            if ($stdout) {
-                Write-Host -NoNewline $stdout
-            }
         }
 
         return @{
@@ -334,20 +331,31 @@ function Apply-UsvfsPatchFallback([string]$PatchedSourceDir, [string]$MO2Version
         Write-Info "Checking header for destructor injection: $sharedParametersHeaderPath"
         $hContent = Get-Content $sharedParametersHeaderPath -Raw
         
-        # Check if already patched to avoid double declaration if script runs twice
-        if ($hContent -match '~SharedParameters') {
-            Write-Host "[prepare-usvfs] Header already patched (destructors found); skipping injection."
+        $hasForcedLibraryDestructor = $hContent -match '\~ForcedLibrary\s*\(\s*\)\s*;'
+        $hasSharedParametersDestructor = $hContent -match '\~SharedParameters\s*\(\s*\)\s*;'
+
+        if ($hasForcedLibraryDestructor -and $hasSharedParametersDestructor) {
+            Write-Host "[prepare-usvfs] Header already patched (both destructors found); skipping injection."
         } else {
             $originalHContent = $hContent
 
-            # Declare destructors using flexible regex to handle spacing
-            # Only match if the destructor followed by a semicolon is NOT already present
-            $hContent = $hContent -replace 'std::string\s+libraryPath\(\)\s+const\s*;', 'std::string libraryPath() const; ~ForcedLibrary();'
-            $hContent = $hContent -replace 'usvfsParameters\s+makeLocal\(\)\s+const\s*;', 'usvfsParameters makeLocal() const; ~SharedParameters();'
+            if (-not $hasForcedLibraryDestructor) {
+                $hContent = [regex]::Replace(
+                    $hContent,
+                    '(std::string\s+libraryPath\(\)\s+const\s*;)(?!\s*\~ForcedLibrary\s*\(\s*\)\s*;)',
+                    '$1 ~ForcedLibrary();')
+            }
+
+            if (-not $hasSharedParametersDestructor) {
+                $hContent = [regex]::Replace(
+                    $hContent,
+                    '(usvfsParameters\s+makeLocal\(\)\s+const\s*;)(?!\s*\~SharedParameters\s*\(\s*\)\s*;)',
+                    '$1 ~SharedParameters();')
+            }
 
             if ($hContent -ne $originalHContent) {
                 Write-Host "[prepare-usvfs] Successfully patched sharedparameters.h declarations."
-                Set-Content $sharedParametersHeaderPath $hContent -NoNewline
+                Write-Utf8NoBom $sharedParametersHeaderPath $hContent
             } else {
                 Write-Warning "[prepare-usvfs] Failed to find target signatures in sharedparameters.h - destructors NOT declared!"
             }

@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <future>
 #include <map>
 #include <memory>
@@ -410,6 +411,11 @@ static_assert(sizeof(HookContextProxy) == sizeof(usvfs::HookContext),
               "HookContext proxy size drifted");
 static_assert(alignof(HookContextProxy) == alignof(usvfs::HookContext),
               "HookContext proxy alignment drifted");
+static_assert(offsetof(RecursiveBenaphore, m_Semaphore)
+                  == (sizeof(void*) == 8 ? 0x10 : 0x0C),
+              "RecursiveBenaphore semaphore offset drifted");
+static_assert(sizeof(RecursiveBenaphore) == (sizeof(void*) == 8 ? 0x18 : 0x10),
+              "RecursiveBenaphore size drifted");
 
 struct HookManagerProxy
 {

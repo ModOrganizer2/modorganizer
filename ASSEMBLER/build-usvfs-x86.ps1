@@ -27,11 +27,24 @@ if ($UseVcpkgBoost) {
 
 & (Join-Path $PSScriptRoot 'prepare-usvfs-source.ps1') @prepareArgs
 
-$msbuild = 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\amd64\MSBuild.exe'
-if (!(Test-Path $msbuild)) {
-    $msbuild = 'C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\MSBuild\Current\Bin\amd64\MSBuild.exe'
+$msbuild = $null
+$vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+if (Test-Path $vswhere) {
+    $vsPath = & $vswhere -products * -nologo -latest -version '[17.0,19.0)' -property installationPath
+    if ($vsPath) {
+        $candidate = Join-Path $vsPath 'MSBuild\Current\Bin\amd64\MSBuild.exe'
+        if (Test-Path $candidate) {
+            $msbuild = $candidate
+        }
+    }
 }
-if (!(Test-Path $msbuild)) {
+if (-not $msbuild) {
+    $candidate = 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\amd64\MSBuild.exe'
+    if (Test-Path $candidate) {
+        $msbuild = $candidate
+    }
+}
+if (-not $msbuild) {
     throw 'MSBuild.exe was not found'
 }
 
