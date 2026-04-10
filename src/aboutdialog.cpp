@@ -45,7 +45,6 @@ AboutDialog::AboutDialog(const QString& version, QWidget* parent)
   m_LicenseFiles[LICENSE_CCBY3]   = "BY-SA-v3.0.txt";
   m_LicenseFiles[LICENSE_ZLIB]    = "zlib.txt";
   m_LicenseFiles[LICENSE_PYTHON]  = "python.txt";
-  m_LicenseFiles[LICENSE_SSL]     = "openssl.txt";
   m_LicenseFiles[LICENSE_CPPTOML] = "cpptoml.txt";
   m_LicenseFiles[LICENSE_UDIS]    = "udis86.txt";
   m_LicenseFiles[LICENSE_SPDLOG]  = "spdlog.txt";
@@ -69,7 +68,6 @@ AboutDialog::AboutDialog(const QString& version, QWidget* parent)
   addLicense("ANTLR", LICENSE_ANTLR);
   addLicense("LOOT", LICENSE_GPL3);
   addLicense("Python", LICENSE_PYTHON);
-  addLicense("OpenSSL", LICENSE_SSL);
   addLicense("cpptoml", LICENSE_CPPTOML);
   addLicense("Udis86", LICENSE_UDIS);
   addLicense("spdlog", LICENSE_SPDLOG);
