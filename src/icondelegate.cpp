@@ -44,34 +44,34 @@ IconDelegate::IconDelegate(QTreeView* view, int column, int compactSize)
 void IconDelegate::paintIcons(QPainter* painter, const QStyleOptionViewItem& option,
                               const QModelIndex& index, const QList<QString>& icons)
 {
-  int x = 4;
-  painter->save();
+  int iconWidth = !icons.isEmpty() ? ((option.rect.width() / icons.size()) - 4) : 16;
 
-  int iconWidth = icons.size() > 0 ? ((option.rect.width() / icons.size()) - 4) : 16;
-  iconWidth     = std::min(16, iconWidth);
-
-  const int margin = (option.rect.height() - iconWidth) / 2;
-
-  painter->translate(option.rect.topLeft());
-  for (const QString& iconId : icons) {
-    if (iconId.isEmpty()) {
-      x += iconWidth + 4;
-      continue;
-    }
-    QPixmap icon;
-    QString fullIconId = QString("%1_%2").arg(iconId).arg(iconWidth);
-    if (!QPixmapCache::find(fullIconId, &icon)) {
-      icon = QIcon(iconId).pixmap(iconWidth, iconWidth);
-      if (icon.isNull()) {
-        log::warn("failed to load icon {}", iconId);
+  if (iconWidth > 0) {
+    painter->save();
+    iconWidth        = std::min(16, iconWidth);
+    const int margin = (option.rect.height() - iconWidth) / 2;
+    painter->translate(option.rect.topLeft());
+    int x            = 4;
+    for (const QString& iconId : icons) {
+      if (iconId.isEmpty()) {
+        x += iconWidth + 4;
+        continue;
       }
-      QPixmapCache::insert(fullIconId, icon);
+      QPixmap icon;
+      QString fullIconId = QString("%1_%2").arg(iconId).arg(iconWidth);
+      if (!QPixmapCache::find(fullIconId, &icon)) {
+        icon = QIcon(iconId).pixmap(iconWidth, iconWidth);
+        if (icon.isNull()) {
+          log::warn("failed to load icon {}", iconId);
+        }
+        QPixmapCache::insert(fullIconId, icon);
+      }
+      painter->drawPixmap(x, margin, iconWidth, iconWidth, icon);
+      x += iconWidth + 4;
     }
-    painter->drawPixmap(x, margin, iconWidth, iconWidth, icon);
-    x += iconWidth + 4;
-  }
 
-  painter->restore();
+    painter->restore();
+  }
 }
 
 void IconDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option,
