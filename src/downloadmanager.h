@@ -142,8 +142,8 @@ private:
 
   private:
     DownloadInfo()
-        : m_TotalSize(0), m_ReQueried(false), m_Hidden(false),
-          m_AskIfNotFound(true), m_DownloadTimeLast(0), m_DownloadLast(0),
+        : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_AskIfNotFound(true),
+          m_DownloadTimeLast(0), m_DownloadLast(0),
           m_DownloadAcc(tag::rolling_window::window_size = 200),
           m_DownloadTimeAcc(tag::rolling_window::window_size = 200)
     {}

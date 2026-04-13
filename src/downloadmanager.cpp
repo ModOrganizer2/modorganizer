@@ -82,7 +82,7 @@ DownloadManager::DownloadInfo::createFromMeta(const QString& filePath, bool show
                                               const QString outputDirectory,
                                               std::optional<uint64_t> fileSize)
 {
-    QString metaFileName = filePath + ".meta";
+  QString metaFileName = filePath + ".meta";
   QFileInfo metaFileInfo(metaFileName);
   if (QDir::fromNativeSeparators(metaFileInfo.path())
           .compare(QDir::fromNativeSeparators(outputDirectory), Qt::CaseInsensitive) !=
@@ -715,7 +715,7 @@ void DownloadManager::addNXMDownload(const QString& url)
     if (std::get<0>(tuple).compare(foundGame->gameShortName(), Qt::CaseInsensitive) ==
             0 &&
         std::get<1>(tuple) == nxmInfo.modId() &&
-            std::get<2>(tuple) == nxmInfo.fileId()) {
+        std::get<2>(tuple) == nxmInfo.fileId()) {
       const auto infoStr =
           tr("There is already a download queued for this file.\n\nMod %1\nFile %2")
               .arg(nxmInfo.modId())
