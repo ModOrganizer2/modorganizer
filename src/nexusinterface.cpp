@@ -986,6 +986,8 @@ void NexusInterface::nextRequest()
     url = info.m_URL;
   }
   QNetworkRequest request(url);
+  request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                       QNetworkRequest::NoLessSafeRedirectPolicy);
   request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
   request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
                        QNetworkRequest::AlwaysNetwork);
@@ -1069,13 +1071,16 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
                           iter->m_UserData, iter->m_ID, statusCode, errorMsg);
   } else {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if (statusCode == 301) {
+    if (statusCode >= 301 && statusCode <= 308) {
       // redirect request, return request to queue
       iter->m_URL =
           reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toString();
       iter->m_Reroute = true;
       m_RequestQueue.enqueue(*iter);
       // nextRequest();
+      log::debug("redirected download of " + reply->url().toString() + " to " +
+                 iter->m_URL + " with status code " +
+                 reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString());
       return;
     }
     QByteArray data = reply->readAll();

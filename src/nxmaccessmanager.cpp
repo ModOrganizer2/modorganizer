@@ -163,7 +163,7 @@ NexusSSOLogin::NexusSSOLogin() : m_keyReceived(false), m_active(false)
   });
 
   QObject::connect(&m_socket,
-                   qOverload<QAbstractSocket::SocketError>(&QWebSocket::error),
+                   qOverload<QAbstractSocket::SocketError>(&QWebSocket::errorOccurred),
                    [&](auto&& e) {
                      onError(e);
                    });

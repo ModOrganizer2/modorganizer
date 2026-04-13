@@ -94,7 +94,6 @@ private:
     QElapsedTimer m_StartTime;
     qint64 m_PreResumeSize;
     std::pair<int, QString> m_Progress;
-    bool m_HasData;
     DownloadState m_State;
     int m_CurrentUrl;
     QStringList m_Urls;
@@ -143,7 +142,7 @@ private:
 
   private:
     DownloadInfo()
-        : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_HasData(false),
+        : m_TotalSize(0), m_ReQueried(false), m_Hidden(false),
           m_AskIfNotFound(true), m_DownloadTimeLast(0), m_DownloadLast(0),
           m_DownloadAcc(tag::rolling_window::window_size = 200),
           m_DownloadTimeAcc(tag::rolling_window::window_size = 200)
@@ -543,6 +542,7 @@ private slots:
 
 private:
   void createMetaFile(DownloadInfo* info);
+  int generateRandomDownloadID();
   DownloadManager::DownloadInfo* getDownloadInfo(QString fileName);
 
 public:
