@@ -89,13 +89,14 @@ DownloadManager::DownloadInfo::createFromMeta(const QString& filePath, bool show
       0)
     return nullptr;
 
-  DownloadInfo* info = new DownloadInfo;
   QSettings metaFile(metaFileName, QSettings::IniFormat);
-  if (!showHidden && metaFile.value("removed", false).toBool()) {
+  bool hidden = metaFile.value("removed", false).toBool();
+  if (!showHidden && hidden) {
     return nullptr;
-  } else {
-    info->m_Hidden = metaFile.value("removed", false).toBool();
   }
+
+  DownloadInfo* info = new DownloadInfo;
+  info->m_Hidden     = hidden;
 
   QString fileName = QFileInfo(filePath).fileName();
 
