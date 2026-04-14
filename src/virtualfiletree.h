@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ARCHIVEFILENETRY_H
-#define ARCHIVEFILENTRY_H
+#ifndef VIRTUALFILETREE_H
+#define VIRTUALFILETREE_H
 
 #include <QDir>
 
