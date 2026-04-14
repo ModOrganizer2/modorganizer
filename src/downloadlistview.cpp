@@ -333,7 +333,7 @@ void DownloadListView::keyPressEvent(QKeyEvent* event)
     const int row = qobject_cast<QSortFilterProxyModel*>(model())
                         ->mapToSource(currentIndex())
                         .row();
-    auto state = m_Manager->getState(row);
+    auto state    = m_Manager->getState(row);
     if (state >= DownloadManager::STATE_READY) {
       if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
         issueInstall(row);

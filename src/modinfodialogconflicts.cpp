@@ -249,7 +249,7 @@ void ConflictsTab::previewItems(QTreeView* tree)
 
 void ConflictsTab::previewItem(const ConflictItem* item)
 {
-  core().previewFileWithAlternatives(parentWidget(), item->fileName());
+  core().previewFileWithAlternatives(m_parent->parentWidget(), item->fileName());
 }
 
 void ConflictsTab::exploreItems(QTreeView* tree)

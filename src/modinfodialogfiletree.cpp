@@ -224,7 +224,7 @@ void FileTreeTab::onPreview()
     return;
   }
 
-  core().previewFile(parentWidget(), mod().name(), m_fs->filePath(selection));
+  core().previewFile(m_parent->parentWidget(), mod().name(), m_fs->filePath(selection));
 }
 
 void FileTreeTab::onExplore()

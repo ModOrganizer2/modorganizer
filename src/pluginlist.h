@@ -331,7 +331,8 @@ private:
     ESPInfo(const QString& name, bool forceLoaded, bool forceEnabled,
             bool forceDisabled, const QString& originName, const QString& fullPath,
             bool hasIni, std::set<QString> archives, bool lightSupported,
-            bool mediumSupported, bool blueprintSupported);
+            bool mediumSupported, bool blueprintSupported,
+            const QString& blueprintPrefix);
 
     QString name;
     QString fullPath;
@@ -350,6 +351,7 @@ private:
     bool isMediumFlagged;
     bool isLightFlagged;
     bool isBlueprintFlagged;
+    bool isBlueprintPrefixed;
     bool hasNoRecords;
     bool modSelected;
     bool isMasterOfSelectedPlugin;
