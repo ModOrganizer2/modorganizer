@@ -446,7 +446,7 @@ void DownloadManager::refreshList()
 void DownloadManager::queryDownloadListInfo()
 {
   int incompleteCount = 0;
-  for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
+  for (qsizetype i = 0; i < m_ActiveDownloads.size(); i++) {
     if (isInfoIncomplete(i)) {
       incompleteCount++;
     }
@@ -463,7 +463,7 @@ void DownloadManager::queryDownloadListInfo()
     TimeThis tt("DownloadManager::queryDownloadListInfo()");
     log::info("Querying metadata for every download with incomplete info...");
     startDisableDirWatcher();
-    for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
+    for (qsizetype i = 0; i < m_ActiveDownloads.size(); i++) {
       if (isInfoIncomplete(i)) {
         queryInfoMd5(i, false);
       }
@@ -2311,10 +2311,12 @@ void DownloadManager::downloadFinished(int index)
       setState(info, STATE_PAUSED);
     }
 
+    bool cancelled = false;
     if (info->m_State == STATE_CANCELED || (info->m_Tries == 0 && error)) {
       emit aboutToUpdate();
       info->m_Output.remove();
       delete info;
+      cancelled = true;
       m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
       if (error)
         emit showMessage(
@@ -2374,7 +2376,7 @@ void DownloadManager::downloadFinished(int index)
     reply->close();
     reply->deleteLater();
 
-    if ((info->m_Tries > 0) && error) {
+    if (!cancelled && (info->m_Tries > 0) && error) {
       --info->m_Tries;
       resumeDownloadInt(index);
     }
