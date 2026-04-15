@@ -2152,8 +2152,8 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     hasNoRecords = file.isDummy();
 
     if (blueprintSupported) {
-      if ((isBlueprintFlagged || isBlueprintPrefixed) && !forceEnabled) {
-        forceDisabled = true;
+      if ((isBlueprintFlagged || isBlueprintPrefixed) && !this->forceEnabled) {
+        this->forceDisabled = true;
       }
     }
 
