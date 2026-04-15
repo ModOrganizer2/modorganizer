@@ -180,7 +180,7 @@ int checkMissingFiles()
   // files that are likely to be eaten
   static const QStringList files(
       {"helper.exe", "nxmhandler.exe", "usvfs_proxy_x64.exe", "usvfs_proxy_x86.exe",
-       "usvfs_x64.dll", "usvfs_x86.dll", "loot/loot.dll", "loot/lootcli.exe"});
+       "usvfs_x64.dll", "usvfs_x86.dll", "loot/libloot.dll", "loot/lootcli.exe"});
 
   log::debug("  . missing files");
   const auto dir = QCoreApplication::applicationDirPath();
