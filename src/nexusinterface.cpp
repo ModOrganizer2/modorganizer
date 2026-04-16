@@ -954,10 +954,10 @@ void NexusInterface::nextRequest()
     case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
       QString endorse = info.m_Endorse ? "endorse" : "abstain";
       url             = QString("%1/games/%2/mods/%3/%4")
-                .arg(info.m_URL)
-                .arg(info.m_GameName)
-                .arg(info.m_ModID)
-                .arg(endorse);
+                            .arg(info.m_URL)
+                            .arg(info.m_GameName)
+                            .arg(info.m_ModID)
+                            .arg(endorse);
       postObject.insert("Version", info.m_ModVersion);
       postData.setObject(postObject);
     } break;

@@ -288,7 +288,7 @@ confirmStartSteam(QWidget* parent, const SpawnParameters& sp, const QString& det
   const auto mainText = QObject::tr("This program requires Steam");
   const auto content  = QObject::tr(
       "Mod Organizer has detected that this program likely requires Steam to be "
-       "running to function properly.");
+      "running to function properly.");
 
   return MOBase::TaskDialog(parent, title)
       .main(mainText)
@@ -310,10 +310,10 @@ QMessageBox::StandardButton confirmRestartAsAdminForSteam(QWidget* parent,
   const auto mainText = QObject::tr("Steam is running as administrator");
   const auto content  = QObject::tr(
       "Running Steam as administrator is typically unnecessary and can cause "
-       "problems when Mod Organizer itself is not running as administrator."
-       "\r\n\r\n"
-       "You can restart Mod Organizer as administrator and try launching the "
-       "program again.");
+      "problems when Mod Organizer itself is not running as administrator."
+      "\r\n\r\n"
+      "You can restart Mod Organizer as administrator and try launching the "
+      "program again.");
 
   return MOBase::TaskDialog(parent, title)
       .main(mainText)
@@ -337,8 +337,8 @@ bool eventLogNotRunning(QWidget* parent, const env::Service& s,
   const auto mainText = QObject::tr("The Event Log service is not running");
   const auto content  = QObject::tr(
       "The Windows Event Log service is not running. This can prevent USVFS from "
-       "running properly and your mods may not be recognized by the program being "
-       "launched.");
+      "running properly and your mods may not be recognized by the program being "
+      "launched.");
 
   const auto r =
       MOBase::TaskDialog(parent, title)

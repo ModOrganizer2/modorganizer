@@ -424,9 +424,9 @@ MallocPtr<SECURITY_DESCRIPTOR> getSecurityDescriptor(const QString& path)
   BOOL ret         = FALSE;
 
   DWORD length = 0;
-  ret          = ::GetFileSecurityW(wpath.c_str(),
-                                    DACL_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION,
-                                    nullptr, 0, &length);
+  ret = ::GetFileSecurityW(wpath.c_str(),
+                           DACL_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION,
+                           nullptr, 0, &length);
 
   if (!ret || length == 0) {
     const auto e = GetLastError();
