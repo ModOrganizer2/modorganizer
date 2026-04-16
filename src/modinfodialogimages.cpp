@@ -592,7 +592,8 @@ void ImagesTab::onShowDDS()
 
 void ImagesTab::onPreviewButton()
 {
-  core().previewFileWithAlternatives(parentWidget(), m_files.selectedFile()->path());
+  core().previewFileWithAlternatives(m_parent->parentWidget(),
+                                     m_files.selectedFile()->path());
 }
 
 void ImagesTab::onFilterChanged()

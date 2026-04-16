@@ -226,8 +226,10 @@ void PluginList::refresh(const QString& profileName,
       gamePlugins ? gamePlugins->blueprintPluginsAreSupported() : false;
   const bool loadOrderMechanismNone =
       m_GamePlugin->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::None;
+  const QString& blueprintPrefix = m_GamePlugin->blueprintPrefix();
 
-  m_CurrentProfile = profileName;
+  m_CurrentProfile   = profileName;
+  m_BlueprintPlugins = blueprintPluginsAreSupported;
 
   std::unordered_map<QString, FileEntryPtr> availablePlugins;
   QStringList archiveCandidates;
@@ -287,7 +289,8 @@ void PluginList::refresh(const QString& profileName,
       m_ESPs.emplace_back(filename, forceLoaded, forceEnabled, forceDisabled,
                           originName, ToQString(current->getFullPath()), hasIni,
                           loadedArchives, lightPluginsAreSupported,
-                          mediumPluginsAreSupported, blueprintPluginsAreSupported);
+                          mediumPluginsAreSupported, blueprintPluginsAreSupported,
+                          blueprintPrefix);
       m_ESPs.rbegin()->priority = -1;
     } catch (const std::exception& e) {
       reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3")
@@ -484,6 +487,24 @@ void PluginList::enableESP(const QString& name, bool enable)
                                    m_ESPs[iter->second].forceLoaded ||
                                    m_ESPs[iter->second].forceEnabled;
 
+    if (m_BlueprintPlugins &&
+        !name.startsWith(m_GamePlugin->blueprintPrefix(), Qt::CaseInsensitive)) {
+      QString blueprint = m_GamePlugin->blueprintPrefix();
+      blueprint += name.left(name.size() - 4) + ".esm";
+      auto blueprintPlugin = m_ESPsByName.find(blueprint);
+      if (blueprintPlugin != m_ESPsByName.end()) {
+        if (m_ESPs[iter->second].enabled) {
+          m_ESPs[blueprintPlugin->second].forceDisabled = false;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = true;
+          m_ESPs[blueprintPlugin->second].enabled       = true;
+        } else {
+          m_ESPs[blueprintPlugin->second].forceDisabled = true;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = false;
+          m_ESPs[blueprintPlugin->second].enabled       = false;
+        }
+      }
+    }
+
     emit writePluginsList();
     if (enabled != m_ESPs[iter->second].enabled) {
       pluginStatesChanged({name}, state(name));
@@ -514,6 +535,20 @@ void PluginList::setEnabled(const QModelIndexList& indices, bool enabled)
     if (m_ESPs[idx.row()].enabled != enabled) {
       m_ESPs[idx.row()].enabled = enabled;
       dirty.append(m_ESPs[idx.row()].name);
+      if (m_BlueprintPlugins &&
+          !m_ESPs[idx.row()].name.startsWith(m_GamePlugin->blueprintPrefix(),
+                                             Qt::CaseInsensitive)) {
+        QString blueprint = m_GamePlugin->blueprintPrefix();
+        blueprint +=
+            m_ESPs[idx.row()].name.left(m_ESPs[idx.row()].name.size() - 4) + ".esm";
+        auto blueprintPlugin = m_ESPsByName.find(blueprint);
+        if (blueprintPlugin != m_ESPsByName.end()) {
+          m_ESPs[blueprintPlugin->second].forceDisabled = false;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = true;
+          m_ESPs[blueprintPlugin->second].enabled       = true;
+          dirty.append(m_ESPs[blueprintPlugin->second].name);
+        }
+      }
     }
   }
   if (!dirty.isEmpty()) {
@@ -532,6 +567,18 @@ void PluginList::setEnabledAll(bool enabled)
     if (info.enabled != enabled) {
       info.enabled = enabled;
       dirty.append(info.name);
+      if (m_BlueprintPlugins &&
+          !info.name.startsWith(m_GamePlugin->blueprintPrefix(), Qt::CaseInsensitive)) {
+        QString blueprint = m_GamePlugin->blueprintPrefix();
+        blueprint += info.name.left(info.name.size() - 4) + ".esm";
+        auto blueprintPlugin = m_ESPsByName.find(blueprint);
+        if (blueprintPlugin != m_ESPsByName.end()) {
+          m_ESPs[blueprintPlugin->second].forceDisabled = false;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = true;
+          m_ESPs[blueprintPlugin->second].enabled       = true;
+          dirty.append(m_ESPs[blueprintPlugin->second].name);
+        }
+      }
     }
   }
   if (!dirty.isEmpty()) {
@@ -955,6 +1002,26 @@ void PluginList::setState(const QString& name, PluginStates state)
     m_ESPs[iter->second].enabled =
         (state == IPluginList::STATE_ACTIVE && !m_ESPs[iter->second].forceDisabled) ||
         m_ESPs[iter->second].forceLoaded || m_ESPs[iter->second].forceEnabled;
+
+    if (m_BlueprintPlugins &&
+        !m_ESPs[iter->second].name.startsWith(m_GamePlugin->blueprintPrefix(),
+                                              Qt::CaseInsensitive)) {
+      QString blueprint = m_GamePlugin->blueprintPrefix();
+      blueprint +=
+          m_ESPs[iter->second].name.left(m_ESPs[iter->second].name.size() - 4) + ".esm";
+      auto blueprintPlugin = m_ESPsByName.find(blueprint);
+      if (blueprintPlugin != m_ESPsByName.end()) {
+        if (m_ESPs[iter->second].enabled) {
+          m_ESPs[blueprintPlugin->second].forceDisabled = false;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = true;
+          m_ESPs[blueprintPlugin->second].enabled       = true;
+        } else {
+          m_ESPs[blueprintPlugin->second].forceDisabled = true;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = false;
+          m_ESPs[blueprintPlugin->second].enabled       = false;
+        }
+      }
+    }
   } else {
     log::warn("Plugin not found: {}", name);
   }
@@ -1404,7 +1471,8 @@ QVariant PluginList::fontData(const QModelIndex& modelIndex) const
     result.setItalic(true);
   else if (m_ESPs[index].isMediumFlagged)
     result.setUnderline(true);
-  if (m_ESPs[index].isBlueprintFlagged)
+  if (m_BlueprintPlugins &&
+      (m_ESPs[index].isBlueprintFlagged || m_ESPs[index].isBlueprintPrefixed))
     result.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, 2);
 
   return result;
@@ -1515,11 +1583,29 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
                   "medium plugins in addition to other plugin types.");
   }
 
-  if (esp.isBlueprintFlagged) {
-    toolTip += "<br><br>" +
-               tr("This plugin has the blueprint flag. This forces it to load after "
-                  "every other non-blueprint plugin. Blueprint plugins will adhere to "
-                  "standard load order rules with other blueprint plugins.");
+  if (m_BlueprintPlugins) {
+    if (esp.isBlueprintFlagged) {
+      toolTip += "<br><br>" +
+                 tr("This plugin has the blueprint flag. This forces it to load after "
+                    "every other non-blueprint plugin.");
+      if (!esp.enabled) {
+        toolTip += " " +
+                   tr("Blueprint plugins are removed "
+                      "from plugins.txt by the game and are effectively disabled. They "
+                      "are intended to be loaded by using the blueprint prefix:") +
+                   " " + m_GamePlugin->blueprintPrefix() + "[main plugin].esm";
+      } else if (esp.isBlueprintPrefixed) {
+        toolTip +=
+            " " +
+            tr("This plugin is prefixed and being loaded by a paired main plugin: ") +
+            " " + m_GamePlugin->blueprintPrefix() + "[main plugin].esm";
+      }
+    } else if (esp.isBlueprintPrefixed && esp.enabled) {
+      toolTip += "<br><br>" +
+                 tr("WARNING: This is a blueprint-prefixed but unflagged plugin being "
+                    "autoloaded by another main plugin file. This is unintended usage "
+                    "and may result in an ambiguous load order.");
+    }
   }
 
   if (esp.isLightFlagged && esp.isMediumFlagged) {
@@ -1539,6 +1625,16 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
     auto feature = m_Organizer.gameFeatures().gameFeature<GamePlugins>();
     if (feature && esp.hasLightExtension && feature->lightPluginsAreSupported()) {
       toolTip += "<br><br>" + tr("Light plugins (ESL) are not supported by this game.");
+    } else if (m_BlueprintPlugins && esp.isBlueprintFlagged &&
+               esp.isBlueprintPrefixed) {
+      toolTip += "<br><br>" +
+                 tr("This blueprint plugin must be enabled by a paired main plugin.");
+    } else if (m_BlueprintPlugins && esp.isBlueprintFlagged) {
+      toolTip += "<br><br>" + tr("This blueprint plugin is not using the blueprint "
+                                 "prefix and can't be loaded.");
+    } else if (m_BlueprintPlugins && esp.isBlueprintPrefixed) {
+      toolTip +=
+          "<br><br>" + tr("This is an invalid blueprint file with no blueprint flag.");
     } else {
       toolTip += "<br><br>" + tr("This game does not currently permit custom plugin "
                                  "loading. There may be manual workarounds.");
@@ -1667,7 +1763,7 @@ QVariant PluginList::iconData(const QModelIndex& modelIndex) const
     }
   }
 
-  if (esp.isBlueprintFlagged) {
+  if (m_BlueprintPlugins && esp.isBlueprintFlagged) {
     result.append(":/MO/gui/resources/go-down.png");
   }
 
@@ -1686,6 +1782,16 @@ bool PluginList::isProblematic(const ESPInfo& esp, const AdditionalInfo* info) c
 {
   if (esp.masterUnset.size() > 0) {
     return true;
+  }
+
+  if (m_BlueprintPlugins) {
+    if (esp.isBlueprintPrefixed && esp.enabled && !esp.isBlueprintFlagged) {
+      return true;
+    }
+
+    if (esp.isBlueprintFlagged && !esp.isBlueprintPrefixed) {
+      return true;
+    }
   }
 
   if (info) {
@@ -1730,6 +1836,26 @@ bool PluginList::setData(const QModelIndex& modIndex, const QVariant& value, int
     m_LastCheck.restart();
     emit dataChanged(modIndex, modIndex);
 
+    if (m_BlueprintPlugins &&
+        !m_ESPs[modIndex.row()].name.startsWith(m_GamePlugin->blueprintPrefix(),
+                                                Qt::CaseInsensitive)) {
+      QString blueprint = m_GamePlugin->blueprintPrefix();
+      blueprint +=
+          m_ESPs[modIndex.row()].name.left(m_ESPs[modIndex.row()].name.size() - 4) +
+          ".esm";
+      auto blueprintPlugin = m_ESPsByName.find(blueprint);
+      if (blueprintPlugin != m_ESPsByName.end()) {
+        if (m_ESPs[modIndex.row()].enabled) {
+          m_ESPs[blueprintPlugin->second].forceDisabled = false;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = true;
+          m_ESPs[blueprintPlugin->second].enabled       = true;
+        } else {
+          m_ESPs[blueprintPlugin->second].forceDisabled = true;
+          m_ESPs[blueprintPlugin->second].forceEnabled  = false;
+          m_ESPs[blueprintPlugin->second].enabled       = false;
+        }
+      }
+    }
     refreshLoadOrder();
     emit writePluginsList();
 
@@ -2002,7 +2128,8 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
                              bool forceDisabled, const QString& originName,
                              const QString& fullPath, bool hasIni,
                              std::set<QString> archives, bool lightSupported,
-                             bool mediumSupported, bool blueprintSupported)
+                             bool mediumSupported, bool blueprintSupported,
+                             const QString& blueprintPrefix)
     : name(name), fullPath(fullPath), enabled(forceLoaded), forceLoaded(forceLoaded),
       forceEnabled(forceEnabled), forceDisabled(forceDisabled), priority(0),
       loadOrder(-1), originName(originName), hasIni(hasIni),
@@ -2020,7 +2147,17 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     isBlueprintFlagged = blueprintSupported &&
                          (isMasterFlagged || hasMasterExtension || hasLightExtension) &&
                          file.isBlueprint();
-    hasNoRecords       = file.isDummy();
+    isBlueprintPrefixed =
+        blueprintSupported && name.startsWith(blueprintPrefix, Qt::CaseInsensitive);
+    hasNoRecords = file.isDummy();
+
+    if (blueprintSupported) {
+      if ((isBlueprintFlagged || isBlueprintPrefixed) && !this->forceEnabled) {
+        this->forceDisabled = true;
+      }
+    }
+
+    hasNoRecords = file.isDummy();
 
     formVersion   = file.formVersion();
     headerVersion = file.headerVersion();
