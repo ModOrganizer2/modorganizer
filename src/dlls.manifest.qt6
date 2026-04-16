@@ -6,9 +6,7 @@
   <file name="dxcompiler.dll" />
   <file name="dxil.dll" />
   <file name="libbsarch.dll" />
-  <file name="libcrypto-3-x64.dll" />
   <file name="liblz4.dll" />
-  <file name="libssl-3-x64.dll" />
   <file name="opengl32sw.dll" />
   <file name="Qt6Concurrent.dll" />
   <file name="Qt6Core.dll" />
