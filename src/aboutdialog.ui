@@ -222,7 +222,7 @@
               </item>
               <item>
                <property name="text">
-                <string>Holt59</string>
+                <string notr="true">Holt59</string>
                </property>
               </item>
              </widget>
@@ -486,6 +486,21 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">AkiraJkr</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">AmeliaCute</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">ashemedai</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">blacksol</string>
                </property>
               </item>
@@ -506,6 +521,16 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">CheffieGithub</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">daescha</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">ddbb07</string>
                </property>
               </item>
@@ -516,7 +541,27 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">Deewens</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">DefinitelyNotSade</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">dekart811</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Deorder</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">diegofesanto</string>
                </property>
               </item>
               <item>
@@ -527,6 +572,11 @@
               <item>
                <property name="text">
                 <string notr="true">Drew Warwick</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Eddoursul</string>
                </property>
               </item>
               <item>
@@ -581,7 +631,62 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">Jonny_Bro</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">ju5tA1ex</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Kane Dou</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">KenJyn76</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Ketsuban</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">LaughingHyena</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">Luca|EzioTheDeadPoet</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">mick-lue</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">ModZero</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">mopioid</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">mrudat</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Nikirack</string>
                </property>
               </item>
               <item>
@@ -601,7 +706,17 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">Paynamia</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">PurpleFez</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Ra2-IFV</string>
                </property>
               </item>
               <item>
@@ -611,7 +726,22 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">RodolfoFigueroa</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Ryan Young</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">Schilduin</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">shellbj</string>
                </property>
               </item>
               <item>
@@ -621,17 +751,22 @@
               </item>
               <item>
                <property name="text">
-                <string notr="true">Trosski</string>
+                <string notr="true">Syer10</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string notr="true">Uhuru</string>
+                <string notr="true">The Conceptionist</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string notr="true">Wolverine2710</string>
+                <string notr="true">TheForgotten69</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">TheUnlocked</string>
                </property>
               </item>
               <item>
@@ -641,12 +776,7 @@
               </item>
               <item>
                <property name="text">
-                <string notr="true">z929669</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Eddoursul</string>
+                <string notr="true">Trosski</string>
                </property>
               </item>
               <item>
@@ -656,7 +786,32 @@
               </item>
               <item>
                <property name="text">
-                <string notr="true">ashemedai</string>
+                <string notr="true">Uhuru</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">uwx</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Wolverine2710</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">xieve</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">z929669</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Zash</string>
                </property>
               </item>
              </widget>
