@@ -477,8 +477,8 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
 
   m_StartTime = QTime::currentTime();
 
-  //m_Tutorial.expose("modList", m_OrganizerCore.modList());
-  //m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
+  // m_Tutorial.expose("modList", m_OrganizerCore.modList());
+  // m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
 
   m_OrganizerCore.setUserInterface(this);
   m_OrganizerCore.onFinishedRun([=](const QString, unsigned int) {
@@ -1111,7 +1111,6 @@ void MainWindow::createHelpMenu()
   QAction* issueAction = new QAction(tr("Report Issue"), menu);
   connect(issueAction, SIGNAL(triggered()), this, SLOT(issueTriggered()));
   menu->addAction(issueAction);
-
 
   /* Disable tutorials
   QMenu* tutorialMenu = new QMenu(tr("Tutorials"), menu);
