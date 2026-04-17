@@ -88,7 +88,8 @@ public slots:
   /**
    * @brief used to inform the model that data has changed
    *
-   * @param row the row that changed. This can be negative to update the whole view
+   * @param row the row that changed. This can be negative to update the whole view,
+   * but you have to call aboutToUpdate() before update(-1) and only for that case.
    **/
   void update(int row);
 
