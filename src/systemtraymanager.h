@@ -21,8 +21,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SYSTEMTRAYMANAGER_H
 
 #include <QDockWidget>
+#include <QIcon>
 #include <QMainWindow>
 #include <QObject>
+#include <QString>
 #include <QSystemTrayIcon>
 
 class SystemTrayManager : public QObject
@@ -34,6 +36,10 @@ public:
 
   void minimizeToSystemTray();
   void restoreFromSystemTray();
+
+  void showNotification(
+      const QString& title, const QString& message,
+      QSystemTrayIcon::MessageIcon icon = QSystemTrayIcon::MessageIcon::Information);
 
 private:
   QMainWindow* m_Parent;
