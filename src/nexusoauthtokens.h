@@ -101,4 +101,16 @@ inline NexusOAuthTokens makeTokensFromResponse(const QJsonObject& json)
   return tokens;
 }
 
+inline NexusOAuthTokens makeTokensFromResponse(const QVariantMap& data)
+{
+  NexusOAuthTokens tokens;
+  tokens.accessToken  = data["access_token"].toString();
+  tokens.refreshToken = data["refresh_token"].toString();
+  tokens.scope        = data["scope"].toString();
+  tokens.tokenType    = data["token_type"].toString();
+  tokens.expiresAt    = data["expiration_at"].toDateTime();
+
+  return tokens;
+}
+
 #endif  // NEXUSOAUTHTOKENS_H

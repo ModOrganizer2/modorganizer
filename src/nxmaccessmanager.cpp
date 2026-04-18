@@ -44,7 +44,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace std::chrono_literals;
 
-const QString NexusBaseUrl("https://api.nexusmods.com/v1");
+const QString NexusBaseUrl("https://api.nexusmods.com/v2/graphql");
 
 ValidationProgressDialog::ValidationProgressDialog(Settings* s, NexusKeyValidator& v)
     : m_settings(s), m_validator(v), m_updateTimer(nullptr), m_first(true)
@@ -181,7 +181,7 @@ void ValidationAttempt::start(NXMAccessManager& m, const NexusOAuthTokens& token
 
 bool ValidationAttempt::sendRequest(NXMAccessManager& m, const NexusOAuthTokens& tokens)
 {
-  const QString requestUrl(NexusBaseUrl + "/users/validate");
+  const QString requestUrl(NexusBaseUrl);
   QNetworkRequest request(requestUrl);
 
   if (tokens.accessToken.isEmpty()) {
@@ -190,6 +190,7 @@ bool ValidationAttempt::sendRequest(NXMAccessManager& m, const NexusOAuthTokens&
   }
 
   const auto bearer = QStringLiteral("Bearer %1").arg(tokens.accessToken);
+  qDebug(tokens.accessToken.toStdString().c_str());
   request.setRawHeader("Authorization", bearer.toUtf8());
   request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader,
                     m.userAgent().toUtf8());
@@ -199,7 +200,8 @@ bool ValidationAttempt::sendRequest(NXMAccessManager& m, const NexusOAuthTokens&
   request.setRawHeader("Application-Name", "MO2");
   request.setRawHeader("Application-Version", m.MOVersion().toUtf8());
 
-  m_reply = m.get(request);
+  QJsonDocument data;
+  auto root = data.object();
 
   if (!m_reply) {
     setFailure(SoftError, QObject::tr("Failed to request %1").arg(requestUrl));
