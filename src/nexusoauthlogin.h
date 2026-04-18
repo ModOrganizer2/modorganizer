@@ -21,8 +21,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define NEXUSOAUTHLOGIN_H
 
 #include "nexusoauthtokens.h"
-#include <QObject>
 #include <QAbstractOAuth>
+#include <QObject>
 #include <functional>
 #include <memory>
 
