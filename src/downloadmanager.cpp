@@ -589,9 +589,29 @@ bool DownloadManager::addDownload(QNetworkReply* reply, const QStringList& URLs,
     baseName.truncate(queryIndex);
   }
 
+  bool renameToUnique = false;
+  if (QFile::exists(m_OutputDirectory + "/" + MOBase::sanitizeFileName(baseName))) {
+    if (QMessageBox::question(
+            m_ParentWidget, tr("Download again?"),
+            tr("A file with the same name \"%1\" has already been downloaded. "
+               "Do you want to download it again? The new file will receive a "
+               "different name.")
+                .arg(baseName),
+            QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+      removePending(newDownload->m_FileInfo->gameName,
+                    newDownload->m_FileInfo->modID,
+                    newDownload->m_FileInfo->fileID);
+      reply->abort();
+      reply->deleteLater();
+      delete newDownload;
+      return false;
+    }
+    renameToUnique = true;
+  }
+
   {
     DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
-    newDownload->setName(getDownloadFileName(baseName), false);
+    newDownload->setName(getDownloadFileName(baseName, renameToUnique), false);
   }
 
   startDownload(reply, newDownload, false);
@@ -668,47 +688,19 @@ void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
     }
     emit downloadAdded();
 
-    if (QFile::exists(m_OutputDirectory + "/" + newDownload->m_FileName)) {
-      setState(newDownload, STATE_PAUSING);
-      QCoreApplication::processEvents();
-      if (QMessageBox::question(
-              m_ParentWidget, tr("Download again?"),
-              tr("A file with the same name \"%1\" has already been downloaded. "
-                 "Do you want to download it again? The new file will receive a "
-                 "different name.")
-                  .arg(newDownload->m_FileName),
-              QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
-        if (reply->isFinished())
-          setState(newDownload, STATE_CANCELED);
-        else
-          setState(newDownload, STATE_CANCELING);
-      } else {
-        {
-          DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
-          newDownload->setName(getDownloadFileName(newDownload->m_FileName, true),
-                               true);
-        }
-        if (newDownload->m_State == STATE_PAUSED)
-          resumeDownload(indexByInfo(newDownload));
-        else
-          setState(newDownload, STATE_DOWNLOADING);
-      }
-    } else
-      connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
-
     QCoreApplication::processEvents();
+  }
 
-    if (newDownload->m_State != STATE_DOWNLOADING &&
-        newDownload->m_State != STATE_READY &&
-        newDownload->m_State != STATE_FETCHINGMODINFO && reply->isFinished()) {
-      int index = indexByInfo(newDownload);
-      if (index >= 0) {
-        downloadFinished(index);
-      }
-      return;
+  // Qt will not emit finished() to a slot connected after the reply has already
+  // finished, so detect that case and drive the handler manually.
+  if (reply->isFinished()) {
+    int index = indexByInfo(newDownload);
+    if (index >= 0) {
+      downloadFinished(index);
     }
-  } else
+  } else {
     connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
+  }
 }
 
 void DownloadManager::addNXMDownload(const QString& url)
