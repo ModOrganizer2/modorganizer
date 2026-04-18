@@ -83,20 +83,21 @@ DownloadManager::DownloadInfo::createFromMeta(const QString& filePath, bool show
                                               const QString outputDirectory,
                                               std::optional<uint64_t> fileSize)
 {
-  DownloadInfo* info = new DownloadInfo;
-
   QString metaFileName = filePath + ".meta";
   QFileInfo metaFileInfo(metaFileName);
   if (QDir::fromNativeSeparators(metaFileInfo.path())
           .compare(QDir::fromNativeSeparators(outputDirectory), Qt::CaseInsensitive) !=
       0)
     return nullptr;
+
   QSettings metaFile(metaFileName, QSettings::IniFormat);
-  if (!showHidden && metaFile.value("removed", false).toBool()) {
+  const bool hidden = metaFile.value("removed", false).toBool();
+  if (!showHidden && hidden) {
     return nullptr;
-  } else {
-    info->m_Hidden = metaFile.value("removed", false).toBool();
   }
+
+  DownloadInfo* info = new DownloadInfo;
+  info->m_Hidden     = hidden;
 
   QString fileName = QFileInfo(filePath).fileName();
 
