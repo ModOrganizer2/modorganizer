@@ -866,7 +866,7 @@ OrganizerCore::doInstall(const QString& archivePath, GuessedValue<QString> modNa
 
 ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
 {
-  ScopedDisableDirWatcher scopedDirwatcher(&m_DownloadManager);
+  DirWatcherManager::Guard dirWatcherGuard = m_DownloadManager.dirWatcher().scopedGuard();
 
   try {
     QString fileName        = m_DownloadManager.getFilePath(index);

@@ -56,7 +56,6 @@ using namespace MOBase;
 static const char UNFINISHED[] = ".unfinished";
 
 unsigned int DownloadManager::DownloadInfo::s_NextDownloadID = 1U;
-int DownloadManager::m_DirWatcherDisabler                    = 0;
 
 DownloadManager::DownloadInfo*
 DownloadManager::DownloadInfo::createNew(const ModRepositoryFileInfo* fileInfo,
@@ -156,34 +155,54 @@ DownloadManager::DownloadInfo::createFromMeta(const QString& filePath, bool show
   return info;
 }
 
-ScopedDisableDirWatcher::ScopedDisableDirWatcher(DownloadManager* downloadManager)
+DirWatcherManager::DirWatcherManager(QObject* parent) : QObject(parent)
 {
-  m_downloadManager = downloadManager;
-  m_downloadManager->startDisableDirWatcher();
-  log::debug("Scoped Disable DirWatcher: Started");
+  connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this,
+          &DirWatcherManager::onDirectoryChanged);
 }
 
-ScopedDisableDirWatcher::~ScopedDisableDirWatcher()
+void DirWatcherManager::setPath(const QString& path)
 {
-  m_downloadManager->endDisableDirWatcher();
-  m_downloadManager = nullptr;
-  log::debug("Scoped Disable DirWatcher: Stopped");
-}
-
-void DownloadManager::startDisableDirWatcher()
-{
-  DownloadManager::m_DirWatcherDisabler++;
-}
-
-void DownloadManager::endDisableDirWatcher()
-{
-  if (DownloadManager::m_DirWatcherDisabler > 0) {
-    if (DownloadManager::m_DirWatcherDisabler == 1)
-      QCoreApplication::processEvents();
-    DownloadManager::m_DirWatcherDisabler--;
-  } else {
-    DownloadManager::m_DirWatcherDisabler = 0;
+  const QStringList existing = m_watcher.directories();
+  if (!existing.isEmpty()) {
+    m_watcher.removePaths(existing);
   }
+  m_watcher.addPath(path);
+}
+
+bool DirWatcherManager::isSuspended() const
+{
+  return m_suspendDepth > 0;
+}
+
+void DirWatcherManager::onDirectoryChanged(const QString&)
+{
+  if (!isSuspended()) {
+    emit directoryChanged();
+  }
+}
+
+DirWatcherManager::Guard::Guard(DirWatcherManager& manager) : m_manager(manager)
+{
+  ++m_manager.m_suspendDepth;
+}
+
+DirWatcherManager::Guard::~Guard()
+{
+  // drain queued events while still suspended so they are filtered out,
+  // then release.
+  //
+  // TODO: find alternative, pumping the event loop from a destructor is a reentrancy hazard;
+  // arbitrary slots may run during ~Guard.
+  if (m_manager.m_suspendDepth == 1) {
+    QCoreApplication::processEvents();
+  }
+  --m_manager.m_suspendDepth;
+}
+
+DirWatcherManager::Guard DirWatcherManager::scopedGuard()
+{
+  return Guard(*this);
 }
 
 void DownloadManager::DownloadInfo::setName(QString newName, bool renameFile)
@@ -225,12 +244,12 @@ QString DownloadManager::DownloadInfo::currentURL()
 }
 
 DownloadManager::DownloadManager(NexusInterface* nexusInterface, QObject* parent)
-    : m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false),
+    : m_NexusInterface(nexusInterface), m_DirWatcher(this), m_ShowHidden(false),
       m_ParentWidget(nullptr)
 {
   m_OrganizerCore = dynamic_cast<OrganizerCore*>(parent);
-  connect(&m_DirWatcher, SIGNAL(directoryChanged(QString)), this,
-          SLOT(directoryChanged(QString)));
+  connect(&m_DirWatcher, &DirWatcherManager::directoryChanged, this,
+          &DownloadManager::refreshList);
   m_TimeoutTimer.setSingleShot(false);
   // connect(&m_TimeoutTimer, SIGNAL(timeout()), this, SLOT(checkDownloadTimeout()));
   m_TimeoutTimer.start(5 * 1000);
@@ -308,15 +327,11 @@ void DownloadManager::pauseAll()
 void DownloadManager::setOutputDirectory(const QString& outputDirectory,
                                          const bool refresh)
 {
-  QStringList directories = m_DirWatcher.directories();
-  if (directories.length() != 0) {
-    m_DirWatcher.removePaths(directories);
-  }
   m_OutputDirectory = QDir::fromNativeSeparators(outputDirectory);
   if (refresh) {
     refreshList();
   }
-  m_DirWatcher.addPath(m_OutputDirectory);
+  m_DirWatcher.setPath(m_OutputDirectory);
 }
 
 void DownloadManager::setShowHidden(bool showHidden)
@@ -337,7 +352,7 @@ void DownloadManager::refreshList()
   try {
     emit aboutToUpdate();
     // avoid triggering other refreshes
-    ScopedDisableDirWatcher scopedDirWatcher(this);
+    DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
 
     int downloadsBefore = m_ActiveDownloads.size();
 
@@ -463,13 +478,14 @@ void DownloadManager::queryDownloadListInfo()
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     TimeThis tt("DownloadManager::queryDownloadListInfo()");
     log::info("Querying metadata for every download with incomplete info...");
-    startDisableDirWatcher();
-    for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
-      if (isInfoIncomplete(i)) {
-        queryInfoMd5(i, false);
+    {
+      DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
+      for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
+        if (isInfoIncomplete(i)) {
+          queryInfoMd5(i, false);
+        }
       }
     }
-    endDisableDirWatcher();
     log::info("Metadata has been retrieved successfully!");
   }
 }
@@ -553,9 +569,10 @@ bool DownloadManager::addDownload(QNetworkReply* reply, const QStringList& URLs,
     baseName.truncate(queryIndex);
   }
 
-  startDisableDirWatcher();
-  newDownload->setName(getDownloadFileName(baseName), false);
-  endDisableDirWatcher();
+  {
+    DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
+    newDownload->setName(getDownloadFileName(baseName), false);
+  }
 
   startDownload(reply, newDownload, false);
   //  emit update(-1);
@@ -646,9 +663,11 @@ void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
         else
           setState(newDownload, STATE_CANCELING);
       } else {
-        startDisableDirWatcher();
-        newDownload->setName(getDownloadFileName(newDownload->m_FileName, true), true);
-        endDisableDirWatcher();
+        {
+          DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
+          newDownload->setName(getDownloadFileName(newDownload->m_FileName, true),
+                               true);
+        }
         if (newDownload->m_State == STATE_PAUSED)
           resumeDownload(indexByInfo(newDownload));
         else
@@ -811,7 +830,7 @@ void DownloadManager::addNXMDownload(const QString& url)
 void DownloadManager::removeFile(int index, bool deleteFile)
 {
   // Avoid triggering refreshes from DirWatcher
-  ScopedDisableDirWatcher scopedDirWatcher(this);
+  DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
 
   if (index >= m_ActiveDownloads.size()) {
     throw MyException(tr("remove: invalid download index %1").arg(index));
@@ -907,11 +926,9 @@ void DownloadManager::restoreDownload(int index)
       QString filePath = m_OutputDirectory + "/" + download->m_FileName;
 
       // avoid dirWatcher triggering refreshes
-      startDisableDirWatcher();
+      DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
       QSettings metaSettings(filePath.append(".meta"), QSettings::IniFormat);
       metaSettings.setValue("removed", false);
-
-      endDisableDirWatcher();
     }
   }
 }
@@ -920,7 +937,7 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
 {
   try {
     // avoid dirWatcher triggering refreshes
-    ScopedDisableDirWatcher scopedDirWatcher(this);
+    DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
 
     emit aboutToUpdate();
 
@@ -1509,7 +1526,7 @@ void DownloadManager::markInstalled(int index)
   }
 
   // Avoid triggering refreshes from DirWatcher
-  ScopedDisableDirWatcher scopedDirWatcher(this);
+  DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
 
   DownloadInfo* info = m_ActiveDownloads.at(index);
   QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
@@ -1528,7 +1545,7 @@ void DownloadManager::markInstalled(QString fileName)
     DownloadInfo* info = getDownloadInfo(fileName);
     if (info != nullptr) {
       // Avoid triggering refreshes from DirWatcher
-      ScopedDisableDirWatcher scopedDirWatcher(this);
+      DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
 
       QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
       metaFile.setValue("installed", true);
@@ -1550,7 +1567,7 @@ void DownloadManager::markUninstalled(int index)
   }
 
   // Avoid triggering refreshes from DirWatcher
-  ScopedDisableDirWatcher scopedDirWatcher(this);
+  DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
 
   DownloadInfo* info = m_ActiveDownloads.at(index);
   QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
@@ -1570,7 +1587,7 @@ void DownloadManager::markUninstalled(QString fileName)
     if (info != nullptr) {
 
       // Avoid triggering refreshes from DirWatcher
-      ScopedDisableDirWatcher scopedDirWatcher(this);
+      DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
 
       QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
       metaFile.setValue("uninstalled", true);
@@ -1738,7 +1755,7 @@ void DownloadManager::downloadReadyRead()
 void DownloadManager::createMetaFile(DownloadInfo* info)
 {
   // Avoid triggering refreshes from DirWatcher
-  ScopedDisableDirWatcher scopedDirWatcher(this);
+  DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
 
   QSettings metaFile(QString("%1.meta").arg(info->m_Output.fileName()),
                      QSettings::IniFormat);
@@ -2364,14 +2381,15 @@ void DownloadManager::downloadFinished(int index)
       QString newName = getFileNameFromNetworkReply(reply);
       QString oldName = QFileInfo(info->m_Output).fileName();
 
-      startDisableDirWatcher();
-      if (!newName.isEmpty() && (oldName.isEmpty())) {
-        info->setName(getDownloadFileName(newName), true);
-      } else {
-        info->setName(m_OutputDirectory + "/" + info->m_FileName,
-                      true);  // don't rename but remove the ".unfinished" extension
+      {
+        DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
+        if (!newName.isEmpty() && (oldName.isEmpty())) {
+          info->setName(getDownloadFileName(newName), true);
+        } else {
+          info->setName(m_OutputDirectory + "/" + info->m_FileName,
+                        true);  // don't rename but remove the ".unfinished" extension
+        }
       }
-      endDisableDirWatcher();
 
       if (!isNexus) {
         setState(info, STATE_READY);
@@ -2409,9 +2427,10 @@ void DownloadManager::metaDataChanged()
   if (info != nullptr) {
     QString newName = getFileNameFromNetworkReply(info->m_Reply);
     if (!newName.isEmpty() && (info->m_FileName.isEmpty())) {
-      startDisableDirWatcher();
-      info->setName(getDownloadFileName(newName), true);
-      endDisableDirWatcher();
+      {
+        DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
+        info->setName(getDownloadFileName(newName), true);
+      }
       refreshAlphabeticalTranslation();
       if (!info->m_Output.isOpen() &&
           !info->m_Output.open(QIODevice::WriteOnly | QIODevice::Append)) {
@@ -2422,12 +2441,6 @@ void DownloadManager::metaDataChanged()
   } else {
     log::warn("meta data event for unknown download");
   }
-}
-
-void DownloadManager::directoryChanged(const QString&)
-{
-  if (DownloadManager::m_DirWatcherDisabler == 0)
-    refreshList();
 }
 
 void DownloadManager::managedGameChanged(MOBase::IPluginGame const* managedGame)
