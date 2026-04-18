@@ -231,7 +231,8 @@ private:
   std::optional<NexusOAuthTokens> m_tokens;
 
   void startValidationCheck(const NexusOAuthTokens& tokens);
-  std::optional<NexusOAuthTokens> refreshTokensBlocking(const NexusOAuthTokens& current);
+  std::optional<NexusOAuthTokens>
+  refreshTokensBlocking(const NexusOAuthTokens& current);
 
   void onValidatorFinished(ValidationAttempt::Result r, const QString& message,
                            std::optional<APIUserAccount>);

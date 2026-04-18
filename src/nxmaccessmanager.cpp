@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include <QCoreApplication>
 #include <QDir>
+#include <QEventLoop>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QMessageBox>
@@ -37,14 +38,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkProxy>
 #include <QNetworkRequest>
 #include <QPushButton>
-#include <QEventLoop>
 #include <QThread>
 #include <QUrlQuery>
 
 using namespace MOBase;
 using namespace std::chrono_literals;
 
-const QString NexusBaseUrl("https://api.nexusmods.com/v2/graphql");
+const QString NexusBaseUrl("https://users.nexusmods.com/oauth/");
 
 ValidationProgressDialog::ValidationProgressDialog(Settings* s, NexusKeyValidator& v)
     : m_settings(s), m_validator(v), m_updateTimer(nullptr), m_first(true)
@@ -182,7 +182,7 @@ void ValidationAttempt::start(NXMAccessManager& m, const NexusOAuthTokens& token
 bool ValidationAttempt::sendRequest(NXMAccessManager& m, const NexusOAuthTokens& tokens)
 {
   const QString requestUrl(NexusBaseUrl);
-  QNetworkRequest request(requestUrl);
+  QNetworkRequest request(requestUrl + "userinfo");
 
   if (tokens.accessToken.isEmpty()) {
     setFailure(HardError, QObject::tr("Access token is empty"));
@@ -200,8 +200,7 @@ bool ValidationAttempt::sendRequest(NXMAccessManager& m, const NexusOAuthTokens&
   request.setRawHeader("Application-Name", "MO2");
   request.setRawHeader("Application-Version", m.MOVersion().toUtf8());
 
-  QJsonDocument data;
-  auto root = data.object();
+  m_reply = m.get(request);
 
   if (!m_reply) {
     setFailure(SoftError, QObject::tr("Failed to request %1").arg(requestUrl));
@@ -286,7 +285,8 @@ void ValidationAttempt::onFinished()
     return;
   }
 
-  const auto doc       = QJsonDocument::fromJson(m_reply->readAll());
+  const auto doc = QJsonDocument::fromJson(m_reply->readAll());
+  qDebug(doc.toJson());
   const auto headers   = m_reply->rawHeaderPairs();
   const auto httpError = m_reply->errorString();
 
@@ -321,14 +321,23 @@ void ValidationAttempt::onFinished()
     return;
   }
 
-  if (!data.contains("user_id")) {
+  if (!data.contains("sub")) {
     setFailure(HardError, QObject::tr("Bad response"));
     return;
   }
 
-  const int id       = data.value("user_id").toInt();
-  const QString name = data.value("name").toString();
-  const bool premium = data.value("is_premium").toBool();
+  const QString id       = data.value("sub").toString();
+  const QString name     = data.value("name").toString();
+  const auto roles       = data.value("membership_roles").toArray();
+  QStringList validRoles = {"premium", "lifetimepremium", "supporter"};
+  bool premium           = false;
+  for (auto role : roles) {
+    QString roleVal = role.toString();
+    if (validRoles.contains(roleVal)) {
+      premium = true;
+      break;
+    }
+  }
 
   if (m_tokens.accessToken.isEmpty()) {
     setFailure(HardError, QObject::tr("Access token is empty"));
@@ -341,7 +350,7 @@ void ValidationAttempt::onFinished()
           .id(QString("%1").arg(id))
           .name(name)
           .type(premium ? APIUserAccountTypes::Premium : APIUserAccountTypes::Regular)
-          .limits(NexusInterface::parseLimits(headers));
+          .limits(NexusInterface::defaultAPILimits());
 
   setSuccess(user);
 }
@@ -706,8 +715,7 @@ NXMAccessManager::refreshTokensBlocking(const NexusOAuthTokens& current)
   request.setRawHeader("Application-Version", MOVersion().toUtf8());
 
   QUrlQuery formData;
-  formData.addQueryItem(QStringLiteral("grant_type"),
-                        QStringLiteral("refresh_token"));
+  formData.addQueryItem(QStringLiteral("grant_type"), QStringLiteral("refresh_token"));
   formData.addQueryItem(QStringLiteral("refresh_token"), current.refreshToken);
   formData.addQueryItem(QStringLiteral("client_id"), NexusOAuth::clientId());
 

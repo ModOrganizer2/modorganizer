@@ -130,6 +130,9 @@ mo2_add_filter(NAME src/core GROUPS
 	githubpp
 	installationmanager
 	nexusinterface
+	nexusoauthlogin
+	nexusoauthtokens
+	nexusoauthconfig
 	nxmaccessmanager
 	organizercore
 	game_features
