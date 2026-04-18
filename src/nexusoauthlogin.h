@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "nexusoauthtokens.h"
 #include <QObject>
+#include <QAbstractOAuth>
 #include <functional>
 #include <memory>
 

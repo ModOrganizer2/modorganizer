@@ -93,7 +93,7 @@ void NexusOAuthLogin::start()
   m_flow->setTokenUrl(QUrl(NexusOAuth::tokenUrl()));
 #endif
   m_flow->setClientIdentifier(clientId);
-  m_flow->setScope(QString());
+  m_flow->setScope("openid profile email");
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
   m_flow->setPkceMethod(QOAuth2AuthorizationCodeFlow::PkceMethod::S256);
 #endif
@@ -118,13 +118,13 @@ void NexusOAuthLogin::start()
 
   m_flow->setReplyHandler(m_replyHandler.get());
 
-  QObject::connect(m_flow.get(), &QAbstractOAuth::authorizeWithBrowser, this,
-                   [&](const QUrl& url) {
+  QObject::connect(m_flow.get(), &QOAuth2AuthorizationCodeFlow::authorizeWithBrowser,
+                   this, [&](const QUrl& url) {
                      shell::Open(url);
                      setState(State::WaitingForBrowser);
                    });
 
-  QObject::connect(m_flow.get(), &QAbstractOAuth::statusChanged, this,
+  QObject::connect(m_flow.get(), &QOAuth2AuthorizationCodeFlow::statusChanged, this,
                    [&](QAbstractOAuth::Status status) {
                      switch (status) {
                      case QAbstractOAuth::Status::RefreshingToken:
@@ -141,12 +141,14 @@ void NexusOAuthLogin::start()
                      }
                    });
 
-  QObject::connect(m_flow.get(), &QAbstractOAuth::requestFailed, this,
+  QObject::connect(m_flow.get(), &QOAuth2AuthorizationCodeFlow::requestFailed, this,
                    [&](QAbstractOAuth::Error error) {
                      handleError(QObject::tr("Authorization failed (%1)").arg(int(error)));
                    });
 
-  QObject::connect(m_flow.get(), &QAbstractOAuth::granted, this, [&] {
+  QObject::connect(m_flow.get(),
+                   &QOAuth2AuthorizationCodeFlow::granted, this,
+                   [&]() {
                      notifyTokens();
                    });
 
@@ -188,13 +190,14 @@ void NexusOAuthLogin::notifyTokens()
     return;
   }
 
-  QJsonObject payload;
-  payload.insert(QStringLiteral("access_token"), m_flow->token());
+  QVariantMap payload;
+  payload["access_token"]  = m_flow->token();
+  payload["refresh_token"] = m_flow->refreshToken();
+  payload["scope"]         = m_flow->scope();
+  payload["expiration_at"] = m_flow->expirationAt();
 
   const auto extras = m_flow->extraTokens();
-  for (auto it = extras.constBegin(); it != extras.constEnd(); ++it) {
-    payload.insert(it.key(), QJsonValue::fromVariant(it.value()));
-  }
+  payload.insert(extras);
 
   auto tokens = makeTokensFromResponse(payload);
   if (!tokens.isValid()) {
@@ -253,17 +256,19 @@ void NexusOAuthLogin::injectPkceChallenge(QAbstractOAuth::Stage stage,
         QCryptographicHash::hash(m_codeVerifier, QCryptographicHash::Sha256)
             .toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
 
-    parameters->insert(QStringLiteral("code_challenge"), QString::fromUtf8(challenge));
-    parameters->insert(QStringLiteral("code_challenge_method"), QStringLiteral("S256"));
-    parameters->insert(QStringLiteral("redirect_uri"), NexusOAuth::redirectUri());
+    parameters->replace(QStringLiteral("code_challenge"), QString::fromUtf8(challenge));
+    parameters->replace(QStringLiteral("code_challenge_method"),
+                        QStringLiteral("S256"));
+    parameters->replace(QStringLiteral("redirect_uri"), NexusOAuth::redirectUri());
     break;
   }
 
   case QAbstractOAuth::Stage::RequestingAccessToken: {
     if (!m_codeVerifier.isEmpty()) {
-      parameters->insert(QStringLiteral("code_verifier"), QString::fromUtf8(m_codeVerifier));
+      parameters->replace(QStringLiteral("code_verifier"),
+                         QString::fromUtf8(m_codeVerifier));
     }
-    parameters->insert(QStringLiteral("redirect_uri"), NexusOAuth::redirectUri());
+    parameters->replace(QStringLiteral("redirect_uri"), NexusOAuth::redirectUri());
     break;
   }
 
