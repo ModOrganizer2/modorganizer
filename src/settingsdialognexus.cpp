@@ -3,6 +3,7 @@
 #include "nexusinterface.h"
 #include "nexusoauthlogin.h"
 #include "serverinfo.h"
+#include "ui_nexusmanualkey.h"
 #include "ui_settingsdialog.h"
 #include <utility.h>
 
@@ -26,12 +27,61 @@ private:
   int m_SortRole;
 };
 
+class NexusManualKeyDialog : public QDialog
+{
+public:
+  NexusManualKeyDialog(QWidget* parent)
+      : QDialog(parent), ui(new Ui::NexusManualKeyDialog)
+  {
+    ui->setupUi(this);
+    ui->key->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+
+    connect(ui->openBrowser, &QPushButton::clicked, [&] {
+      openBrowser();
+    });
+    connect(ui->paste, &QPushButton::clicked, [&] {
+      paste();
+    });
+    connect(ui->clear, &QPushButton::clicked, [&] {
+      clear();
+    });
+  }
+
+  void accept() override
+  {
+    m_key = ui->key->toPlainText();
+    QDialog::accept();
+  }
+
+  const QString& key() const { return m_key; }
+
+  void openBrowser()
+  {
+    shell::Open(QUrl("https://www.nexusmods.com/users/myaccount?tab=api"));
+  }
+
+  void paste()
+  {
+    const auto text = QApplication::clipboard()->text();
+    if (!text.isEmpty()) {
+      ui->key->setPlainText(text);
+    }
+  }
+
+  void clear() { ui->key->clear(); }
+
+private:
+  std::unique_ptr<Ui::NexusManualKeyDialog> ui;
+  QString m_key;
+};
+
 NexusConnectionUI::NexusConnectionUI(QWidget* parent, Settings* s,
                                      QAbstractButton* connectButton,
                                      QAbstractButton* disconnectButton,
+                                     QAbstractButton* manualButton,
                                      QListWidget* logList)
     : m_parent(parent), m_settings(s), m_connect(connectButton),
-      m_disconnect(disconnectButton), m_log(logList)
+      m_disconnect(disconnectButton), m_manual(manualButton), m_log(logList)
 {
   if (m_connect) {
     QObject::connect(m_connect, &QPushButton::clicked, [&] {
@@ -42,6 +92,12 @@ NexusConnectionUI::NexusConnectionUI(QWidget* parent, Settings* s,
   if (m_disconnect) {
     QObject::connect(m_disconnect, &QPushButton::clicked, [&] {
       disconnect();
+    });
+  }
+
+  if (m_manual) {
+    QObject::connect(manualButton, &QPushButton::clicked, [&] {
+      manual();
     });
   }
 
@@ -79,6 +135,35 @@ void NexusConnectionUI::connect()
   updateState();
 }
 
+void NexusConnectionUI::manual()
+{
+  if (m_nexusValidator && m_nexusValidator->isActive()) {
+    m_nexusValidator->cancel();
+    return;
+  }
+
+  NexusManualKeyDialog d(m_parent);
+  if (d.exec() != QDialog::Accepted) {
+    return;
+  }
+
+  const auto key = d.key();
+  if (key.isEmpty()) {
+    clearTokens();
+    return;
+  }
+
+  m_log->clear();
+  auto tokens = NexusInterface::instance().getAccessManager()->tokens();
+  if (!tokens) {
+    tokens = NexusOAuthTokens();
+  }
+  tokens->apiKey = key;
+  NexusInterface::instance().getAccessManager()->setTokens(*tokens);
+  m_pendingTokens = tokens;
+  validateTokens(*tokens);
+}
+
 void NexusConnectionUI::disconnect()
 {
   clearTokens();
@@ -103,7 +188,24 @@ void NexusConnectionUI::validateTokens(const NexusOAuthTokens& tokens)
 
 void NexusConnectionUI::onTokensReceived(const NexusOAuthTokens& tokens)
 {
-  m_pendingTokens = tokens;
+  if (GlobalSettings::hasNexusOAuthTokens()) {
+    NexusOAuthTokens oldTokens;
+    GlobalSettings::nexusOAuthTokens(oldTokens);
+    NexusOAuthTokens newTokens(tokens);
+    if (tokens.apiKey.isEmpty()) {
+      newTokens.apiKey = oldTokens.apiKey;
+    }
+    if (tokens.accessToken.isEmpty()) {
+      newTokens.accessToken  = oldTokens.accessToken;
+      newTokens.refreshToken = oldTokens.refreshToken;
+      newTokens.tokenType    = oldTokens.tokenType;
+      newTokens.expiresAt    = oldTokens.expiresAt;
+      newTokens.scope        = oldTokens.scope;
+    }
+    m_pendingTokens = newTokens;
+  } else {
+    m_pendingTokens = tokens;
+  }
   addLog(tr("Received authorization from Nexus."));
   validateTokens(tokens);
 }
@@ -198,15 +300,28 @@ void NexusConnectionUI::updateState()
   if (m_nexusLogin && m_nexusLogin->isActive()) {
     setButton(m_connect, true, QObject::tr("Cancel"));
     setButton(m_disconnect, false);
+    setButton(m_manual, false, QObject::tr("Enter API Key Manually"));
   } else if (m_nexusValidator && m_nexusValidator->isActive()) {
     setButton(m_connect, false, QObject::tr("Connect to Nexus"));
     setButton(m_disconnect, false);
   } else if (GlobalSettings::hasNexusOAuthTokens()) {
-    setButton(m_connect, true, QObject::tr("Connect to Nexus"));
+    NexusOAuthTokens tokens;
+    GlobalSettings::nexusOAuthTokens(tokens);
+    if (tokens.accessToken.isEmpty()) {
+      setButton(m_connect, true, QObject::tr("Connect to Nexus"));
+    } else {
+      setButton(m_connect, false, QObject::tr("Connect to Nexus"));
+    }
     setButton(m_disconnect, true);
+    if (tokens.apiKey.isEmpty()) {
+      setButton(m_manual, true, QObject::tr("Enter API Key Manually"));
+    } else {
+      setButton(m_manual, false, QObject::tr("Enter API Key Manually"));
+    }
   } else {
     setButton(m_connect, true, QObject::tr("Connect to Nexus"));
     setButton(m_disconnect, false);
+    setButton(m_manual, true, QObject::tr("Enter API Key Manually"));
   }
 
   emit stateChanged();
@@ -247,7 +362,8 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d) : SettingsTab
   }
 
   m_connectionUI.reset(new NexusConnectionUI(&dialog(), &settings(), ui->nexusConnect,
-                                             ui->nexusDisconnect, ui->nexusLog));
+                                             ui->nexusDisconnect, ui->nexusManualKey,
+                                             ui->nexusLog));
 
   QObject::connect(
       m_connectionUI.get(), &NexusConnectionUI::stateChanged, &d,

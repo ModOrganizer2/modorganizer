@@ -19,9 +19,11 @@ class NexusConnectionUI : public QObject
 
 public:
   NexusConnectionUI(QWidget* parent, Settings* s, QAbstractButton* connectButton,
-                    QAbstractButton* disconnectButton, QListWidget* logList);
+                    QAbstractButton* disconnectButton, QAbstractButton* manualButton,
+                    QListWidget* logList);
 
   void connect();
+  void manual();
   void disconnect();
 
 signals:
@@ -33,6 +35,7 @@ private:
   Settings* m_settings;
   QAbstractButton* m_connect;
   QAbstractButton* m_disconnect;
+  QAbstractButton* m_manual;
   QListWidget* m_log;
 
   std::unique_ptr<NexusOAuthLogin> m_nexusLogin;

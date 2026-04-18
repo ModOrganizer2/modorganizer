@@ -44,7 +44,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace std::chrono_literals;
 
-const QString NexusBaseUrl("https://users.nexusmods.com/oauth/");
+const QString NexusUserUrl("https://users.nexusmods.com/oauth/");
+const QString NexusV1BaseUrl("https://api.nexusmods.com/v1/");
 
 ValidationProgressDialog::ValidationProgressDialog(Settings* s, NexusKeyValidator& v)
     : m_settings(s), m_validator(v), m_updateTimer(nullptr), m_first(true)
@@ -181,17 +182,24 @@ void ValidationAttempt::start(NXMAccessManager& m, const NexusOAuthTokens& token
 
 bool ValidationAttempt::sendRequest(NXMAccessManager& m, const NexusOAuthTokens& tokens)
 {
-  const QString requestUrl(NexusBaseUrl);
-  QNetworkRequest request(requestUrl + "userinfo");
 
-  if (tokens.accessToken.isEmpty()) {
-    setFailure(HardError, QObject::tr("Access token is empty"));
+  if (tokens.accessToken.isEmpty() && tokens.apiKey.isEmpty()) {
+    setFailure(HardError, QObject::tr("No access token or API key"));
     return false;
   }
 
-  const auto bearer = QStringLiteral("Bearer %1").arg(tokens.accessToken);
-  qDebug(tokens.accessToken.toStdString().c_str());
-  request.setRawHeader("Authorization", bearer.toUtf8());
+  QString requestUrl;
+  QNetworkRequest request;
+  if (!tokens.accessToken.isEmpty()) {
+    requestUrl = NexusUserUrl + "userinfo";
+    request.setUrl(requestUrl);
+    const auto bearer = QStringLiteral("Bearer %1").arg(tokens.accessToken);
+    request.setRawHeader("Authorization", bearer.toUtf8());
+  } else {
+    requestUrl = NexusV1BaseUrl + "users/validate";
+    request.setUrl(requestUrl);
+    request.setRawHeader("APIKEY", tokens.apiKey.toUtf8());
+  }
   request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader,
                     m.userAgent().toUtf8());
   request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
@@ -285,8 +293,7 @@ void ValidationAttempt::onFinished()
     return;
   }
 
-  const auto doc = QJsonDocument::fromJson(m_reply->readAll());
-  qDebug(doc.toJson());
+  const auto doc       = QJsonDocument::fromJson(m_reply->readAll());
   const auto headers   = m_reply->rawHeaderPairs();
   const auto httpError = m_reply->errorString();
 
@@ -321,38 +328,60 @@ void ValidationAttempt::onFinished()
     return;
   }
 
-  if (!data.contains("sub")) {
-    setFailure(HardError, QObject::tr("Bad response"));
-    return;
-  }
-
-  const QString id       = data.value("sub").toString();
-  const QString name     = data.value("name").toString();
-  const auto roles       = data.value("membership_roles").toArray();
-  QStringList validRoles = {"premium", "lifetimepremium", "supporter"};
-  bool premium           = false;
-  for (auto role : roles) {
-    QString roleVal = role.toString();
-    if (validRoles.contains(roleVal)) {
-      premium = true;
-      break;
+  if (!m_tokens.accessToken.isEmpty()) {
+    if (!data.contains("sub")) {
+      setFailure(HardError, QObject::tr("Bad response"));
+      return;
     }
+
+    const QString id       = data.value("sub").toString();
+    const QString name     = data.value("name").toString();
+    const auto roles       = data.value("membership_roles").toArray();
+    QStringList validRoles = {"premium", "lifetimepremium", "supporter"};
+    bool premium           = false;
+    for (auto role : roles) {
+      QString roleVal = role.toString();
+      if (validRoles.contains(roleVal)) {
+        premium = true;
+        break;
+      }
+    }
+
+    if (m_tokens.accessToken.isEmpty()) {
+      setFailure(HardError, QObject::tr("Access token is empty"));
+      return;
+    }
+
+    const auto user =
+        APIUserAccount()
+            .accessToken(m_tokens.accessToken)
+            .id(QString("%1").arg(id))
+            .name(name)
+            .type(premium ? APIUserAccountTypes::Premium : APIUserAccountTypes::Regular)
+            .limits(NexusInterface::defaultAPILimits());
+
+    setSuccess(user);
+  } else if (!m_tokens.apiKey.isEmpty()) {
+    if (!data.contains("user_id")) {
+      setFailure(HardError, QObject::tr("Bad response"));
+      return;
+    }
+
+    const int id       = data.value("user_id").toInt();
+    const QString key  = data.value("key").toString();
+    const QString name = data.value("name").toString();
+    const bool premium = data.value("is_premium").toBool();
+
+    const auto user =
+        APIUserAccount()
+            .apiKey(m_tokens.apiKey)
+            .id(QString("%1").arg(id))
+            .name(name)
+            .type(premium ? APIUserAccountTypes::Premium : APIUserAccountTypes::Regular)
+            .limits(NexusInterface::parseLimits(headers));
+
+    setSuccess(user);
   }
-
-  if (m_tokens.accessToken.isEmpty()) {
-    setFailure(HardError, QObject::tr("Access token is empty"));
-    return;
-  }
-
-  const auto user =
-      APIUserAccount()
-          .accessToken(m_tokens.accessToken)
-          .id(QString("%1").arg(id))
-          .name(name)
-          .type(premium ? APIUserAccountTypes::Premium : APIUserAccountTypes::Regular)
-          .limits(NexusInterface::defaultAPILimits());
-
-  setSuccess(user);
 }
 
 void ValidationAttempt::onSslErrors(const QList<QSslError>& errors)
@@ -637,7 +666,7 @@ NXMAccessManager::createRequest(QNetworkAccessManager::Operation operation,
 
 void NXMAccessManager::showCookies() const
 {
-  QUrl url(NexusBaseUrl + "/");
+  QUrl url(NexusV1BaseUrl + "/");
   for (const QNetworkCookie& cookie : cookieJar()->cookiesForUrl(url)) {
     log::debug("{} - {} (expires: {})", cookie.name().constData(),
                cookie.value().constData(), cookie.expirationDate().toString());
@@ -671,17 +700,21 @@ bool NXMAccessManager::ensureFreshToken()
     return false;
   }
 
-  if (!m_tokens->isExpired()) {
+  if (!m_tokens->accessToken.isEmpty()) {
+    if (!m_tokens->isExpired()) {
+      return true;
+    }
+
+    const auto refreshed = refreshTokensBlocking(*m_tokens);
+    if (!refreshed) {
+      return false;
+    }
+
+    setTokens(*refreshed);
+    GlobalSettings::setNexusOAuthTokens(*refreshed);
     return true;
   }
 
-  const auto refreshed = refreshTokensBlocking(*m_tokens);
-  if (!refreshed) {
-    return false;
-  }
-
-  setTokens(*refreshed);
-  GlobalSettings::setNexusOAuthTokens(*refreshed);
   return true;
 }
 
