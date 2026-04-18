@@ -205,6 +205,30 @@ DirWatcherManager::Guard DirWatcherManager::scopedGuard()
   return Guard(*this);
 }
 
+DownloadManager::ModelResetGuard::ModelResetGuard(DownloadManager& manager)
+    : m_manager(manager)
+{
+  if (m_manager.m_modelResetDepth++ == 0) {
+    emit m_manager.aboutToResetModel();
+  }
+}
+
+DownloadManager::ModelResetGuard::~ModelResetGuard()
+{
+  if (--m_manager.m_modelResetDepth == 0) {
+    emit m_manager.modelReset();
+  }
+}
+
+void DownloadManager::notifyRowChanged(int row)
+{
+  // suppressed while a reset is in progress; the outer reset will refresh
+  // all rows on release
+  if (m_modelResetDepth == 0) {
+    emit rowChanged(row);
+  }
+}
+
 void DownloadManager::DownloadInfo::setName(QString newName, bool renameFile)
 {
   QString oldMetaFileName = QString("%1.meta").arg(m_FileName);
@@ -349,11 +373,10 @@ void DownloadManager::refreshList()
 {
   TimeThis tt("DownloadManager::refreshList()");
 
-  try {
-    emit aboutToUpdate();
-    // avoid triggering other refreshes
-    DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
+  DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
+  ModelResetGuard guard(*this);
 
+  try {
     int downloadsBefore = m_ActiveDownloads.size();
 
     // remove finished downloads
@@ -451,9 +474,6 @@ void DownloadManager::refreshList()
         });
 
     log::debug("saw {} downloads", m_ActiveDownloads.size());
-
-    emit update(-1);
-
   } catch (const std::bad_alloc&) {
     reportError(tr("Memory allocation error (in refreshing directory)."));
   }
@@ -575,7 +595,6 @@ bool DownloadManager::addDownload(QNetworkReply* reply, const QStringList& URLs,
   }
 
   startDownload(reply, newDownload, false);
-  //  emit update(-1);
   return true;
 }
 
@@ -592,15 +611,15 @@ void DownloadManager::removePending(QString gameName, int modID, int fileID)
       break;
     }
   }
-  emit aboutToUpdate();
   for (auto iter : m_PendingDownloads) {
     if (gameShortName.compare(std::get<0>(iter), Qt::CaseInsensitive) == 0 &&
         (std::get<1>(iter) == modID) && (std::get<2>(iter) == fileID)) {
+      // only emit a reset if we actually have a row to remove
+      ModelResetGuard guard(*this);
       m_PendingDownloads.removeAt(m_PendingDownloads.indexOf(iter));
       break;
     }
   }
-  emit update(-1);
 }
 
 void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownload,
@@ -639,13 +658,14 @@ void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
 
   if (!resume) {
     newDownload->m_PreResumeSize = newDownload->m_Output.size();
-    removePending(newDownload->m_FileInfo->gameName, newDownload->m_FileInfo->modID,
-                  newDownload->m_FileInfo->fileID);
-
-    emit aboutToUpdate();
-    m_ActiveDownloads.append(newDownload);
-
-    emit update(-1);
+    {
+      // coalesce the pending removal and the active append into one reset
+      ModelResetGuard guard(*this);
+      removePending(newDownload->m_FileInfo->gameName,
+                    newDownload->m_FileInfo->modID,
+                    newDownload->m_FileInfo->fileID);
+      m_ActiveDownloads.append(newDownload);
+    }
     emit downloadAdded();
 
     if (QFile::exists(m_OutputDirectory + "/" + newDownload->m_FileName)) {
@@ -808,12 +828,11 @@ void DownloadManager::addNXMDownload(const QString& url)
     }
   }
 
-  emit aboutToUpdate();
-
-  m_PendingDownloads.append(
-      std::make_tuple(foundGame->gameShortName(), nxmInfo.modId(), nxmInfo.fileId()));
-
-  emit update(-1);
+  {
+    ModelResetGuard guard(*this);
+    m_PendingDownloads.append(
+        std::make_tuple(foundGame->gameShortName(), nxmInfo.modId(), nxmInfo.fileId()));
+  }
   emit downloadAdded();
   ModRepositoryFileInfo* info = new ModRepositoryFileInfo();
 
@@ -935,11 +954,17 @@ void DownloadManager::restoreDownload(int index)
 
 void DownloadManager::removeDownload(int index, bool deleteFile)
 {
-  try {
-    // avoid dirWatcher triggering refreshes
-    DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
+  // validate the single-index case before entering the guard so we don't
+  // emit an empty reset on early return
+  if (index >= 0 && index >= m_ActiveDownloads.size()) {
+    reportError(tr("remove: invalid download index %1").arg(index));
+    return;
+  }
 
-    emit aboutToUpdate();
+  try {
+    DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
+    // coalesce the removal and the subsequent refresh into one reset
+    ModelResetGuard guard(*this);
 
     if (index < 0) {
       bool removeAll            = (index == -1);
@@ -960,21 +985,15 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
         }
       }
     } else {
-      if (index >= m_ActiveDownloads.size()) {
-        reportError(tr("remove: invalid download index %1").arg(index));
-        // emit update(-1);
-        return;
-      }
-
       removeFile(index, deleteFile);
       delete m_ActiveDownloads.at(index);
       m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
     }
-    emit update(-1);
+
+    refreshList();
   } catch (const std::exception& e) {
     log::error("failed to remove download: {}", e.what());
   }
-  refreshList();
 }
 
 void DownloadManager::cancelDownload(int index)
@@ -1074,7 +1093,7 @@ void DownloadManager::resumeDownloadInt(int index)
     log::debug("resume at {} bytes", info->m_ResumePos);
     startDownload(m_NexusInterface->getAccessManager()->get(request), info, true);
   }
-  emit update(index);
+  notifyRowChanged(index);
 }
 
 DownloadManager::DownloadInfo* DownloadManager::downloadInfoByID(unsigned int id)
@@ -1735,7 +1754,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 
         TaskProgressManager::instance().updateProgress(info->m_TaskProgressId,
                                                        bytesReceived, bytesTotal);
-        emit update(index);
+        notifyRowChanged(index);
       }
     }
   } catch (const std::bad_alloc&) {
@@ -1785,7 +1804,7 @@ void DownloadManager::createMetaFile(DownloadInfo* info)
   // slightly hackish...
   for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
     if (m_ActiveDownloads[i] == info) {
-      emit update(i);
+      notifyRowChanged(i);
     }
   }
 }
@@ -2255,19 +2274,20 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID,
       } else {
         info->m_State = STATE_READY;
         queryInfo(index);
-        emit update(index);
+        notifyRowChanged(index);
         return;
       }
     }
 
     if (info->m_FileInfo->modID == modID) {
       if (info->m_State < STATE_FETCHINGMODINFO) {
+        ModelResetGuard guard(*this);
         m_ActiveDownloads.erase(iter);
         delete info;
       } else {
         setState(info, STATE_READY);
+        notifyRowChanged(index);
       }
-      emit update(index);
       break;
     }
   }
@@ -2335,22 +2355,21 @@ void DownloadManager::downloadFinished(int index)
     }
 
     if (info->m_State == STATE_CANCELED || (info->m_Tries == 0 && error)) {
-      emit aboutToUpdate();
-      info->m_Output.remove();
-      delete info;
-      m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
+      {
+        ModelResetGuard guard(*this);
+        info->m_Output.remove();
+        delete info;
+        m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
+      }
       if (error)
         emit showMessage(
             tr("We were unable to download the file due to errors after four retries. "
                "There may be an issue with the Nexus servers."));
-      emit update(-1);
     } else if (info->isPausedState() || info->m_State == STATE_PAUSING) {
-      emit aboutToUpdate();
       info->m_Output.close();
       createMetaFile(info);
-      emit update(index);
+      notifyRowChanged(index);
     } else {
-      emit aboutToUpdate();
       QString url = info->m_Urls[info->m_CurrentUrl];
       if (info->m_FileInfo->userData.contains("downloadMap")) {
         foreach (const QVariant& server,
@@ -2395,7 +2414,7 @@ void DownloadManager::downloadFinished(int index)
         setState(info, STATE_READY);
       }
 
-      emit update(index);
+      notifyRowChanged(index);
     }
     reply->close();
     reply->deleteLater();

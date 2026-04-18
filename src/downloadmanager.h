@@ -113,6 +113,25 @@ class DownloadManager : public QObject
   Q_OBJECT
 
 public:
+  /**
+   * @brief RAII full-reset guard. Use when the row count changes; drops
+   * view selection/scroll state. Nests safely: inner guards coalesce into
+   * the outermost scope so only one reset is emitted.
+   */
+  class [[nodiscard]] ModelResetGuard
+  {
+  public:
+    explicit ModelResetGuard(DownloadManager& manager);
+    ~ModelResetGuard();
+    ModelResetGuard(const ModelResetGuard&)            = delete;
+    ModelResetGuard& operator=(const ModelResetGuard&) = delete;
+    ModelResetGuard(ModelResetGuard&&)                 = delete;
+    ModelResetGuard& operator=(ModelResetGuard&&)      = delete;
+
+  private:
+    DownloadManager& m_manager;
+  };
+
   enum DownloadState
   {
     STATE_STARTED = 0,
@@ -480,16 +499,38 @@ public:  // IDownloadManager interface:
 
   void pauseAll();
 
-Q_SIGNALS:
-
-  void aboutToUpdate();
-
   /**
-   * @brief signals that the specified download has changed
+   * @brief notify the UI that a single row's data changed. Preserves view
+   * state; prefer over ModelResetGuard when the row count is unchanged.
    *
    * @param row the row that changed. This corresponds to the download index
-   **/
-  void update(int row);
+   */
+  void notifyRowChanged(int row);
+
+Q_SIGNALS:
+
+  /**
+   * @brief emitted before the download list model is about to be reset
+   *
+   * Emitted by ModelResetGuard on construction. Views should call
+   * beginResetModel() in response.
+   */
+  void aboutToResetModel();
+
+  /**
+   * @brief emitted after the download list model has been reset
+   *
+   * Emitted by ModelResetGuard on destruction. Views should call
+   * endResetModel() in response.
+   */
+  void modelReset();
+
+  /**
+   * @brief signals that the specified download row's data has changed
+   *
+   * @param row the row that changed. This corresponds to the download index
+   */
+  void rowChanged(int row);
 
   /**
    * @brief signals the ui that a message should be displayed
@@ -659,6 +700,9 @@ private:
   QVector<int> m_AlphabeticalTranslation;
 
   DirWatcherManager m_DirWatcher;
+
+  // nesting depth of active ModelResetGuard scopes; see its docs
+  int m_modelResetDepth = 0;
 
   SignalDownloadCallback m_DownloadComplete;
   SignalDownloadCallback m_DownloadPaused;
