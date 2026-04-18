@@ -1598,15 +1598,16 @@ void DownloadManager::markUninstalled(QString fileName)
 
 QString DownloadManager::getDownloadFileName(const QString& baseName, bool rename) const
 {
-  QString fullPath = m_OutputDirectory + "/" + MOBase::sanitizeFileName(baseName);
+  const QString sanitized = MOBase::sanitizeFileName(baseName);
+  QString fullPath        = m_OutputDirectory + "/" + sanitized;
   if (QFile::exists(fullPath) && rename) {
     int i = 1;
     while (QFile::exists(
-        QString("%1/%2_%3").arg(m_OutputDirectory).arg(i).arg(baseName))) {
+        QString("%1/%2_%3").arg(m_OutputDirectory).arg(i).arg(sanitized))) {
       ++i;
     }
 
-    fullPath = QString("%1/%2_%3").arg(m_OutputDirectory).arg(i).arg(baseName);
+    fullPath = QString("%1/%2_%3").arg(m_OutputDirectory).arg(i).arg(sanitized);
   }
   return fullPath;
 }
