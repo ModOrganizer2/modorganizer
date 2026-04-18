@@ -70,6 +70,11 @@ public:
   const QString& accessToken() const;
 
   /**
+   * OAuth access token
+   */
+  const QString& apiKey() const;
+
+  /**
    * user id
    */
   const QString& id() const;
@@ -93,6 +98,11 @@ public:
    * sets the OAuth access token
    */
   APIUserAccount& accessToken(const QString& token);
+
+  /**
+   * sets the OAuth access token
+   */
+  APIUserAccount& apiKey(const QString& apiKey);
 
   /**
    * sets the user id
@@ -132,7 +142,7 @@ public:
   bool exhausted() const;
 
 private:
-  QString m_accessToken, m_id, m_name;
+  QString m_accessToken, m_apiKey, m_id, m_name;
   APIUserAccountTypes m_type;
   APILimits m_limits;
 };

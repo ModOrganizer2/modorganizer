@@ -996,14 +996,19 @@ void NexusInterface::nextRequest()
   }
 
   const auto currentTokens = m_AccessManager->tokens();
-  if (!currentTokens || currentTokens->accessToken.isEmpty()) {
+  if (!currentTokens ||
+      (currentTokens->accessToken.isEmpty() && currentTokens->apiKey.isEmpty())) {
     log::error("nexus: no OAuth token available, request aborted");
     info.m_Reply = nullptr;
     return;
   }
 
-  const auto bearer = QStringLiteral("Bearer %1").arg(currentTokens->accessToken);
-  request.setRawHeader("Authorization", bearer.toUtf8());
+  if (!currentTokens->accessToken.isEmpty()) {
+    const auto bearer = QStringLiteral("Bearer %1").arg(currentTokens->accessToken);
+    request.setRawHeader("Authorization", bearer.toUtf8());
+  } else {
+    request.setRawHeader("APIKEY", currentTokens->apiKey.toUtf8());
+  }
   request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader,
                     m_AccessManager->userAgent(info.m_SubModule));
   request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,

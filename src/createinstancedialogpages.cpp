@@ -1200,7 +1200,7 @@ bool PathsPage::checkPath(QString path, PlaceholderLabel& existsLabel,
 NexusPage::NexusPage(CreateInstanceDialog& dlg) : Page(dlg), m_skip(false)
 {
   m_connectionUI.reset(new NexusConnectionUI(&m_dlg, dlg.settings(), ui->nexusConnect,
-                                             nullptr, ui->nexusLog));
+                                             nullptr, ui->nexusManual, ui->nexusLog));
 
   // just check it once, or connecting and then going back and forth would skip
   // the page, which would be unexpected
