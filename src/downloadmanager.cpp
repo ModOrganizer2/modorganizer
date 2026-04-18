@@ -193,8 +193,8 @@ DirWatcherManager::Guard::~Guard()
   // drain queued events while still suspended so they are filtered out,
   // then release.
   //
-  // TODO: find alternative, pumping the event loop from a destructor is a reentrancy hazard;
-  // arbitrary slots may run during ~Guard.
+  // TODO: find alternative, pumping the event loop from a destructor is a reentrancy
+  // hazard; arbitrary slots may run during ~Guard.
   if (m_manager.m_suspendDepth == 1) {
     QCoreApplication::processEvents();
   }
@@ -599,8 +599,7 @@ bool DownloadManager::addDownload(QNetworkReply* reply, const QStringList& URLs,
                "different name.")
                 .arg(baseName),
             QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
-      removePending(newDownload->m_FileInfo->gameName,
-                    newDownload->m_FileInfo->modID,
+      removePending(newDownload->m_FileInfo->gameName, newDownload->m_FileInfo->modID,
                     newDownload->m_FileInfo->fileID);
       reply->abort();
       reply->deleteLater();
@@ -682,8 +681,7 @@ void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
     {
       // coalesce the pending removal and the active append into one reset
       ModelResetGuard guard(*this);
-      removePending(newDownload->m_FileInfo->gameName,
-                    newDownload->m_FileInfo->modID,
+      removePending(newDownload->m_FileInfo->gameName, newDownload->m_FileInfo->modID,
                     newDownload->m_FileInfo->fileID);
       m_ActiveDownloads.append(newDownload);
     }
@@ -745,7 +743,8 @@ void DownloadManager::addNXMDownload(const QString& url)
   }
 
   for (auto tuple : m_PendingDownloads) {
-    if (std::get<0>(tuple).compare(foundGame->gameShortName(), Qt::CaseInsensitive) == 0 &&
+    if (std::get<0>(tuple).compare(foundGame->gameShortName(), Qt::CaseInsensitive) ==
+            0 &&
         std::get<1>(tuple) == nxmInfo.modId() &&
         std::get<2>(tuple) == nxmInfo.fileId()) {
       const auto infoStr =
