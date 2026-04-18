@@ -666,10 +666,6 @@ private:
 
   void removeFile(int index, bool deleteFile);
 
-  void refreshAlphabeticalTranslation();
-
-  bool ByName(int LHS, int RHS);
-
   QString getFileNameFromNetworkReply(QNetworkReply* reply);
 
   void setState(DownloadInfo* info, DownloadManager::DownloadState state);
@@ -697,7 +693,6 @@ private:
 
   QString m_OutputDirectory;
   std::set<int> m_RequestIDs;
-  QVector<int> m_AlphabeticalTranslation;
 
   DirWatcherManager m_DirWatcher;
 

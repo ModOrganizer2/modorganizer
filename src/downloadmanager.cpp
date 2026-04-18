@@ -876,38 +876,6 @@ void DownloadManager::removeFile(int index, bool deleteFile)
   m_DownloadRemoved(index);
 }
 
-class LessThanWrapper
-{
-public:
-  LessThanWrapper(DownloadManager* manager) : m_Manager(manager) {}
-  bool operator()(int LHS, int RHS)
-  {
-    return m_Manager->getFileName(LHS).compare(m_Manager->getFileName(RHS),
-                                               Qt::CaseInsensitive) < 0;
-  }
-
-private:
-  DownloadManager* m_Manager;
-};
-
-bool DownloadManager::ByName(int LHS, int RHS)
-{
-  return m_ActiveDownloads[LHS]->m_FileName < m_ActiveDownloads[RHS]->m_FileName;
-}
-
-void DownloadManager::refreshAlphabeticalTranslation()
-{
-  m_AlphabeticalTranslation.clear();
-  int pos = 0;
-  for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin();
-       iter != m_ActiveDownloads.end(); ++iter, ++pos) {
-    m_AlphabeticalTranslation.push_back(pos);
-  }
-
-  std::sort(m_AlphabeticalTranslation.begin(), m_AlphabeticalTranslation.end(),
-            LessThanWrapper(this));
-}
-
 void DownloadManager::restoreDownload(int index)
 {
 
@@ -2429,7 +2397,6 @@ void DownloadManager::metaDataChanged()
         DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
         info->setName(getDownloadFileName(newName), true);
       }
-      refreshAlphabeticalTranslation();
       notifyRowChanged(index);
       if (!info->m_Output.isOpen() &&
           !info->m_Output.open(QIODevice::WriteOnly | QIODevice::Append)) {
