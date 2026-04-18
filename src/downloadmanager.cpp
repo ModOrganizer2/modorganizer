@@ -752,10 +752,9 @@ void DownloadManager::addNXMDownload(const QString& url)
   }
 
   for (auto tuple : m_PendingDownloads) {
-    if (std::get<0>(tuple).compare(foundGame->gameShortName(), Qt::CaseInsensitive) ==
-            0,
+    if (std::get<0>(tuple).compare(foundGame->gameShortName(), Qt::CaseInsensitive) == 0 &&
         std::get<1>(tuple) == nxmInfo.modId() &&
-            std::get<2>(tuple) == nxmInfo.fileId()) {
+        std::get<2>(tuple) == nxmInfo.fileId()) {
       const auto infoStr =
           tr("There is already a download queued for this file.\n\nMod %1\nFile %2")
               .arg(nxmInfo.modId())
