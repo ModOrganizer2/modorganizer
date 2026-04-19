@@ -58,7 +58,9 @@ int DownloadList::columnCount(const QModelIndex&) const
 
 QModelIndex DownloadList::index(int row, int column, const QModelIndex&) const
 {
-  return createIndex(row, column, row);
+  // Embed the stable DownloadID in internalId() so any consumer of the index
+  // can identify the download without having to track row shifts.
+  return createIndex(row, column, m_manager.downloadIDAtRow(row));
 }
 
 QModelIndex DownloadList::parent(const QModelIndex&) const
