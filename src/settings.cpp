@@ -2502,7 +2502,8 @@ void GlobalSettings::setHideAssignCategoriesQuestion(bool b)
 
 namespace
 {
-constexpr auto NexusOAuthCredentialKey = "NEXUS_OAUTH_TOKENS";
+constexpr auto NexusLegacyCredentialKey = "APIKEY";
+constexpr auto NexusOAuthCredentialKey  = "NEXUS_OAUTH_TOKENS";
 
 std::optional<NexusOAuthTokens> parseStoredTokens(const QString& raw)
 {
@@ -2521,13 +2522,34 @@ std::optional<NexusOAuthTokens> parseStoredTokens(const QString& raw)
 
 bool GlobalSettings::nexusOAuthTokens(NexusOAuthTokens& tokens)
 {
+  // If legacy credential key exists and is not set in the new credentials,
+  // insert it into the current tokens. In all cases, clear the old credential
+  // store once parsed.
+  const auto legacyRaw = getWindowsCredential(NexusLegacyCredentialKey);
+  if (!legacyRaw.isEmpty()) {
+    tokens.apiKey = legacyRaw;
+    setWindowsCredential(NexusLegacyCredentialKey, "");
+  }
   const auto raw    = getWindowsCredential(NexusOAuthCredentialKey);
   const auto parsed = parseStoredTokens(raw);
-  if (!parsed) {
+  if (!parsed && legacyRaw.isEmpty()) {
     return false;
+  } else if (parsed && legacyRaw.isEmpty()) {
+    tokens = *parsed;
+  } else if (parsed) {
+    if (!parsed->apiKey.isEmpty()) {
+      tokens = *parsed;
+    } else {
+      tokens.accessToken  = parsed->accessToken;
+      tokens.refreshToken = parsed->refreshToken;
+      tokens.expiresAt    = parsed->expiresAt;
+      tokens.tokenType    = parsed->tokenType;
+      tokens.scope        = parsed->scope;
+      setNexusOAuthTokens(tokens);
+    }
+  } else {
+    setNexusOAuthTokens(tokens);
   }
-
-  tokens = *parsed;
   return true;
 }
 
