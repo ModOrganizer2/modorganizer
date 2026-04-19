@@ -922,10 +922,11 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
     return;
   }
 
+  // coalesce the removal and the subsequent refresh into one reset
+  ModelResetGuard guard(*this);
+
   try {
     DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
-    // coalesce the removal and the subsequent refresh into one reset
-    ModelResetGuard guard(*this);
 
     if (index < 0) {
       bool removeAll            = (index == -1);
