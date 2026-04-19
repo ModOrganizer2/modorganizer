@@ -666,7 +666,21 @@ private slots:
 
   void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
   void downloadReadyRead();
-  void downloadFinished(int index = 0);
+  /**
+   * @brief Slot wired to QNetworkReply::finished().
+   *
+   * Resolves the originating reply through sender() and then dispatches to
+   * finishDownload. Use the public finishDownload directly for non-slot calls.
+   */
+  void onReplyFinished();
+
+  /**
+   * @brief Run the post-download bookkeeping for the given download.
+   *
+   * Writes any remaining data, transitions the download's state, and emits
+   * the appropriate plugin signals.
+   */
+  void finishDownload(unsigned int id);
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
   void checkDownloadTimeout();
