@@ -818,11 +818,13 @@ void ModListViewActions::removeMods(const QModelIndexList& indices) const
               QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
         // use mod names instead of indexes because those become invalid during the
         // removal
-        DownloadManager::startDisableDirWatcher();
-        for (QString name : modNames) {
-          m_core.modList()->removeRowForce(ModInfo::getIndex(name), QModelIndex());
+        {
+          DirWatcherManager::Guard dirWatcherGuard =
+              m_core.downloadManager()->dirWatcher().scopedGuard();
+          for (QString name : modNames) {
+            m_core.modList()->removeRowForce(ModInfo::getIndex(name), QModelIndex());
+          }
         }
-        DownloadManager::endDisableDirWatcher();
       }
     } else if (!indices.isEmpty()) {
       m_core.modList()->removeRow(indices[0].data(ModList::IndexRole).toInt(),
