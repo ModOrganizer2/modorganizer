@@ -112,14 +112,14 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
   bool pendingDownload = index.row() >= m_manager.numTotalDownloads();
   if (role == Qt::DisplayRole) {
     if (pendingDownload) {
-      std::tuple<QString, int, int> nexusids =
+      const DownloadManager::PendingDownload pending =
           m_manager.getPendingDownload(index.row() - m_manager.numTotalDownloads());
       switch (index.column()) {
       case COL_NAME:
         return tr("< game %1 mod %2 file %3 >")
-            .arg(std::get<0>(nexusids))
-            .arg(std::get<1>(nexusids))
-            .arg(std::get<2>(nexusids));
+            .arg(pending.gameName)
+            .arg(pending.modID)
+            .arg(pending.fileID);
       case COL_SIZE:
         return tr("Unknown");
       case COL_STATUS:

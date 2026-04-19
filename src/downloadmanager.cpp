@@ -57,12 +57,17 @@ static const char UNFINISHED[] = ".unfinished";
 
 unsigned int DownloadManager::DownloadInfo::s_NextDownloadID = 1U;
 
+unsigned int DownloadManager::DownloadInfo::newDownloadID()
+{
+  return s_NextDownloadID++;
+}
+
 DownloadManager::DownloadInfo*
 DownloadManager::DownloadInfo::createNew(const ModRepositoryFileInfo* fileInfo,
                                          const QStringList& URLs)
 {
   DownloadInfo* info = new DownloadInfo;
-  info->m_DownloadID = s_NextDownloadID++;
+  info->m_DownloadID = newDownloadID();
   info->m_StartTime.start();
   info->m_PreResumeSize  = 0LL;
   info->m_Progress       = std::make_pair<int, QString>(0, "0.0 B/s ");
@@ -119,7 +124,7 @@ DownloadManager::DownloadInfo::createFromMeta(const QString& filePath, bool show
     }
   }
 
-  info->m_DownloadID = s_NextDownloadID++;
+  info->m_DownloadID = newDownloadID();
   info->m_Output.setFileName(filePath);
   info->m_TotalSize      = fileSize ? *fileSize : QFileInfo(filePath).size();
   info->m_PreResumeSize  = info->m_TotalSize;
@@ -287,6 +292,7 @@ DownloadManager::~DownloadManager()
     delete *iter;
   }
   m_ActiveDownloads.clear();
+  m_ByID.clear();
 }
 
 void DownloadManager::setParentWidget(QWidget* w)
@@ -385,6 +391,7 @@ void DownloadManager::refreshList()
          iter != m_ActiveDownloads.end();) {
       if (((*iter)->m_State == STATE_READY) || ((*iter)->m_State == STATE_INSTALLED) ||
           ((*iter)->m_State == STATE_UNINSTALLED)) {
+        m_ByID.remove((*iter)->m_DownloadID);
         delete *iter;
         iter = m_ActiveDownloads.erase(iter);
       } else {
@@ -469,6 +476,7 @@ void DownloadManager::refreshList()
           }
 
           cx.self.m_ActiveDownloads.push_front(info);
+          cx.self.m_ByID.insert(info->m_DownloadID, info);
           cx.seen.insert(std::move(lc));
           cx.seen.insert(
               QFileInfo(info->m_Output.fileName()).fileName().toLower().toStdWString());
@@ -621,12 +629,14 @@ bool DownloadManager::addDownload(QNetworkReply* reply, const QStringList& URLs,
 void DownloadManager::removePending(QString gameName, int modID, int fileID)
 {
   QString gameShortName = getValidGameShortName(gameName);
-  for (auto iter : m_PendingDownloads) {
-    if (gameShortName.compare(std::get<0>(iter), Qt::CaseInsensitive) == 0 &&
-        (std::get<1>(iter) == modID) && (std::get<2>(iter) == fileID)) {
+
+  for (int i = 0; i < m_PendingDownloads.size(); ++i) {
+    const PendingDownload& pending = m_PendingDownloads.at(i);
+    if (gameShortName.compare(pending.gameName, Qt::CaseInsensitive) == 0 &&
+        pending.modID == modID && pending.fileID == fileID) {
       // only emit a reset if we actually have a row to remove
       ModelResetGuard guard(*this);
-      m_PendingDownloads.removeAt(m_PendingDownloads.indexOf(iter));
+      m_PendingDownloads.removeAt(i);
       break;
     }
   }
@@ -674,6 +684,7 @@ void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
       removePending(newDownload->m_FileInfo->gameName, newDownload->m_FileInfo->modID,
                     newDownload->m_FileInfo->fileID);
       m_ActiveDownloads.append(newDownload);
+      m_ByID.insert(newDownload->m_DownloadID, newDownload);
     }
     emit downloadAdded();
 
@@ -732,11 +743,9 @@ void DownloadManager::addNXMDownload(const QString& url)
     return;
   }
 
-  for (auto tuple : m_PendingDownloads) {
-    if (std::get<0>(tuple).compare(foundGame->gameShortName(), Qt::CaseInsensitive) ==
-            0 &&
-        std::get<1>(tuple) == nxmInfo.modId() &&
-        std::get<2>(tuple) == nxmInfo.fileId()) {
+  for (const PendingDownload& pending : m_PendingDownloads) {
+    if (pending.gameName.compare(foundGame->gameShortName(), Qt::CaseInsensitive) == 0 &&
+        pending.modID == nxmInfo.modId() && pending.fileID == nxmInfo.fileId()) {
       const auto infoStr =
           tr("There is already a download queued for this file.\n\nMod %1\nFile %2")
               .arg(nxmInfo.modId())
@@ -803,8 +812,9 @@ void DownloadManager::addNXMDownload(const QString& url)
 
   {
     ModelResetGuard guard(*this);
-    m_PendingDownloads.append(
-        std::make_tuple(foundGame->gameShortName(), nxmInfo.modId(), nxmInfo.fileId()));
+    PendingDownload pending{foundGame->gameShortName(), nxmInfo.modId(),
+                            nxmInfo.fileId()};
+    m_PendingDownloads.append(pending);
   }
   emit downloadAdded();
   ModRepositoryFileInfo* info = new ModRepositoryFileInfo();
@@ -921,6 +931,7 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
         if ((removeAll && (downloadState >= STATE_READY)) ||
             (removeState == downloadState)) {
           removeFile(index, deleteFile);
+          m_ByID.remove((*iter)->m_DownloadID);
           delete *iter;
           iter = m_ActiveDownloads.erase(iter);
         } else {
@@ -929,8 +940,10 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
         }
       }
     } else {
+      DownloadInfo* info = m_ActiveDownloads.at(index);
       removeFile(index, deleteFile);
-      delete m_ActiveDownloads.at(index);
+      m_ByID.remove(info->m_DownloadID);
+      delete info;
       m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
     }
   } catch (const std::exception& e) {
@@ -1041,15 +1054,7 @@ void DownloadManager::resumeDownloadInt(int index)
 
 DownloadManager::DownloadInfo* DownloadManager::downloadInfoByID(unsigned int id)
 {
-  auto iter = std::find_if(m_ActiveDownloads.begin(), m_ActiveDownloads.end(),
-                           [id](DownloadInfo* info) {
-                             return info->m_DownloadID == id;
-                           });
-  if (iter != m_ActiveDownloads.end()) {
-    return *iter;
-  } else {
-    return nullptr;
-  }
+  return m_ByID.value(id, nullptr);
 }
 
 void DownloadManager::queryInfo(int index)
@@ -1306,7 +1311,7 @@ int DownloadManager::numPendingDownloads() const
   return m_PendingDownloads.size();
 }
 
-std::tuple<QString, int, int> DownloadManager::getPendingDownload(int index)
+DownloadManager::PendingDownload DownloadManager::getPendingDownload(int index)
 {
   if ((index < 0) || (index >= m_PendingDownloads.size())) {
     throw MyException(tr("get pending: invalid download index %1").arg(index));
@@ -2180,6 +2185,7 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID,
     if (info->m_FileInfo->modID == modID) {
       if (info->m_State < STATE_FETCHINGMODINFO) {
         ModelResetGuard guard(*this);
+        m_ByID.remove(info->m_DownloadID);
         m_ActiveDownloads.erase(iter);
         delete info;
       } else {
@@ -2257,6 +2263,7 @@ void DownloadManager::downloadFinished(int index)
       {
         ModelResetGuard guard(*this);
         info->m_Output.remove();
+        m_ByID.remove(info->m_DownloadID);
         delete info;
         m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
       }

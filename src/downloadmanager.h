@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileSystemWatcher>
+#include <QHash>
 #include <QMap>
 #include <QNetworkReply>
 #include <QObject>
@@ -40,6 +41,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/signals2.hpp>
 #include <idownloadmanager.h>
 #include <modrepositoryfileinfo.h>
+#include <optional>
 #include <set>
 using namespace boost::accumulators;
 
@@ -150,6 +152,21 @@ public:
     STATE_UNINSTALLED
   };
 
+  /**
+   * @brief A download that has been requested but has not yet produced a
+   * DownloadInfo.
+   *
+   * Created when the user initiates an NXM download; drained either when the
+   * Nexus API returns the actual download URL (at which point a DownloadInfo
+   * is created) or when the request is cancelled or fails.
+   */
+  struct PendingDownload
+  {
+    QString gameName;
+    int modID;
+    int fileID;
+  };
+
 private:
   struct DownloadInfo
   {
@@ -186,6 +203,14 @@ private:
     MOBase::ModRepositoryFileInfo* m_FileInfo{nullptr};
 
     bool m_Hidden;
+
+    /**
+     * @brief Issue a new download id.
+     *
+     * The only supported way to obtain one; ids are monotonically increasing
+     * within a session and never reused.
+     */
+    static unsigned int newDownloadID();
 
     static DownloadInfo* createNew(const MOBase::ModRepositoryFileInfo* fileInfo,
                                    const QStringList& URLs);
@@ -329,9 +354,9 @@ public:
    * @brief retrieve the info of a pending download
    * @param index index of the pending download (index in the range [0,
    * numPendingDownloads()[)
-   * @return pair of modid, fileid
+   * @return the PendingDownload entry at the given index
    */
-  std::tuple<QString, int, int> getPendingDownload(int index);
+  PendingDownload getPendingDownload(int index);
 
   /**
    * @brief retrieve the full path to the download specified by index
@@ -686,9 +711,13 @@ private:
   OrganizerCore* m_OrganizerCore;
   QWidget* m_ParentWidget;
 
-  QVector<std::tuple<QString, int, int>> m_PendingDownloads;
+  QVector<PendingDownload> m_PendingDownloads;
 
   QVector<DownloadInfo*> m_ActiveDownloads;
+
+  // Secondary index into m_ActiveDownloads keyed by m_DownloadID; kept in sync
+  // with every m_ActiveDownloads mutation.
+  QHash<unsigned int, DownloadInfo*> m_ByID;
 
   QString m_OutputDirectory;
   std::set<int> m_RequestIDs;
