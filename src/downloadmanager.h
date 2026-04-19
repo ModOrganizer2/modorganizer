@@ -153,6 +153,14 @@ public:
   };
 
   /**
+   * @brief Stable identifier for a download.
+   *
+   * Monotonically increasing within a session and never reused. Distinct from
+   * row indices, which are positional and shift as the list is mutated.
+   */
+  using DownloadID = unsigned int;
+
+  /**
    * @brief A download that has been requested but has not yet produced a
    * DownloadInfo.
    *
@@ -374,6 +382,21 @@ public:
    * @return the PendingDownload entry at the given index
    */
   PendingDownload getPendingDownload(int index);
+
+  /**
+   * @brief Resolve a view row to a stable DownloadID.
+   *
+   * Rows cover active downloads followed by pending ones. Returns 0 if the row
+   * is out of range.
+   */
+  DownloadID downloadIDAtRow(int row) const;
+
+  /**
+   * @brief Resolve a stable DownloadID to its current view row.
+   *
+   * @return the current row, or -1 if no download with that id is tracked.
+   */
+  int rowForDownloadID(DownloadID id) const;
 
   /**
    * @brief retrieve the full path to the download specified by index

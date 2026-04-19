@@ -2070,6 +2070,32 @@ int DownloadManager::indexByInfo(const DownloadInfo* info) const
   return -1;
 }
 
+DownloadManager::DownloadID DownloadManager::downloadIDAtRow(int row) const
+{
+  if (row >= 0 && row < m_ActiveDownloads.size()) {
+    return m_ActiveDownloads[row]->m_DownloadID;
+  }
+  const int pendingRow = row - m_ActiveDownloads.size();
+  if (pendingRow >= 0 && pendingRow < m_PendingDownloads.size()) {
+    return m_PendingDownloads[pendingRow].reservedID;
+  }
+  return 0;
+}
+
+int DownloadManager::rowForDownloadID(DownloadID id) const
+{
+  if (DownloadInfo* info = m_ByID.value(id, nullptr)) {
+    return indexByInfo(info);
+  }
+  const int base = m_ActiveDownloads.size();
+  for (int i = 0; i < m_PendingDownloads.size(); ++i) {
+    if (m_PendingDownloads[i].reservedID == id) {
+      return base + i;
+    }
+  }
+  return -1;
+}
+
 void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int fileID,
                                                QVariant userData, QVariant resultData,
                                                int requestID)
