@@ -915,9 +915,9 @@ void DownloadManager::restoreDownload(int index)
 
 void DownloadManager::removeDownload(int index, bool deleteFile)
 {
-  // validate the single-index case before entering the guard so we don't
-  // emit an empty reset on early return
-  if (index >= 0 && index >= m_ActiveDownloads.size()) {
+  // validate before entering the guard so we don't emit an empty reset on
+  // early return
+  if (index >= m_ActiveDownloads.size()) {
     reportError(tr("remove: invalid download index %1").arg(index));
     return;
   }
@@ -950,11 +950,11 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
       delete m_ActiveDownloads.at(index);
       m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
     }
-
-    refreshList();
   } catch (const std::exception& e) {
     log::error("failed to remove download: {}", e.what());
   }
+
+  refreshList();
 }
 
 void DownloadManager::cancelDownload(int index)
