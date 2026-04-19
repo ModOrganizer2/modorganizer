@@ -767,7 +767,8 @@ DownloadManager::DownloadID DownloadManager::addNXMDownload(const QString& url)
   // If a pending entry already covers this file, return its id so callers that
   // poll by id see the same download regardless of how many times they queue.
   for (const PendingDownload& pending : m_PendingDownloads) {
-    if (pending.gameName.compare(foundGame->gameShortName(), Qt::CaseInsensitive) == 0 &&
+    if (pending.gameName.compare(foundGame->gameShortName(), Qt::CaseInsensitive) ==
+            0 &&
         pending.modID == nxmInfo.modId() && pending.fileID == nxmInfo.fileId()) {
       const auto infoStr =
           tr("There is already a download queued for this file.\n\nMod %1\nFile %2")
@@ -1650,9 +1651,8 @@ void DownloadManager::setState(DownloadManager::DownloadInfo* info,
         info->m_FileInfo->gameName, info->m_FileInfo->modID, this, id, QString()));
   } break;
   case STATE_FETCHINGFILEINFO: {
-    m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_FileInfo->gameName,
-                                                       info->m_FileInfo->modID, this,
-                                                       id, QString()));
+    m_RequestIDs.insert(m_NexusInterface->requestFiles(
+        info->m_FileInfo->gameName, info->m_FileInfo->modID, this, id, QString()));
   } break;
   case STATE_FETCHINGMODINFO_MD5: {
     log::debug("Searching {} for MD5 of {}", info->m_GamesToQuery[0],
