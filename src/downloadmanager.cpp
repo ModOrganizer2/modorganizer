@@ -726,12 +726,9 @@ bool DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
   // Qt will not emit finished() to a slot connected after the reply has already
   // finished, so detect that case and drive the handler manually.
   if (reply->isFinished()) {
-    int index = indexByInfo(newDownload);
-    if (index >= 0) {
-      downloadFinished(index);
-    }
+    finishDownload(newDownload->m_DownloadID);
   } else {
-    connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
+    connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(onReplyFinished()));
   }
   return true;
 }
@@ -1050,7 +1047,7 @@ void DownloadManager::resumeDownloadInt(int index)
   if (info->m_TotalSize <= info->m_Output.size() && info->m_Reply != nullptr &&
       info->m_Reply->isFinished() && info->m_State != STATE_ERROR) {
     setState(info, STATE_DOWNLOADING);
-    downloadFinished(index);
+    finishDownload(info->m_DownloadID);
     return;
   }
 
@@ -2278,134 +2275,136 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID,
   emit showMessage(tr("Failed to request file info from nexus: %1").arg(errorString));
 }
 
-void DownloadManager::downloadFinished(int index)
+void DownloadManager::onReplyFinished()
+{
+  DownloadInfo* info = findDownload(this->sender());
+  if (info == nullptr) {
+    log::warn("finished signal from unknown reply");
+    return;
+  }
+  finishDownload(info->m_DownloadID);
+}
+
+void DownloadManager::finishDownload(unsigned int id)
 {
   DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
 
-  DownloadInfo* info;
-  if (index > 0)
-    info = m_ActiveDownloads[index];
-  else {
-    info = findDownload(this->sender(), &index);
-    if (info == nullptr && index == 0) {
-      info = m_ActiveDownloads[index];
+  DownloadInfo* info = m_ByID.value(id, nullptr);
+  if (info == nullptr) {
+    log::warn("no download with id {}", id);
+    return;
+  }
+  int index = indexByInfo(info);
+
+  QNetworkReply* reply = info->m_Reply;
+  QByteArray data;
+  if (reply->isOpen() && info->m_HasData) {
+    data = reply->readAll();
+    info->m_Output.write(data);
+  }
+  info->m_Output.close();
+  TaskProgressManager::instance().forgetMe(info->m_TaskProgressId);
+
+  bool error = false;
+  if ((info->m_State != STATE_CANCELING) && (info->m_State != STATE_PAUSING)) {
+    bool textData = reply->header(QNetworkRequest::ContentTypeHeader)
+                        .toString()
+                        .startsWith("text", Qt::CaseInsensitive);
+    if (textData)
+      emit showMessage(
+          tr("Warning: Content type is: %1")
+              .arg(reply->header(QNetworkRequest::ContentTypeHeader).toString()));
+    if ((info->m_Output.size() == 0) ||
+        ((reply->error() != QNetworkReply::NoError) &&
+         (reply->error() != QNetworkReply::OperationCanceledError))) {
+      if (reply->error() == QNetworkReply::UnknownContentError)
+        emit showMessage(
+            tr("Download header content length: %1 downloaded file size: %2")
+                .arg(reply->header(QNetworkRequest::ContentLengthHeader).toLongLong())
+                .arg(info->m_Output.size()));
+      if (info->m_Tries == 0) {
+        emit showMessage(tr("Download failed: %1 (%2)")
+                             .arg(reply->errorString())
+                             .arg(reply->error()));
+      }
+      error = true;
+      setState(info, STATE_ERROR);
     }
   }
 
-  if (info != nullptr) {
-    QNetworkReply* reply = info->m_Reply;
-    QByteArray data;
-    if (reply->isOpen() && info->m_HasData) {
-      data = reply->readAll();
-      info->m_Output.write(data);
+  if (info->m_State == STATE_CANCELING) {
+    setState(info, STATE_CANCELED);
+  } else if (info->m_State == STATE_PAUSING) {
+    if (info->m_Output.isOpen() && info->m_HasData) {
+      info->m_Output.write(info->m_Reply->readAll());
     }
+    setState(info, STATE_PAUSED);
+  }
+
+  if (info->m_State == STATE_CANCELED || (info->m_Tries == 0 && error)) {
+    {
+      ModelResetGuard guard(*this);
+      info->m_Output.remove();
+      m_ByID.remove(info->m_DownloadID);
+      delete info;
+      m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
+    }
+    if (error)
+      emit showMessage(
+          tr("We were unable to download the file due to errors after four retries. "
+             "There may be an issue with the Nexus servers."));
+  } else if (info->isPausedState() || info->m_State == STATE_PAUSING) {
     info->m_Output.close();
-    TaskProgressManager::instance().forgetMe(info->m_TaskProgressId);
-
-    bool error = false;
-    if ((info->m_State != STATE_CANCELING) && (info->m_State != STATE_PAUSING)) {
-      bool textData = reply->header(QNetworkRequest::ContentTypeHeader)
-                          .toString()
-                          .startsWith("text", Qt::CaseInsensitive);
-      if (textData)
-        emit showMessage(
-            tr("Warning: Content type is: %1")
-                .arg(reply->header(QNetworkRequest::ContentTypeHeader).toString()));
-      if ((info->m_Output.size() == 0) ||
-          ((reply->error() != QNetworkReply::NoError) &&
-           (reply->error() != QNetworkReply::OperationCanceledError))) {
-        if (reply->error() == QNetworkReply::UnknownContentError)
-          emit showMessage(
-              tr("Download header content length: %1 downloaded file size: %2")
-                  .arg(reply->header(QNetworkRequest::ContentLengthHeader).toLongLong())
-                  .arg(info->m_Output.size()));
-        if (info->m_Tries == 0) {
-          emit showMessage(tr("Download failed: %1 (%2)")
-                               .arg(reply->errorString())
-                               .arg(reply->error()));
-        }
-        error = true;
-        setState(info, STATE_ERROR);
-      }
-    }
-
-    if (info->m_State == STATE_CANCELING) {
-      setState(info, STATE_CANCELED);
-    } else if (info->m_State == STATE_PAUSING) {
-      if (info->m_Output.isOpen() && info->m_HasData) {
-        info->m_Output.write(info->m_Reply->readAll());
-      }
-      setState(info, STATE_PAUSED);
-    }
-
-    if (info->m_State == STATE_CANCELED || (info->m_Tries == 0 && error)) {
-      {
-        ModelResetGuard guard(*this);
-        info->m_Output.remove();
-        m_ByID.remove(info->m_DownloadID);
-        delete info;
-        m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
-      }
-      if (error)
-        emit showMessage(
-            tr("We were unable to download the file due to errors after four retries. "
-               "There may be an issue with the Nexus servers."));
-    } else if (info->isPausedState() || info->m_State == STATE_PAUSING) {
-      info->m_Output.close();
-      createMetaFile(info);
-    } else {
-      QString url = info->m_Urls[info->m_CurrentUrl];
-      if (info->m_FileInfo->userData.contains("downloadMap")) {
-        foreach (const QVariant& server,
-                 info->m_FileInfo->userData["downloadMap"].toList()) {
-          QVariantMap serverMap = server.toMap();
-          if (serverMap["URI"].toString() == url) {
-            int deltaTime = info->m_StartTime.elapsed() / 1000;
-            if (deltaTime > 5) {
-              emit downloadSpeed(serverMap["short_name"].toString(),
-                                 (info->m_TotalSize - info->m_PreResumeSize) /
-                                     deltaTime);
-            }  // no division by zero please! Also, if the download is shorter than a
-               // few seconds, the result is way to inprecise
-            break;
-          }
-        }
-      }
-
-      bool isNexus = info->m_FileInfo->repository == "Nexus";
-      // need to change state before changing the file name, otherwise .unfinished is
-      // appended
-      if (isNexus) {
-        setState(info, STATE_FETCHINGMODINFO);
-      } else {
-        setState(info, STATE_NOFETCH);
-      }
-
-      QString newName = getFileNameFromNetworkReply(reply);
-      QString oldName = QFileInfo(info->m_Output).fileName();
-
-      if (!newName.isEmpty() && (oldName.isEmpty())) {
-        info->setName(getDownloadFileName(newName), true);
-      } else {
-        info->setName(m_OutputDirectory + "/" + info->m_FileName,
-                      true);  // don't rename but remove the ".unfinished" extension
-      }
-
-      if (!isNexus) {
-        setState(info, STATE_READY);
-      }
-
-      notifyRowChanged(index);
-    }
-    reply->close();
-    reply->deleteLater();
-
-    if ((info->m_Tries > 0) && error) {
-      --info->m_Tries;
-      resumeDownloadInt(index);
-    }
+    createMetaFile(info);
   } else {
-    log::warn("no download index {}", index);
+    QString url = info->m_Urls[info->m_CurrentUrl];
+    if (info->m_FileInfo->userData.contains("downloadMap")) {
+      foreach (const QVariant& server,
+               info->m_FileInfo->userData["downloadMap"].toList()) {
+        QVariantMap serverMap = server.toMap();
+        if (serverMap["URI"].toString() == url) {
+          int deltaTime = info->m_StartTime.elapsed() / 1000;
+          if (deltaTime > 5) {
+            emit downloadSpeed(serverMap["short_name"].toString(),
+                               (info->m_TotalSize - info->m_PreResumeSize) / deltaTime);
+          }  // no division by zero please! Also, if the download is shorter than a
+             // few seconds, the result is way to inprecise
+          break;
+        }
+      }
+    }
+
+    bool isNexus = info->m_FileInfo->repository == "Nexus";
+    // need to change state before changing the file name, otherwise .unfinished is
+    // appended
+    if (isNexus) {
+      setState(info, STATE_FETCHINGMODINFO);
+    } else {
+      setState(info, STATE_NOFETCH);
+    }
+
+    QString newName = getFileNameFromNetworkReply(reply);
+    QString oldName = QFileInfo(info->m_Output).fileName();
+
+    if (!newName.isEmpty() && (oldName.isEmpty())) {
+      info->setName(getDownloadFileName(newName), true);
+    } else {
+      info->setName(m_OutputDirectory + "/" + info->m_FileName,
+                    true);  // don't rename but remove the ".unfinished" extension
+    }
+
+    if (!isNexus) {
+      setState(info, STATE_READY);
+    }
+
+    notifyRowChanged(index);
+  }
+  reply->close();
+  reply->deleteLater();
+
+  if ((info->m_Tries > 0) && error) {
+    --info->m_Tries;
+    resumeDownloadInt(index);
   }
 }
 
@@ -2458,7 +2457,7 @@ void DownloadManager::checkDownloadTimeout()
         m_ActiveDownloads[i]->m_Reply != nullptr &&
         m_ActiveDownloads[i]->m_Reply->isOpen()) {
       pauseDownload(i);
-      downloadFinished(i);
+      finishDownload(m_ActiveDownloads[i]->m_DownloadID);
       resumeDownload(i);
     }
   }
