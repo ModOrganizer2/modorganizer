@@ -64,10 +64,11 @@ unsigned int DownloadManager::DownloadInfo::newDownloadID()
 
 DownloadManager::DownloadInfo*
 DownloadManager::DownloadInfo::createNew(const ModRepositoryFileInfo* fileInfo,
-                                         const QStringList& URLs)
+                                         const QStringList& URLs,
+                                         std::optional<unsigned int> reservedID)
 {
   DownloadInfo* info = new DownloadInfo;
-  info->m_DownloadID = newDownloadID();
+  info->m_DownloadID = reservedID.has_value() ? *reservedID : newDownloadID();
   info->m_StartTime.start();
   info->m_PreResumeSize  = 0LL;
   info->m_Progress       = std::make_pair<int, QString>(0, "0.0 B/s ");
@@ -520,7 +521,8 @@ void DownloadManager::queryDownloadListInfo()
 }
 
 bool DownloadManager::addDownload(const QStringList& URLs, QString gameName, int modID,
-                                  int fileID, const ModRepositoryFileInfo* fileInfo)
+                                  int fileID, const ModRepositoryFileInfo* fileInfo,
+                                  std::optional<unsigned int> reservedID)
 {
   QString fileName = QFileInfo(URLs.first()).fileName();
   if (fileName.isEmpty()) {
@@ -558,7 +560,7 @@ bool DownloadManager::addDownload(const QStringList& URLs, QString gameName, int
                        QNetworkRequest::AlwaysNetwork);
   request.setHttp2Configuration(h2Conf);
   return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName,
-                     gameName, modID, fileID, fileInfo);
+                     gameName, modID, fileID, fileInfo, reservedID);
 }
 
 bool DownloadManager::addDownload(QNetworkReply* reply,
@@ -575,11 +577,12 @@ bool DownloadManager::addDownload(QNetworkReply* reply,
 
 bool DownloadManager::addDownload(QNetworkReply* reply, const QStringList& URLs,
                                   const QString& fileName, QString gameName, int modID,
-                                  int fileID, const ModRepositoryFileInfo* fileInfo)
+                                  int fileID, const ModRepositoryFileInfo* fileInfo,
+                                  std::optional<unsigned int> reservedID)
 {
   // download invoked from an already open network reply (i.e. download link in the
   // browser)
-  DownloadInfo* newDownload = DownloadInfo::createNew(fileInfo, URLs);
+  DownloadInfo* newDownload = DownloadInfo::createNew(fileInfo, URLs, reservedID);
 
   QString baseName = fileName;
   if (!fileInfo->fileName.isEmpty()) {
@@ -607,8 +610,7 @@ bool DownloadManager::addDownload(QNetworkReply* reply, const QStringList& URLs,
                "different name.")
                 .arg(baseName),
             QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
-      removePending(newDownload->m_FileInfo->gameName, newDownload->m_FileInfo->modID,
-                    newDownload->m_FileInfo->fileID);
+      removePending(gameName, modID, fileID);
       reply->abort();
       reply->deleteLater();
       delete newDownload;
@@ -622,8 +624,19 @@ bool DownloadManager::addDownload(QNetworkReply* reply, const QStringList& URLs,
     newDownload->setName(getDownloadFileName(baseName, renameToUnique), false);
   }
 
-  startDownload(reply, newDownload, false);
-  return true;
+  return startDownload(reply, newDownload, false);
+}
+
+void DownloadManager::notifyPendingDownloadFailed(const QString& gameName, int modID,
+                                                  int fileID)
+{
+  for (const PendingDownload& pending : m_PendingDownloads) {
+    if (pending.gameName.compare(gameName, Qt::CaseInsensitive) == 0 &&
+        pending.modID == modID && pending.fileID == fileID) {
+      m_DownloadFailed(pending.reservedID);
+      return;
+    }
+  }
 }
 
 void DownloadManager::removePending(QString gameName, int modID, int fileID)
@@ -631,7 +644,7 @@ void DownloadManager::removePending(QString gameName, int modID, int fileID)
   QString gameShortName = gameName;
   QStringList games(m_ManagedGame->validShortNames());
   games += m_ManagedGame->gameShortName();
-  for (auto game : games) {
+  for (const auto& game : games) {
     MOBase::IPluginGame* gamePlugin = m_OrganizerCore->getGame(game);
     if (gamePlugin != nullptr &&
         gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
@@ -651,7 +664,7 @@ void DownloadManager::removePending(QString gameName, int modID, int fileID)
   }
 }
 
-void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownload,
+bool DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownload,
                                     bool resume)
 {
   reply->setReadBufferSize(
@@ -668,14 +681,24 @@ void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
   }
 
   newDownload->m_StartTime.start();
-  createMetaFile(newDownload);
 
   if (!newDownload->m_Output.open(mode)) {
     reportError(tr("failed to download %1: could not open output file: %2")
                     .arg(reply->url().toString())
                     .arg(newDownload->m_Output.fileName()));
-    return;
+    if (!resume) {
+      // newDownload has not been appended to m_ActiveDownloads yet: drop it
+      // here, otherwise it leaks. The resume path is owned elsewhere.
+      reply->abort();
+      reply->deleteLater();
+      delete newDownload;
+    }
+    return false;
   }
+
+  // Write the .meta only once we know the download is actually going to start.
+  // Otherwise a failed start leaves an orphan .meta on disk.
+  createMetaFile(newDownload);
 
   connect(newDownload->m_Reply, SIGNAL(downloadProgress(qint64, qint64)), this,
           SLOT(downloadProgress(qint64, qint64)));
@@ -710,9 +733,10 @@ void DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
   } else {
     connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
   }
+  return true;
 }
 
-void DownloadManager::addNXMDownload(const QString& url)
+unsigned int DownloadManager::addNXMDownload(const QString& url)
 {
   NXMUrl nxmInfo(url);
 
@@ -749,9 +773,11 @@ void DownloadManager::addNXMDownload(const QString& url)
             .arg(nxmInfo.game())
             .arg(m_ManagedGame->gameShortName()),
         QMessageBox::Ok);
-    return;
+    return 0;
   }
 
+  // If a pending entry already covers this file, return its id so callers that
+  // poll by id see the same download regardless of how many times they queue.
   for (const PendingDownload& pending : m_PendingDownloads) {
     if (pending.gameName.compare(foundGame->gameShortName(), Qt::CaseInsensitive) == 0 &&
         pending.modID == nxmInfo.modId() && pending.fileID == nxmInfo.fileId()) {
@@ -765,7 +791,7 @@ void DownloadManager::addNXMDownload(const QString& url)
 
       QMessageBox::information(m_ParentWidget, tr("Already Queued"), infoStr,
                                QMessageBox::Ok);
-      return;
+      return pending.reservedID;
     }
   }
 
@@ -814,15 +840,19 @@ void DownloadManager::addNXMDownload(const QString& url)
         log::debug("{}", debugStr);
         QMessageBox::information(m_ParentWidget, tr("Already Started"), infoStr,
                                  QMessageBox::Ok);
-        return;
+        return download->m_DownloadID;
       }
     }
   }
 
+  // Reserve the id now (before any async work) so the caller can refer to the
+  // eventual download before the Nexus API responds and a DownloadInfo exists.
+  const unsigned int reservedID = DownloadInfo::newDownloadID();
+
   {
     ModelResetGuard guard(*this);
     PendingDownload pending{foundGame->gameShortName(), nxmInfo.modId(),
-                            nxmInfo.fileId()};
+                            nxmInfo.fileId(), reservedID};
     m_PendingDownloads.append(pending);
   }
   emit downloadAdded();
@@ -836,6 +866,7 @@ void DownloadManager::addNXMDownload(const QString& url)
   m_RequestIDs.insert(m_NexusInterface->requestFileInfo(
       foundGame->gameShortName(), nxmInfo.modId(), nxmInfo.fileId(), this,
       QVariant::fromValue(test), ""));
+  return reservedID;
 }
 
 void DownloadManager::removeFile(int index, bool deleteFile)
@@ -874,7 +905,7 @@ void DownloadManager::removeFile(int index, bool deleteFile)
     if (!download->m_Hidden)
       metaSettings.setValue("removed", true);
   }
-  m_DownloadRemoved(index);
+  m_DownloadRemoved(download->m_DownloadID);
 }
 
 void DownloadManager::restoreDownload(int index)
@@ -1603,47 +1634,48 @@ QString DownloadManager::getFileNameFromNetworkReply(QNetworkReply* reply)
 void DownloadManager::setState(DownloadManager::DownloadInfo* info,
                                DownloadManager::DownloadState state)
 {
-  info->m_State = state;
-  // Row is re-looked up at each use: reply->abort() and plugin callbacks can
-  // re-enter and erase info (and info may not be tracked yet on first state).
+  // Cache the id before reply->abort(): aborting fires signals synchronously
+  // and a slot may erase info, leaving this pointer dangling. The id is stable
+  // and m_ByID.contains() lets us check whether info is still present afterward.
+  const unsigned int id = info->m_DownloadID;
+  info->m_State         = state;
   switch (state) {
   case STATE_PAUSED: {
     info->m_Reply->abort();
     info->m_Output.close();
-    if (const int r = indexByInfo(info); r >= 0)
-      m_DownloadPaused(r);
+    if (m_ByID.contains(id))
+      m_DownloadPaused(id);
   } break;
   case STATE_ERROR: {
     info->m_Reply->abort();
     info->m_Output.close();
-    if (const int r = indexByInfo(info); r >= 0)
-      m_DownloadFailed(r);
+    if (m_ByID.contains(id))
+      m_DownloadFailed(id);
   } break;
   case STATE_CANCELED: {
     info->m_Reply->abort();
-    if (const int r = indexByInfo(info); r >= 0)
-      m_DownloadFailed(r);
+    if (m_ByID.contains(id))
+      m_DownloadFailed(id);
   } break;
   case STATE_FETCHINGMODINFO: {
     m_RequestIDs.insert(m_NexusInterface->requestDescription(
-        info->m_FileInfo->gameName, info->m_FileInfo->modID, this, info->m_DownloadID,
-        QString()));
+        info->m_FileInfo->gameName, info->m_FileInfo->modID, this, id, QString()));
   } break;
   case STATE_FETCHINGFILEINFO: {
     m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_FileInfo->gameName,
                                                        info->m_FileInfo->modID, this,
-                                                       info->m_DownloadID, QString()));
+                                                       id, QString()));
   } break;
   case STATE_FETCHINGMODINFO_MD5: {
     log::debug("Searching {} for MD5 of {}", info->m_GamesToQuery[0],
                QString(info->m_Hash.toHex()));
     m_RequestIDs.insert(m_NexusInterface->requestInfoFromMd5(
-        info->m_GamesToQuery[0], info->m_Hash, this, info->m_DownloadID, QString()));
+        info->m_GamesToQuery[0], info->m_Hash, this, id, QString()));
   } break;
   case STATE_READY: {
     createMetaFile(info);
-    if (const int r = indexByInfo(info); r >= 0)
-      m_DownloadComplete(r);
+    if (m_ByID.contains(id))
+      m_DownloadComplete(id);
   } break;
   default: /* NOP */
     break;
@@ -1966,23 +1998,28 @@ bool ServerByPreference(const ServerList::container& preferredServers,
 
 int DownloadManager::startDownloadURLs(const QStringList& urls)
 {
+  const unsigned int reservedID = DownloadInfo::newDownloadID();
   ModRepositoryFileInfo info;
-  addDownload(urls, "", -1, -1, &info);
-  return m_ActiveDownloads.size() - 1;
+  if (!addDownload(urls, "", -1, -1, &info, reservedID)) {
+    return 0;
+  }
+  return static_cast<int>(reservedID);
 }
 
 int DownloadManager::startDownloadNexusFile(const QString& gameName, int modID,
                                             int fileID)
 {
-  int newID = m_ActiveDownloads.size();
-  addNXMDownload(
-      QString("nxm://%1/mods/%2/files/%3").arg(gameName).arg(modID).arg(fileID));
-  return newID;
+  return static_cast<int>(addNXMDownload(
+      QString("nxm://%1/mods/%2/files/%3").arg(gameName).arg(modID).arg(fileID)));
 }
 
 QString DownloadManager::downloadPath(int id)
 {
-  return getFilePath(id);
+  DownloadInfo* info = downloadInfoByID(static_cast<unsigned int>(id));
+  if (info == nullptr) {
+    return QString();
+  }
+  return m_OutputDirectory + "/" + info->m_FileName;
 }
 
 boost::signals2::connection
@@ -2046,6 +2083,7 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
       qobject_cast<ModRepositoryFileInfo*>(qvariant_cast<QObject*>(userData));
   QVariantList resultList = resultData.toList();
   if (resultList.length() == 0) {
+    notifyPendingDownloadFailed(gameName, modID, fileID);
     removePending(gameName, modID, fileID);
     emit showMessage(tr("No download server available. Please try again later."));
     return;
@@ -2063,7 +2101,18 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
   foreach (const QVariant& server, resultList) {
     URLs.append(server.toMap()["URI"].toString());
   }
-  addDownload(URLs, gameName, modID, fileID, info);
+
+  // Carry the pending entry's reserved id into the DownloadInfo so callers who
+  // received it from addNXMDownload can continue to identify the download.
+  std::optional<unsigned int> reservedID;
+  for (const PendingDownload& pending : m_PendingDownloads) {
+    if (pending.gameName.compare(gameName, Qt::CaseInsensitive) == 0 &&
+        pending.modID == modID && pending.fileID == fileID) {
+      reservedID = pending.reservedID;
+      break;
+    }
+  }
+  addDownload(URLs, gameName, modID, fileID, info, reservedID);
 }
 
 void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant userData,
@@ -2224,6 +2273,7 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID,
     }
   }
 
+  notifyPendingDownloadFailed(gameName, modID, fileID);
   removePending(gameName, modID, fileID);
   emit showMessage(tr("Failed to request file info from nexus: %1").arg(errorString));
 }
