@@ -55,9 +55,9 @@ using namespace MOBase;
 
 static const char UNFINISHED[] = ".unfinished";
 
-unsigned int DownloadManager::DownloadInfo::s_NextDownloadID = 1U;
+DownloadManager::DownloadID DownloadManager::DownloadInfo::s_NextDownloadID = 1U;
 
-unsigned int DownloadManager::DownloadInfo::newDownloadID()
+DownloadManager::DownloadID DownloadManager::DownloadInfo::newDownloadID()
 {
   return s_NextDownloadID++;
 }
@@ -65,7 +65,7 @@ unsigned int DownloadManager::DownloadInfo::newDownloadID()
 DownloadManager::DownloadInfo*
 DownloadManager::DownloadInfo::createNew(const ModRepositoryFileInfo* fileInfo,
                                          const QStringList& URLs,
-                                         std::optional<unsigned int> reservedID)
+                                         std::optional<DownloadID> reservedID)
 {
   DownloadInfo* info = new DownloadInfo;
   info->m_DownloadID = reservedID.has_value() ? *reservedID : newDownloadID();
@@ -327,9 +327,9 @@ void DownloadManager::pauseAll()
 {
 
   // first loop: pause all downloads
-  for (int i = 0; i < m_ActiveDownloads.count(); ++i) {
-    if (m_ActiveDownloads[i]->m_State < STATE_READY) {
-      pauseDownload(i);
+  for (DownloadInfo* info : m_ActiveDownloads) {
+    if (info->m_State < STATE_READY) {
+      pauseDownload(info->m_DownloadID);
     }
   }
 
@@ -522,7 +522,7 @@ void DownloadManager::queryDownloadListInfo()
 
 bool DownloadManager::addDownload(const QStringList& URLs, QString gameName, int modID,
                                   int fileID, const ModRepositoryFileInfo* fileInfo,
-                                  std::optional<unsigned int> reservedID)
+                                  std::optional<DownloadID> reservedID)
 {
   QString fileName = QFileInfo(URLs.first()).fileName();
   if (fileName.isEmpty()) {
@@ -578,7 +578,7 @@ bool DownloadManager::addDownload(QNetworkReply* reply,
 bool DownloadManager::addDownload(QNetworkReply* reply, const QStringList& URLs,
                                   const QString& fileName, QString gameName, int modID,
                                   int fileID, const ModRepositoryFileInfo* fileInfo,
-                                  std::optional<unsigned int> reservedID)
+                                  std::optional<DownloadID> reservedID)
 {
   // download invoked from an already open network reply (i.e. download link in the
   // browser)
@@ -724,7 +724,7 @@ bool DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
   return true;
 }
 
-unsigned int DownloadManager::addNXMDownload(const QString& url)
+DownloadManager::DownloadID DownloadManager::addNXMDownload(const QString& url)
 {
   NXMUrl nxmInfo(url);
 
@@ -835,7 +835,7 @@ unsigned int DownloadManager::addNXMDownload(const QString& url)
 
   // Reserve the id now (before any async work) so the caller can refer to the
   // eventual download before the Nexus API responds and a DownloadInfo exists.
-  const unsigned int reservedID = DownloadInfo::newDownloadID();
+  const DownloadID reservedID = DownloadInfo::newDownloadID();
 
   {
     ModelResetGuard guard(*this);
@@ -981,26 +981,26 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
   refreshList();
 }
 
-void DownloadManager::cancelDownload(int index)
+void DownloadManager::cancelDownload(DownloadID id)
 {
-  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    reportError(tr("cancel: invalid download index %1").arg(index));
+  DownloadInfo* info = m_ByID.value(id, nullptr);
+  if (info == nullptr) {
+    reportError(tr("cancel: invalid download id %1").arg(id));
     return;
   }
 
-  if (m_ActiveDownloads.at(index)->m_State == STATE_DOWNLOADING) {
-    setState(m_ActiveDownloads.at(index), STATE_CANCELING);
+  if (info->m_State == STATE_DOWNLOADING) {
+    setState(info, STATE_CANCELING);
   }
 }
 
-void DownloadManager::pauseDownload(int index)
+void DownloadManager::pauseDownload(DownloadID id)
 {
-  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    reportError(tr("pause: invalid download index %1").arg(index));
+  DownloadInfo* info = m_ByID.value(id, nullptr);
+  if (info == nullptr) {
+    reportError(tr("pause: invalid download id %1").arg(id));
     return;
   }
-
-  DownloadInfo* info = m_ActiveDownloads.at(index);
 
   if (info->m_State == STATE_DOWNLOADING) {
     if ((info->m_Reply != nullptr) && (info->m_Reply->isRunning())) {
@@ -1015,24 +1015,24 @@ void DownloadManager::pauseDownload(int index)
   }
 }
 
-void DownloadManager::resumeDownload(int index)
+void DownloadManager::resumeDownload(DownloadID id)
 {
-  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    reportError(tr("resume: invalid download index %1").arg(index));
+  DownloadInfo* info = m_ByID.value(id, nullptr);
+  if (info == nullptr) {
+    reportError(tr("resume: invalid download id %1").arg(id));
     return;
   }
-  DownloadInfo* info = m_ActiveDownloads[index];
-  info->m_Tries      = AUTOMATIC_RETRIES;
-  resumeDownloadInt(index);
+  info->m_Tries = AUTOMATIC_RETRIES;
+  resumeDownloadInt(id);
 }
 
-void DownloadManager::resumeDownloadInt(int index)
+void DownloadManager::resumeDownloadInt(DownloadID id)
 {
-  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    reportError(tr("resume (int): invalid download index %1").arg(index));
+  DownloadInfo* info = m_ByID.value(id, nullptr);
+  if (info == nullptr) {
+    reportError(tr("resume (int): invalid download id %1").arg(id));
     return;
   }
-  DownloadInfo* info = m_ActiveDownloads[index];
 
   // Check for finished download;
   if (info->m_TotalSize <= info->m_Output.size() && info->m_Reply != nullptr &&
@@ -1080,7 +1080,7 @@ void DownloadManager::resumeDownloadInt(int index)
   }
 }
 
-DownloadManager::DownloadInfo* DownloadManager::downloadInfoByID(unsigned int id)
+DownloadManager::DownloadInfo* DownloadManager::downloadInfoByID(DownloadID id)
 {
   return m_ByID.value(id, nullptr);
 }
@@ -1625,8 +1625,8 @@ void DownloadManager::setState(DownloadManager::DownloadInfo* info,
   // Cache the id before reply->abort(): aborting fires signals synchronously
   // and a slot may erase info, leaving this pointer dangling. The id is stable
   // and m_ByID.contains() lets us check whether info is still present afterward.
-  const unsigned int id = info->m_DownloadID;
-  info->m_State         = state;
+  const DownloadID id = info->m_DownloadID;
+  info->m_State       = state;
   switch (state) {
   case STATE_PAUSED: {
     info->m_Reply->abort();
@@ -1978,7 +1978,7 @@ bool ServerByPreference(const ServerList::container& preferredServers,
 
 int DownloadManager::startDownloadURLs(const QStringList& urls)
 {
-  const unsigned int reservedID = DownloadInfo::newDownloadID();
+  const DownloadID reservedID = DownloadInfo::newDownloadID();
   ModRepositoryFileInfo info;
   if (!addDownload(urls, "", -1, -1, &info, reservedID)) {
     return 0;
@@ -1995,7 +1995,7 @@ int DownloadManager::startDownloadNexusFile(const QString& gameName, int modID,
 
 QString DownloadManager::downloadPath(int id)
 {
-  DownloadInfo* info = downloadInfoByID(static_cast<unsigned int>(id));
+  DownloadInfo* info = downloadInfoByID(static_cast<DownloadID>(id));
   if (info == nullptr) {
     return QString();
   }
@@ -2110,7 +2110,7 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
 
   // Carry the pending entry's reserved id into the DownloadInfo so callers who
   // received it from addNXMDownload can continue to identify the download.
-  std::optional<unsigned int> reservedID;
+  std::optional<DownloadID> reservedID;
   for (const PendingDownload& pending : m_PendingDownloads) {
     if (pending.gameName.compare(gameName, Qt::CaseInsensitive) == 0 &&
         pending.modID == modID && pending.fileID == fileID) {
@@ -2282,7 +2282,7 @@ void DownloadManager::onReplyFinished()
   finishDownload(info->m_DownloadID);
 }
 
-void DownloadManager::finishDownload(unsigned int id)
+void DownloadManager::finishDownload(DownloadID id)
 {
   DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
 
@@ -2399,9 +2399,12 @@ void DownloadManager::finishDownload(unsigned int id)
   reply->close();
   reply->deleteLater();
 
-  if ((info->m_Tries > 0) && error) {
-    --info->m_Tries;
-    resumeDownloadInt(index);
+  // The CANCELED / retries-exhausted branch above may have deleted info; use
+  // m_ByID to check liveness before reading any more fields or retrying.
+  if (DownloadInfo* aliveInfo = m_ByID.value(id, nullptr);
+      aliveInfo != nullptr && error && aliveInfo->m_Tries > 0) {
+    --aliveInfo->m_Tries;
+    resumeDownloadInt(id);
   }
 }
 
@@ -2446,16 +2449,14 @@ void DownloadManager::managedGameChanged(MOBase::IPluginGame const* managedGame)
 
 void DownloadManager::checkDownloadTimeout()
 {
-  for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
-    if (m_ActiveDownloads[i]->m_StartTime.elapsed() -
-                m_ActiveDownloads[i]->m_DownloadTimeLast >
-            5 * 1000 &&
-        m_ActiveDownloads[i]->m_State == STATE_DOWNLOADING &&
-        m_ActiveDownloads[i]->m_Reply != nullptr &&
-        m_ActiveDownloads[i]->m_Reply->isOpen()) {
-      pauseDownload(i);
-      finishDownload(m_ActiveDownloads[i]->m_DownloadID);
-      resumeDownload(i);
+  for (DownloadInfo* info : m_ActiveDownloads) {
+    if (info->m_StartTime.elapsed() - info->m_DownloadTimeLast > 5 * 1000 &&
+        info->m_State == STATE_DOWNLOADING && info->m_Reply != nullptr &&
+        info->m_Reply->isOpen()) {
+      const DownloadID id = info->m_DownloadID;
+      pauseDownload(id);
+      finishDownload(id);
+      resumeDownload(id);
     }
   }
 }
