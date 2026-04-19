@@ -49,12 +49,17 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
           SLOT(removeDownload(int, bool)));
   connect(ui.list, SIGNAL(restoreDownload(int)), m_core.downloadManager(),
           SLOT(restoreDownload(int)));
-  connect(ui.list, SIGNAL(cancelDownload(int)), m_core.downloadManager(),
-          SLOT(cancelDownload(int)));
-  connect(ui.list, SIGNAL(pauseDownload(int)), m_core.downloadManager(),
-          SLOT(pauseDownload(int)));
-  connect(ui.list, &DownloadListView::resumeDownload, [&](int i) {
-    resumeDownload(i);
+  // The view reports actions by row; translate to DownloadID at the boundary.
+  connect(ui.list, &DownloadListView::cancelDownload, this, [this](int row) {
+    auto* dm = m_core.downloadManager();
+    dm->cancelDownload(dm->downloadIDAtRow(row));
+  });
+  connect(ui.list, &DownloadListView::pauseDownload, this, [this](int row) {
+    auto* dm = m_core.downloadManager();
+    dm->pauseDownload(dm->downloadIDAtRow(row));
+  });
+  connect(ui.list, &DownloadListView::resumeDownload, this, [this](int row) {
+    resumeDownload(row);
   });
 }
 
@@ -105,6 +110,7 @@ void DownloadsTab::queryInfos()
 void DownloadsTab::resumeDownload(int downloadIndex)
 {
   m_core.loggedInAction(ui.list, [this, downloadIndex] {
-    m_core.downloadManager()->resumeDownload(downloadIndex);
+    auto* dm = m_core.downloadManager();
+    dm->resumeDownload(dm->downloadIDAtRow(downloadIndex));
   });
 }

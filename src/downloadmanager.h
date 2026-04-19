@@ -175,7 +175,7 @@ public:
     QString gameName;
     int modID;
     int fileID;
-    unsigned int reservedID;
+    DownloadID reservedID;
   };
 
 private:
@@ -186,7 +186,7 @@ private:
     accumulator_set<qint64, stats<tag::rolling_mean>> m_DownloadTimeAcc;
     qint64 m_DownloadLast;
     qint64 m_DownloadTimeLast;
-    unsigned int m_DownloadID;
+    DownloadID m_DownloadID;
     QString m_FileName;
     QFile m_Output;
     QNetworkReply* m_Reply;
@@ -221,7 +221,7 @@ private:
      * The only supported way to obtain one; ids are monotonically increasing
      * within a session and never reused.
      */
-    static unsigned int newDownloadID();
+    static DownloadID newDownloadID();
 
     /**
      * @brief Create a new DownloadInfo for a fresh download.
@@ -234,7 +234,7 @@ private:
      */
     static DownloadInfo* createNew(const MOBase::ModRepositoryFileInfo* fileInfo,
                                    const QStringList& URLs,
-                                   std::optional<unsigned int> reservedID = {});
+                                   std::optional<DownloadID> reservedID = {});
     static DownloadInfo* createFromMeta(const QString& filePath, bool showHidden,
                                         const QString outputDirectory,
                                         std::optional<uint64_t> fileSize = {});
@@ -249,14 +249,14 @@ private:
      **/
     void setName(QString newName, bool renameFile);
 
-    unsigned int downloadID() { return m_DownloadID; }
+    DownloadID downloadID() { return m_DownloadID; }
 
     bool isPausedState();
 
     QString currentURL();
 
   private:
-    static unsigned int s_NextDownloadID;
+    static DownloadID s_NextDownloadID;
 
   private:
     DownloadInfo()
@@ -344,7 +344,7 @@ public:
                    const QString& fileName, QString gameName, int modID, int fileID = 0,
                    const MOBase::ModRepositoryFileInfo* fileInfo =
                        new MOBase::ModRepositoryFileInfo(),
-                   std::optional<unsigned int> reservedID = {});
+                   std::optional<DownloadID> reservedID = {});
 
   /**
    * @brief start a download using a nxm-link
@@ -358,7 +358,7 @@ public:
    * @todo the game name encoded into the link is currently ignored, all downloads are
    *incorrectly assumed to be for the identified game
    **/
-  unsigned int addNXMDownload(const QString& url);
+  DownloadID addNXMDownload(const QString& url);
 
   /**
    * @brief retrieve the total number of downloads, both finished and unfinished
@@ -643,13 +643,13 @@ public slots:
    * @brief cancel the specified download. This will lead to the corresponding file to
    *be deleted
    *
-   * @param index index of the download to cancel
+   * @param id id of the download to cancel
    **/
-  void cancelDownload(int index);
+  void cancelDownload(DownloadID id);
 
-  void pauseDownload(int index);
+  void pauseDownload(DownloadID id);
 
-  void resumeDownload(int index);
+  void resumeDownload(DownloadID id);
 
   void queryInfo(int index);
 
@@ -703,7 +703,7 @@ private slots:
    * Writes any remaining data, transitions the download's state, and emits
    * the appropriate plugin signals.
    */
-  void finishDownload(unsigned int id);
+  void finishDownload(DownloadID id);
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
   void checkDownloadTimeout();
@@ -733,7 +733,7 @@ private:
    * before returning. Returns whether the download actually started.
    */
   bool startDownload(QNetworkReply* reply, DownloadInfo* newDownload, bool resume);
-  void resumeDownloadInt(int index);
+  void resumeDownloadInt(DownloadID id);
 
   /**
    * @brief start a download from a url
@@ -745,7 +745,7 @@ private:
    **/
   bool addDownload(const QStringList& URLs, QString gameName, int modID, int fileID,
                    const MOBase::ModRepositoryFileInfo* fileInfo,
-                   std::optional<unsigned int> reservedID = {});
+                   std::optional<DownloadID> reservedID = {});
 
   // important: the caller has to lock the list-mutex, otherwise the
   // DownloadInfo-pointer might get invalidated at any time
@@ -757,7 +757,7 @@ private:
 
   void setState(DownloadInfo* info, DownloadManager::DownloadState state);
 
-  DownloadInfo* downloadInfoByID(unsigned int id);
+  DownloadInfo* downloadInfoByID(DownloadID id);
 
   void removePending(QString gameName, int modID, int fileID);
 
@@ -791,7 +791,7 @@ private:
 
   // Secondary index into m_ActiveDownloads keyed by m_DownloadID; kept in sync
   // with every m_ActiveDownloads mutation.
-  QHash<unsigned int, DownloadInfo*> m_ByID;
+  QHash<DownloadID, DownloadInfo*> m_ByID;
 
   QString m_OutputDirectory;
   std::set<int> m_RequestIDs;
