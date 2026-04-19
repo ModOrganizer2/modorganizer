@@ -158,13 +158,16 @@ public:
    *
    * Created when the user initiates an NXM download; drained either when the
    * Nexus API returns the actual download URL (at which point a DownloadInfo
-   * is created) or when the request is cancelled or fails.
+   * is created using reservedID as its download id so that external references
+   * handed out before the download existed remain valid) or when the request
+   * is cancelled or fails.
    */
   struct PendingDownload
   {
     QString gameName;
     int modID;
     int fileID;
+    unsigned int reservedID;
   };
 
 private:
@@ -212,8 +215,18 @@ private:
      */
     static unsigned int newDownloadID();
 
+    /**
+     * @brief Create a new DownloadInfo for a fresh download.
+     *
+     * When reservedID is provided it is used as the download id. Callers that
+     * need to hand out an id before the DownloadInfo exists (e.g. the NXM flow
+     * reserves an id when the request is queued, long before the Nexus API
+     * returns the actual URL) should reserve via newDownloadID() and pass it
+     * here. Otherwise a fresh id is drawn internally.
+     */
     static DownloadInfo* createNew(const MOBase::ModRepositoryFileInfo* fileInfo,
-                                   const QStringList& URLs);
+                                   const QStringList& URLs,
+                                   std::optional<unsigned int> reservedID = {});
     static DownloadInfo* createFromMeta(const QString& filePath, bool showHidden,
                                         const QString outputDirectory,
                                         std::optional<uint64_t> fileSize = {});
@@ -322,18 +335,22 @@ public:
   bool addDownload(QNetworkReply* reply, const QStringList& URLs,
                    const QString& fileName, QString gameName, int modID, int fileID = 0,
                    const MOBase::ModRepositoryFileInfo* fileInfo =
-                       new MOBase::ModRepositoryFileInfo());
+                       new MOBase::ModRepositoryFileInfo(),
+                   std::optional<unsigned int> reservedID = {});
 
   /**
    * @brief start a download using a nxm-link
    *
-   * starts a download using a nxm-link. The download manager will first query the nexus
-   * page for file information.
+   * Starts a download using a nxm-link. The download manager will first query the
+   * nexus page for file information. The returned id identifies the eventual
+   * download; it is reserved immediately so external references remain valid even
+   * before the Nexus API responds.
    * @param url a nxm link looking like this: nxm://skyrim/mods/1234/files/4711
+   * @return the reserved download id
    * @todo the game name encoded into the link is currently ignored, all downloads are
    *incorrectly assumed to be for the identified game
    **/
-  void addNXMDownload(const QString& url);
+  unsigned int addNXMDownload(const QString& url);
 
   /**
    * @brief retrieve the total number of downloads, both finished and unfinished
@@ -671,7 +688,14 @@ public:
   QString getDownloadFileName(const QString& baseName, bool rename = false) const;
 
 private:
-  void startDownload(QNetworkReply* reply, DownloadInfo* newDownload, bool resume);
+  /**
+   * @brief Begin downloading into newDownload from reply.
+   *
+   * On the !resume path newDownload becomes owned by m_ActiveDownloads on
+   * success; on failure (e.g. the output file cannot be opened) it is deleted
+   * before returning. Returns whether the download actually started.
+   */
+  bool startDownload(QNetworkReply* reply, DownloadInfo* newDownload, bool resume);
   void resumeDownloadInt(int index);
 
   /**
@@ -683,7 +707,8 @@ private:
    *only happens if there is a duplicate and the user decides not to download again
    **/
   bool addDownload(const QStringList& URLs, QString gameName, int modID, int fileID,
-                   const MOBase::ModRepositoryFileInfo* fileInfo);
+                   const MOBase::ModRepositoryFileInfo* fileInfo,
+                   std::optional<unsigned int> reservedID = {});
 
   // important: the caller has to lock the list-mutex, otherwise the
   // DownloadInfo-pointer might get invalidated at any time
@@ -698,6 +723,15 @@ private:
   DownloadInfo* downloadInfoByID(unsigned int id);
 
   void removePending(QString gameName, int modID, int fileID);
+
+  /**
+   * @brief Fire onDownloadFailed for a pending entry, if any matches.
+   *
+   * Used on Nexus API failures so callers holding a reserved id from
+   * addNXMDownload do not wait indefinitely for a result. No-op if no pending
+   * entry matches the (gameName, modID, fileID) triple.
+   */
+  void notifyPendingDownloadFailed(const QString& gameName, int modID, int fileID);
 
   static QString getFileTypeString(int fileType);
 
