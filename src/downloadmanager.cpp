@@ -1278,6 +1278,7 @@ void DownloadManager::openMetaFile(int index)
     shell::Open(metaPath);
     return;
   } else {
+    DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
     QSettings metaFile(metaPath, QSettings::IniFormat);
     metaFile.setValue("removed", false);
   }
