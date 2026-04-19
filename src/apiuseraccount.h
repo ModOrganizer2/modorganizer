@@ -65,7 +65,12 @@ public:
   bool isValid() const;
 
   /**
-   * api key
+   * OAuth access token
+   */
+  const QString& accessToken() const;
+
+  /**
+   * OAuth access token
    */
   const QString& apiKey() const;
 
@@ -90,9 +95,14 @@ public:
   const APILimits& limits() const;
 
   /**
-   * sets the api key
+   * sets the OAuth access token
    */
-  APIUserAccount& apiKey(const QString& key);
+  APIUserAccount& accessToken(const QString& token);
+
+  /**
+   * sets the OAuth access token
+   */
+  APIUserAccount& apiKey(const QString& apiKey);
 
   /**
    * sets the user id
@@ -132,7 +142,7 @@ public:
   bool exhausted() const;
 
 private:
-  QString m_key, m_id, m_name;
+  QString m_accessToken, m_apiKey, m_id, m_name;
   APIUserAccountTypes m_type;
   APILimits m_limits;
 };

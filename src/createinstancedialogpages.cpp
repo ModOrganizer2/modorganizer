@@ -103,6 +103,7 @@ void Page::next()
 
 bool Page::action(CreateInstanceDialog::Actions a)
 {
+  Q_UNUSED(a);
   // no-op
   return false;
 }
@@ -1203,7 +1204,7 @@ NexusPage::NexusPage(CreateInstanceDialog& dlg) : Page(dlg), m_skip(false)
 
   // just check it once, or connecting and then going back and forth would skip
   // the page, which would be unexpected
-  m_skip = GlobalSettings::hasNexusApiKey();
+  m_skip = GlobalSettings::hasNexusOAuthTokens();
 }
 
 NexusPage::~NexusPage() = default;
