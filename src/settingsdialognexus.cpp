@@ -210,10 +210,11 @@ void NexusConnectionUI::onTokensReceived(const NexusOAuthTokens& tokens)
   validateTokens(tokens);
 }
 
-void NexusConnectionUI::onOAuthStateChanged(NexusOAuthLogin::State s, const QString& e)
+void NexusConnectionUI::onOAuthStateChanged(NXMAccessManager::OAuthState s,
+                                            const QString& e)
 {
-  if (s != NexusOAuthLogin::State::Finished) {
-    const auto log = NexusOAuthLogin::stateToString(s, e);
+  if (s != NXMAccessManager::OAuthState::Finished) {
+    const auto log = NXMAccessManager::stateToString(s, e);
 
     for (auto&& line : log.split("\n")) {
       addLog(line);

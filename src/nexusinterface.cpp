@@ -985,15 +985,11 @@ void NexusInterface::nextRequest()
   } else {
     url = info.m_URL;
   }
-  QNetworkRequest request(url);
-  request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
-  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
-                       QNetworkRequest::AlwaysNetwork);
-  if (!m_AccessManager->ensureFreshToken()) {
-    log::error("nexus: unable to refresh OAuth token, request aborted");
-    info.m_Reply = nullptr;
-    return;
-  }
+  // if (!m_AccessManager->ensureFreshToken()) {
+  //   log::error("nexus: unable to refresh OAuth token, request aborted");
+  //   info.m_Reply = nullptr;
+  //   return;
+  // }
 
   const auto currentTokens = m_AccessManager->tokens();
   if (!currentTokens ||
@@ -1003,34 +999,50 @@ void NexusInterface::nextRequest()
     return;
   }
 
+  QNetworkRequest request(url);
   if (!currentTokens->accessToken.isEmpty()) {
-    const auto bearer = QStringLiteral("Bearer %1").arg(currentTokens->accessToken);
-    request.setRawHeader("Authorization", bearer.toUtf8());
-  } else {
-    request.setRawHeader("APIKEY", currentTokens->apiKey.toUtf8());
-  }
-  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader,
-                    m_AccessManager->userAgent(info.m_SubModule));
-  request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
-                    "application/json");
-  request.setRawHeader("Protocol-Version", "1.0.0");
-  request.setRawHeader("Application-Name", "MO2");
-  request.setRawHeader("Application-Version",
-                       QApplication::applicationVersion().toUtf8());
-
-  if (postData.object().isEmpty()) {
-    if (!requestIsDelete) {
-      info.m_Reply = m_AccessManager->get(request);
+    if (postData.object().isEmpty()) {
+      if (!requestIsDelete) {
+        info.m_Reply = m_AccessManager->makeOAuthGetRequest(url);
+      } else {
+        info.m_Reply = m_AccessManager->deleteResource(request);
+      }
+    } else if (!requestIsDelete) {
+      info.m_Reply = m_AccessManager->makeOAuthPostRequest(url, postData.toJson());
     } else {
-      info.m_Reply = m_AccessManager->deleteResource(request);
+      // Qt doesn't support DELETE with a payload as that's technically against the HTTP
+      // standard...
+      info.m_Reply =
+          m_AccessManager->sendCustomRequest(request, "DELETE", postData.toJson());
     }
-  } else if (!requestIsDelete) {
-    info.m_Reply = m_AccessManager->post(request, postData.toJson());
   } else {
-    // Qt doesn't support DELETE with a payload as that's technically against the HTTP
-    // standard...
-    info.m_Reply =
-        m_AccessManager->sendCustomRequest(request, "DELETE", postData.toJson());
+    request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
+    request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
+                         QNetworkRequest::AlwaysNetwork);
+    request.setRawHeader("APIKEY", currentTokens->apiKey.toUtf8());
+    request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader,
+                      m_AccessManager->userAgent(info.m_SubModule));
+    request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
+                      "application/json");
+    request.setRawHeader("Protocol-Version", "1.0.0");
+    request.setRawHeader("Application-Name", "MO2");
+    request.setRawHeader("Application-Version",
+                         QApplication::applicationVersion().toUtf8());
+
+    if (postData.object().isEmpty()) {
+      if (!requestIsDelete) {
+        info.m_Reply = m_AccessManager->get(request);
+      } else {
+        info.m_Reply = m_AccessManager->deleteResource(request);
+      }
+    } else if (!requestIsDelete) {
+      info.m_Reply = m_AccessManager->post(request, postData.toJson());
+    } else {
+      // Qt doesn't support DELETE with a payload as that's technically against the HTTP
+      // standard...
+      info.m_Reply =
+          m_AccessManager->sendCustomRequest(request, "DELETE", postData.toJson());
+    }
   }
 
   connect(info.m_Reply, SIGNAL(finished()), this, SLOT(requestFinished()));

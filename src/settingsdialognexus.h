@@ -51,7 +51,7 @@ private:
   bool clearTokens();
 
   void onTokensReceived(const NexusOAuthTokens& tokens);
-  void onOAuthStateChanged(NexusOAuthLogin::State s, const QString& message);
+  void onOAuthStateChanged(NXMAccessManager::OAuthState s, const QString& message);
 
   void onValidatorFinished(ValidationAttempt::Result r, const QString& message,
                            std::optional<APIUserAccount> user);

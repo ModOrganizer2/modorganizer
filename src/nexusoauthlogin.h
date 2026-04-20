@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define NEXUSOAUTHLOGIN_H
 
 #include "nexusoauthtokens.h"
+#include "nxmaccessmanager.h"
 #include <QAbstractOAuth>
 #include <QObject>
 #include <functional>
@@ -34,16 +35,6 @@ class NexusOAuthLogin : public QObject
   Q_OBJECT
 
 public:
-  enum class State
-  {
-    Initializing,
-    WaitingForBrowser,
-    Authorizing,
-    Finished,
-    Cancelled,
-    Error
-  };
-
   explicit NexusOAuthLogin(QObject* parent = nullptr);
   ~NexusOAuthLogin();
 
@@ -52,20 +43,15 @@ public:
   bool isActive() const;
 
   std::function<void(const NexusOAuthTokens&)> tokensReceived;
-  std::function<void(State, QString)> stateChanged;
+  std::function<void(NXMAccessManager::OAuthState, QString)> stateChanged;
 
-  static QString stateToString(State state, const QString& details = {});
+private slots:
+  void authorizationEnded();
 
 private:
   std::unique_ptr<QOAuth2AuthorizationCodeFlow> m_flow;
   std::unique_ptr<QOAuthHttpServerReplyHandler> m_replyHandler;
   bool m_active;
-
-  void setState(State state, const QString& message = {});
-  void notifyTokens();
-  void handleError(const QString& message);
-  void injectPkceChallenge(QAbstractOAuth::Stage stage,
-                           QMultiMap<QString, QVariant>* parameters);
 
   QByteArray m_codeVerifier;
 };
