@@ -19,7 +19,7 @@ APIUserAccount::APIUserAccount() : m_type(APIUserAccountTypes::None) {}
 
 bool APIUserAccount::isValid() const
 {
-  return !m_accessToken.isEmpty() && !m_apiKey.isEmpty();
+  return !m_accessToken.isEmpty() || !m_apiKey.isEmpty();
 }
 
 const QString& APIUserAccount::accessToken() const

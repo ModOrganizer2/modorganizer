@@ -29,6 +29,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkReply>
 #include <QProgressDialog>
 #include <QTimer>
+#include <QtNetworkAuth/QOAuth2AuthorizationCodeFlow>
+#include <QtNetworkAuth/QOAuthHttpServerReplyHandler>
 #include <optional>
 #include <set>
 
@@ -68,12 +70,12 @@ public:
   QElapsedTimer elapsed() const;
 
 private:
-  QNetworkReply* m_reply;
-  Result m_result;
-  QString m_message;
-  QTimer m_timeout;
-  QElapsedTimer m_elapsed;
-  NexusOAuthTokens m_tokens;
+  QNetworkReply* m_Reply;
+  Result m_Result;
+  QString m_Message;
+  QTimer m_Timeout;
+  QElapsedTimer m_Elapsed;
+  NexusOAuthTokens m_Tokens;
 
   bool sendRequest(NXMAccessManager& m, const NexusOAuthTokens& tokens);
 
@@ -113,10 +115,10 @@ public:
   const ValidationAttempt* currentAttempt() const;
 
 private:
-  Settings* m_settings;
-  NXMAccessManager& m_manager;
-  std::optional<NexusOAuthTokens> m_tokens;
-  std::vector<std::unique_ptr<ValidationAttempt>> m_attempts;
+  Settings* m_Settings;
+  NXMAccessManager& m_Manager;
+  std::optional<NexusOAuthTokens> m_Tokens;
+  std::vector<std::unique_ptr<ValidationAttempt>> m_Attempts;
 
   void createAttempts(const std::vector<std::chrono::seconds>& timeouts);
   std::vector<std::chrono::seconds> getTimeouts() const;
@@ -147,10 +149,10 @@ protected:
 
 private:
   std::unique_ptr<Ui::ValidationProgressDialog> ui;
-  Settings* m_settings;
-  NexusKeyValidator& m_validator;
-  QTimer* m_updateTimer;
-  bool m_first;
+  Settings* m_Settings;
+  NexusKeyValidator& m_Validator;
+  QTimer* m_UpdateTimer;
+  bool m_First;
 
   void onHide();
   void onCancel();
@@ -165,6 +167,17 @@ class NXMAccessManager : public QNetworkAccessManager
 {
   Q_OBJECT
 public:
+  enum class OAuthState
+  {
+    Initializing,
+    WaitingForBrowser,
+    Authorizing,
+    Refreshing,
+    Finished,
+    Cancelled,
+    Error
+  };
+
   NXMAccessManager(QObject* parent, Settings* s, const QString& moVersion);
 
   void setTopLevelWidget(QWidget* w);
@@ -174,10 +187,20 @@ public:
   bool validateAttempted() const;
   bool validateWaiting() const;
 
+  void connectOrRefresh(const NexusOAuthTokens tokens);
+  void cancelAuth();
+
+  QNetworkReply* makeOAuthGetRequest(const QUrl url);
+  QNetworkReply* makeOAuthPostRequest(const QUrl url, const QByteArray payload);
+
+  static QString stateToString(OAuthState state, const QString& details = {});
+
+  std::function<void(const NexusOAuthTokens&)> tokensReceived;
+  std::function<void(OAuthState, QString)> stateChanged;
+
   void apiCheck(const NexusOAuthTokens& tokens, bool force = false);
   void setTokens(const NexusOAuthTokens& tokens);
   std::optional<NexusOAuthTokens> tokens() const;
-  bool ensureFreshToken();
 
   void showCookies() const;
 
@@ -208,6 +231,7 @@ signals:
   void validateSuccessful(bool necessary);
   void validateFailed(const QString& message);
   void credentialsReceived(const APIUserAccount& user);
+  void authorizationEnded();
 
 protected:
   virtual QNetworkReply* createRequest(QNetworkAccessManager::Operation operation,
@@ -226,13 +250,20 @@ private:
   Settings* m_Settings;
   mutable std::unique_ptr<ValidationProgressDialog> m_ProgressDialog;
   QString m_MOVersion;
-  NexusKeyValidator m_validator;
-  States m_validationState;
-  std::optional<NexusOAuthTokens> m_tokens;
+  NexusKeyValidator m_Validator;
+  States m_ValidationState;
+  std::optional<NexusOAuthTokens> m_Tokens;
+  std::unique_ptr<QOAuth2AuthorizationCodeFlow> m_NexusOAuth;
+  std::unique_ptr<QOAuthHttpServerReplyHandler> m_NexusOAuthReplyHandler;
+
+  void handleOAuthError(const QString& message);
+
+  void setOAuthState(OAuthState state, const QString& message = {});
+  void notifyTokens();
+
+  void saveRefreshedTokens(const NexusOAuthTokens tokens);
 
   void startValidationCheck(const NexusOAuthTokens& tokens);
-  std::optional<NexusOAuthTokens>
-  refreshTokensBlocking(const NexusOAuthTokens& current);
 
   void onValidatorFinished(ValidationAttempt::Result r, const QString& message,
                            std::optional<APIUserAccount>);
