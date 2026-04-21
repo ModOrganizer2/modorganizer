@@ -88,23 +88,6 @@ struct NexusOAuthTokens
   }
 };
 
-inline NexusOAuthTokens makeTokensFromResponse(const QJsonObject& json)
-{
-  NexusOAuthTokens tokens;
-  tokens.accessToken  = json.value(QStringLiteral("access_token")).toString();
-  tokens.refreshToken = json.value(QStringLiteral("refresh_token")).toString();
-  tokens.scope        = json.value(QStringLiteral("scope")).toString();
-  tokens.tokenType    = json.value(QStringLiteral("token_type")).toString();
-
-  const auto expiresIn = json.value(QStringLiteral("expires_in")).toInt();
-  if (expiresIn > 0) {
-    tokens.expiresAt =
-        QDateTime::currentDateTimeUtc().addSecs(static_cast<qint64>(expiresIn));
-  }
-
-  return tokens;
-}
-
 inline NexusOAuthTokens makeTokensFromResponse(const QVariantMap& data)
 {
   NexusOAuthTokens tokens;

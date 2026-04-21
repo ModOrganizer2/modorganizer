@@ -985,11 +985,6 @@ void NexusInterface::nextRequest()
   } else {
     url = info.m_URL;
   }
-  // if (!m_AccessManager->ensureFreshToken()) {
-  //   log::error("nexus: unable to refresh OAuth token, request aborted");
-  //   info.m_Reply = nullptr;
-  //   return;
-  // }
 
   const auto currentTokens = m_AccessManager->tokens();
   if (!currentTokens ||
@@ -1005,7 +1000,8 @@ void NexusInterface::nextRequest()
       if (!requestIsDelete) {
         info.m_Reply = m_AccessManager->makeOAuthGetRequest(url);
       } else {
-        info.m_Reply = m_AccessManager->deleteResource(request);
+        m_AccessManager->addAPIHeaders(request);
+        info.m_Reply = m_AccessManager->makeOAuthDeleteRequest(request);
       }
     } else if (!requestIsDelete) {
       info.m_Reply = m_AccessManager->makeOAuthPostRequest(url, postData.toJson());
@@ -1013,21 +1009,11 @@ void NexusInterface::nextRequest()
       // Qt doesn't support DELETE with a payload as that's technically against the HTTP
       // standard...
       info.m_Reply =
-          m_AccessManager->sendCustomRequest(request, "DELETE", postData.toJson());
+          m_AccessManager->makeOAuthCustomRequest(request, "DELETE", postData.toJson());
     }
   } else {
-    request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
-    request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
-                         QNetworkRequest::AlwaysNetwork);
     request.setRawHeader("APIKEY", currentTokens->apiKey.toUtf8());
-    request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader,
-                      m_AccessManager->userAgent(info.m_SubModule));
-    request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
-                      "application/json");
-    request.setRawHeader("Protocol-Version", "1.0.0");
-    request.setRawHeader("Application-Name", "MO2");
-    request.setRawHeader("Application-Version",
-                         QApplication::applicationVersion().toUtf8());
+    m_AccessManager->addAPIHeaders(request);
 
     if (postData.object().isEmpty()) {
       if (!requestIsDelete) {

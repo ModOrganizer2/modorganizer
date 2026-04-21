@@ -192,11 +192,16 @@ public:
 
   QNetworkReply* makeOAuthGetRequest(const QUrl url);
   QNetworkReply* makeOAuthPostRequest(const QUrl url, const QByteArray payload);
+  QNetworkReply* makeOAuthDeleteRequest(QNetworkRequest request);
+  QNetworkReply* makeOAuthCustomRequest(QNetworkRequest request, const QByteArray& verb,
+                                        const QByteArray& data);
 
   static QString stateToString(OAuthState state, const QString& details = {});
 
   std::function<void(const NexusOAuthTokens&)> tokensReceived;
   std::function<void(OAuthState, QString)> stateChanged;
+
+  void addAPIHeaders(QNetworkRequest& request);
 
   void apiCheck(const NexusOAuthTokens& tokens, bool force = false);
   void setTokens(const NexusOAuthTokens& tokens);
@@ -256,6 +261,7 @@ private:
   std::unique_ptr<QOAuth2AuthorizationCodeFlow> m_NexusOAuth;
   std::unique_ptr<QOAuthHttpServerReplyHandler> m_NexusOAuthReplyHandler;
 
+  void ensureFreshToken();
   void handleOAuthError(const QString& message);
 
   void setOAuthState(OAuthState state, const QString& message = {});
