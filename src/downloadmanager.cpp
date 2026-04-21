@@ -385,8 +385,6 @@ void DownloadManager::refreshList()
   ModelResetGuard guard(*this);
 
   try {
-    int downloadsBefore = m_ActiveDownloads.size();
-
     // remove finished downloads
     for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin();
          iter != m_ActiveDownloads.end();) {
@@ -492,7 +490,7 @@ void DownloadManager::refreshList()
 void DownloadManager::queryDownloadListInfo()
 {
   int incompleteCount = 0;
-  for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
+  for (int i = 0; i < m_ActiveDownloads.size(); i++) {
     if (isInfoIncomplete(i)) {
       incompleteCount++;
     }
@@ -510,7 +508,7 @@ void DownloadManager::queryDownloadListInfo()
     log::info("Querying metadata for every download with incomplete info...");
     {
       DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
-      for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
+      for (int i = 0; i < m_ActiveDownloads.size(); i++) {
         if (isInfoIncomplete(i)) {
           queryInfoMd5(i, false);
         }
@@ -1715,7 +1713,6 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         if (bytesTotal > info->m_TotalSize) {
           info->m_TotalSize = bytesTotal;
         }
-        int oldProgress        = info->m_Progress.first;
         info->m_Progress.first = ((info->m_ResumePos + bytesReceived) * 100) /
                                  (info->m_ResumePos + bytesTotal);
 
