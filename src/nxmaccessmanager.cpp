@@ -727,12 +727,28 @@ std::optional<NexusOAuthTokens> NXMAccessManager::tokens() const
   return m_Tokens;
 }
 
+void NXMAccessManager::ensureFreshToken()
+{
+  if (!m_Tokens || (m_Tokens->apiKey.isEmpty() && m_Tokens->accessToken.isEmpty())) {
+    log::warn("nexus: no OAuth tokens available");
+    return;
+  }
+
+  if (!m_Tokens->accessToken.isEmpty()) {
+    if (!m_Tokens->isExpired()) {
+      return;
+    }
+
+    tokensReceived = [&](const NexusOAuthTokens& tokens) {
+      saveRefreshedTokens(tokens);
+    };
+    stateChanged = nullptr;
+    connectOrRefresh(*m_Tokens);
+  }
+}
+
 void NXMAccessManager::handleOAuthError(const QString& message)
 {
-  if (m_NexusOAuthReplyHandler) {
-    m_NexusOAuthReplyHandler->close();
-  }
-  m_NexusOAuthReplyHandler.reset();
   if (stateChanged) {
     stateChanged(OAuthState::Error, message);
   }
@@ -772,6 +788,8 @@ void NXMAccessManager::notifyTokens()
   if (tokensReceived) {
     tokensReceived(tokens);
   }
+
+  startValidationCheck(tokens);
   emit authorizationEnded();
 }
 
@@ -921,12 +939,6 @@ void NXMAccessManager::connectOrRefresh(const NexusOAuthTokens tokens)
   m_NexusOAuth->setPkceMethod(QOAuth2AuthorizationCodeFlow::PkceMethod::S256);
   m_NexusOAuth->setAutoRefresh(true);
   m_NexusOAuth->setRefreshLeadTime(std::chrono::seconds(300));
-
-  // m_NexusOAuth->setModifyParametersFunction(
-  //     [this](QAbstractOAuth::Stage stage, QMultiMap<QString, QVariant>* parameters)
-  //     {
-  //       injectPkceChallenge(stage, parameters);
-  //     });
   QSet<QByteArray> scope = {"openid", "profile", "email"};
   m_NexusOAuth->setRequestedScopeTokens(scope);
   m_NexusOAuthReplyHandler.reset(new QOAuthHttpServerReplyHandler(
@@ -973,18 +985,27 @@ void NXMAccessManager::cancelAuth()
   setOAuthState(OAuthState::Cancelled);
 }
 
+void NXMAccessManager::addAPIHeaders(QNetworkRequest& request)
+{
+  request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
+  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
+                       QNetworkRequest::AlwaysNetwork);
+  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader,
+                    userAgent().toUtf8());
+  request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
+                    "application/json");
+  request.setRawHeader("Protocol-Version", "1.0.0");
+  request.setRawHeader("Application-Name", "MO2");
+  request.setRawHeader("Application-Version", MOVersion().toUtf8());
+}
+
 QNetworkReply* NXMAccessManager::makeOAuthGetRequest(const QUrl url)
 {
   if (!m_NexusOAuth->token().isEmpty()) {
+    ensureFreshToken();
     QNetworkRequest request(url);
     m_NexusOAuth->prepareRequest(&request, "GET");
-    request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader,
-                      userAgent().toUtf8());
-    request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
-                      "application/json");
-    request.setRawHeader("Protocol-Version", "1.0.0");
-    request.setRawHeader("Application-Name", "MO2");
-    request.setRawHeader("Application-Version", MOVersion().toUtf8());
+    addAPIHeaders(request);
     return m_NexusOAuth->networkAccessManager()->get(request);
   }
   return nullptr;
@@ -994,16 +1015,33 @@ QNetworkReply* NXMAccessManager::makeOAuthPostRequest(const QUrl url,
                                                       const QByteArray payload = {})
 {
   if (!m_NexusOAuth->token().isEmpty()) {
+    ensureFreshToken();
     QNetworkRequest request(url);
     m_NexusOAuth->prepareRequest(&request, "POST", payload);
-    request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader,
-                      userAgent().toUtf8());
-    request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
-                      "application/json");
-    request.setRawHeader("Protocol-Version", "1.0.0");
-    request.setRawHeader("Application-Name", "MO2");
-    request.setRawHeader("Application-Version", MOVersion().toUtf8());
+    addAPIHeaders(request);
     return m_NexusOAuth->networkAccessManager()->post(request, payload);
+  }
+  return nullptr;
+}
+
+QNetworkReply* NXMAccessManager::makeOAuthDeleteRequest(QNetworkRequest request)
+{
+  if (!m_NexusOAuth->token().isEmpty()) {
+    ensureFreshToken();
+    m_NexusOAuth->prepareRequest(&request, "DELETE");
+    addAPIHeaders(request);
+    return m_NexusOAuth->networkAccessManager()->deleteResource(request);
+  }
+  return nullptr;
+}
+
+QNetworkReply* NXMAccessManager::makeOAuthCustomRequest(QNetworkRequest request, const QByteArray& verb, const QByteArray& data)
+{
+  if (!m_NexusOAuth->token().isEmpty()) {
+    ensureFreshToken();
+    m_NexusOAuth->prepareRequest(&request, verb, data);
+    addAPIHeaders(request);
+    return m_NexusOAuth->networkAccessManager()->sendCustomRequest(request, verb, data);
   }
   return nullptr;
 }
@@ -1036,8 +1074,9 @@ void NXMAccessManager::apiCheck(const NexusOAuthTokens& tokens, bool force)
     };
     stateChanged = nullptr;
     connectOrRefresh(tokens);
+  } else if (!tokens.apiKey.isEmpty()) {
+    startValidationCheck(tokens);
   }
-  startValidationCheck(tokens);
 }
 
 const QString& NXMAccessManager::MOVersion() const
