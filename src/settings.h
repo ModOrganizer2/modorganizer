@@ -958,6 +958,24 @@ public:
   static bool hideAssignCategoriesQuestion();
   static void setHideAssignCategoriesQuestion(bool b);
 
+  // if the key exists from the credentials store, puts it in `apiKey` and
+  // returns true; otherwise, returns false and leaves `apiKey` untouched
+  //
+  static bool nexusApiKey(QString& apiKey);
+
+  // sets the api key in the credentials store, removes it if empty; returns
+  // false on errors
+  //
+  static bool setNexusApiKey(const QString& apiKey);
+
+  // removes the api key from the credentials store; returns false on errors
+  //
+  static bool clearNexusApiKey();
+
+  // returns whether an API key is currently stored
+  //
+  static bool hasNexusApiKey();
+
   // Retrieves the stored OAuth tokens. Returns false if the credential doesn't exist
   // or can't be parsed.
   //

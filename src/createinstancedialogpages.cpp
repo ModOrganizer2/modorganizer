@@ -1204,7 +1204,7 @@ NexusPage::NexusPage(CreateInstanceDialog& dlg) : Page(dlg), m_skip(false)
 
   // just check it once, or connecting and then going back and forth would skip
   // the page, which would be unexpected
-  m_skip = GlobalSettings::hasNexusOAuthTokens();
+  m_skip = GlobalSettings::hasNexusOAuthTokens() || GlobalSettings::hasNexusApiKey();
 }
 
 NexusPage::~NexusPage() = default;

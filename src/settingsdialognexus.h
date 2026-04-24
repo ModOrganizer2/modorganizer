@@ -46,9 +46,9 @@ private:
 
   void updateState();
 
-  void validateTokens(const NexusOAuthTokens& tokens);
+  void validateCredentials(const NexusOAuthTokens& tokens);
   bool persistTokens(const NexusOAuthTokens& tokens);
-  bool clearTokens();
+  bool clearCredentials();
 
   void onTokensReceived(const NexusOAuthTokens& tokens);
   void onOAuthStateChanged(NXMAccessManager::OAuthState s, const QString& message);

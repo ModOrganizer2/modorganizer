@@ -149,7 +149,7 @@ void NexusConnectionUI::manual()
 
   const auto key = d.key();
   if (key.isEmpty()) {
-    clearTokens();
+    clearCredentials();
     return;
   }
 
@@ -161,17 +161,17 @@ void NexusConnectionUI::manual()
   tokens->apiKey = key;
   NexusInterface::instance().getAccessManager()->setTokens(*tokens);
   m_pendingTokens = tokens;
-  validateTokens(*tokens);
+  validateCredentials(*tokens);
 }
 
 void NexusConnectionUI::disconnect()
 {
-  clearTokens();
+  clearCredentials();
   m_log->clear();
   addLog(tr("Disconnected."));
 }
 
-void NexusConnectionUI::validateTokens(const NexusOAuthTokens& tokens)
+void NexusConnectionUI::validateCredentials(const NexusOAuthTokens& tokens)
 {
   if (!m_nexusValidator) {
     m_nexusValidator.reset(new NexusKeyValidator(
@@ -188,9 +188,10 @@ void NexusConnectionUI::validateTokens(const NexusOAuthTokens& tokens)
 
 void NexusConnectionUI::onTokensReceived(const NexusOAuthTokens& tokens)
 {
-  if (GlobalSettings::hasNexusOAuthTokens()) {
+  if (GlobalSettings::hasNexusOAuthTokens() || GlobalSettings::hasNexusApiKey()) {
     NexusOAuthTokens oldTokens;
     GlobalSettings::nexusOAuthTokens(oldTokens);
+    GlobalSettings::nexusApiKey(oldTokens.apiKey);
     NexusOAuthTokens newTokens(tokens);
     if (tokens.apiKey.isEmpty()) {
       newTokens.apiKey = oldTokens.apiKey;
@@ -207,7 +208,7 @@ void NexusConnectionUI::onTokensReceived(const NexusOAuthTokens& tokens)
     m_pendingTokens = tokens;
   }
   addLog(tr("Received authorization from Nexus."));
-  validateTokens(tokens);
+  validateCredentials(tokens);
 }
 
 void NexusConnectionUI::onOAuthStateChanged(NXMAccessManager::OAuthState s,
@@ -263,8 +264,9 @@ void NexusConnectionUI::addLog(const QString& s)
 
 bool NexusConnectionUI::persistTokens(const NexusOAuthTokens& tokens)
 {
-  const bool ret = GlobalSettings::setNexusOAuthTokens(tokens);
-  if (ret) {
+  const bool ret  = GlobalSettings::setNexusOAuthTokens(tokens);
+  const bool ret2 = GlobalSettings::setNexusApiKey(tokens.apiKey);
+  if (ret && ret2) {
     NexusInterface::instance().getAccessManager()->setTokens(tokens);
   }
 
@@ -272,19 +274,20 @@ bool NexusConnectionUI::persistTokens(const NexusOAuthTokens& tokens)
 
   emit keyChanged();
 
-  return ret;
+  return ret && ret2;
 }
 
-bool NexusConnectionUI::clearTokens()
+bool NexusConnectionUI::clearCredentials()
 {
-  const auto ret = GlobalSettings::clearNexusOAuthTokens();
+  auto ret  = GlobalSettings::clearNexusOAuthTokens();
+  auto ret2 = GlobalSettings::clearNexusApiKey();
 
-  NexusInterface::instance().getAccessManager()->clearTokens();
+  NexusInterface::instance().getAccessManager()->clearCredentials();
   updateState();
 
   emit keyChanged();
 
-  return ret;
+  return ret && ret2;
 }
 
 void NexusConnectionUI::updateState()
@@ -308,6 +311,7 @@ void NexusConnectionUI::updateState()
   } else if (GlobalSettings::hasNexusOAuthTokens()) {
     NexusOAuthTokens tokens;
     GlobalSettings::nexusOAuthTokens(tokens);
+    GlobalSettings::nexusApiKey(tokens.apiKey);
     if (tokens.accessToken.isEmpty()) {
       setButton(m_connect, true, QObject::tr("Connect to Nexus"));
     } else {

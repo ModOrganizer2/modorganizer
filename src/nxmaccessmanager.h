@@ -214,7 +214,7 @@ public:
   QString userAgent(const QString& subModule = QString()) const;
   const QString& MOVersion() const;
 
-  void clearTokens();
+  void clearCredentials();
 
   void refuseValidation();
 
