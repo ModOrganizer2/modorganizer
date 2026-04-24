@@ -231,7 +231,8 @@ void ModListViewActions::checkModsForUpdates() const
     NexusInterface::instance().requestTrackingInfo(m_receiver, QVariant(), QString());
   } else {
     NexusOAuthTokens tokens;
-    if (GlobalSettings::nexusOAuthTokens(tokens)) {
+    if (GlobalSettings::nexusOAuthTokens(tokens) ||
+        GlobalSettings::nexusApiKey(tokens.apiKey)) {
       m_core.doAfterLogin([=]() {
         checkModsForUpdates();
       });
@@ -311,7 +312,8 @@ void ModListViewActions::checkModsForUpdates(
     ModInfo::manualUpdateCheck(m_receiver, IDs);
   } else {
     NexusOAuthTokens tokens;
-    if (GlobalSettings::nexusOAuthTokens(tokens)) {
+    if (GlobalSettings::nexusOAuthTokens(tokens) ||
+        GlobalSettings::nexusApiKey(tokens.apiKey)) {
       m_core.doAfterLogin([=]() {
         checkModsForUpdates(IDs);
       });

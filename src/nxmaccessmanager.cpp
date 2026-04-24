@@ -783,7 +783,7 @@ void NXMAccessManager::notifyTokens()
     return;
   }
 
-  tokens.scope = m_NexusOAuth->scope();
+  tokens.scope = scopes.join(" ");
 
   if (tokensReceived) {
     tokensReceived(tokens);
@@ -796,9 +796,10 @@ void NXMAccessManager::notifyTokens()
 void NXMAccessManager::saveRefreshedTokens(const NexusOAuthTokens tokens)
 {
   NexusOAuthTokens finalTokens;
-  if (GlobalSettings::hasNexusOAuthTokens()) {
+  if (GlobalSettings::hasNexusOAuthTokens() || GlobalSettings::hasNexusApiKey()) {
     NexusOAuthTokens oldTokens;
     GlobalSettings::nexusOAuthTokens(oldTokens);
+    GlobalSettings::nexusApiKey(oldTokens.apiKey);
     NexusOAuthTokens newTokens(tokens);
     if (tokens.apiKey.isEmpty()) {
       newTokens.apiKey = oldTokens.apiKey;
@@ -807,8 +808,9 @@ void NXMAccessManager::saveRefreshedTokens(const NexusOAuthTokens tokens)
   } else {
     finalTokens = tokens;
   }
-  const bool ret = GlobalSettings::setNexusOAuthTokens(finalTokens);
-  if (ret) {
+  const bool ret  = GlobalSettings::setNexusOAuthTokens(finalTokens);
+  const bool ret2 = GlobalSettings::setNexusApiKey(finalTokens.apiKey);
+  if (ret && ret2) {
     setTokens(finalTokens);
   }
 }
@@ -1035,7 +1037,9 @@ QNetworkReply* NXMAccessManager::makeOAuthDeleteRequest(QNetworkRequest request)
   return nullptr;
 }
 
-QNetworkReply* NXMAccessManager::makeOAuthCustomRequest(QNetworkRequest request, const QByteArray& verb, const QByteArray& data)
+QNetworkReply* NXMAccessManager::makeOAuthCustomRequest(QNetworkRequest request,
+                                                        const QByteArray& verb,
+                                                        const QByteArray& data)
 {
   if (!m_NexusOAuth->token().isEmpty()) {
     ensureFreshToken();
@@ -1104,7 +1108,7 @@ QString NXMAccessManager::userAgent(const QString& subModule) const
       .arg(m_MOVersion, comments.join("; "), qVersion());
 }
 
-void NXMAccessManager::clearTokens()
+void NXMAccessManager::clearCredentials()
 {
   m_Validator.cancel();
   // TODO: Verify revocation process

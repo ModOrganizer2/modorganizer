@@ -52,7 +52,6 @@ struct NexusOAuthTokens
   QJsonObject toJson() const
   {
     QJsonObject json;
-    json.insert(QStringLiteral("api_key"), apiKey);
     json.insert(QStringLiteral("access_token"), accessToken);
     json.insert(QStringLiteral("refresh_token"), refreshToken);
     json.insert(QStringLiteral("scope"), scope);
@@ -64,7 +63,6 @@ struct NexusOAuthTokens
   static std::optional<NexusOAuthTokens> fromJson(const QJsonObject& json)
   {
     NexusOAuthTokens tokens;
-    tokens.apiKey       = json.value(QStringLiteral("api_key")).toString();
     tokens.accessToken  = json.value(QStringLiteral("access_token")).toString();
     tokens.refreshToken = json.value(QStringLiteral("refresh_token")).toString();
     tokens.scope        = json.value(QStringLiteral("scope")).toString();

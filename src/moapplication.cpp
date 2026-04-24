@@ -320,7 +320,8 @@ int MOApplication::run(MOMultiProcess& multiProcess)
 
   // start an api check
   NexusOAuthTokens tokens;
-  if (GlobalSettings::nexusOAuthTokens(tokens)) {
+  if (GlobalSettings::nexusOAuthTokens(tokens) ||
+      GlobalSettings::nexusApiKey(tokens.apiKey)) {
     m_nexus->getAccessManager()->apiCheck(tokens);
   }
 

@@ -2520,35 +2520,45 @@ std::optional<NexusOAuthTokens> parseStoredTokens(const QString& raw)
 }
 }  // namespace
 
+bool GlobalSettings::nexusApiKey(QString& apiKey)
+{
+  QString tempKey = getWindowsCredential(NexusLegacyCredentialKey);
+  if (tempKey.isEmpty())
+    return false;
+
+  apiKey = tempKey;
+  return true;
+}
+
+bool GlobalSettings::setNexusApiKey(const QString& apiKey)
+{
+  if (!setWindowsCredential(NexusLegacyCredentialKey, apiKey)) {
+    const auto e = GetLastError();
+    log::error("Storing API key failed: {}", formatSystemMessage(e));
+    return false;
+  }
+
+  return true;
+}
+
+bool GlobalSettings::clearNexusApiKey()
+{
+  return setNexusApiKey("");
+}
+
+bool GlobalSettings::hasNexusApiKey()
+{
+  return !getWindowsCredential(NexusLegacyCredentialKey).isEmpty();
+}
+
 bool GlobalSettings::nexusOAuthTokens(NexusOAuthTokens& tokens)
 {
-  // If legacy credential key exists and is not set in the new credentials,
-  // insert it into the current tokens. In all cases, clear the old credential
-  // store once parsed.
-  const auto legacyRaw = getWindowsCredential(NexusLegacyCredentialKey);
-  if (!legacyRaw.isEmpty()) {
-    tokens.apiKey = legacyRaw;
-    setWindowsCredential(NexusLegacyCredentialKey, "");
-  }
   const auto raw    = getWindowsCredential(NexusOAuthCredentialKey);
   const auto parsed = parseStoredTokens(raw);
-  if (!parsed && legacyRaw.isEmpty()) {
+  if (!parsed) {
     return false;
-  } else if (parsed && legacyRaw.isEmpty()) {
-    tokens = *parsed;
-  } else if (parsed) {
-    if (!parsed->apiKey.isEmpty()) {
-      tokens = *parsed;
-    } else {
-      tokens.accessToken  = parsed->accessToken;
-      tokens.refreshToken = parsed->refreshToken;
-      tokens.expiresAt    = parsed->expiresAt;
-      tokens.tokenType    = parsed->tokenType;
-      tokens.scope        = parsed->scope;
-      setNexusOAuthTokens(tokens);
-    }
   } else {
-    setNexusOAuthTokens(tokens);
+    tokens = *parsed;
   }
   return true;
 }
