@@ -57,9 +57,6 @@ void NexusOAuthLogin::start()
   connect(accessManager, &NXMAccessManager::authorizationEnded, this,
           &NexusOAuthLogin::authorizationEnded);
 
-  accessManager->tokensReceived = tokensReceived;
-  accessManager->stateChanged   = stateChanged;
-
   NexusInterface::instance().getAccessManager()->connectOrRefresh(NexusOAuthTokens());
   m_active = true;
 }

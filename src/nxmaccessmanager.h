@@ -198,9 +198,6 @@ public:
 
   static QString stateToString(OAuthState state, const QString& details = {});
 
-  std::function<void(const NexusOAuthTokens&)> tokensReceived;
-  std::function<void(OAuthState, QString)> stateChanged;
-
   void addAPIHeaders(QNetworkRequest& request);
 
   void apiCheck(const NexusOAuthTokens& tokens, bool force = false);
@@ -237,6 +234,8 @@ signals:
   void validateFailed(const QString& message);
   void credentialsReceived(const APIUserAccount& user);
   void authorizationEnded();
+  void tokensReceived(const NexusOAuthTokens tokens);
+  void updateOAuthState(OAuthState state, QString message);
 
 protected:
   virtual QNetworkReply* createRequest(QNetworkAccessManager::Operation operation,
@@ -267,8 +266,6 @@ private:
   void setOAuthState(OAuthState state, const QString& message = {});
   void notifyTokens();
 
-  void saveRefreshedTokens(const NexusOAuthTokens tokens);
-
   void startValidationCheck(const NexusOAuthTokens& tokens);
 
   void onValidatorFinished(ValidationAttempt::Result r, const QString& message,
@@ -278,6 +275,9 @@ private:
 
   void startProgress();
   void stopProgress();
+
+private slots:
+  void saveRefreshedTokens(const NexusOAuthTokens tokens);
 };
 
 #endif  // NXMACCESSMANAGER_H
