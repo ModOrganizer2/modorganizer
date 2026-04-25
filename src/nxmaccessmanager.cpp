@@ -609,6 +609,10 @@ NXMAccessManager::NXMAccessManager(QObject* parent, Settings* s,
     : QNetworkAccessManager(parent), m_Settings(s), m_MOVersion(moVersion),
       m_Validator(s, *this), m_ValidationState(NotChecked)
 {
+  NexusOAuthTokens tokens;
+  GlobalSettings::nexusOAuthTokens(tokens);
+  GlobalSettings::nexusApiKey(tokens.apiKey);
+  m_Tokens = tokens;
   m_NexusOAuth.reset(new QOAuth2AuthorizationCodeFlow);
   m_NexusOAuthReplyHandler.reset(new QOAuthHttpServerReplyHandler(
       QHostAddress::LocalHost, NexusOAuth::redirectPort(), this));
@@ -1115,8 +1119,8 @@ void NXMAccessManager::clearCredentials()
   //      request, params.toString(QUrl::FullyEncoded).toUtf8());
   //}
   m_Tokens.reset();
-  m_NexusOAuthReplyHandler.reset();
-  m_NexusOAuth.reset();
+  m_NexusOAuth->setToken("");
+  m_NexusOAuthReplyHandler->close();
   emit credentialsReceived(APIUserAccount());
 }
 
