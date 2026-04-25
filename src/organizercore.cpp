@@ -300,9 +300,11 @@ bool OrganizerCore::nexusApi(bool retry)
     return false;
   } else {
     NexusOAuthTokens tokens;
-    if (GlobalSettings::nexusOAuthTokens(tokens)) {
+    GlobalSettings::nexusOAuthTokens(tokens);
+    GlobalSettings::nexusApiKey(tokens.apiKey);
+    if (tokens.isValid() || !tokens.apiKey.isEmpty()) {
       // credentials stored or user entered them manually
-      log::debug("attempt to verify nexus api key");
+      log::debug("attempt to verify nexus credentials");
       accessManager->apiCheck(tokens);
       return true;
     } else {
