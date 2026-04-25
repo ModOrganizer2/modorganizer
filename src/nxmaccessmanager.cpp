@@ -610,6 +610,8 @@ NXMAccessManager::NXMAccessManager(QObject* parent, Settings* s,
       m_Validator(s, *this), m_ValidationState(NotChecked)
 {
   m_NexusOAuth.reset(new QOAuth2AuthorizationCodeFlow);
+  m_NexusOAuthReplyHandler.reset(new QOAuthHttpServerReplyHandler(
+      QHostAddress::LocalHost, NexusOAuth::redirectPort(), this));
 
   connect(m_NexusOAuth.get(), &QOAuth2AuthorizationCodeFlow::requestFailed, this,
           [&](QAbstractOAuth::Error error) {
@@ -620,18 +622,21 @@ NXMAccessManager::NXMAccessManager(QObject* parent, Settings* s,
     notifyTokens();
   });
 
-  connect(m_NexusOAuth.get(), &QOAuth2AuthorizationCodeFlow::tokenChanged, this, [&]() {
-    tokensReceived = [&](const NexusOAuthTokens& tokens) {
-      saveRefreshedTokens(tokens);
-    };
-    stateChanged = nullptr;
-    notifyTokens();
-  });
-
   connect(m_NexusOAuth.get(), &QOAuth2AuthorizationCodeFlow::authorizeWithBrowser, this,
           [&](const QUrl& url) {
             shell::Open(url);
             setOAuthState(OAuthState::WaitingForBrowser);
+          });
+
+  connect(m_NexusOAuth.get(), &QOAuth2AuthorizationCodeFlow::accessTokenAboutToExpire,
+          this, [&] {
+            if (!m_NexusOAuthReplyHandler->isListening() &&
+                !m_NexusOAuthReplyHandler->listen(QHostAddress::LocalHost,
+                                                  NexusOAuth::redirectPort())) {
+              handleOAuthError(QObject::tr("Failed to bind to localhost on port %1.")
+                                   .arg(NexusOAuth::redirectPort()));
+              return;
+            }
           });
 
   connect(m_NexusOAuth.get(), &QOAuth2AuthorizationCodeFlow::statusChanged, this,
@@ -650,6 +655,9 @@ NXMAccessManager::NXMAccessManager(QObject* parent, Settings* s,
               break;
             }
           });
+
+  connect(this, &NXMAccessManager::tokensReceived, this,
+          &NXMAccessManager::saveRefreshedTokens);
 
   m_Validator.finished = [&](auto&& r, auto&& m, auto&& u) {
     onValidatorFinished(r, m, u);
@@ -739,19 +747,14 @@ void NXMAccessManager::ensureFreshToken()
       return;
     }
 
-    tokensReceived = [&](const NexusOAuthTokens& tokens) {
-      saveRefreshedTokens(tokens);
-    };
-    stateChanged = nullptr;
     connectOrRefresh(*m_Tokens);
   }
 }
 
 void NXMAccessManager::handleOAuthError(const QString& message)
 {
-  if (stateChanged) {
-    stateChanged(OAuthState::Error, message);
-  }
+  m_NexusOAuthReplyHandler->close();
+  emit updateOAuthState(OAuthState::Error, message);
   emit authorizationEnded();
 }
 
@@ -785,9 +788,7 @@ void NXMAccessManager::notifyTokens()
 
   tokens.scope = scopes.join(" ");
 
-  if (tokensReceived) {
-    tokensReceived(tokens);
-  }
+  emit tokensReceived(tokens);
 
   startValidationCheck(tokens);
   emit authorizationEnded();
@@ -817,9 +818,7 @@ void NXMAccessManager::saveRefreshedTokens(const NexusOAuthTokens tokens)
 
 void NXMAccessManager::setOAuthState(OAuthState state, const QString& message)
 {
-  if (stateChanged) {
-    stateChanged(state, message);
-  }
+  emit updateOAuthState(state, message);
 }
 
 QString NXMAccessManager::stateToString(OAuthState state, const QString& details)
@@ -943,8 +942,6 @@ void NXMAccessManager::connectOrRefresh(const NexusOAuthTokens tokens)
   m_NexusOAuth->setRefreshLeadTime(std::chrono::seconds(300));
   QSet<QByteArray> scope = {"openid", "profile", "email"};
   m_NexusOAuth->setRequestedScopeTokens(scope);
-  m_NexusOAuthReplyHandler.reset(new QOAuthHttpServerReplyHandler(
-      QHostAddress::LocalHost, NexusOAuth::redirectPort(), this));
   m_NexusOAuthReplyHandler->setCallbackPath(QUrl(NexusOAuth::redirectUri()).path());
   m_NexusOAuthReplyHandler->setCallbackText(
       QObject::tr("<html><body><h2>Mod Organizer</h2><p>Authorization complete. You "
@@ -970,7 +967,6 @@ void NXMAccessManager::connectOrRefresh(const NexusOAuthTokens tokens)
     setOAuthState(OAuthState::Refreshing);
     m_NexusOAuth->refreshTokens();
   } else {
-
     setOAuthState(OAuthState::Initializing);
     m_NexusOAuth->grant();
   }
@@ -1073,10 +1069,6 @@ void NXMAccessManager::apiCheck(const NexusOAuthTokens& tokens, bool force)
   }
 
   if (m_NexusOAuth->token().isEmpty() && !tokens.accessToken.isEmpty()) {
-    tokensReceived = [&](const NexusOAuthTokens& tokens) {
-      saveRefreshedTokens(tokens);
-    };
-    stateChanged = nullptr;
     connectOrRefresh(tokens);
   } else if (!tokens.apiKey.isEmpty()) {
     startValidationCheck(tokens);

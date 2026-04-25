@@ -34,10 +34,7 @@ struct NexusOAuthTokens
   QDateTime expiresAt;
   QString apiKey;
 
-  bool isValid() const
-  {
-    return (!accessToken.isEmpty() && expiresAt.isValid()) || !apiKey.isEmpty();
-  }
+  bool isValid() const { return !accessToken.isEmpty() && expiresAt.isValid(); }
 
   bool isExpired(std::chrono::seconds skew = std::chrono::seconds(60)) const
   {

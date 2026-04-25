@@ -101,7 +101,19 @@ NexusConnectionUI::NexusConnectionUI(QWidget* parent, Settings* s,
     });
   }
 
-  if (GlobalSettings::hasNexusOAuthTokens()) {
+  QObject::connect(NexusInterface::instance().getAccessManager(),
+                   &NXMAccessManager::updateOAuthState, this,
+                   [&](NXMAccessManager::OAuthState state, QString message) {
+                     onOAuthStateChanged(state, message);
+                   });
+
+  QObject::connect(NexusInterface::instance().getAccessManager(),
+                   &NXMAccessManager::tokensReceived, this,
+                   [&](const NexusOAuthTokens tokens) {
+                     onTokensReceived(tokens);
+                   });
+
+  if (GlobalSettings::hasNexusOAuthTokens() || GlobalSettings::hasNexusApiKey()) {
     addLog(tr("Connected."));
   } else {
     addLog(tr("Not connected."));
@@ -119,14 +131,6 @@ void NexusConnectionUI::connect()
 
   if (!m_nexusLogin) {
     m_nexusLogin.reset(new NexusOAuthLogin(m_parent));
-
-    m_nexusLogin->tokensReceived = [&](const NexusOAuthTokens& tokens) {
-      onTokensReceived(tokens);
-    };
-
-    m_nexusLogin->stateChanged = [&](auto&& state, auto&& message) {
-      onOAuthStateChanged(state, message);
-    };
   }
 
   m_log->clear();
@@ -308,7 +312,8 @@ void NexusConnectionUI::updateState()
   } else if (m_nexusValidator && m_nexusValidator->isActive()) {
     setButton(m_connect, false, QObject::tr("Connect to Nexus"));
     setButton(m_disconnect, false);
-  } else if (GlobalSettings::hasNexusOAuthTokens()) {
+  } else if (GlobalSettings::hasNexusOAuthTokens() ||
+             GlobalSettings::hasNexusApiKey()) {
     NexusOAuthTokens tokens;
     GlobalSettings::nexusOAuthTokens(tokens);
     GlobalSettings::nexusApiKey(tokens.apiKey);
