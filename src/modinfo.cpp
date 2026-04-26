@@ -314,8 +314,8 @@ bool ModInfo::checkAllForUpdate(PluginContainer* pluginContainer, QObject* recei
   }
 
   // Detect invalid source games
+  const auto& gamePlugins = pluginContainer->plugins<IPluginGame>();
   for (auto itr = games.begin(); itr != games.end();) {
-    auto gamePlugins        = pluginContainer->plugins<IPluginGame>();
     IPluginGame* gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
     for (auto plugin : gamePlugins) {
       if (plugin != nullptr &&
