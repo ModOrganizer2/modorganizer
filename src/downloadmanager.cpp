@@ -604,19 +604,19 @@ bool DownloadManager::addDownload(QNetworkReply* reply, const QStringList& URLs,
                "different name.")
                 .arg(baseName),
             QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
-      notifyPendingDownloadFailed(gameName, modID, fileID);
-      removePending(gameName, modID, fileID);
-      reply->abort();
-      reply->deleteLater();
-      delete newDownload;
+      cancelPendingDownload(newDownload, reply);
       return false;
     }
     renameToUnique = true;
   }
 
-  {
+  try {
     DirWatcherManager::Guard dirWatcherGuard = m_DirWatcher.scopedGuard();
     newDownload->setName(getDownloadFileName(baseName, renameToUnique), false);
+  } catch (const std::exception& e) {
+    log::error("exception preparing download: {}", e.what());
+    cancelPendingDownload(newDownload, reply);
+    return false;
   }
 
   return startDownload(reply, newDownload, false);
@@ -631,6 +631,21 @@ void DownloadManager::notifyPendingDownloadFailed(const QString& gameName, int m
       m_DownloadFailed(pending.reservedID);
       return;
     }
+  }
+}
+
+void DownloadManager::cancelPendingDownload(DownloadInfo* newDownload,
+                                            QNetworkReply* reply)
+{
+  notifyPendingDownloadFailed(newDownload->m_FileInfo->gameName,
+                              newDownload->m_FileInfo->modID,
+                              newDownload->m_FileInfo->fileID);
+  removePending(newDownload->m_FileInfo->gameName, newDownload->m_FileInfo->modID,
+                newDownload->m_FileInfo->fileID);
+  delete newDownload;
+  if (reply != nullptr) {
+    reply->abort();
+    reply->deleteLater();
   }
 }
 
@@ -673,16 +688,7 @@ bool DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
                     .arg(reply->url().toString())
                     .arg(newDownload->m_Output.fileName()));
     if (!resume) {
-      // newDownload has not been appended to m_ActiveDownloads yet: drop it
-      // here, otherwise it leaks. The resume path is owned elsewhere.
-      notifyPendingDownloadFailed(newDownload->m_FileInfo->gameName,
-                                  newDownload->m_FileInfo->modID,
-                                  newDownload->m_FileInfo->fileID);
-      removePending(newDownload->m_FileInfo->gameName, newDownload->m_FileInfo->modID,
-                    newDownload->m_FileInfo->fileID);
-      reply->abort();
-      reply->deleteLater();
-      delete newDownload;
+      cancelPendingDownload(newDownload, reply);
     }
     return false;
   }
