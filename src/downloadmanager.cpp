@@ -35,7 +35,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <taskprogressmanager.h>
 #include <utility.h>
 
-#include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDirIterator>
 #include <QEventLoop>
@@ -694,6 +693,7 @@ bool DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
   connect(newDownload->m_Reply, SIGNAL(readyRead()), this, SLOT(downloadReadyRead()));
   connect(newDownload->m_Reply, SIGNAL(metaDataChanged()), this,
           SLOT(metaDataChanged()));
+  connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(onReplyFinished()));
 
   if (!resume) {
     newDownload->m_PreResumeSize = newDownload->m_Output.size();
@@ -706,16 +706,14 @@ bool DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
       m_ByID.insert(newDownload->m_DownloadID, newDownload);
     }
     emit downloadAdded();
-
-    QCoreApplication::processEvents();
   }
 
-  // Qt will not emit finished() to a slot connected after the reply has already
-  // finished, so detect that case and drive the handler manually.
+  // Reply may have finished before we connected; defer a manual finish via a
+  // queued call rather than reentering startDownload synchronously.
   if (reply->isFinished()) {
-    finishDownload(newDownload->m_DownloadID);
-  } else {
-    connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(onReplyFinished()));
+    QMetaObject::invokeMethod(
+        this, [this, id = newDownload->m_DownloadID] { finishDownload(id); },
+        Qt::QueuedConnection);
   }
   return true;
 }
