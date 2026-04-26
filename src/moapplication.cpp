@@ -159,7 +159,7 @@ MOApplication::MOApplication(int& argc, char** argv) : QApplication(argc, argv)
   updateStyle(m_defaultStyle);
   addDllsToPath();
 
-  // When MO2 is launched by nxmhandler, CWD is set to `C:\Windows\System32`. 
+  // When MO2 is launched by nxmhandler, CWD is set to `C:\Windows\System32`.
   // QtWebEngineProcess crashes if CWD is not set to the application directory.
   QDir::setCurrent(QCoreApplication::applicationDirPath());
 }
