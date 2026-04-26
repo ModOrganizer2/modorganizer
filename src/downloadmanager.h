@@ -767,6 +767,15 @@ private:
    */
   void notifyPendingDownloadFailed(const QString& gameName, int modID, int fileID);
 
+  /**
+   * @brief Roll back a download that has not yet been activated.
+   *
+   * Ensures a caller awaiting the reservedID receives an onDownloadFailed
+   * callback. Must not be called once the download has been registered as
+   * active.
+   */
+  void cancelPendingDownload(DownloadInfo* newDownload, QNetworkReply* reply);
+
   static QString getFileTypeString(int fileType);
 
   void writeData(DownloadInfo* info);
