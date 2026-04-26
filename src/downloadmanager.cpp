@@ -188,6 +188,11 @@ void DirWatcherManager::onDirectoryChanged(const QString&)
   }
 }
 
+void DirWatcherManager::releaseSuspension()
+{
+  --m_suspendDepth;
+}
+
 DirWatcherManager::Guard::Guard(DirWatcherManager& manager) : m_manager(manager)
 {
   ++m_manager.m_suspendDepth;
@@ -195,15 +200,10 @@ DirWatcherManager::Guard::Guard(DirWatcherManager& manager) : m_manager(manager)
 
 DirWatcherManager::Guard::~Guard()
 {
-  // drain queued events while still suspended so they are filtered out,
-  // then release.
-  //
-  // TODO: find alternative, pumping the event loop from a destructor is a reentrancy
-  // hazard; arbitrary slots may run during ~Guard.
-  if (m_manager.m_suspendDepth == 1) {
-    QCoreApplication::processEvents();
-  }
-  --m_manager.m_suspendDepth;
+  // Queued so file system notifications already posted during the 
+  // suspension are dispatched (and filtered) before the suspension lifts.
+  QMetaObject::invokeMethod(&m_manager, &DirWatcherManager::releaseSuspension,
+                            Qt::QueuedConnection);
 }
 
 DirWatcherManager::Guard DirWatcherManager::scopedGuard()
