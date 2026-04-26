@@ -330,8 +330,7 @@ void DownloadManager::pauseAll()
 
   auto stillTransitioning = [this] {
     for (const DownloadInfo* info : m_ActiveDownloads) {
-      if (info->m_State < STATE_CANCELED ||
-          info->m_State == STATE_FETCHINGFILEINFO ||
+      if (info->m_State < STATE_CANCELED || info->m_State == STATE_FETCHINGFILEINFO ||
           info->m_State == STATE_FETCHINGMODINFO ||
           info->m_State == STATE_FETCHINGMODINFO_MD5) {
         return true;
@@ -679,8 +678,7 @@ bool DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
       notifyPendingDownloadFailed(newDownload->m_FileInfo->gameName,
                                   newDownload->m_FileInfo->modID,
                                   newDownload->m_FileInfo->fileID);
-      removePending(newDownload->m_FileInfo->gameName,
-                    newDownload->m_FileInfo->modID,
+      removePending(newDownload->m_FileInfo->gameName, newDownload->m_FileInfo->modID,
                     newDownload->m_FileInfo->fileID);
       reply->abort();
       reply->deleteLater();
@@ -719,7 +717,10 @@ bool DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
   // queued call rather than reentering startDownload synchronously.
   if (reply->isFinished()) {
     QMetaObject::invokeMethod(
-        this, [this, id = newDownload->m_DownloadID] { finishDownload(id); },
+        this,
+        [this, id = newDownload->m_DownloadID] {
+          finishDownload(id);
+        },
         Qt::QueuedConnection);
   }
   return true;
