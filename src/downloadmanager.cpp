@@ -605,6 +605,7 @@ bool DownloadManager::addDownload(QNetworkReply* reply, const QStringList& URLs,
                "different name.")
                 .arg(baseName),
             QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+      notifyPendingDownloadFailed(gameName, modID, fileID);
       removePending(gameName, modID, fileID);
       reply->abort();
       reply->deleteLater();
