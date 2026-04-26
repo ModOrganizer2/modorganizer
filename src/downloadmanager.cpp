@@ -38,11 +38,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDirIterator>
+#include <QEventLoop>
 #include <QFileInfo>
 #include <QHttp2Configuration>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QTextDocument>
+#include <QTimer>
 
 #include <boost/bind/bind.hpp>
 #include <regex>
@@ -321,35 +323,35 @@ bool DownloadManager::downloadsInProgressNoPause()
 
 void DownloadManager::pauseAll()
 {
-
-  // first loop: pause all downloads
   for (DownloadInfo* info : m_ActiveDownloads) {
     if (info->m_State < STATE_READY) {
       pauseDownload(info->m_DownloadID);
     }
   }
 
-  ::Sleep(100);
-
-  bool done       = false;
-  QTime startTime = QTime::currentTime();
-  // further loops: busy waiting for all downloads to complete. This could be neater...
-  while (!done && (startTime.secsTo(QTime::currentTime()) < 5)) {
-    QCoreApplication::processEvents();
-    done = true;
-    foreach (DownloadInfo* info, m_ActiveDownloads) {
-      if ((info->m_State < STATE_CANCELED) ||
-          (info->m_State == STATE_FETCHINGFILEINFO) ||
-          (info->m_State == STATE_FETCHINGMODINFO) ||
-          (info->m_State == STATE_FETCHINGMODINFO_MD5)) {
-        done = false;
-        break;
+  auto stillTransitioning = [this] {
+    for (const DownloadInfo* info : m_ActiveDownloads) {
+      if (info->m_State < STATE_CANCELED ||
+          info->m_State == STATE_FETCHINGFILEINFO ||
+          info->m_State == STATE_FETCHINGMODINFO ||
+          info->m_State == STATE_FETCHINGMODINFO_MD5) {
+        return true;
       }
     }
-    if (!done) {
-      ::Sleep(100);
+    return false;
+  };
+
+  QEventLoop loop;
+  QTimer::singleShot(5000, &loop, &QEventLoop::quit);
+  const auto conn = connect(this, &DownloadManager::stateChanged, &loop, [&] {
+    if (!stillTransitioning()) {
+      loop.quit();
     }
+  });
+  if (stillTransitioning()) {
+    loop.exec();
   }
+  disconnect(conn);
 }
 
 void DownloadManager::setOutputDirectory(const QString& outputDirectory,
