@@ -675,6 +675,12 @@ bool DownloadManager::startDownload(QNetworkReply* reply, DownloadInfo* newDownl
     if (!resume) {
       // newDownload has not been appended to m_ActiveDownloads yet: drop it
       // here, otherwise it leaks. The resume path is owned elsewhere.
+      notifyPendingDownloadFailed(newDownload->m_FileInfo->gameName,
+                                  newDownload->m_FileInfo->modID,
+                                  newDownload->m_FileInfo->fileID);
+      removePending(newDownload->m_FileInfo->gameName,
+                    newDownload->m_FileInfo->modID,
+                    newDownload->m_FileInfo->fileID);
       reply->abort();
       reply->deleteLater();
       delete newDownload;
