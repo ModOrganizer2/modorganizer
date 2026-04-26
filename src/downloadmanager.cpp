@@ -620,17 +620,7 @@ bool DownloadManager::addDownload(QNetworkReply* reply, const QStringList& URLs,
 
 void DownloadManager::removePending(QString gameName, int modID, int fileID)
 {
-  QString gameShortName = gameName;
-  QStringList games(m_ManagedGame->validShortNames());
-  games += m_ManagedGame->gameShortName();
-  for (auto game : games) {
-    MOBase::IPluginGame* gamePlugin = m_OrganizerCore->getGame(game);
-    if (gamePlugin != nullptr &&
-        gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
-      gameShortName = gamePlugin->gameShortName();
-      break;
-    }
-  }
+  QString gameShortName = getValidGameShortName(gameName);
   for (auto iter : m_PendingDownloads) {
     if (gameShortName.compare(std::get<0>(iter), Qt::CaseInsensitive) == 0 &&
         (std::get<1>(iter) == modID) && (std::get<2>(iter) == fileID)) {
@@ -1909,15 +1899,7 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
 
   info->repository = "Nexus";
 
-  QStringList games(m_ManagedGame->validShortNames());
-  games += m_ManagedGame->gameShortName();
-  for (auto game : games) {
-    MOBase::IPluginGame* gamePlugin = m_OrganizerCore->getGame(game);
-    if (gamePlugin != nullptr &&
-        gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
-      info->gameName = gamePlugin->gameShortName();
-    }
-  }
+  info->gameName = getValidGameShortName(gameName);
 
   info->modID  = modID;
   info->fileID = fileID;
@@ -2145,19 +2127,7 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
   info->m_FileInfo->uploader    = modDetails["uploaded_by"].toString();
   info->m_FileInfo->uploaderUrl = modDetails["uploaded_users_profile_url"].toString();
 
-  QString gameShortName = gameName;
-  QStringList games(m_ManagedGame->validShortNames());
-  games += m_ManagedGame->gameShortName();
-  for (auto game : games) {
-    MOBase::IPluginGame* gamePlugin = m_OrganizerCore->getGame(game);
-    if (gamePlugin != nullptr &&
-        gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
-      gameShortName = gamePlugin->gameShortName();
-      break;
-    }
-  }
-
-  info->m_FileInfo->gameName = gameShortName;
+  info->m_FileInfo->gameName = getValidGameShortName(gameName);
 
   // If the file description is not present, send another query to get it
   if (!fileDetails["description"].isValid()) {
@@ -2427,4 +2397,19 @@ void DownloadManager::writeData(DownloadInfo* info)
                       .arg(fileName));
     }
   }
+}
+
+QString DownloadManager::getValidGameShortName(const QString& gameNexusName) const
+{
+  QStringList games(m_ManagedGame->validShortNames());
+  games.prepend(m_ManagedGame->gameShortName());
+  for (auto& game : games) {
+    MOBase::IPluginGame* gamePlugin = m_OrganizerCore->getGame(game);
+    if (gamePlugin != nullptr &&
+        gamePlugin->gameNexusName().compare(gameNexusName, Qt::CaseInsensitive) == 0) {
+      return gamePlugin->gameShortName();
+    }
+  }
+
+  return gameNexusName;
 }

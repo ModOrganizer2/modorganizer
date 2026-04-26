@@ -675,6 +675,8 @@ private:
 
   void writeData(DownloadInfo* info);
 
+  QString getValidGameShortName(const QString& gameNexusName) const;
+
 private:
   static const int AUTOMATIC_RETRIES = 3;
 
