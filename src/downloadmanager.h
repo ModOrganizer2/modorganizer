@@ -101,6 +101,8 @@ private slots:
   void onDirectoryChanged(const QString&);
 
 private:
+  void releaseSuspension();
+
   QFileSystemWatcher m_watcher;
   int m_suspendDepth = 0;
 };
