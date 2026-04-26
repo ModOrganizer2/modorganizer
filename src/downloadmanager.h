@@ -32,7 +32,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSettings>
 #include <QStringList>
 #include <QTime>
-#include <QTimer>
 #include <QUrl>
 #include <QVector>
 #include <boost/accumulators/accumulators.hpp>
@@ -706,7 +705,6 @@ private slots:
   void finishDownload(DownloadID id);
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
-  void checkDownloadTimeout();
 
 private:
   void createMetaFile(DownloadInfo* info);
@@ -806,13 +804,9 @@ private:
   SignalDownloadCallback m_DownloadFailed;
   SignalDownloadCallback m_DownloadRemoved;
 
-  std::map<QString, int> m_DownloadFails;
-
   bool m_ShowHidden;
 
   MOBase::IPluginGame const* m_ManagedGame;
-
-  QTimer m_TimeoutTimer;
 };
 
 #endif  // DOWNLOADMANAGER_H
