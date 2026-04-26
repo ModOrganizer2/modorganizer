@@ -200,7 +200,7 @@ DirWatcherManager::Guard::Guard(DirWatcherManager& manager) : m_manager(manager)
 
 DirWatcherManager::Guard::~Guard()
 {
-  // Queued so file system notifications already posted during the 
+  // Queued so file system notifications already posted during the
   // suspension are dispatched (and filtered) before the suspension lifts.
   QMetaObject::invokeMethod(&m_manager, &DirWatcherManager::releaseSuspension,
                             Qt::QueuedConnection);
