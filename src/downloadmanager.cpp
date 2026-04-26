@@ -43,7 +43,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QTextDocument>
-#include <QTimer>
 
 #include <boost/bind/bind.hpp>
 #include <regex>
@@ -281,9 +280,6 @@ DownloadManager::DownloadManager(NexusInterface* nexusInterface, QObject* parent
   m_OrganizerCore = dynamic_cast<OrganizerCore*>(parent);
   connect(&m_DirWatcher, &DirWatcherManager::directoryChanged, this,
           &DownloadManager::refreshList);
-  m_TimeoutTimer.setSingleShot(false);
-  // connect(&m_TimeoutTimer, SIGNAL(timeout()), this, SLOT(checkDownloadTimeout()));
-  m_TimeoutTimer.start(5 * 1000);
 }
 
 DownloadManager::~DownloadManager()
@@ -2442,20 +2438,6 @@ void DownloadManager::metaDataChanged()
 void DownloadManager::managedGameChanged(MOBase::IPluginGame const* managedGame)
 {
   m_ManagedGame = managedGame;
-}
-
-void DownloadManager::checkDownloadTimeout()
-{
-  for (DownloadInfo* info : m_ActiveDownloads) {
-    if (info->m_StartTime.elapsed() - info->m_DownloadTimeLast > 5 * 1000 &&
-        info->m_State == STATE_DOWNLOADING && info->m_Reply != nullptr &&
-        info->m_Reply->isOpen()) {
-      const DownloadID id = info->m_DownloadID;
-      pauseDownload(id);
-      finishDownload(id);
-      resumeDownload(id);
-    }
-  }
 }
 
 void DownloadManager::writeData(DownloadInfo* info)
