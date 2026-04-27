@@ -10,6 +10,8 @@
 #include <log.h>
 #include <report.h>
 
+#include <boost/optional/optional_io.hpp>
+
 namespace cl
 {
 
@@ -221,8 +223,12 @@ std::optional<int> CommandLine::runEarly()
 
 std::optional<int> CommandLine::runPostApplication(MOApplication& a)
 {
-  // handle -i with no arguments
-  if (m_vm.count("instance") && m_vm["instance"].as<std::string>() == "") {
+  const auto instanceArg = m_vm.find("instance");
+  if (instanceArg != m_vm.end() &&
+      !instanceArg->second.as<boost::optional<std::string>>().has_value()) {
+
+    // handle -i with no arguments (distinct from -i "", which will launch the
+    // portable instance if it exists, hence the use of boost::optional)
     env::Console c;
 
     if (auto i = InstanceManager::singleton().currentInstance()) {
@@ -314,7 +320,9 @@ void CommandLine::createOptions()
 
               ("logs", "duplicates the logs to stdout")
 
-                  ("instance,i", po::value<std::string>()->implicit_value(""),
+                  ("instance,i",
+                   po::value<boost::optional<std::string>>()->implicit_value(
+                       boost::none),
                    "use the given instance (defaults to last used)")
 
                       ("profile,p", po::value<std::string>(),
@@ -402,8 +410,14 @@ std::optional<QString> CommandLine::instance() const
 
   if (m_shortcut.isValid() && m_shortcut.hasInstance()) {
     return m_shortcut.instanceName();
-  } else if (m_vm.count("instance")) {
-    return QString::fromStdString(m_vm["instance"].as<std::string>());
+  } else {
+    const auto instanceArg = m_vm.find("instance");
+    if (instanceArg != m_vm.end()) {
+      const auto& instanceVal = instanceArg->second.as<boost::optional<std::string>>();
+      if (instanceVal.has_value()) {
+        return QString::fromStdString(instanceVal.value());
+      }
+    }
   }
 
   return {};
