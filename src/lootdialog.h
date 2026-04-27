@@ -75,6 +75,10 @@ private:
   void onFinished();
   void log(MOBase::log::Levels lv, const QString& s);
   void showReport();
+  void applySortedLoadOrder();
+
+private slots:
+  void on_buttons_clicked(QAbstractButton* b);
 };
 
 #endif  // MODORGANIZER_LOOTDIALOG_H
