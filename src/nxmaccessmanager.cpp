@@ -599,6 +599,7 @@ void NexusKeyValidator::onAttemptFailure(const ValidationAttempt& a)
 void NexusKeyValidator::setFinished(ValidationAttempt::Result r, const QString& message,
                                     std::optional<APIUserAccount> user)
 {
+  m_Attempts.clear();
   if (finished) {
     finished(r, message, user);
   }
@@ -616,6 +617,7 @@ NXMAccessManager::NXMAccessManager(QObject* parent, Settings* s,
   m_NexusOAuth.reset(new QOAuth2AuthorizationCodeFlow);
   m_NexusOAuthReplyHandler.reset(new QOAuthHttpServerReplyHandler(
       QHostAddress::LocalHost, NexusOAuth::redirectPort(), this));
+  m_NexusOAuth->setReplyHandler(m_NexusOAuthReplyHandler.get());
 
   connect(m_NexusOAuth.get(), &QOAuth2AuthorizationCodeFlow::requestFailed, this,
           [&](QAbstractOAuth::Error error) {
@@ -737,22 +739,6 @@ void NXMAccessManager::setTokens(const NexusOAuthTokens& tokens)
 std::optional<NexusOAuthTokens> NXMAccessManager::tokens() const
 {
   return m_Tokens;
-}
-
-void NXMAccessManager::ensureFreshToken()
-{
-  if (!m_Tokens || (m_Tokens->apiKey.isEmpty() && m_Tokens->accessToken.isEmpty())) {
-    log::warn("nexus: no OAuth tokens available");
-    return;
-  }
-
-  if (!m_Tokens->accessToken.isEmpty()) {
-    if (!m_Tokens->isExpired()) {
-      return;
-    }
-
-    connectOrRefresh(*m_Tokens);
-  }
 }
 
 void NXMAccessManager::handleOAuthError(const QString& message)
@@ -942,23 +928,20 @@ void NXMAccessManager::connectOrRefresh(const NexusOAuthTokens tokens)
   m_NexusOAuth->setTokenUrl(QUrl(NexusOAuth::tokenUrl()));
   m_NexusOAuth->setClientIdentifier(clientId);
   m_NexusOAuth->setPkceMethod(QOAuth2AuthorizationCodeFlow::PkceMethod::S256);
-  m_NexusOAuth->setAutoRefresh(true);
-  m_NexusOAuth->setRefreshLeadTime(std::chrono::seconds(300));
   QSet<QByteArray> scope = {"openid", "profile", "email"};
   m_NexusOAuth->setRequestedScopeTokens(scope);
+  m_NexusOAuthReplyHandler->close();
   m_NexusOAuthReplyHandler->setCallbackPath(QUrl(NexusOAuth::redirectUri()).path());
   m_NexusOAuthReplyHandler->setCallbackText(
       QObject::tr("<html><body><h2>Mod Organizer</h2><p>Authorization complete. You "
                   "may close this "
                   "window.</p></body></html>"));
-  if (!m_NexusOAuthReplyHandler->isListening() &&
-      !m_NexusOAuthReplyHandler->listen(QHostAddress::LocalHost,
+  if (!m_NexusOAuthReplyHandler->listen(QHostAddress::LocalHost,
                                         NexusOAuth::redirectPort())) {
     handleOAuthError(QObject::tr("Failed to bind to localhost on port %1.")
                          .arg(NexusOAuth::redirectPort()));
     return;
   }
-  m_NexusOAuth->setReplyHandler(m_NexusOAuthReplyHandler.get());
   if (!tokens.accessToken.isEmpty()) {
     m_NexusOAuth->setToken(tokens.accessToken);
     m_NexusOAuth->setRefreshToken(tokens.refreshToken);
@@ -1004,7 +987,6 @@ void NXMAccessManager::addAPIHeaders(QNetworkRequest& request)
 QNetworkReply* NXMAccessManager::makeOAuthGetRequest(const QUrl url)
 {
   if (!m_NexusOAuth->token().isEmpty()) {
-    ensureFreshToken();
     QNetworkRequest request(url);
     m_NexusOAuth->prepareRequest(&request, "GET");
     addAPIHeaders(request);
@@ -1017,7 +999,6 @@ QNetworkReply* NXMAccessManager::makeOAuthPostRequest(const QUrl url,
                                                       const QByteArray payload = {})
 {
   if (!m_NexusOAuth->token().isEmpty()) {
-    ensureFreshToken();
     QNetworkRequest request(url);
     m_NexusOAuth->prepareRequest(&request, "POST", payload);
     addAPIHeaders(request);
@@ -1029,7 +1010,6 @@ QNetworkReply* NXMAccessManager::makeOAuthPostRequest(const QUrl url,
 QNetworkReply* NXMAccessManager::makeOAuthDeleteRequest(QNetworkRequest request)
 {
   if (!m_NexusOAuth->token().isEmpty()) {
-    ensureFreshToken();
     m_NexusOAuth->prepareRequest(&request, "DELETE");
     addAPIHeaders(request);
     return m_NexusOAuth->networkAccessManager()->deleteResource(request);
@@ -1042,7 +1022,6 @@ QNetworkReply* NXMAccessManager::makeOAuthCustomRequest(QNetworkRequest request,
                                                         const QByteArray& data)
 {
   if (!m_NexusOAuth->token().isEmpty()) {
-    ensureFreshToken();
     m_NexusOAuth->prepareRequest(&request, verb, data);
     addAPIHeaders(request);
     return m_NexusOAuth->networkAccessManager()->sendCustomRequest(request, verb, data);

@@ -36,7 +36,7 @@ struct NexusOAuthTokens
 
   bool isValid() const { return !accessToken.isEmpty() && expiresAt.isValid(); }
 
-  bool isExpired(std::chrono::seconds skew = std::chrono::seconds(60)) const
+  bool isExpired(std::chrono::seconds skew = std::chrono::seconds(300)) const
   {
     if (!expiresAt.isValid()) {
       return true;

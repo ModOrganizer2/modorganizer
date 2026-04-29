@@ -996,6 +996,10 @@ void NexusInterface::nextRequest()
 
   QNetworkRequest request(url);
   if (!currentTokens->accessToken.isEmpty()) {
+    if (currentTokens->isExpired()) {
+      m_AccessManager->connectOrRefresh(*currentTokens);
+      return;
+    }
     if (postData.object().isEmpty()) {
       if (!requestIsDelete) {
         info.m_Reply = m_AccessManager->makeOAuthGetRequest(url);

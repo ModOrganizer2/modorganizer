@@ -260,7 +260,6 @@ private:
   std::unique_ptr<QOAuth2AuthorizationCodeFlow> m_NexusOAuth;
   std::unique_ptr<QOAuthHttpServerReplyHandler> m_NexusOAuthReplyHandler;
 
-  void ensureFreshToken();
   void handleOAuthError(const QString& message);
 
   void setOAuthState(OAuthState state, const QString& message = {});
