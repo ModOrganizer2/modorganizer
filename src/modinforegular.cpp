@@ -332,7 +332,7 @@ bool ModInfoRegular::updateAvailable() const
   if (m_IgnoredVersion.isValid() && (m_IgnoredVersion == m_NewestVersion)) {
     return false;
   }
-  if (m_NexusFileStatus == 4 || m_NexusFileStatus == 6) {
+  if (!NexusInterface::isActiveFileStatus(m_NexusFileStatus)) {
     return true;
   }
   return m_NewestVersion.isValid() && (m_Version < m_NewestVersion);
