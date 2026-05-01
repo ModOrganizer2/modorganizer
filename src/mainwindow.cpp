@@ -3199,6 +3199,57 @@ void MainWindow::finishUpdateInfo(const NxmUpdateInfoData& data)
   }
 }
 
+/**
+ * @brief Walks the Nexus file update chain forward to find the most recent
+ *   active successor of an installed file.
+ *
+ * "Active" means the successor's Nexus category is not OLD_VERSION, REMOVED,
+ * or ARCHIVED. Successors referenced by the chain but missing from filesById
+ * are not considered active, but the walk still follows them in case a later
+ * step is active. Cycles in the chain are guarded against.
+ *
+ * @param installedFileId The Nexus file_id to start walking from. If the chain
+ *   has no entry keyed on this id, returns nullopt.
+ * @param updatesByOldId Index of file_updates entries keyed by old_file_id.
+ * @param filesById Index of files entries keyed by file_id.
+ * @return The file_id of the most recent active successor in the chain, or
+ *   nullopt if no active successor exists.
+ */
+static std::optional<int>
+findLatestActiveSuccessor(int installedFileId,
+                          const QHash<int, QVariantMap>& updatesByOldId,
+                          const QHash<int, QVariantMap>& filesById)
+{
+  std::optional<int> latestActiveSuccessor;
+  QSet<int> visited;
+  int currentId = installedFileId;
+
+  while (true) {
+    const auto updateIt = updatesByOldId.constFind(currentId);
+    if (updateIt == updatesByOldId.constEnd()) {
+      break;
+    }
+
+    currentId = updateIt.value()["new_file_id"].toInt();
+    if (visited.contains(currentId)) {
+      break;
+    }
+    visited.insert(currentId);
+
+    const auto fileIt = filesById.constFind(currentId);
+    if (fileIt != filesById.constEnd()) {
+      const int categoryId = fileIt.value()["category_id"].toInt();
+      if (categoryId != NexusInterface::FileStatus::OLD_VERSION &&
+          categoryId != NexusInterface::FileStatus::REMOVED &&
+          categoryId != NexusInterface::FileStatus::ARCHIVED) {
+        latestActiveSuccessor = currentId;
+      }
+    }
+  }
+
+  return latestActiveSuccessor;
+}
+
 void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userData,
                                      QVariant resultData, int requestID)
 {
@@ -3282,35 +3333,13 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
         }
       }
 
-      bool foundActiveUpdate = false;
+      const std::optional<int> latestActiveSuccessor =
+          findLatestActiveSuccessor(currentUpdateId, updatesByOldId, filesById);
 
-      // there is at least one update
-      if (currentUpdateId > 0) {
-        // follow the update chain until there are no more updates
-        while (true) {
-          auto updateIt = updatesByOldId.constFind(currentUpdateId);
-          if (updateIt == updatesByOldId.constEnd()) {
-            break;
-          }
-
-          currentUpdateId = updateIt.value()["new_file_id"].toInt();
-
-          // check if the new file is still active
-          auto fileIt = filesById.constFind(currentUpdateId);
-          if (fileIt != filesById.constEnd()) {
-            const QVariantMap& fileData = fileIt.value();
-            int updateStatus            = fileData["category_id"].toInt();
-
-            if (updateStatus != NexusInterface::FileStatus::OLD_VERSION &&
-                updateStatus != NexusInterface::FileStatus::REMOVED &&
-                updateStatus != NexusInterface::FileStatus::ARCHIVED) {
-
-              // new version is active, so record it
-              validNewVersion   = fileData["version"].toString();
-              foundActiveUpdate = true;
-            }
-          }
-        }
+      const bool foundActiveUpdate = latestActiveSuccessor.has_value();
+      if (foundActiveUpdate) {
+        validNewVersion =
+            filesById.value(*latestActiveSuccessor)["version"].toString();
       }
 
       // if there were no active direct file updates for the installedFile
