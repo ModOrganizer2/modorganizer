@@ -3280,8 +3280,6 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
 
   std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameNameReal, modID);
 
-  bool requiresInfo = false;
-
   for (auto mod : modsList) {
     QString validNewVersion;
     int newModStatus = -1;
@@ -3334,21 +3332,10 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
 
       const auto latestActiveSuccessor =
           findLatestActiveSuccessor(*installedFileId, updatesByOldId, filesById);
-      const bool foundActiveUpdate = latestActiveSuccessor.has_value();
-      if (foundActiveUpdate) {
+      if (latestActiveSuccessor) {
         validNewVersion =
             filesById.value(*latestActiveSuccessor)["version"].toString();
       }
-
-      if (!foundActiveUpdate &&
-          newModStatus != NexusInterface::FileStatus::OPTIONAL_FILE &&
-          newModStatus != NexusInterface::FileStatus::MISCELLANEOUS) {
-        // No active direct update; fall back to the mod's global version.
-        requiresInfo = true;
-      }
-    } else {
-      // No file id available; fall back to the mod's global version.
-      requiresInfo = true;
     }
 
     if (newModStatus > 0) {
@@ -3357,17 +3344,12 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
 
     if (!validNewVersion.isEmpty()) {
       mod->setNewestVersion(validNewVersion);
-      mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
     }
+    mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
   }
 
   // invalidate the filter to display mods with an update
   ui->modList->invalidateFilter();
-
-  if (requiresInfo) {
-    NexusInterface::instance().requestModInfo(gameNameReal, modID, this, QVariant(),
-                                              QString());
-  }
 }
 
 void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userData,
