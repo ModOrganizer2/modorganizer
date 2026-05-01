@@ -69,6 +69,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "spawn.h"
 #include "statusbar.h"
 #include "systemtraymanager.h"
+#include <ranges>
+
 #include <bsainvalidation.h>
 #include <dataarchives.h>
 #include <safewritefile.h>
@@ -3201,42 +3203,6 @@ void MainWindow::finishUpdateInfo(const NxmUpdateInfoData& data)
 }
 
 /**
- * @brief Find a Nexus file_id by archive filename (case-insensitive) in the
- *   update-check response.
- *
- * @return The matched file_id, or nullopt if no entry matches.
- */
-static std::optional<int>
-findFileIdByName(const QString& filename,
-                 const QList<QVariant>& files,
-                 const QList<QVariant>& fileUpdates)
-{
-  // Check the files list
-  for (const auto& file : files) {
-    const auto fileData = file.toMap();
-    if (fileData["file_name"].toString().compare(filename,
-                                                 Qt::CaseInsensitive) == 0) {
-      return fileData["file_id"].toInt();
-    }
-  }
-
-  // Check the update chain entries, archived files can be hidden from 
-  // the files list but still appear in the update chain
-  for (const auto& updateEntry : fileUpdates) {
-    const auto updateData = updateEntry.toMap();
-    if (filename.compare(updateData["old_file_name"].toString(),
-                         Qt::CaseInsensitive) == 0) {
-      return updateData["old_file_id"].toInt();
-    }
-    if (filename.compare(updateData["new_file_name"].toString(),
-                         Qt::CaseInsensitive) == 0) {
-      return updateData["new_file_id"].toInt();
-    }
-  }
-  return std::nullopt;
-}
-
-/**
  * @brief Walks the Nexus file update chain forward and collects every
  *   successor of an installed file, in chain order.
  *
@@ -3270,14 +3236,118 @@ findUpdateChainSuccessors(int installedFileId,
   return successors;
 }
 
+/**
+ * @brief Resolve the Nexus file_id of a mod's installed file (recorded id,
+ *   else filename match).
+ *
+ * @return The file_id, or nullopt if neither path yields one.
+ */
+static std::optional<int>
+resolveInstalledFileId(const ModInfo::Ptr& mod,
+                       const QList<QVariant>& files,
+                       const QList<QVariant>& fileUpdates)
+{
+  if (auto modRegular = dynamic_cast<ModInfoRegular*>(mod.get())) {
+    if (auto fileId = modRegular->nexusFileId()) {
+      return fileId;
+    }
+  }
+
+  const QString installedFileName =
+      QFileInfo(mod->installationFile()).fileName();
+  if (installedFileName.isEmpty()) {
+    return std::nullopt;
+  }
+
+  // Match the installed filename against the files list.
+  for (const auto& file : files) {
+    const auto fileData = file.toMap();
+    if (fileData["file_name"].toString().compare(installedFileName,
+                                                 Qt::CaseInsensitive) == 0) {
+      return fileData["file_id"].toInt();
+    }
+  }
+
+  // Match against the update chain, archived files can be hidden from the
+  // files list but still appear here.
+  for (const auto& updateEntry : fileUpdates) {
+    const auto updateData = updateEntry.toMap();
+    if (installedFileName.compare(updateData["old_file_name"].toString(),
+                                  Qt::CaseInsensitive) == 0) {
+      return updateData["old_file_id"].toInt();
+    }
+    if (installedFileName.compare(updateData["new_file_name"].toString(),
+                                  Qt::CaseInsensitive) == 0) {
+      return updateData["new_file_id"].toInt();
+    }
+  }
+  return std::nullopt;
+}
+
+/**
+ * @brief Pick the newest available version for an installed file by walking
+ *   the update chain. Active files prefer an active successor; obsolete
+ *   files also accept the latest downloadable (listed, not removed)
+ *   successor; both fall back to the file's own version.
+ *
+ * @return Version string, or empty if none can be derived.
+ */
+static QString
+pickNewestVersion(int installedFileId,
+                  bool fileIsActive,
+                  const QHash<int, QVariantMap>& filesById,
+                  const QHash<int, QVariantMap>& updatesByOldId)
+{
+  const auto chainSuccessors =
+      findUpdateChainSuccessors(installedFileId, updatesByOldId);
+
+  std::optional<int> latestActiveSuccessor;
+  std::optional<int> latestDownloadableSuccessor;
+
+  // Find the latest active and latest downloadable successors
+  for (const int successorId : std::views::reverse(chainSuccessors)) {
+    const auto succIt = filesById.constFind(successorId);
+
+    if (succIt == filesById.constEnd()) {
+      // Not in files list — effectively archived and hidden by the author.
+      continue;
+    }
+
+    const int succStatus = succIt.value()["category_id"].toInt();
+
+    if (NexusInterface::isActiveFileStatus(succStatus)) {
+      latestActiveSuccessor = successorId;
+      break;
+    }
+
+    if (!latestDownloadableSuccessor &&
+        succStatus != NexusInterface::FileStatus::REMOVED) {
+      latestDownloadableSuccessor = successorId;
+    }
+  }
+
+  std::optional<int> versionSourceId;
+  if (latestActiveSuccessor) {
+    versionSourceId = latestActiveSuccessor;
+
+  } else if (!fileIsActive && latestDownloadableSuccessor) {
+    versionSourceId = latestDownloadableSuccessor;
+
+  } else {
+    versionSourceId = installedFileId;
+  }
+  
+  return filesById.value(*versionSourceId)["version"].toString();
+}
+
 void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userData,
                                      QVariant resultData, int requestID)
 {
   QVariantMap resultInfo = resultData.toMap();
   QList files            = resultInfo["files"].toList();
   QList fileUpdates      = resultInfo["file_updates"].toList();
-  QString gameShortName;
 
+  QString gameShortName;
   for (IPluginGame* game : m_PluginContainer.plugins<IPluginGame>()) {
     if (game->gameNexusName() == gameName) {
       gameShortName = game->gameShortName();
@@ -3299,90 +3369,42 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
     updatesByOldId.insert(updateData["old_file_id"].toInt(), updateData);
   }
 
-  std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameShortName, modID);
-
   bool needsModPageVersion = false;
+  std::vector<ModInfo::Ptr> installedMods = ModInfo::getByModID(gameShortName, modID);
 
-  for (const auto& mod : modsList) {
-    QString newestVersionValue;
-    int newModStatus = -1;
+  // Check each installed mod matching nexus modID against the update info
+  for (const auto& installedMod : installedMods) {
+    installedMod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
 
-    // Use nexus file_id, or fall back to installation file name matching if not available.
-    std::optional<int> installedFileId;
-    if (auto modRegular = dynamic_cast<ModInfoRegular*>(mod.get())) {
-      installedFileId = modRegular->nexusFileId();
-    }
-
-    if (!installedFileId) {
-      const QString installedFileName =
-          QFileInfo(mod->installationFile()).fileName();
-      if (!installedFileName.isEmpty()) {
-        installedFileId = findFileIdByName(installedFileName, files, fileUpdates);
-      }
-    }
+    // Identify the installed file.
+    const auto installedFileId =
+        resolveInstalledFileId(installedMod, files, fileUpdates);
 
     if (!installedFileId) {
-      // No installed file we can identify — typically a manually created mod
-      // with a mod id assigned via the edit interface. Fall back to the
-      // mod-page global version since we have nothing to anchor on.
+      // Manually created mod with mod_id assigned via the edit interface;
+      // fall back to mod page version.
       needsModPageVersion = true;
-    } else {
-      const auto fileIt = filesById.constFind(*installedFileId);
-      if (fileIt != filesById.constEnd()) {
-        newModStatus = fileIt.value()["category_id"].toInt();
-      } else {
-        // not listed; likely archived with hidden archives on the mod
-        newModStatus = NexusInterface::FileStatus::ARCHIVED_HIDDEN;
-      }
-
-      // Walk the chain once; pick latestActive and latestKnown in a single
-      // reverse scan (newest entries are at the back).
-      const auto chainSuccessors =
-          findUpdateChainSuccessors(*installedFileId, updatesByOldId);
-      std::optional<int> latestActiveSuccessor;
-      std::optional<int> latestKnownSuccessor;
-      for (auto it = chainSuccessors.rbegin(); it != chainSuccessors.rend();
-           ++it) {
-        const auto succIt = filesById.constFind(*it);
-        if (succIt == filesById.constEnd()) {
-          continue;
-        }
-        if (!latestKnownSuccessor) {
-          latestKnownSuccessor = *it;
-        }
-        if (NexusInterface::isActiveFileStatus(
-                succIt.value()["category_id"].toInt())) {
-          latestActiveSuccessor = *it;
-          break;
-        }
-      }
-
-      // Pick the version source per status rules:
-      //   active file  → active successor, else our own version
-      //   obsolete     → active successor, else latest known successor, else our own version
-      const bool fileIsActive =
-          NexusInterface::isActiveFileStatus(newModStatus);
-      std::optional<int> versionSourceId;
-      if (latestActiveSuccessor) {
-        versionSourceId = latestActiveSuccessor;
-      } else if (!fileIsActive && latestKnownSuccessor) {
-        versionSourceId = latestKnownSuccessor;
-      } else {
-        versionSourceId = installedFileId;
-      }
-
-      newestVersionValue =
-          filesById.value(*versionSourceId)["version"].toString();
+      continue;
     }
 
-    if (newModStatus > 0) {
-      mod->setNexusFileStatus(newModStatus);
-    }
+    // Determine the installed file's current Nexus status.
+    int nexusFileStatus = NexusInterface::FileStatus::ARCHIVED_HIDDEN;
 
+    if (const auto fileIt = filesById.constFind(*installedFileId);
+        fileIt != filesById.constEnd()) {
+      nexusFileStatus = fileIt.value()["category_id"].toInt();
+    }
+    installedMod->setNexusFileStatus(nexusFileStatus);
+
+    // Find the newest available version per the update chain.
+    const QString newestVersionValue = pickNewestVersion(
+        *installedFileId, 
+        NexusInterface::isActiveFileStatus(nexusFileStatus),
+        filesById, updatesByOldId);
+    
     if (!newestVersionValue.isEmpty()) {
-      mod->setNewestVersion(newestVersionValue);
+      installedMod->setNewestVersion(newestVersionValue);
     }
-    mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
   }
 
   // invalidate the filter to display mods with an update
