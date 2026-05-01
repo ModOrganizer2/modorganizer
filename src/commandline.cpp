@@ -853,6 +853,18 @@ Command::Meta DownloadFileCommand::meta() const
   return {"download", "downloads a file", "URL", ""};
 }
 
+po::options_description DownloadFileCommand::getVisibleOptions() const
+{
+  po::options_description d;
+
+  d.add_options()("name,n", po::value<std::string>(), "(optional) the download name")(
+      "modname,m", po::value<std::string>(), "(optional) the mod name")(
+      "version,v", po::value<std::string>(), "(optional) the download / mod version")(
+      "source,s", po::value<std::string>(), "(optional) the download source");
+
+  return d;
+}
+
 po::options_description DownloadFileCommand::getInternalOptions() const
 {
   po::options_description d;
@@ -879,16 +891,33 @@ bool DownloadFileCommand::canForwardToPrimary() const
 std::optional<int> DownloadFileCommand::runPostOrganizer(OrganizerCore& core)
 {
   const QString url = QString::fromStdString(vm()["URL"].as<std::string>());
+  QString name, modName, version, source;
 
   if (!url.startsWith("https://")) {
     reportError(QObject::tr("Download URL must start with https://"));
     return 1;
   }
 
+  if (vm().count("name")) {
+    name = QString::fromStdString(vm()["name"].as<std::string>());
+  }
+
+  if (vm().count("modname")) {
+    modName = QString::fromStdString(vm()["modname"].as<std::string>());
+  }
+
+  if (vm().count("version")) {
+    version = QString::fromStdString(vm()["version"].as<std::string>());
+  }
+
+  if (vm().count("source")) {
+    source = QString::fromStdString(vm()["source"].as<std::string>());
+  }
+
   log::debug("starting direct download from command line: {}", url.toStdString());
   MessageDialog::showMessage(QObject::tr("Download started"), qApp->activeWindow(),
                              false);
-  core.downloadManager()->startDownloadURLs(QStringList() << url);
+  core.downloadManager()->startDownloadURLWithMeta(url, name, modName, version, source);
 
   return {};
 }

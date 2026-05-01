@@ -212,6 +212,7 @@ class DownloadFileCommand : public Command
 protected:
   Meta meta() const override;
 
+  po::options_description getVisibleOptions() const override;
   po::options_description getInternalOptions() const override;
   po::positional_options_description getPositional() const override;
 

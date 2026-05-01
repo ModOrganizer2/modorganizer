@@ -410,6 +410,9 @@ public:
 
 public:  // IDownloadManager interface:
   int startDownloadURLs(const QStringList& urls);
+  int startDownloadURLWithMeta(const QString& url, const QString& name,
+                               const QString& modName, const QString& version,
+                               const QString& source);
   int startDownloadNexusFile(const QString& gameName, int modID, int fileID);
   QString downloadPath(int id);
 

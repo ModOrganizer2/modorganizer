@@ -1991,19 +1991,28 @@ void NexusSettings::registerAsNXMHandler(bool force)
 
   const auto executable = QCoreApplication::applicationFilePath();
 
-  QString mode       = force ? "forcereg" : "reg";
-  QString parameters = mode + " " + m_Parent.game().plugin()->gameShortName();
+  QString mode           = force ? "forcereg" : "reg";
+  QString parametersNxm  = mode + " nxm " + m_Parent.game().plugin()->gameShortName();
+  QString parametersModl = mode + " modl " + m_Parent.game().plugin()->gameShortName();
   for (const QString& altGame : m_Parent.game().plugin()->validShortNames()) {
-    parameters += "," + altGame;
+    parametersNxm += "," + altGame;
+    parametersModl += "," + altGame;
   }
-  parameters += " \"" + executable + "\"";
+  parametersNxm += " \"" + executable + "\"";
+  parametersModl +=
+      " \"" + executable + "\" \"-n %name% -m %modname% -v %version% -s %source%\"";
 
-  const auto r = shell::Execute(nxmPath, parameters);
-
-  if (!r.success()) {
+  const auto r1 = shell::Execute(nxmPath, parametersNxm);
+  if (!r1.success()) {
     QMessageBox::critical(
         nullptr, QObject::tr("Failed"),
-        QObject::tr("Failed to start the helper application: %1").arg(r.toString()));
+        QObject::tr("Failed to start the helper application: %1").arg(r1.toString()));
+  }
+  const auto r2 = shell::Execute(nxmPath, parametersModl);
+  if (!r2.success()) {
+    QMessageBox::critical(
+        nullptr, QObject::tr("Failed"),
+        QObject::tr("Failed to start the helper application: %1").arg(r2.toString()));
   }
 }
 
