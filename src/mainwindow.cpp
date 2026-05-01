@@ -3242,10 +3242,9 @@ findUpdateChainSuccessors(int installedFileId,
  *
  * @return The file_id, or nullopt if neither path yields one.
  */
-static std::optional<int>
-resolveInstalledFileId(const ModInfo::Ptr& mod,
-                       const QList<QVariant>& files,
-                       const QList<QVariant>& fileUpdates)
+static std::optional<int> resolveInstalledFileId(const ModInfo::Ptr& mod,
+                                                 const QList<QVariant>& files,
+                                                 const QList<QVariant>& fileUpdates)
 {
   if (auto modRegular = dynamic_cast<ModInfoRegular*>(mod.get())) {
     if (auto fileId = modRegular->nexusFileId()) {
@@ -3253,8 +3252,7 @@ resolveInstalledFileId(const ModInfo::Ptr& mod,
     }
   }
 
-  const QString installedFileName =
-      QFileInfo(mod->installationFile()).fileName();
+  const QString installedFileName = QFileInfo(mod->installationFile()).fileName();
   if (installedFileName.isEmpty()) {
     return std::nullopt;
   }
@@ -3292,11 +3290,9 @@ resolveInstalledFileId(const ModInfo::Ptr& mod,
  *
  * @return Version string, or empty if none can be derived.
  */
-static QString
-pickNewestVersion(int installedFileId,
-                  bool fileIsActive,
-                  const QHash<int, QVariantMap>& filesById,
-                  const QHash<int, QVariantMap>& updatesByOldId)
+static QString pickNewestVersion(int installedFileId, bool fileIsActive,
+                                 const QHash<int, QVariantMap>& filesById,
+                                 const QHash<int, QVariantMap>& updatesByOldId)
 {
   const auto chainSuccessors =
       findUpdateChainSuccessors(installedFileId, updatesByOldId);
@@ -3336,7 +3332,7 @@ pickNewestVersion(int installedFileId,
   } else {
     versionSourceId = installedFileId;
   }
-  
+
   return filesById.value(*versionSourceId)["version"].toString();
 }
 
@@ -3369,7 +3365,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
     updatesByOldId.insert(updateData["old_file_id"].toInt(), updateData);
   }
 
-  bool needsModPageVersion = false;
+  bool needsModPageVersion                = false;
   std::vector<ModInfo::Ptr> installedMods = ModInfo::getByModID(gameShortName, modID);
 
   // Check each installed mod matching nexus modID against the update info
@@ -3398,10 +3394,9 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
 
     // Find the newest available version per the update chain.
     const QString newestVersionValue = pickNewestVersion(
-        *installedFileId, 
-        NexusInterface::isActiveFileStatus(nexusFileStatus),
+        *installedFileId, NexusInterface::isActiveFileStatus(nexusFileStatus),
         filesById, updatesByOldId);
-    
+
     if (!newestVersionValue.isEmpty()) {
       installedMod->setNewestVersion(newestVersionValue);
     }

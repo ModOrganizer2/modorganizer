@@ -187,23 +187,24 @@ public:
    * @brief Whether a Nexus file category represents a file that is still
    *   listed and considered current on the mod page.
    *
-   * Inactive (false) refers to files that have been marked as obsolete or have been removed.
+   * Inactive (false) refers to files that have been marked as obsolete or have been
+   * removed.
    */
   static bool isActiveFileStatus(int status)
   {
     switch (status) {
-      case FileStatus::MAIN:
-      case FileStatus::UPDATE:
-      case FileStatus::OPTIONAL_FILE:
-      case FileStatus::MISCELLANEOUS:
-        return true;
-      case FileStatus::OLD_VERSION:
-      case FileStatus::REMOVED:
-      case FileStatus::ARCHIVED:
-      case FileStatus::ARCHIVED_HIDDEN:
-        return false;
-      default:
-        return false;
+    case FileStatus::MAIN:
+    case FileStatus::UPDATE:
+    case FileStatus::OPTIONAL_FILE:
+    case FileStatus::MISCELLANEOUS:
+      return true;
+    case FileStatus::OLD_VERSION:
+    case FileStatus::REMOVED:
+    case FileStatus::ARCHIVED:
+    case FileStatus::ARCHIVED_HIDDEN:
+      return false;
+    default:
+      return false;
     }
   }
 
