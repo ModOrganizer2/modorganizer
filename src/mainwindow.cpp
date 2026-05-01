@@ -3214,6 +3214,20 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
     }
   }
 
+  QHash<int, QVariantMap> filesById;
+  filesById.reserve(files.size());
+  for (const auto& file : files) {
+    const QVariantMap fileData = file.toMap();
+    filesById.insert(fileData["file_id"].toInt(), fileData);
+  }
+
+  QHash<int, QVariantMap> updatesByOldId;
+  updatesByOldId.reserve(fileUpdates.size());
+  for (const auto& updateEntry : fileUpdates) {
+    const QVariantMap updateData = updateEntry.toMap();
+    updatesByOldId.insert(updateData["old_file_id"].toInt(), updateData);
+  }
+
   std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameNameReal, modID);
 
   bool requiresInfo = false;
@@ -3272,39 +3286,28 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
 
       // there is at least one update
       if (currentUpdateId > 0) {
-        bool lookForMoreUpdates = true;
-
         // follow the update chain until there are no more updates
-        while (lookForMoreUpdates) {
-          lookForMoreUpdates = false;
+        while (true) {
+          auto updateIt = updatesByOldId.constFind(currentUpdateId);
+          if (updateIt == updatesByOldId.constEnd()) {
+            break;
+          }
 
-          for (auto& updateEntry : fileUpdates) {
-            const QVariantMap& updateData = updateEntry.toMap();
+          currentUpdateId = updateIt.value()["new_file_id"].toInt();
 
-            if (currentUpdateId == updateData["old_file_id"].toInt()) {
-              currentUpdateId = updateData["new_file_id"].toInt();
+          // check if the new file is still active
+          auto fileIt = filesById.constFind(currentUpdateId);
+          if (fileIt != filesById.constEnd()) {
+            const QVariantMap& fileData = fileIt.value();
+            int updateStatus            = fileData["category_id"].toInt();
 
-              // check if the new file is still active
-              for (auto& file : files) {
-                const QVariantMap& fileData = file.toMap();
+            if (updateStatus != NexusInterface::FileStatus::OLD_VERSION &&
+                updateStatus != NexusInterface::FileStatus::REMOVED &&
+                updateStatus != NexusInterface::FileStatus::ARCHIVED) {
 
-                if (currentUpdateId == fileData["file_id"].toInt()) {
-                  int updateStatus = fileData["category_id"].toInt();
-
-                  if (updateStatus != NexusInterface::FileStatus::OLD_VERSION &&
-                      updateStatus != NexusInterface::FileStatus::REMOVED &&
-                      updateStatus != NexusInterface::FileStatus::ARCHIVED) {
-
-                    // new version is active, so record it
-                    validNewVersion   = fileData["version"].toString();
-                    foundActiveUpdate = true;
-                  }
-                  break;
-                }
-              }
-
-              lookForMoreUpdates = true;
-              break;
+              // new version is active, so record it
+              validNewVersion   = fileData["version"].toString();
+              foundActiveUpdate = true;
             }
           }
         }
