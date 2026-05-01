@@ -3239,9 +3239,7 @@ findLatestActiveSuccessor(int installedFileId,
     const auto fileIt = filesById.constFind(currentId);
     if (fileIt != filesById.constEnd()) {
       const int categoryId = fileIt.value()["category_id"].toInt();
-      if (categoryId != NexusInterface::FileStatus::OLD_VERSION &&
-          categoryId != NexusInterface::FileStatus::REMOVED &&
-          categoryId != NexusInterface::FileStatus::ARCHIVED) {
+      if (NexusInterface::isActiveFileStatus(categoryId)) {
         latestActiveSuccessor = currentId;
       }
     }
@@ -3300,10 +3298,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
           foundFileData = fileData;
           newModStatus  = foundFileData["category_id"].toInt();
 
-          if (newModStatus != NexusInterface::FileStatus::OLD_VERSION &&
-              newModStatus != NexusInterface::FileStatus::REMOVED &&
-              newModStatus != NexusInterface::FileStatus::ARCHIVED) {
-
+          if (NexusInterface::isActiveFileStatus(newModStatus)) {
             // since the file is still active if there are no updates for it, use this
             // as current version
             validNewVersion = foundFileData["version"].toString();
