@@ -16,6 +16,8 @@ private:
   void addLanguages();
   void selectLanguage();
 
+  void associateModl();
+
   void resetDialogs();
 
   void onEditCategories();

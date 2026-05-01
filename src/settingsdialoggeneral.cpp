@@ -21,6 +21,11 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   ui->hideDownloadInstallBox->setChecked(
       settings().interface().hideDownloadsAfterInstallation());
 
+  // connect MODL button
+  QObject::connect(ui->associateModlButton, &QPushButton::clicked, [&] {
+    associateModl();
+  });
+
   // updates
   ui->checkForUpdates->setChecked(settings().checkForUpdates());
   ui->usePrereleaseBox->setChecked(settings().usePrereleases());
@@ -149,6 +154,11 @@ void GeneralSettingsTab::selectLanguage()
   if (currentID != -1) {
     ui->languageBox->setCurrentIndex(currentID);
   }
+}
+
+void GeneralSettingsTab::associateModl()
+{
+  Settings::instance().registerAsMODLHandler(true);
 }
 
 void GeneralSettingsTab::resetDialogs()
