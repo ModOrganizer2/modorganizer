@@ -588,6 +588,8 @@ private:
 
   DownloadInfo* downloadInfoByID(unsigned int id);
 
+  QString displayNameByInfo(const DownloadInfo* info) const;
+
   void removePending(QString gameName, int modID, int fileID);
 
   static QString getFileTypeString(int fileType);

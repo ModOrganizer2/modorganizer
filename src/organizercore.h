@@ -8,6 +8,7 @@
 #include <QSettings>
 #include <QString>
 #include <QStringList>
+#include <QSystemTrayIcon>
 #include <QThread>
 #include <QVariant>
 
@@ -359,6 +360,10 @@ public:
   static env::CoreDumpTypes getGlobalCoreDumpType();
   static void setGlobalCoreDumpType(env::CoreDumpTypes type);
   static std::wstring getGlobalCoreDumpPath();
+
+  void showNotification(
+      const QString& title, const QString& message,
+      QSystemTrayIcon::MessageIcon icon = QSystemTrayIcon::MessageIcon::Information);
 
 public:
   MOBase::IModRepositoryBridge* createNexusBridge() const;
