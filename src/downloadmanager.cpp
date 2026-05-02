@@ -1988,7 +1988,7 @@ int DownloadManager::startDownloadURLWithMeta(const QString& url, const QString&
   info.modName    = modName;
   info.version    = version;
   info.repository = source;
-  if (!addDownload(QStringList() << url, "", -1, -1, &info)) {
+  if (!addDownload(QStringList(url), "", -1, -1, &info)) {
     return 0;
   }
   return m_ActiveDownloads.size() - 1;
