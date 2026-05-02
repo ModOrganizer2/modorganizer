@@ -9,8 +9,9 @@
 using namespace MOBase;
 using namespace json;
 
-static QString LootReportPath  = QDir::temp().absoluteFilePath("lootreport.json");
-static const DWORD PipeTimeout = 500;
+static QString LootReportPath       = QDir::temp().absoluteFilePath("lootreport.json");
+static QString SortedPluginListPath = QDir::temp().absoluteFilePath("loadorder.txt");
+static const DWORD PipeTimeout      = 500;
 
 class AsyncPipe
 {
@@ -423,11 +424,13 @@ Loot::~Loot()
   }
 
   deleteReportFile();
+  deleteSortedLoadOrder();
 }
 
 bool Loot::start(QWidget* parent, bool didUpdateMasterList)
 {
   deleteReportFile();
+  deleteSortedLoadOrder();
 
   log::debug("starting loot");
 
@@ -476,6 +479,8 @@ bool Loot::spawnLootcli(QWidget* parent, bool didUpdateMasterList,
 
              << "--out" << QString("\"%1\"").arg(LootReportPath)
 
+             << "--pluginListOutputPath" << QString("\"%1\"").arg(SortedPluginListPath)
+
              << "--language" << m_core.settings().interface().language();
 
   if (didUpdateMasterList) {
@@ -514,9 +519,14 @@ bool Loot::result() const
   return m_result;
 }
 
-const QString& Loot::outPath() const
+const QString& Loot::reportPath() const
 {
   return LootReportPath;
+}
+
+const QString& Loot::sortedPluginListPath() const
+{
+  return SortedPluginListPath;
 }
 
 const Loot::Report& Loot::report() const
@@ -691,6 +701,18 @@ void Loot::deleteReportFile()
     if (!r) {
       log::error("failed to remove temporary loot json report '{}': {}", LootReportPath,
                  r.toString());
+    }
+  }
+}
+
+void Loot::deleteSortedLoadOrder()
+{
+  if (QFile::exists(SortedPluginListPath)) {
+    log::debug("deleting temporary sorted plugin list '{}'", SortedPluginListPath);
+    const auto r = shell::Delete(QFileInfo(SortedPluginListPath));
+    if (!r) {
+      log::error("failed to remove temporary sorted plugin list '{}': {}",
+                 SortedPluginListPath, r.toString());
     }
   }
 }
