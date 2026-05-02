@@ -60,7 +60,6 @@ private:
   std::unique_ptr<NexusConnectionUI> m_connectionUI;
 
   void clearCache();
-  void associate();
 
   void updateNexusData();
   void updateCustomBrowser();

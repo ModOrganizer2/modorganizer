@@ -23,7 +23,7 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
 
   // connect MODL button
   QObject::connect(ui->associateModlButton, &QPushButton::clicked, [&] {
-    associateModl();
+    Settings::instance().registerAsMODLHandler(true);
   });
 
   // updates
@@ -154,11 +154,6 @@ void GeneralSettingsTab::selectLanguage()
   if (currentID != -1) {
     ui->languageBox->setCurrentIndex(currentID);
   }
-}
-
-void GeneralSettingsTab::associateModl()
-{
-  Settings::instance().registerAsMODLHandler(true);
 }
 
 void GeneralSettingsTab::resetDialogs()
