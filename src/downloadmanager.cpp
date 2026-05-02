@@ -676,6 +676,14 @@ void DownloadManager::addNXMDownload(const QString& url)
 {
   NXMUrl nxmInfo(url);
 
+  if (nxmInfo.isCollection()) {
+    QString collectionStr(
+        tr("This is a Nexus collections link. These are not yet supported by MO."));
+    QMessageBox::information(m_ParentWidget, tr("Collections Not Supported"),
+                             collectionStr, QMessageBox::Ok);
+    return;
+  }
+
   QStringList validGames;
   MOBase::IPluginGame* foundGame = nullptr;
   validGames.append(m_ManagedGame->gameShortName());
