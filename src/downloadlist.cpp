@@ -35,8 +35,10 @@ DownloadList::DownloadList(OrganizerCore& core, QObject* parent)
     : QAbstractTableModel(parent), m_manager(*core.downloadManager()),
       m_settings(core.settings())
 {
-  connect(&m_manager, SIGNAL(update(int)), this, SLOT(update(int)));
-  connect(&m_manager, SIGNAL(aboutToUpdate()), this, SLOT(aboutToUpdate()));
+  connect(&m_manager, &DownloadManager::aboutToResetModel, this,
+          &DownloadList::onAboutToResetModel);
+  connect(&m_manager, &DownloadManager::modelReset, this, &DownloadList::onModelReset);
+  connect(&m_manager, &DownloadManager::rowChanged, this, &DownloadList::onRowChanged);
 }
 
 int DownloadList::rowCount(const QModelIndex& parent) const
@@ -56,7 +58,9 @@ int DownloadList::columnCount(const QModelIndex&) const
 
 QModelIndex DownloadList::index(int row, int column, const QModelIndex&) const
 {
-  return createIndex(row, column, row);
+  // Embed the stable DownloadID in internalId() so any consumer of the index
+  // can identify the download without having to track row shifts.
+  return createIndex(row, column, m_manager.downloadIDAtRow(row));
 }
 
 QModelIndex DownloadList::parent(const QModelIndex&) const
@@ -110,14 +114,14 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
   bool pendingDownload = index.row() >= m_manager.numTotalDownloads();
   if (role == Qt::DisplayRole) {
     if (pendingDownload) {
-      std::tuple<QString, int, int> nexusids =
+      const DownloadManager::PendingDownload pending =
           m_manager.getPendingDownload(index.row() - m_manager.numTotalDownloads());
       switch (index.column()) {
       case COL_NAME:
         return tr("< game %1 mod %2 file %3 >")
-            .arg(std::get<0>(nexusids))
-            .arg(std::get<1>(nexusids))
-            .arg(std::get<2>(nexusids));
+            .arg(pending.gameName)
+            .arg(pending.modID)
+            .arg(pending.fileID);
       case COL_SIZE:
         return tr("Unknown");
       case COL_STATUS:
@@ -239,16 +243,19 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
   return QVariant();
 }
 
-void DownloadList::aboutToUpdate()
+void DownloadList::onAboutToResetModel()
 {
-  emit beginResetModel();
+  beginResetModel();
 }
 
-void DownloadList::update(int row)
+void DownloadList::onModelReset()
 {
-  if (row < 0)
-    emit endResetModel();
-  else if (row < this->rowCount())
+  endResetModel();
+}
+
+void DownloadList::onRowChanged(int row)
+{
+  if (row < this->rowCount())
     emit dataChanged(
         this->index(row, 0, QModelIndex()),
         this->index(row, this->columnCount(QModelIndex()) - 1, QModelIndex()));
