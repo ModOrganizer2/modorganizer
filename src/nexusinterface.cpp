@@ -985,33 +985,54 @@ void NexusInterface::nextRequest()
   } else {
     url = info.m_URL;
   }
-  QNetworkRequest request(url);
-  request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
-  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
-                       QNetworkRequest::AlwaysNetwork);
-  request.setRawHeader("APIKEY", m_User.apiKey().toUtf8());
-  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader,
-                    m_AccessManager->userAgent(info.m_SubModule));
-  request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
-                    "application/json");
-  request.setRawHeader("Protocol-Version", "1.0.0");
-  request.setRawHeader("Application-Name", "MO2");
-  request.setRawHeader("Application-Version",
-                       QApplication::applicationVersion().toUtf8());
 
-  if (postData.object().isEmpty()) {
-    if (!requestIsDelete) {
-      info.m_Reply = m_AccessManager->get(request);
-    } else {
-      info.m_Reply = m_AccessManager->deleteResource(request);
+  const auto currentTokens = m_AccessManager->tokens();
+  if (!currentTokens ||
+      (currentTokens->accessToken.isEmpty() && currentTokens->apiKey.isEmpty())) {
+    log::error("nexus: no OAuth token available, request aborted");
+    info.m_Reply = nullptr;
+    return;
+  }
+
+  QNetworkRequest request(url);
+  if (!currentTokens->accessToken.isEmpty()) {
+    if (currentTokens->isExpired()) {
+      m_AccessManager->connectOrRefresh(*currentTokens);
+      return;
     }
-  } else if (!requestIsDelete) {
-    info.m_Reply = m_AccessManager->post(request, postData.toJson());
+    if (postData.object().isEmpty()) {
+      if (!requestIsDelete) {
+        info.m_Reply = m_AccessManager->makeOAuthGetRequest(url);
+      } else {
+        m_AccessManager->addAPIHeaders(request);
+        info.m_Reply = m_AccessManager->makeOAuthDeleteRequest(request);
+      }
+    } else if (!requestIsDelete) {
+      info.m_Reply = m_AccessManager->makeOAuthPostRequest(url, postData.toJson());
+    } else {
+      // Qt doesn't support DELETE with a payload as that's technically against the HTTP
+      // standard...
+      info.m_Reply =
+          m_AccessManager->makeOAuthCustomRequest(request, "DELETE", postData.toJson());
+    }
   } else {
-    // Qt doesn't support DELETE with a payload as that's technically against the HTTP
-    // standard...
-    info.m_Reply =
-        m_AccessManager->sendCustomRequest(request, "DELETE", postData.toJson());
+    request.setRawHeader("APIKEY", currentTokens->apiKey.toUtf8());
+    m_AccessManager->addAPIHeaders(request);
+
+    if (postData.object().isEmpty()) {
+      if (!requestIsDelete) {
+        info.m_Reply = m_AccessManager->get(request);
+      } else {
+        info.m_Reply = m_AccessManager->deleteResource(request);
+      }
+    } else if (!requestIsDelete) {
+      info.m_Reply = m_AccessManager->post(request, postData.toJson());
+    } else {
+      // Qt doesn't support DELETE with a payload as that's technically against the HTTP
+      // standard...
+      info.m_Reply =
+          m_AccessManager->sendCustomRequest(request, "DELETE", postData.toJson());
+    }
   }
 
   connect(info.m_Reply, SIGNAL(finished()), this, SLOT(requestFinished()));

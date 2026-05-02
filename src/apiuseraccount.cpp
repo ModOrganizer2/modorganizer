@@ -19,12 +19,17 @@ APIUserAccount::APIUserAccount() : m_type(APIUserAccountTypes::None) {}
 
 bool APIUserAccount::isValid() const
 {
-  return !m_key.isEmpty();
+  return !m_accessToken.isEmpty() || !m_apiKey.isEmpty();
+}
+
+const QString& APIUserAccount::accessToken() const
+{
+  return m_accessToken;
 }
 
 const QString& APIUserAccount::apiKey() const
 {
-  return m_key;
+  return m_apiKey;
 }
 
 const QString& APIUserAccount::id() const
@@ -47,9 +52,15 @@ const APILimits& APIUserAccount::limits() const
   return m_limits;
 }
 
-APIUserAccount& APIUserAccount::apiKey(const QString& key)
+APIUserAccount& APIUserAccount::accessToken(const QString& token)
 {
-  m_key = key;
+  m_accessToken = token;
+  return *this;
+}
+
+APIUserAccount& APIUserAccount::apiKey(const QString& apiKey)
+{
+  m_apiKey = apiKey;
   return *this;
 }
 

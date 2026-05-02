@@ -26,8 +26,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "serverinfo.h"
 #include "settingsutilities.h"
 #include "shared/appconfig.h"
+#include <QJsonDocument>
 #include <expanderwidget.h>
 #include <iplugingame.h>
+#include <optional>
 #include <utility.h>
 
 using namespace MOBase;
@@ -2498,9 +2500,29 @@ void GlobalSettings::setHideAssignCategoriesQuestion(bool b)
   settings().setValue("HideAssignCategoriesQuestion", b);
 }
 
+namespace
+{
+constexpr auto NexusLegacyCredentialKey = "APIKEY";
+constexpr auto NexusOAuthCredentialKey  = "NEXUS_OAUTH_TOKENS";
+
+std::optional<NexusOAuthTokens> parseStoredTokens(const QString& raw)
+{
+  if (raw.isEmpty()) {
+    return std::nullopt;
+  }
+
+  const auto doc = QJsonDocument::fromJson(raw.toUtf8());
+  if (doc.isNull() || !doc.isObject()) {
+    return std::nullopt;
+  }
+
+  return NexusOAuthTokens::fromJson(doc.object());
+}
+}  // namespace
+
 bool GlobalSettings::nexusApiKey(QString& apiKey)
 {
-  QString tempKey = getWindowsCredential("APIKEY");
+  QString tempKey = getWindowsCredential(NexusLegacyCredentialKey);
   if (tempKey.isEmpty())
     return false;
 
@@ -2510,7 +2532,7 @@ bool GlobalSettings::nexusApiKey(QString& apiKey)
 
 bool GlobalSettings::setNexusApiKey(const QString& apiKey)
 {
-  if (!setWindowsCredential("APIKEY", apiKey)) {
+  if (!setWindowsCredential(NexusLegacyCredentialKey, apiKey)) {
     const auto e = GetLastError();
     log::error("Storing API key failed: {}", formatSystemMessage(e));
     return false;
@@ -2526,7 +2548,42 @@ bool GlobalSettings::clearNexusApiKey()
 
 bool GlobalSettings::hasNexusApiKey()
 {
-  return !getWindowsCredential("APIKEY").isEmpty();
+  return !getWindowsCredential(NexusLegacyCredentialKey).isEmpty();
+}
+
+bool GlobalSettings::nexusOAuthTokens(NexusOAuthTokens& tokens)
+{
+  const auto raw    = getWindowsCredential(NexusOAuthCredentialKey);
+  const auto parsed = parseStoredTokens(raw);
+  if (!parsed) {
+    return false;
+  } else {
+    tokens = *parsed;
+  }
+  return true;
+}
+
+bool GlobalSettings::setNexusOAuthTokens(const NexusOAuthTokens& tokens)
+{
+  const auto payload = QJsonDocument(tokens.toJson()).toJson(QJsonDocument::Compact);
+
+  if (!setWindowsCredential(NexusOAuthCredentialKey, payload)) {
+    const auto e = GetLastError();
+    log::error("Storing OAuth tokens failed: {}", formatSystemMessage(e));
+    return false;
+  }
+
+  return true;
+}
+
+bool GlobalSettings::clearNexusOAuthTokens()
+{
+  return setWindowsCredential(NexusOAuthCredentialKey, "");
+}
+
+bool GlobalSettings::hasNexusOAuthTokens()
+{
+  return !getWindowsCredential(NexusOAuthCredentialKey).isEmpty();
 }
 
 void GlobalSettings::resetDialogs()

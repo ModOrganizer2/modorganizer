@@ -53,8 +53,10 @@ QString Instance::displayName() const
 {
   if (isPortable())
     return QObject::tr("Portable");
-  else
-    return QDir(m_dir).dirName();
+  else {
+    QDir instanceDir(m_dir.toUtf8());
+    return instanceDir.dirName();
+  }
 }
 
 QString Instance::gameName() const

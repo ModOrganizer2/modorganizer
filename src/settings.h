@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGS_H
 
 #include "envdump.h"
+#include "nexusoauthtokens.h"
 #include <lootcli/lootcli.h>
 #include <questionboxmemory.h>
 #include <uibase/filterwidget.h>
@@ -960,6 +961,24 @@ public:
   // returns whether an API key is currently stored
   //
   static bool hasNexusApiKey();
+
+  // Retrieves the stored OAuth tokens. Returns false if the credential doesn't exist
+  // or can't be parsed.
+  //
+  static bool nexusOAuthTokens(NexusOAuthTokens& tokens);
+
+  // Persists the OAuth tokens inside the credentials store, replacing the previous
+  // entry. Returns false on errors.
+  //
+  static bool setNexusOAuthTokens(const NexusOAuthTokens& tokens);
+
+  // Removes the stored OAuth tokens; returns false on errors.
+  //
+  static bool clearNexusOAuthTokens();
+
+  // Returns whether OAuth tokens are currently stored.
+  //
+  static bool hasNexusOAuthTokens();
 
   // resets anything that the user can disable
   static void resetDialogs();
