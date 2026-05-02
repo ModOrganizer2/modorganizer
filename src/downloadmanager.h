@@ -52,6 +52,58 @@ class NexusInterface;
 class PluginContainer;
 class OrganizerCore;
 
+/**
+ * @brief QFileSystemWatcher with a nestable RAII suspension scope.
+ *
+ * Forwards directoryChanged() only while no Guard is alive. Use a Guard to
+ * bracket filesystem writes that would otherwise trigger a spurious refresh.
+ */
+class DirWatcherManager : public QObject
+{
+  Q_OBJECT
+
+public:
+  explicit DirWatcherManager(QObject* parent = nullptr);
+
+  /// Set the directory being watched (replaces any previous path).
+  void setPath(const QString& path);
+
+  /// True while one or more Guards are alive.
+  bool isSuspended() const;
+
+  /**
+   * @brief RAII suspension guard. Nests safely; the only way to suspend
+   * forwarding.
+   */
+  class [[nodiscard]] Guard
+  {
+  public:
+    explicit Guard(DirWatcherManager& manager);
+    ~Guard();
+    Guard(const Guard&)            = delete;
+    Guard& operator=(const Guard&) = delete;
+    Guard(Guard&&)                 = delete;
+    Guard& operator=(Guard&&)      = delete;
+
+  private:
+    DirWatcherManager& m_manager;
+  };
+
+  /// Returns a suspension Guard bound to the caller's scope.
+  [[nodiscard]] Guard scopedGuard();
+
+signals:
+  /// Emitted when the watched directory changes and no Guard is active.
+  void directoryChanged();
+
+private slots:
+  void onDirectoryChanged(const QString&);
+
+private:
+  QFileSystemWatcher m_watcher;
+  int m_suspendDepth = 0;
+};
+
 /*!
  * \brief manages downloading of files and provides progress information for gui
  *elements
@@ -61,6 +113,25 @@ class DownloadManager : public QObject
   Q_OBJECT
 
 public:
+  /**
+   * @brief RAII full-reset guard. Use when the row count changes; drops
+   * view selection/scroll state. Nests safely: inner guards coalesce into
+   * the outermost scope so only one reset is emitted.
+   */
+  class [[nodiscard]] ModelResetGuard
+  {
+  public:
+    explicit ModelResetGuard(DownloadManager& manager);
+    ~ModelResetGuard();
+    ModelResetGuard(const ModelResetGuard&)            = delete;
+    ModelResetGuard& operator=(const ModelResetGuard&) = delete;
+    ModelResetGuard(ModelResetGuard&&)                 = delete;
+    ModelResetGuard& operator=(ModelResetGuard&&)      = delete;
+
+  private:
+    DownloadManager& m_manager;
+  };
+
   enum DownloadState
   {
     STATE_STARTED = 0,
@@ -190,19 +261,6 @@ public:
    * @param outputDirectory the new output directory
    **/
   void setOutputDirectory(const QString& outputDirectory, const bool refresh = true);
-
-  /**
-   * @brief disables feedback from the downlods fileSystemWhatcher untill
-   *disableDownloadsWatcherEnd() is called
-   *
-   **/
-  static void startDisableDirWatcher();
-
-  /**
-   * @brief re-enables feedback from the downlods fileSystemWhatcher after
-   *disableDownloadsWatcherStart() was called
-   **/
-  static void endDisableDirWatcher();
 
   /**
    * @return current download directory
@@ -408,6 +466,12 @@ public:
    */
   void queryDownloadListInfo();
 
+  /**
+   * @return the directory watcher for the downloads folder; call
+   * scopedGuard() on it to suspend across filesystem writes.
+   */
+  DirWatcherManager& dirWatcher() { return m_DirWatcher; }
+
 public:  // IDownloadManager interface:
   int startDownloadURLs(const QStringList& urls);
   int startDownloadNexusFile(const QString& gameName, int modID, int fileID);
@@ -432,16 +496,38 @@ public:  // IDownloadManager interface:
 
   void pauseAll();
 
-Q_SIGNALS:
-
-  void aboutToUpdate();
-
   /**
-   * @brief signals that the specified download has changed
+   * @brief notify the UI that a single row's data changed. Preserves view
+   * state; prefer over ModelResetGuard when the row count is unchanged.
    *
    * @param row the row that changed. This corresponds to the download index
-   **/
-  void update(int row);
+   */
+  void notifyRowChanged(int row);
+
+Q_SIGNALS:
+
+  /**
+   * @brief emitted before the download list model is about to be reset
+   *
+   * Emitted by ModelResetGuard on construction. Views should call
+   * beginResetModel() in response.
+   */
+  void aboutToResetModel();
+
+  /**
+   * @brief emitted after the download list model has been reset
+   *
+   * Emitted by ModelResetGuard on destruction. Views should call
+   * endResetModel() in response.
+   */
+  void modelReset();
+
+  /**
+   * @brief signals that the specified download row's data has changed
+   *
+   * @param row the row that changed. This corresponds to the download index
+   */
+  void rowChanged(int row);
 
   /**
    * @brief signals the ui that a message should be displayed
@@ -538,7 +624,6 @@ private slots:
   void downloadFinished(int index = 0);
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
-  void directoryChanged(const QString& dirctory);
   void checkDownloadTimeout();
 
 private:
@@ -578,10 +663,6 @@ private:
 
   void removeFile(int index, bool deleteFile);
 
-  void refreshAlphabeticalTranslation();
-
-  bool ByName(int LHS, int RHS);
-
   QString getFileNameFromNetworkReply(QNetworkReply* reply);
 
   void setState(DownloadInfo* info, DownloadManager::DownloadState state);
@@ -593,6 +674,8 @@ private:
   static QString getFileTypeString(int fileType);
 
   void writeData(DownloadInfo* info);
+
+  QString getValidGameShortName(const QString& gameNexusName) const;
 
 private:
   static const int AUTOMATIC_RETRIES = 3;
@@ -609,21 +692,16 @@ private:
 
   QString m_OutputDirectory;
   std::set<int> m_RequestIDs;
-  QVector<int> m_AlphabeticalTranslation;
 
-  QFileSystemWatcher m_DirWatcher;
+  DirWatcherManager m_DirWatcher;
+
+  // nesting depth of active ModelResetGuard scopes; see its docs
+  int m_modelResetDepth = 0;
 
   SignalDownloadCallback m_DownloadComplete;
   SignalDownloadCallback m_DownloadPaused;
   SignalDownloadCallback m_DownloadFailed;
   SignalDownloadCallback m_DownloadRemoved;
-
-  // The dirWatcher is actually triggering off normal Mo operations such as deleting
-  // downloads or editing .meta files so it needs to be disabled during operations that
-  // are known to cause the creation or deletion of files in the Downloads folder.
-  // Notably using QSettings to edit a file creates a temporarily .lock file that causes
-  // the Watcher to trigger multiple listRefreshes freezing the ui.
-  static int m_DirWatcherDisabler;
 
   std::map<QString, int> m_DownloadFails;
 
@@ -632,16 +710,6 @@ private:
   MOBase::IPluginGame const* m_ManagedGame;
 
   QTimer m_TimeoutTimer;
-};
-
-class ScopedDisableDirWatcher
-{
-public:
-  ScopedDisableDirWatcher(DownloadManager* downloadManager);
-  ~ScopedDisableDirWatcher();
-
-private:
-  DownloadManager* m_downloadManager;
 };
 
 #endif  // DOWNLOADMANAGER_H

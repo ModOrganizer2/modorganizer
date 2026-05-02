@@ -35,8 +35,10 @@ DownloadList::DownloadList(OrganizerCore& core, QObject* parent)
     : QAbstractTableModel(parent), m_manager(*core.downloadManager()),
       m_settings(core.settings())
 {
-  connect(&m_manager, SIGNAL(update(int)), this, SLOT(update(int)));
-  connect(&m_manager, SIGNAL(aboutToUpdate()), this, SLOT(aboutToUpdate()));
+  connect(&m_manager, &DownloadManager::aboutToResetModel, this,
+          &DownloadList::onAboutToResetModel);
+  connect(&m_manager, &DownloadManager::modelReset, this, &DownloadList::onModelReset);
+  connect(&m_manager, &DownloadManager::rowChanged, this, &DownloadList::onRowChanged);
 }
 
 int DownloadList::rowCount(const QModelIndex& parent) const
@@ -239,16 +241,19 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
   return QVariant();
 }
 
-void DownloadList::aboutToUpdate()
+void DownloadList::onAboutToResetModel()
 {
-  emit beginResetModel();
+  beginResetModel();
 }
 
-void DownloadList::update(int row)
+void DownloadList::onModelReset()
 {
-  if (row < 0)
-    emit endResetModel();
-  else if (row < this->rowCount())
+  endResetModel();
+}
+
+void DownloadList::onRowChanged(int row)
+{
+  if (row < this->rowCount())
     emit dataChanged(
         this->index(row, 0, QModelIndex()),
         this->index(row, this->columnCount(QModelIndex()) - 1, QModelIndex()));

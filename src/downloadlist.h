@@ -83,16 +83,20 @@ public:
   //
   bool lessThanPredicate(const QModelIndex& left, const QModelIndex& right);
 
-public slots:
+private slots:
 
   /**
-   * @brief used to inform the model that data has changed
-   *
-   * @param row the row that changed. This can be negative to update the whole view
-   **/
-  void update(int row);
+   * @brief full reset (row count changed). Drops selection and scroll state.
+   */
+  void onAboutToResetModel();
+  void onModelReset();
 
-  void aboutToUpdate();
+  /**
+   * @brief single-row data change (row count unchanged). Preserves view state.
+   *
+   * @param row the row that changed
+   */
+  void onRowChanged(int row);
 
 private:
   DownloadManager& m_manager;
