@@ -857,7 +857,8 @@ po::options_description DownloadFileCommand::getVisibleOptions() const
 {
   po::options_description d;
 
-  d.add_options()("name,n", po::value<std::string>(), "(optional) the download name")(
+  d.add_options()("game,g", po::value<std::string>(), "managed game")(
+      "name,n", po::value<std::string>(), "(optional) the download name")(
       "modname,m", po::value<std::string>(), "(optional) the mod name")(
       "version,v", po::value<std::string>(), "(optional) the download / mod version")(
       "source,s", po::value<std::string>(), "(optional) the download source");
@@ -891,11 +892,16 @@ bool DownloadFileCommand::canForwardToPrimary() const
 std::optional<int> DownloadFileCommand::runPostOrganizer(OrganizerCore& core)
 {
   const QString url = QString::fromStdString(vm()["URL"].as<std::string>());
+  QString game("");
   QString name, modName, version, source;
 
   if (!url.startsWith("https://")) {
     reportError(QObject::tr("Download URL must start with https://"));
     return 1;
+  }
+
+  if (vm().count("game")) {
+    game = QString::fromStdString(vm()["game"].as<std::string>());
   }
 
   if (vm().count("name")) {
@@ -917,7 +923,8 @@ std::optional<int> DownloadFileCommand::runPostOrganizer(OrganizerCore& core)
   log::debug("starting direct download from command line: {}", url.toStdString());
   MessageDialog::showMessage(QObject::tr("Download started"), qApp->activeWindow(),
                              false);
-  core.downloadManager()->startDownloadURLWithMeta(url, name, modName, version, source);
+  core.downloadManager()->startDownloadURLWithMeta(url, game, name, modName, version,
+                                                   source);
 
   return {};
 }
