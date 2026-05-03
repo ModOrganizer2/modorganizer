@@ -1356,7 +1356,7 @@ void MainWindow::showEvent(QShowEvent* event)
 
     m_OrganizerCore.settings().widgets().restoreIndex(ui->groupCombo);
 
-    m_OrganizerCore.settings().nexus().registerAsNXMHandler(false);
+    m_OrganizerCore.settings().registerDownloadHandlers(false);
     m_WasVisible = true;
     updateProblemsButton();
 

@@ -809,6 +809,20 @@ public:
   unsigned int motdHash() const;
   void setMotdHash(unsigned int hash);
 
+  // registers MO as the handler for download links
+  //
+  // if 'force' is true, the registration dialog will be shown even if the user
+  // said earlier not to
+  //
+  void registerDownloadHandlers(bool force);
+
+  // registers MO as the handler for modl links
+  //
+  // if 'force' is true, the registration dialog will be shown even if the user
+  // said earlier not to
+  //
+  void registerAsMODLHandler(bool force);
+
   // whether archives should be parsed to show conflicts and contents
   //
   bool archiveParsing() const;

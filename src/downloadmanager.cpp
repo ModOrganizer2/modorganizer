@@ -1986,6 +1986,22 @@ int DownloadManager::startDownloadURLs(const QStringList& urls)
   return m_ActiveDownloads.size() - 1;
 }
 
+int DownloadManager::startDownloadURLWithMeta(const QString& url, const QString& name,
+                                              const QString& modName,
+                                              const QString& version,
+                                              const QString& source)
+{
+  ModRepositoryFileInfo info;
+  info.name       = name;
+  info.modName    = modName;
+  info.version    = version;
+  info.repository = source;
+  if (!addDownload(QStringList(url), "", -1, -1, &info)) {
+    return 0;
+  }
+  return m_ActiveDownloads.size() - 1;
+}
+
 int DownloadManager::startDownloadNexusFile(const QString& gameName, int modID,
                                             int fileID)
 {

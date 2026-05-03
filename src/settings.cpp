@@ -417,6 +417,35 @@ void Settings::setKeepBackupOnInstall(bool b)
   set(m_Settings, "General", "backup_install", b);
 }
 
+void Settings::registerDownloadHandlers(bool force)
+{
+  m_Nexus.registerAsNXMHandler(force);
+  registerAsMODLHandler(force);
+}
+
+void Settings::registerAsMODLHandler(bool force)
+{
+  const auto nxmPath = QCoreApplication::applicationDirPath() + "/" +
+                       QString::fromStdWString(AppConfig::nxmHandlerExe());
+
+  const auto executable = QCoreApplication::applicationFilePath();
+
+  QString mode       = force ? "forcereg" : "reg";
+  QString parameters = mode + " modl " + m_Game.plugin()->gameShortName();
+  for (const QString& altGame : m_Game.plugin()->validShortNames()) {
+    parameters += "," + altGame;
+  }
+  parameters +=
+      " \"" + executable + "\" \"-n %name% -m %modname% -v %version% -s %source%\"";
+
+  const auto r = shell::Execute(nxmPath, parameters);
+  if (!r.success()) {
+    QMessageBox::critical(
+        nullptr, QObject::tr("Failed"),
+        QObject::tr("Failed to start the helper application: %1").arg(r.toString()));
+  }
+}
+
 GameSettings& Settings::game()
 {
   return m_Game;
@@ -1992,14 +2021,13 @@ void NexusSettings::registerAsNXMHandler(bool force)
   const auto executable = QCoreApplication::applicationFilePath();
 
   QString mode       = force ? "forcereg" : "reg";
-  QString parameters = mode + " " + m_Parent.game().plugin()->gameShortName();
+  QString parameters = mode + " nxm " + m_Parent.game().plugin()->gameShortName();
   for (const QString& altGame : m_Parent.game().plugin()->validShortNames()) {
     parameters += "," + altGame;
   }
   parameters += " \"" + executable + "\"";
 
   const auto r = shell::Execute(nxmPath, parameters);
-
   if (!r.success()) {
     QMessageBox::critical(
         nullptr, QObject::tr("Failed"),

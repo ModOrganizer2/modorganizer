@@ -21,6 +21,11 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   ui->hideDownloadInstallBox->setChecked(
       settings().interface().hideDownloadsAfterInstallation());
 
+  // connect MODL button
+  QObject::connect(ui->associateModlButton, &QPushButton::clicked, [&] {
+    Settings::instance().registerAsMODLHandler(true);
+  });
+
   // updates
   ui->checkForUpdates->setChecked(settings().checkForUpdates());
   ui->usePrereleaseBox->setChecked(settings().usePrereleases());

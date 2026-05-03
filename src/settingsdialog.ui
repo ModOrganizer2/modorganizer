@@ -31,10 +31,10 @@
 #generalScrollAreaWidgetContents { background-color: transparent; }</string>
          </property>
          <property name="frameShape">
-          <enum>QFrame::NoFrame</enum>
+          <enum>QFrame::Shape::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Plain</enum>
+          <enum>QFrame::Shadow::Plain</enum>
          </property>
          <property name="widgetResizable">
           <bool>true</bool>
@@ -85,7 +85,7 @@
               <item row="0" column="2">
                <spacer name="horizontalSpacer_4">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -163,6 +163,19 @@
                 </property>
                 <property name="text">
                  <string>Hide downloads after installation</string>
+                </property>
+               </widget>
+              </item>
+              <item alignment="Qt::AlignmentFlag::AlignLeft">
+               <widget class="QPushButton" name="associateModlButton">
+                <property name="maximumSize">
+                 <size>
+                  <width>300</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Associate MODL Download Links</string>
                 </property>
                </widget>
               </item>
@@ -348,7 +361,7 @@
               <item>
                <spacer name="horizontalSpacer_2">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -364,7 +377,7 @@
            <item>
             <spacer name="verticalSpacer_2">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -391,7 +404,7 @@
           <string>Style</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_13">
           <item>
@@ -414,7 +427,7 @@
           <item>
            <spacer name="horizontalSpacer_5">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -438,16 +451,16 @@
             <item>
              <widget class="ColorTable" name="colorTable">
               <property name="editTriggers">
-               <set>QAbstractItemView::NoEditTriggers</set>
+               <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
               </property>
               <property name="selectionMode">
-               <enum>QAbstractItemView::SingleSelection</enum>
+               <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
               </property>
               <property name="selectionBehavior">
-               <enum>QAbstractItemView::SelectRows</enum>
+               <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
               </property>
               <property name="verticalScrollMode">
-               <enum>QAbstractItemView::ScrollPerPixel</enum>
+               <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
               </property>
               <property name="cornerButtonEnabled">
                <bool>false</bool>
@@ -610,10 +623,10 @@ If you disable this feature, MO will only display official DLCs this way. Please
        <item>
         <spacer name="verticalSpacer_5">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
+          <enum>QSizePolicy::Policy::Fixed</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -771,7 +784,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                <item>
                 <spacer name="horizontalSpacer_3">
                  <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
+                  <enum>Qt::Orientation::Horizontal</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -805,7 +818,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
        <item>
         <spacer name="verticalSpacer_13">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -895,7 +908,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
          <item row="1" column="1">
           <spacer name="verticalSpacer_8">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -965,7 +978,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
          <item row="10" column="1">
           <spacer name="verticalSpacer_7">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -1008,7 +1021,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
        <item>
         <spacer name="verticalSpacer_6">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -1039,10 +1052,10 @@ If you disable this feature, MO will only display official DLCs this way. Please
 #nexusScrollAreaWidgetContents { background-color: transparent; }</string>
          </property>
          <property name="frameShape">
-          <enum>QFrame::NoFrame</enum>
+          <enum>QFrame::Shape::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Plain</enum>
+          <enum>QFrame::Shadow::Plain</enum>
          </property>
          <property name="widgetResizable">
           <bool>true</bool>
@@ -1089,7 +1102,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                    <string>User ID:</string>
                   </property>
                   <property name="textInteractionFlags">
-                   <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+                   <set>Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
                   </property>
                  </widget>
                 </item>
@@ -1228,7 +1241,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                  <item>
                   <spacer name="verticalSpacer_4">
                    <property name="orientation">
-                    <enum>Qt::Vertical</enum>
+                    <enum>Qt::Orientation::Vertical</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -1259,7 +1272,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                  <item>
                   <widget class="QListWidget" name="nexusLog">
                    <property name="sizeAdjustPolicy">
-                    <enum>QAbstractScrollArea::AdjustToContents</enum>
+                    <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents</enum>
                    </property>
                   </widget>
                  </item>
@@ -1437,10 +1450,10 @@ If you disable this feature, MO will only display official DLCs this way. Please
                 <item>
                  <widget class="QListWidget" name="knownServersList">
                   <property name="dragDropMode">
-                   <enum>QAbstractItemView::DragDrop</enum>
+                   <enum>QAbstractItemView::DragDropMode::DragDrop</enum>
                   </property>
                   <property name="defaultDropAction">
-                   <enum>Qt::MoveAction</enum>
+                   <enum>Qt::DropAction::MoveAction</enum>
                   </property>
                  </widget>
                 </item>
@@ -1458,10 +1471,10 @@ If you disable this feature, MO will only display official DLCs this way. Please
                 <item>
                  <widget class="QListWidget" name="preferredServersList">
                   <property name="dragDropMode">
-                   <enum>QAbstractItemView::DragDrop</enum>
+                   <enum>QAbstractItemView::DragDropMode::DragDrop</enum>
                   </property>
                   <property name="defaultDropAction">
-                   <enum>Qt::MoveAction</enum>
+                   <enum>Qt::DropAction::MoveAction</enum>
                   </property>
                  </widget>
                 </item>
@@ -1484,7 +1497,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
        <item>
         <widget class="QSplitter" name="splitter">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <widget class="QWidget" name="widget" native="true">
           <property name="sizePolicy">
@@ -1515,7 +1528,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
               </sizepolicy>
              </property>
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <widget class="QWidget" name="widget1" native="true">
               <layout class="QVBoxLayout" name="verticalLayout_15">
@@ -1571,7 +1584,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                 <widget class="QWidget" name="pluginDescription" native="true">
                  <layout class="QFormLayout" name="pluginDescriptionLayout">
                   <property name="labelAlignment">
-                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                   <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
                   </property>
                   <property name="leftMargin">
                    <number>6</number>
@@ -1582,7 +1595,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                      <string>Author:</string>
                     </property>
                     <property name="alignment">
-                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
                     </property>
                    </widget>
                   </item>
@@ -1592,7 +1605,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                      <string/>
                     </property>
                     <property name="alignment">
-                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
                     </property>
                    </widget>
                   </item>
@@ -1602,7 +1615,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                      <string>Version:</string>
                     </property>
                     <property name="alignment">
-                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
                     </property>
                    </widget>
                   </item>
@@ -1612,7 +1625,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                      <string/>
                     </property>
                     <property name="alignment">
-                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
                     </property>
                    </widget>
                   </item>
@@ -1622,7 +1635,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                      <string>Description:</string>
                     </property>
                     <property name="alignment">
-                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
                     </property>
                    </widget>
                   </item>
@@ -1632,7 +1645,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                      <string/>
                     </property>
                     <property name="alignment">
-                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
                     </property>
                     <property name="wordWrap">
                      <bool>true</bool>
@@ -1687,7 +1700,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                   <string>No plugin found.</string>
                  </property>
                  <property name="alignment">
-                  <set>Qt::AlignCenter</set>
+                  <set>Qt::AlignmentFlag::AlignCenter</set>
                  </property>
                 </widget>
                </item>
@@ -1729,10 +1742,10 @@ If you disable this feature, MO will only display official DLCs this way. Please
 #workaroundScrollAreaWidgetContents { background-color: transparent; }</string>
          </property>
          <property name="frameShape">
-          <enum>QFrame::NoFrame</enum>
+          <enum>QFrame::Shape::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Plain</enum>
+          <enum>QFrame::Shadow::Plain</enum>
          </property>
          <property name="widgetResizable">
           <bool>true</bool>
@@ -1851,7 +1864,7 @@ Uncheck this if you want to use Mod Organizer with total conversions (like Nehri
               <item row="1" column="3">
                <widget class="QLineEdit" name="steamPassEdit">
                 <property name="echoMode">
-                 <enum>QLineEdit::Password</enum>
+                 <enum>QLineEdit::EchoMode::Password</enum>
                 </property>
                </widget>
               </item>
@@ -2125,7 +2138,7 @@ programs you are intentionally running.</string>
               <item>
                <spacer name="horizontalSpacer">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -2141,7 +2154,7 @@ programs you are intentionally running.</string>
            <item>
             <spacer name="verticalSpacer">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -2182,7 +2195,7 @@ programs you are intentionally running.</string>
          </property>
          <layout class="QFormLayout" name="formLayout_4">
           <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::FieldsStayAtSizeHint</enum>
+           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
           </property>
           <item row="0" column="0">
            <widget class="QLabel" name="label_12">
@@ -2257,7 +2270,7 @@ programs you are intentionally running.</string>
          </property>
          <layout class="QFormLayout" name="formLayout_2">
           <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::FieldsStayAtSizeHint</enum>
+           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
           </property>
           <item row="0" column="0">
            <widget class="QLabel" name="label_32">
@@ -2296,10 +2309,10 @@ programs you are intentionally running.</string>
        <item>
         <spacer name="verticalSpacer_10">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
+          <enum>QSizePolicy::Policy::Expanding</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -2316,10 +2329,10 @@ programs you are intentionally running.</string>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>

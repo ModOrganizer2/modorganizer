@@ -343,7 +343,7 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d) : SettingsTab
     clearCache();
   });
   QObject::connect(ui->associateButton, &QPushButton::clicked, [&] {
-    associate();
+    Settings::instance().nexus().registerAsNXMHandler(true);
   });
   QObject::connect(ui->useCustomBrowser, &QCheckBox::clicked, [&] {
     updateCustomBrowser();
@@ -415,11 +415,6 @@ void NexusSettingsTab::clearCache()
 {
   QDir(Settings::instance().paths().cache()).removeRecursively();
   NexusInterface::instance().clearCache();
-}
-
-void NexusSettingsTab::associate()
-{
-  Settings::instance().nexus().registerAsNXMHandler(true);
 }
 
 void NexusSettingsTab::updateNexusData()
