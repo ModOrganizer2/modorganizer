@@ -2,6 +2,7 @@
 #define MODINFOREGULAR_H
 
 #include <limits>
+#include <optional>
 
 #include "modinfowithconflictinfo.h"
 #include "nexusinterface.h"
@@ -445,7 +446,21 @@ public:
   virtual bool validated() const override { return m_Validated; }
   virtual std::set<std::pair<int, int>> installedFiles() const override
   {
-    return m_InstalledFileIDs;
+    return {m_InstalledFileIDs.begin(), m_InstalledFileIDs.end()};
+  }
+
+  /**
+   * @brief Nexus file id of this mod's install. When multiple installs have
+   *   been merged, returns the most recent.
+   *
+   * @return The file id, or nullopt if no nexusId has been recorded.
+   */
+  std::optional<int> nexusFileId() const
+  {
+    if (m_InstalledFileIDs.empty()) {
+      return std::nullopt;
+    }
+    return m_InstalledFileIDs.back().second;
   }
 
 public:  // Plugin operations:
@@ -505,7 +520,8 @@ private:
   QColor m_Color;
 
   int m_NexusID;
-  std::set<std::pair<int, int>> m_InstalledFileIDs;
+  // Ordered by install time, oldest first; back is the most recent install.
+  std::vector<std::pair<int, int>> m_InstalledFileIDs;
 
   // List of plugin settings:
   std::map<QString, std::map<QString, QVariant>> m_PluginSettings;

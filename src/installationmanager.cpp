@@ -491,12 +491,13 @@ InstallationResult InstallationManager::doInstall(GuessedValue<QString>& modName
     return {IPluginInstaller::RESULT_FAILED};
   }
 
-  bool merge = false;
   // determine target directory
   InstallationResult result = testOverwrite(modName);
   if (!result) {
     return result;
   }
+
+  const bool merge = result.merged();
 
   result.m_name = modName;
 

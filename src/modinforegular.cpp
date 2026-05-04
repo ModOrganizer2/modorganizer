@@ -227,8 +227,8 @@ void ModInfoRegular::readMeta()
   int numFiles = metaFile.beginReadArray("installedFiles");
   for (int i = 0; i < numFiles; ++i) {
     metaFile.setArrayIndex(i);
-    m_InstalledFileIDs.insert(std::make_pair(metaFile.value("modid").toInt(),
-                                             metaFile.value("fileid").toInt()));
+    m_InstalledFileIDs.emplace_back(metaFile.value("modid").toInt(),
+                                    metaFile.value("fileid").toInt());
   }
   metaFile.endArray();
 
@@ -332,7 +332,7 @@ bool ModInfoRegular::updateAvailable() const
   if (m_IgnoredVersion.isValid() && (m_IgnoredVersion == m_NewestVersion)) {
     return false;
   }
-  if (m_NexusFileStatus == 4 || m_NexusFileStatus == 6) {
+  if (!NexusInterface::isActiveFileStatus(m_NexusFileStatus)) {
     return true;
   }
   return m_NewestVersion.isValid() && (m_Version < m_NewestVersion);
@@ -942,7 +942,13 @@ QStringList ModInfoRegular::archives(bool checkOnDisk)
 
 void ModInfoRegular::addInstalledFile(int modId, int fileId)
 {
-  m_InstalledFileIDs.insert(std::make_pair(modId, fileId));
+  const auto entry = std::make_pair(modId, fileId);
+  const auto existing =
+      std::find(m_InstalledFileIDs.begin(), m_InstalledFileIDs.end(), entry);
+  if (existing != m_InstalledFileIDs.end()) {
+    m_InstalledFileIDs.erase(existing);
+  }
+  m_InstalledFileIDs.push_back(entry);
   m_MetaInfoChanged = true;
 }
 
