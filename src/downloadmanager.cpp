@@ -1992,6 +1992,7 @@ int DownloadManager::startDownloadURLWithMeta(const QString& url, const QString&
                                               const QString& version,
                                               const QString& source)
 {
+  ModRepositoryFileInfo info;
   MOBase::IPluginGame* requestedGame = m_OrganizerCore->getGame(game);
   if (requestedGame) {
     MOBase::IPluginGame* foundGame = nullptr;
@@ -2027,8 +2028,8 @@ int DownloadManager::startDownloadURLWithMeta(const QString& url, const QString&
           QMessageBox::Ok);
       return 0;
     }
+    info.gameName = game;
   }
-  ModRepositoryFileInfo info;
   info.name       = name;
   info.modName    = modName;
   info.version    = version;
