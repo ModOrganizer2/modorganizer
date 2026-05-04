@@ -329,7 +329,7 @@ void ValidationAttempt::onFinished()
     const QString id       = data.value("sub").toString();
     const QString name     = data.value("name").toString();
     const auto roles       = data.value("membership_roles").toArray();
-    QStringList validRoles = {"premium", "lifetimepremium", "supporter"};
+    QStringList validRoles = {"premium", "lifetimepremium"};
     bool premium           = false;
     for (auto role : roles) {
       QString roleVal = role.toString();
