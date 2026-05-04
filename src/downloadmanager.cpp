@@ -741,7 +741,7 @@ DownloadManager::DownloadID DownloadManager::addNXMDownload(const QString& url)
         tr("This is a Nexus collections link. These are not yet supported by MO."));
     QMessageBox::information(m_ParentWidget, tr("Collections Not Supported"),
                              collectionStr, QMessageBox::Ok);
-    return;
+    return 0;
   }
 
   QStringList validGames;
