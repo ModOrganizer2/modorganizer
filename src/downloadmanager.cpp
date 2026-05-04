@@ -1986,17 +1986,55 @@ int DownloadManager::startDownloadURLs(const QStringList& urls)
   return m_ActiveDownloads.size() - 1;
 }
 
-int DownloadManager::startDownloadURLWithMeta(const QString& url, const QString& name,
+int DownloadManager::startDownloadURLWithMeta(const QString& url, const QString& game,
+                                              const QString& name,
                                               const QString& modName,
                                               const QString& version,
                                               const QString& source)
 {
   ModRepositoryFileInfo info;
+  MOBase::IPluginGame* requestedGame = m_OrganizerCore->getGame(game);
+  if (requestedGame) {
+    MOBase::IPluginGame* foundGame = nullptr;
+    QStringList validGames;
+    validGames.append(m_ManagedGame->gameShortName());
+    validGames.append(m_ManagedGame->validShortNames());
+    for (auto validGame : validGames) {
+      MOBase::IPluginGame* gamePlugin = m_OrganizerCore->getGame(validGame);
+
+      // some game plugins give names in validShortNames() that may refer to other
+      // plugins, like ttw returning "FalloutNV" and "Fallout3"; if these plugins
+      // are not loaded, getGame() might return null
+      if (!gamePlugin) {
+        // log an error, it's most probably not normal
+        log::error("no plugin for game '{}', an antivirus might have deleted it", game);
+        continue;
+      }
+
+      if (game.compare(gamePlugin->gameShortName(), Qt::CaseInsensitive) == 0) {
+        foundGame = gamePlugin;
+        break;
+      }
+    }
+    if (foundGame == nullptr) {
+      log::debug("download requested for wrong game (current game: {}, url: {})",
+                 m_ManagedGame->gameShortName(), game);
+      QMessageBox::information(
+          m_ParentWidget, tr("Wrong Game"),
+          tr("The download link is for a mod for \"%1\" but this instance of MO "
+             "has been set up for \"%2\".")
+              .arg(requestedGame->displayGameName())
+              .arg(m_ManagedGame->displayGameName()),
+          QMessageBox::Ok);
+      return 0;
+    }
+    info.gameName = game;
+  }
   info.name       = name;
   info.modName    = modName;
   info.version    = version;
   info.repository = source;
-  if (!addDownload(QStringList(url), "", -1, -1, &info)) {
+  if (!addDownload(QStringList(url), game, -1, -1, &info)) {
     return 0;
   }
   return m_ActiveDownloads.size() - 1;
