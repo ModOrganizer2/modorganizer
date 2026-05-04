@@ -54,6 +54,7 @@ public:
   void addOutput(const QString& s);
   bool result() const;
   void cancel();
+  void openSortedPluginList();
   void openReport();
 
   int exec() override;

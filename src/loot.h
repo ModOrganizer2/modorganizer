@@ -94,6 +94,7 @@ public:
   const QString& reportPath() const;
   const QString& sortedPluginListPath() const;
   const Report& report() const;
+  const QString getSortedPluginListMarkdown() const;
   const std::vector<QString>& errors() const;
   const std::vector<QString>& warnings() const;
 
@@ -124,7 +125,7 @@ private:
   void processMessage(const lootcli::Message& m);
 
   Report createReport() const;
-  void processOutputFile(Report& r) const;
+  void processReport(Report& r) const;
   void deleteReportFile();
 
   void deleteSortedLoadOrder();

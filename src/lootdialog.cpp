@@ -146,6 +146,12 @@ void LootDialog::cancel()
   }
 }
 
+void LootDialog::openSortedPluginList()
+{
+  const auto& path = m_loot.sortedPluginListPath();
+  shell::Open(path);
+}
+
 void LootDialog::openReport()
 {
   const auto& path = m_loot.reportPath();
@@ -209,7 +215,11 @@ void LootDialog::createUI()
   }
 
   m_expander.set(ui->details, ui->detailsPanel);
+  ui->openPluginList->setEnabled(false);
   ui->openJsonReport->setEnabled(false);
+  connect(ui->openPluginList, &QPushButton::clicked, [&] {
+    openSortedPluginList();
+  });
   connect(ui->openJsonReport, &QPushButton::clicked, [&] {
     openReport();
   });
@@ -253,6 +263,7 @@ void LootDialog::onFinished()
 
     showReport();
 
+    ui->openPluginList->setEnabled(true);
     ui->openJsonReport->setEnabled(true);
     ui->buttons->setStandardButtons(QDialogButtonBox::Apply | QDialogButtonBox::Cancel);
 
@@ -284,7 +295,10 @@ void LootDialog::showReport()
     }
   }
 
-  m_report.setText(lootReport.toMarkdown());
+  const auto markdown =
+      m_loot.getSortedPluginListMarkdown() + "\n" + lootReport.toMarkdown();
+
+  m_report.setText(markdown);
 }
 
 void LootDialog::applySortedLoadOrder()
