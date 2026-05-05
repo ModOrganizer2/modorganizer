@@ -789,9 +789,12 @@ const QString Loot::getSortedPluginListMarkdown() const
   QString markdown = "### " + tr("Sorted plugins") + "\n<details><summary>" +
                      tr("Show") + "</summary>\n\n";
 
+  const auto pluginList = m_core.pluginList();
   while (!pluginListFile.atEnd()) {
-    const QString line = QString::fromUtf8(pluginListFile.readLine().trimmed());
-    markdown += " - " + line + "\n";
+    const QString pluginName = QString::fromUtf8(pluginListFile.readLine().trimmed());
+    const bool active        = pluginList->isEnabled(pluginName);
+    const QString prefix     = active ? " - [x] " : " - [ ] ";
+    markdown += prefix + pluginName + "\n";
   }
 
   markdown += "</details>";
