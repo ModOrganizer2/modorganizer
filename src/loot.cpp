@@ -797,7 +797,7 @@ const QString Loot::getSortedPluginListMarkdown() const
     markdown += prefix + pluginName + "\n";
   }
 
-  markdown += "</details>";
+  markdown += "</details>\n";
 
   pluginListFile.close();
   return markdown;
