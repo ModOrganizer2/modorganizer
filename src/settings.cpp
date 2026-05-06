@@ -419,31 +419,40 @@ void Settings::setKeepBackupOnInstall(bool b)
 
 void Settings::registerDownloadHandlers(bool force)
 {
-  m_Nexus.registerAsNXMHandler(force);
-  registerAsMODLHandler(force);
+  registerAsMODLHandler(force, true);
 }
 
-void Settings::registerAsMODLHandler(bool force)
+void Settings::registerAsMODLHandler(bool force, bool includeNxm)
 {
   const auto nxmPath = QCoreApplication::applicationDirPath() + "/" +
                        QString::fromStdWString(AppConfig::nxmHandlerExe());
 
   const auto executable = QCoreApplication::applicationFilePath();
 
-  QString mode       = force ? "forcereg" : "reg";
-  QString parameters = mode + " modl " + m_Game.plugin()->gameShortName();
-  for (const QString& altGame : m_Game.plugin()->validShortNames()) {
-    parameters += "," + altGame;
-  }
-  parameters +=
-      " \"" + executable + "\" \"-n %name% -m %modname% -v %version% -s %source%\"";
+  QStringList parameters = {force ? "forcereg" : "reg", "modl"};
+  QStringList games      = {m_Game.plugin()->gameShortName()};
+  games.append(m_Game.plugin()->validShortNames());
+  parameters.append(games.join(","));
+  parameters.append({executable, "-n %name% -m %modname% -v %version% -s %source%"});
 
-  const auto r = shell::Execute(nxmPath, parameters);
-  if (!r.success()) {
-    QMessageBox::critical(
-        nullptr, QObject::tr("Failed"),
-        QObject::tr("Failed to start the helper application: %1").arg(r.toString()));
-  }
+  QProcess* modlNxmProcess = new QProcess(this);
+
+  connect(modlNxmProcess, &QProcess::finished,
+          [=](int exitCode, QProcess::ExitStatus exitStatus) {
+            if (exitStatus == QProcess::NormalExit) {
+              if (includeNxm) {
+                nexus().registerAsNXMHandler(force);
+              }
+            } else {
+              QMessageBox::critical(
+                  nullptr, QObject::tr("Failed"),
+                  QObject::tr("Failed to start the helper application: %1")
+                      .arg(modlNxmProcess->program()));
+            }
+            modlNxmProcess->deleteLater();
+          });
+
+  modlNxmProcess->start(nxmPath, parameters);
 }
 
 GameSettings& Settings::game()

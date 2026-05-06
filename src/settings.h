@@ -821,7 +821,7 @@ public:
   // if 'force' is true, the registration dialog will be shown even if the user
   // said earlier not to
   //
-  void registerAsMODLHandler(bool force);
+  void registerAsMODLHandler(bool force, bool includeNxm = false);
 
   // whether archives should be parsed to show conflicts and contents
   //
