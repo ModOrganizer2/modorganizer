@@ -91,8 +91,10 @@ public:
   void cancel();
   bool result() const;
 
-  const QString& outPath() const;
+  const QString& reportPath() const;
+  const QString& sortedPluginListPath() const;
   const Report& report() const;
+  const QString getSortedPluginListMarkdown() const;
   const std::vector<QString>& errors() const;
   const std::vector<QString>& warnings() const;
 
@@ -123,8 +125,10 @@ private:
   void processMessage(const lootcli::Message& m);
 
   Report createReport() const;
-  void processOutputFile(Report& r) const;
+  void processReport(Report& r) const;
   void deleteReportFile();
+
+  void deleteSortedLoadOrder();
 
   Message reportMessage(const QJsonObject& message) const;
   std::vector<Plugin> reportPlugins(const QJsonArray& plugins) const;

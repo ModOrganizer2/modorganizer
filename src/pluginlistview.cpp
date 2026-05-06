@@ -181,23 +181,16 @@ void PluginListView::onSortButtonClicked()
 {
   const bool offline = m_core->settings().network().offlineMode();
 
-  auto r = QMessageBox::No;
-
   if (offline) {
-    r = QMessageBox::question(topLevelWidget(), tr("Sorting plugins"),
-                              tr("Are you sure you want to sort your plugins list?") +
-                                  "\r\n\r\n" +
-                                  tr("Note: You are currently in offline mode and LOOT "
-                                     "will not update the master list."),
-                              QMessageBox::Yes | QMessageBox::No);
-  } else {
-    r = QMessageBox::question(topLevelWidget(), tr("Sorting plugins"),
-                              tr("Are you sure you want to sort your plugins list?"),
-                              QMessageBox::Yes | QMessageBox::No);
-  }
-
-  if (r != QMessageBox::Yes) {
-    return;
+    const auto r = QMessageBox::question(
+        topLevelWidget(), tr("Sorting plugins"),
+        tr("Are you sure you want to sort your plugins list?") + "\r\n\r\n" +
+            tr("Note: You are currently in offline mode and LOOT "
+               "will not update the master list."),
+        QMessageBox::Yes | QMessageBox::No);
+    if (r != QMessageBox::Yes) {
+      return;
+    }
   }
 
   m_core->savePluginList();

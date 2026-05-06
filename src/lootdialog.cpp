@@ -146,9 +146,15 @@ void LootDialog::cancel()
   }
 }
 
+void LootDialog::openSortedPluginList()
+{
+  const auto& path = m_loot.sortedPluginListPath();
+  shell::Open(path);
+}
+
 void LootDialog::openReport()
 {
-  const auto path = m_loot.outPath();
+  const auto& path = m_loot.reportPath();
   shell::Open(path);
 }
 
@@ -209,7 +215,11 @@ void LootDialog::createUI()
   }
 
   m_expander.set(ui->details, ui->detailsPanel);
+  ui->openPluginList->setEnabled(false);
   ui->openJsonReport->setEnabled(false);
+  connect(ui->openPluginList, &QPushButton::clicked, [&] {
+    openSortedPluginList();
+  });
   connect(ui->openJsonReport, &QPushButton::clicked, [&] {
     openReport();
   });
@@ -253,8 +263,9 @@ void LootDialog::onFinished()
 
     showReport();
 
+    ui->openPluginList->setEnabled(true);
     ui->openJsonReport->setEnabled(true);
-    ui->buttons->setStandardButtons(QDialogButtonBox::Close);
+    ui->buttons->setStandardButtons(QDialogButtonBox::Apply | QDialogButtonBox::Cancel);
 
     // if loot failed, the Done progress won't be received; this makes sure
     // the progress bar is stopped
@@ -284,5 +295,44 @@ void LootDialog::showReport()
     }
   }
 
-  m_report.setText(lootReport.toMarkdown());
+  const auto markdown =
+      m_loot.getSortedPluginListMarkdown() + "\n" + lootReport.toMarkdown();
+
+  m_report.setText(markdown);
+}
+
+void LootDialog::applySortedLoadOrder()
+{
+  const auto& sortedPluginListPath = m_loot.sortedPluginListPath();
+  if (!QFile::exists(sortedPluginListPath)) {
+    log::error("sorted plugin list '{}' does not exist, cannot apply sorted load order",
+               sortedPluginListPath);
+    return;
+  }
+
+  const auto& pluginListPath = m_core.profilePath() + "/loadorder.txt";
+  log::debug("moving sorted load order from '{}' to '{}'", sortedPluginListPath,
+             pluginListPath);
+
+  const auto r = shellMove(sortedPluginListPath, pluginListPath, true, this);
+  if (!r) {
+    const auto e = GetLastError();
+    log::error("failed to move sorted plugin list from '{}' to '{}': {}",
+               sortedPluginListPath, pluginListPath, formatSystemMessage(e));
+  }
+}
+
+void LootDialog::on_buttons_clicked(QAbstractButton* b)
+{
+  const auto role = ui->buttons->buttonRole(b);
+  switch (role) {
+  case QDialogButtonBox::ApplyRole:
+    ui->buttons->setEnabled(false);
+    applySortedLoadOrder();
+    close();
+    break;
+  case QDialogButtonBox::RejectRole:
+    reject();
+    break;
+  }
 }
