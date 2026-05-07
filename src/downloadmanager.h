@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileSystemWatcher>
+#include <QHash>
 #include <QMap>
 #include <QNetworkReply>
 #include <QObject>
@@ -31,7 +32,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSettings>
 #include <QStringList>
 #include <QTime>
-#include <QTimer>
 #include <QUrl>
 #include <QVector>
 #include <boost/accumulators/accumulators.hpp>
@@ -40,6 +40,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/signals2.hpp>
 #include <idownloadmanager.h>
 #include <modrepositoryfileinfo.h>
+#include <optional>
 #include <set>
 using namespace boost::accumulators;
 
@@ -52,6 +53,60 @@ class NexusInterface;
 class PluginContainer;
 class OrganizerCore;
 
+/**
+ * @brief QFileSystemWatcher with a nestable RAII suspension scope.
+ *
+ * Forwards directoryChanged() only while no Guard is alive. Use a Guard to
+ * bracket filesystem writes that would otherwise trigger a spurious refresh.
+ */
+class DirWatcherManager : public QObject
+{
+  Q_OBJECT
+
+public:
+  explicit DirWatcherManager(QObject* parent = nullptr);
+
+  /// Set the directory being watched (replaces any previous path).
+  void setPath(const QString& path);
+
+  /// True while one or more Guards are alive.
+  bool isSuspended() const;
+
+  /**
+   * @brief RAII suspension guard. Nests safely; the only way to suspend
+   * forwarding.
+   */
+  class [[nodiscard]] Guard
+  {
+  public:
+    explicit Guard(DirWatcherManager& manager);
+    ~Guard();
+    Guard(const Guard&)            = delete;
+    Guard& operator=(const Guard&) = delete;
+    Guard(Guard&&)                 = delete;
+    Guard& operator=(Guard&&)      = delete;
+
+  private:
+    DirWatcherManager& m_manager;
+  };
+
+  /// Returns a suspension Guard bound to the caller's scope.
+  [[nodiscard]] Guard scopedGuard();
+
+signals:
+  /// Emitted when the watched directory changes and no Guard is active.
+  void directoryChanged();
+
+private slots:
+  void onDirectoryChanged(const QString&);
+
+private:
+  void releaseSuspension();
+
+  QFileSystemWatcher m_watcher;
+  int m_suspendDepth = 0;
+};
+
 /*!
  * \brief manages downloading of files and provides progress information for gui
  *elements
@@ -61,6 +116,25 @@ class DownloadManager : public QObject
   Q_OBJECT
 
 public:
+  /**
+   * @brief RAII full-reset guard. Use when the row count changes; drops
+   * view selection/scroll state. Nests safely: inner guards coalesce into
+   * the outermost scope so only one reset is emitted.
+   */
+  class [[nodiscard]] ModelResetGuard
+  {
+  public:
+    explicit ModelResetGuard(DownloadManager& manager);
+    ~ModelResetGuard();
+    ModelResetGuard(const ModelResetGuard&)            = delete;
+    ModelResetGuard& operator=(const ModelResetGuard&) = delete;
+    ModelResetGuard(ModelResetGuard&&)                 = delete;
+    ModelResetGuard& operator=(ModelResetGuard&&)      = delete;
+
+  private:
+    DownloadManager& m_manager;
+  };
+
   enum DownloadState
   {
     STATE_STARTED = 0,
@@ -79,6 +153,32 @@ public:
     STATE_UNINSTALLED
   };
 
+  /**
+   * @brief Stable identifier for a download.
+   *
+   * Monotonically increasing within a session and never reused. Distinct from
+   * row indices, which are positional and shift as the list is mutated.
+   */
+  using DownloadID = unsigned int;
+
+  /**
+   * @brief A download that has been requested but has not yet produced a
+   * DownloadInfo.
+   *
+   * Created when the user initiates an NXM download; drained either when the
+   * Nexus API returns the actual download URL (at which point a DownloadInfo
+   * is created using reservedID as its download id so that external references
+   * handed out before the download existed remain valid) or when the request
+   * is cancelled or fails.
+   */
+  struct PendingDownload
+  {
+    QString gameName;
+    int modID;
+    int fileID;
+    DownloadID reservedID;
+  };
+
 private:
   struct DownloadInfo
   {
@@ -87,7 +187,7 @@ private:
     accumulator_set<qint64, stats<tag::rolling_mean>> m_DownloadTimeAcc;
     qint64 m_DownloadLast;
     qint64 m_DownloadTimeLast;
-    unsigned int m_DownloadID;
+    DownloadID m_DownloadID;
     QString m_FileName;
     QFile m_Output;
     QNetworkReply* m_Reply;
@@ -116,8 +216,26 @@ private:
 
     bool m_Hidden;
 
+    /**
+     * @brief Issue a new download id.
+     *
+     * The only supported way to obtain one; ids are monotonically increasing
+     * within a session and never reused.
+     */
+    static DownloadID newDownloadID();
+
+    /**
+     * @brief Create a new DownloadInfo for a fresh download.
+     *
+     * When reservedID is provided it is used as the download id. Callers that
+     * need to hand out an id before the DownloadInfo exists (e.g. the NXM flow
+     * reserves an id when the request is queued, long before the Nexus API
+     * returns the actual URL) should reserve via newDownloadID() and pass it
+     * here. Otherwise a fresh id is drawn internally.
+     */
     static DownloadInfo* createNew(const MOBase::ModRepositoryFileInfo* fileInfo,
-                                   const QStringList& URLs);
+                                   const QStringList& URLs,
+                                   std::optional<DownloadID> reservedID = {});
     static DownloadInfo* createFromMeta(const QString& filePath, bool showHidden,
                                         const QString outputDirectory,
                                         std::optional<uint64_t> fileSize = {});
@@ -132,14 +250,14 @@ private:
      **/
     void setName(QString newName, bool renameFile);
 
-    unsigned int downloadID() { return m_DownloadID; }
+    DownloadID downloadID() { return m_DownloadID; }
 
     bool isPausedState();
 
     QString currentURL();
 
   private:
-    static unsigned int s_NextDownloadID;
+    static DownloadID s_NextDownloadID;
 
   private:
     DownloadInfo()
@@ -192,19 +310,6 @@ public:
   void setOutputDirectory(const QString& outputDirectory, const bool refresh = true);
 
   /**
-   * @brief disables feedback from the downlods fileSystemWhatcher untill
-   *disableDownloadsWatcherEnd() is called
-   *
-   **/
-  static void startDisableDirWatcher();
-
-  /**
-   * @brief re-enables feedback from the downlods fileSystemWhatcher after
-   *disableDownloadsWatcherStart() was called
-   **/
-  static void endDisableDirWatcher();
-
-  /**
    * @return current download directory
    **/
   QString getOutputDirectory() const { return m_OutputDirectory; }
@@ -239,18 +344,22 @@ public:
   bool addDownload(QNetworkReply* reply, const QStringList& URLs,
                    const QString& fileName, QString gameName, int modID, int fileID = 0,
                    const MOBase::ModRepositoryFileInfo* fileInfo =
-                       new MOBase::ModRepositoryFileInfo());
+                       new MOBase::ModRepositoryFileInfo(),
+                   std::optional<DownloadID> reservedID = {});
 
   /**
    * @brief start a download using a nxm-link
    *
-   * starts a download using a nxm-link. The download manager will first query the nexus
-   * page for file information.
+   * Starts a download using a nxm-link. The download manager will first query the
+   * nexus page for file information. The returned id identifies the eventual
+   * download; it is reserved immediately so external references remain valid even
+   * before the Nexus API responds.
    * @param url a nxm link looking like this: nxm://skyrim/mods/1234/files/4711
+   * @return the reserved download id
    * @todo the game name encoded into the link is currently ignored, all downloads are
    *incorrectly assumed to be for the identified game
    **/
-  void addNXMDownload(const QString& url);
+  DownloadID addNXMDownload(const QString& url);
 
   /**
    * @brief retrieve the total number of downloads, both finished and unfinished
@@ -271,9 +380,24 @@ public:
    * @brief retrieve the info of a pending download
    * @param index index of the pending download (index in the range [0,
    * numPendingDownloads()[)
-   * @return pair of modid, fileid
+   * @return the PendingDownload entry at the given index
    */
-  std::tuple<QString, int, int> getPendingDownload(int index);
+  PendingDownload getPendingDownload(int index);
+
+  /**
+   * @brief Resolve a view row to a stable DownloadID.
+   *
+   * Rows cover active downloads followed by pending ones. Returns 0 if the row
+   * is out of range.
+   */
+  DownloadID downloadIDAtRow(int row) const;
+
+  /**
+   * @brief Resolve a stable DownloadID to its current view row.
+   *
+   * @return the current row, or -1 if no download with that id is tracked.
+   */
+  int rowForDownloadID(DownloadID id) const;
 
   /**
    * @brief retrieve the full path to the download specified by index
@@ -408,6 +532,12 @@ public:
    */
   void queryDownloadListInfo();
 
+  /**
+   * @return the directory watcher for the downloads folder; call
+   * scopedGuard() on it to suspend across filesystem writes.
+   */
+  DirWatcherManager& dirWatcher() { return m_DirWatcher; }
+
 public:  // IDownloadManager interface:
   int startDownloadURLs(const QStringList& urls);
   int startDownloadURLWithMeta(const QString& url, const QString& game,
@@ -435,16 +565,38 @@ public:  // IDownloadManager interface:
 
   void pauseAll();
 
-Q_SIGNALS:
-
-  void aboutToUpdate();
-
   /**
-   * @brief signals that the specified download has changed
+   * @brief notify the UI that a single row's data changed. Preserves view
+   * state; prefer over ModelResetGuard when the row count is unchanged.
    *
    * @param row the row that changed. This corresponds to the download index
-   **/
-  void update(int row);
+   */
+  void notifyRowChanged(int row);
+
+Q_SIGNALS:
+
+  /**
+   * @brief emitted before the download list model is about to be reset
+   *
+   * Emitted by ModelResetGuard on construction. Views should call
+   * beginResetModel() in response.
+   */
+  void aboutToResetModel();
+
+  /**
+   * @brief emitted after the download list model has been reset
+   *
+   * Emitted by ModelResetGuard on destruction. Views should call
+   * endResetModel() in response.
+   */
+  void modelReset();
+
+  /**
+   * @brief signals that the specified download row's data has changed
+   *
+   * @param row the row that changed. This corresponds to the download index
+   */
+  void rowChanged(int row);
 
   /**
    * @brief signals the ui that a message should be displayed
@@ -492,13 +644,13 @@ public slots:
    * @brief cancel the specified download. This will lead to the corresponding file to
    *be deleted
    *
-   * @param index index of the download to cancel
+   * @param id id of the download to cancel
    **/
-  void cancelDownload(int index);
+  void cancelDownload(DownloadID id);
 
-  void pauseDownload(int index);
+  void pauseDownload(DownloadID id);
 
-  void resumeDownload(int index);
+  void resumeDownload(DownloadID id);
 
   void queryInfo(int index);
 
@@ -538,11 +690,23 @@ private slots:
 
   void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
   void downloadReadyRead();
-  void downloadFinished(int index = 0);
+  /**
+   * @brief Slot wired to QNetworkReply::finished().
+   *
+   * Resolves the originating reply through sender() and then dispatches to
+   * finishDownload. Use the public finishDownload directly for non-slot calls.
+   */
+  void onReplyFinished();
+
+  /**
+   * @brief Run the post-download bookkeeping for the given download.
+   *
+   * Writes any remaining data, transitions the download's state, and emits
+   * the appropriate plugin signals.
+   */
+  void finishDownload(DownloadID id);
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
-  void directoryChanged(const QString& dirctory);
-  void checkDownloadTimeout();
 
 private:
   void createMetaFile(DownloadInfo* info);
@@ -561,8 +725,15 @@ public:
   QString getDownloadFileName(const QString& baseName, bool rename = false) const;
 
 private:
-  void startDownload(QNetworkReply* reply, DownloadInfo* newDownload, bool resume);
-  void resumeDownloadInt(int index);
+  /**
+   * @brief Begin downloading into newDownload from reply.
+   *
+   * On the !resume path newDownload becomes owned by m_ActiveDownloads on
+   * success; on failure (e.g. the output file cannot be opened) it is deleted
+   * before returning. Returns whether the download actually started.
+   */
+  bool startDownload(QNetworkReply* reply, DownloadInfo* newDownload, bool resume);
+  void resumeDownloadInt(DownloadID id);
 
   /**
    * @brief start a download from a url
@@ -573,7 +744,8 @@ private:
    *only happens if there is a duplicate and the user decides not to download again
    **/
   bool addDownload(const QStringList& URLs, QString gameName, int modID, int fileID,
-                   const MOBase::ModRepositoryFileInfo* fileInfo);
+                   const MOBase::ModRepositoryFileInfo* fileInfo,
+                   std::optional<DownloadID> reservedID = {});
 
   // important: the caller has to lock the list-mutex, otherwise the
   // DownloadInfo-pointer might get invalidated at any time
@@ -581,21 +753,37 @@ private:
 
   void removeFile(int index, bool deleteFile);
 
-  void refreshAlphabeticalTranslation();
-
-  bool ByName(int LHS, int RHS);
-
   QString getFileNameFromNetworkReply(QNetworkReply* reply);
 
   void setState(DownloadInfo* info, DownloadManager::DownloadState state);
 
-  DownloadInfo* downloadInfoByID(unsigned int id);
+  DownloadInfo* downloadInfoByID(DownloadID id);
 
   void removePending(QString gameName, int modID, int fileID);
+
+  /**
+   * @brief Fire onDownloadFailed for a pending entry, if any matches.
+   *
+   * Used on Nexus API failures so callers holding a reserved id from
+   * addNXMDownload do not wait indefinitely for a result. No-op if no pending
+   * entry matches the (gameName, modID, fileID) triple.
+   */
+  void notifyPendingDownloadFailed(const QString& gameName, int modID, int fileID);
+
+  /**
+   * @brief Roll back a download that has not yet been activated.
+   *
+   * Ensures a caller awaiting the reservedID receives an onDownloadFailed
+   * callback. Must not be called once the download has been registered as
+   * active.
+   */
+  void cancelPendingDownload(DownloadInfo* newDownload, QNetworkReply* reply);
 
   static QString getFileTypeString(int fileType);
 
   void writeData(DownloadInfo* info);
+
+  QString getValidGameShortName(const QString& gameNexusName) const;
 
 private:
   static const int AUTOMATIC_RETRIES = 3;
@@ -606,45 +794,30 @@ private:
   OrganizerCore* m_OrganizerCore;
   QWidget* m_ParentWidget;
 
-  QVector<std::tuple<QString, int, int>> m_PendingDownloads;
+  QVector<PendingDownload> m_PendingDownloads;
 
   QVector<DownloadInfo*> m_ActiveDownloads;
 
+  // Secondary index into m_ActiveDownloads keyed by m_DownloadID; kept in sync
+  // with every m_ActiveDownloads mutation.
+  QHash<DownloadID, DownloadInfo*> m_ByID;
+
   QString m_OutputDirectory;
   std::set<int> m_RequestIDs;
-  QVector<int> m_AlphabeticalTranslation;
 
-  QFileSystemWatcher m_DirWatcher;
+  DirWatcherManager m_DirWatcher;
+
+  // nesting depth of active ModelResetGuard scopes; see its docs
+  int m_modelResetDepth = 0;
 
   SignalDownloadCallback m_DownloadComplete;
   SignalDownloadCallback m_DownloadPaused;
   SignalDownloadCallback m_DownloadFailed;
   SignalDownloadCallback m_DownloadRemoved;
 
-  // The dirWatcher is actually triggering off normal Mo operations such as deleting
-  // downloads or editing .meta files so it needs to be disabled during operations that
-  // are known to cause the creation or deletion of files in the Downloads folder.
-  // Notably using QSettings to edit a file creates a temporarily .lock file that causes
-  // the Watcher to trigger multiple listRefreshes freezing the ui.
-  static int m_DirWatcherDisabler;
-
-  std::map<QString, int> m_DownloadFails;
-
   bool m_ShowHidden;
 
   MOBase::IPluginGame const* m_ManagedGame;
-
-  QTimer m_TimeoutTimer;
-};
-
-class ScopedDisableDirWatcher
-{
-public:
-  ScopedDisableDirWatcher(DownloadManager* downloadManager);
-  ~ScopedDisableDirWatcher();
-
-private:
-  DownloadManager* m_downloadManager;
 };
 
 #endif  // DOWNLOADMANAGER_H
