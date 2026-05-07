@@ -3642,7 +3642,8 @@ BSA::EErrorCode MainWindow::extractBSA(BSA::Archive& archive, BSA::Folder::Ptr f
 
   for (unsigned int i = 0; i < folder->getNumFiles(); ++i) {
     BSA::File::Ptr file = folder->getFile(i);
-    BSA::EErrorCode res = archive.extract(file, qUtf8Printable(destination));
+    BSA::EErrorCode res =
+        archive.extract(file, QDir(destination).filesystemAbsolutePath());
     if (res != BSA::ERROR_NONE) {
       reportError(tr("failed to read %1: %2").arg(file->getName().c_str()).arg(res));
       result = res;
@@ -3713,11 +3714,11 @@ void MainWindow::extractBSATriggered(QTreeWidgetItem* item)
 
     for (auto archiveName : archives) {
       BSA::Archive archive;
-      QString archivePath = QString("%1\\%2").arg(origin).arg(archiveName);
-      BSA::EErrorCode result =
-          archive.read(archivePath.toLocal8Bit().constData(), true);
+      std::filesystem::path archivePath(origin.toStdWString());
+      archivePath /= archiveName.toStdWString();
+      BSA::EErrorCode result = archive.read(archivePath, true);
       if ((result != BSA::ERROR_NONE) && (result != BSA::ERROR_INVALIDHASHES)) {
-        reportError(tr("failed to read %1: %2").arg(archivePath).arg(result));
+        reportError(tr("failed to read %1: %2").arg(archivePath.c_str()).arg(result));
         return;
       }
 
@@ -3725,10 +3726,9 @@ void MainWindow::extractBSATriggered(QTreeWidgetItem* item)
       progress.setMaximum(100);
       progress.setValue(0);
       progress.show();
-      archive.extractAll(
-          QDir::toNativeSeparators(targetFolder).toLocal8Bit().constData(),
-          boost::bind(&MainWindow::extractProgress, this, boost::ref(progress), _1,
-                      _2));
+      archive.extractAll(QDir(targetFolder).filesystemAbsolutePath(),
+                         boost::bind(&MainWindow::extractProgress, this,
+                                     boost::ref(progress), _1, _2));
       if (result == BSA::ERROR_INVALIDHASHES) {
         reportError(
             tr("This archive contains invalid hashes. Some files may be broken."));

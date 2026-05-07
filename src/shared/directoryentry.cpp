@@ -215,7 +215,7 @@ void DirectoryEntry::addFromBSA(const std::wstring& originName,
   try {
     // read() can return an error, but it can also throw if the file is not a
     // valid bsa
-    res = archive.read(ToString(archivePath, false).c_str(), false);
+    res = archive.read(archivePath, false);
   } catch (std::exception& e) {
     log::error("invalid bsa '{}', error {}", archivePath, e.what());
     return;
