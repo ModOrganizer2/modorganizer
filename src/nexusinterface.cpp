@@ -852,6 +852,20 @@ void NexusInterface::nextRequest()
     }
   }
 
+  const auto currentTokens = m_AccessManager->tokens();
+  if (!currentTokens ||
+      (currentTokens->accessToken.isEmpty() && currentTokens->apiKey.isEmpty())) {
+    log::error("nexus: no OAuth token available, request aborted");
+    return;
+  }
+
+  if (!currentTokens->accessToken.isEmpty()) {
+    if (currentTokens->isExpired()) {
+      m_AccessManager->connectOrRefresh(*currentTokens);
+      return;
+    }
+  }
+
   if (m_User.exhausted()) {
     m_RequestQueue.clear();
     QTime time = QTime::currentTime();
@@ -983,20 +997,8 @@ void NexusInterface::nextRequest()
     url = info.m_URL;
   }
 
-  const auto currentTokens = m_AccessManager->tokens();
-  if (!currentTokens ||
-      (currentTokens->accessToken.isEmpty() && currentTokens->apiKey.isEmpty())) {
-    log::error("nexus: no OAuth token available, request aborted");
-    info.m_Reply = nullptr;
-    return;
-  }
-
   QNetworkRequest request(url);
   if (!currentTokens->accessToken.isEmpty()) {
-    if (currentTokens->isExpired()) {
-      m_AccessManager->connectOrRefresh(*currentTokens);
-      return;
-    }
     if (postData.object().isEmpty()) {
       if (!requestIsDelete) {
         info.m_Reply = m_AccessManager->makeOAuthGetRequest(url);

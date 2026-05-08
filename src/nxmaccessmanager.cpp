@@ -919,11 +919,15 @@ bool NXMAccessManager::validateWaiting() const
 
 void NXMAccessManager::connectOrRefresh(const NexusOAuthTokens tokens)
 {
+  if (m_NexusOAuth->status() != QAbstractOAuth::Status::NotAuthenticated &&
+      m_NexusOAuth->status() != QAbstractOAuth::Status::Granted)
+    return;
   const auto clientId = NexusOAuth::clientId();
   if (clientId.isEmpty()) {
     handleOAuthError(QObject::tr("No OAuth client id configured."));
     return;
   }
+  m_ValidationState = NotChecked;
   m_NexusOAuth->setAuthorizationUrl(QUrl(NexusOAuth::authorizeUrl()));
   m_NexusOAuth->setTokenUrl(QUrl(NexusOAuth::tokenUrl()));
   m_NexusOAuth->setClientIdentifier(clientId);
