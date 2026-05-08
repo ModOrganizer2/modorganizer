@@ -932,10 +932,27 @@ void NXMAccessManager::connectOrRefresh(const NexusOAuthTokens tokens)
   m_NexusOAuth->setRequestedScopeTokens(scope);
   m_NexusOAuthReplyHandler->close();
   m_NexusOAuthReplyHandler->setCallbackPath(QUrl(NexusOAuth::redirectUri()).path());
+  QFile logo(":/MO/gui/app_icon");
+  logo.open(QIODevice::ReadOnly);
+  QByteArray imageData = logo.readAll();
+  logo.close();
+  QByteArray base64Data = imageData.toBase64();
+  QString imageSrc =
+      QString("data:image/png;base64,") + QString::fromLatin1(base64Data);
   m_NexusOAuthReplyHandler->setCallbackText(
-      QObject::tr("<html><body><h2>Mod Organizer</h2><p>Authorization complete. You "
-                  "may close this "
-                  "window.</p></body></html>"));
+      QString("<style>\n"
+              "    body {\n"
+              "        text-align: center;\n"
+              "        background-color: #2b2b2b;\n"
+              "        color: white;\n"
+              "        font-family: sans-serif;\n"
+              "        font-size: 18px;\n"
+              "    }\n"
+              "</style>\n"
+              "<img src=\"%1\" alt=\"Mod Organizer\">\n")
+          .arg(imageSrc) +
+      QObject::tr("<p><strong>Authorization complete.<br>You may close this "
+                  "window.</strong></p>\n"));
   if (!m_NexusOAuthReplyHandler->listen(QHostAddress::LocalHost,
                                         NexusOAuth::redirectPort())) {
     handleOAuthError(QObject::tr("Failed to bind to localhost on port %1.")
