@@ -20,6 +20,8 @@ APPPARAM(std::wstring, vfs32DLLName, L"usvfs_x86.dll")
 APPPARAM(std::wstring, vfs64DLLName, L"usvfs_x64.dll")
 APPPARAM(std::wstring, nxmHandlerExe, L"nxmhandler.exe")
 APPPARAM(std::wstring, nxmHandlerIni, L"downloadhandler.ini")
+APPPARAM(std::wstring, nexusGameId, L"site")
+APPPARAM(int, nexusModId, 6)
 APPPARAM(std::wstring, portableLockFileName, L"portable.txt")
 APPPARAM(const wchar_t*, localSavePlaceholder, L"__MOProfileSave__\\")
 
