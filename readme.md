@@ -1,5 +1,3 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/hxenwxmpaob5xung?svg=true)](https://ci.appveyor.com/project/ModOrganizer2/modorganizer-736bd)
-
 # Mod Organizer
 
 Mod Organizer (MO) is a tool for managing mod collections of arbitrary size. It is specifically designed for people who like to experiment with mods and thus need an easy and reliable way to install and uninstall them.
@@ -20,14 +18,14 @@ If you want to submit your code changes, please use a good formatting style like
 Through the work of a few people of the community MO2 has come quite far, now it needs some more of those people to go further.
 
 ## Reporting Issues:
-Issues should be reported to the GitHub page or on the open discord server: [Mod Organizer 2](https://discord.gg/ewUVAqyrQX). Here is also where dev builds are tested, bugs are reported and investigated, suggestions are discussed and a lot more.
+Issues should be reported to the GitHub page or on the open Discord server: [Mod Organizer 2](https://discord.gg/ewUVAqyrQX). Here is also where dev builds are tested, bugs are reported and investigated, suggestions are discussed and a lot more.
 
 Credits to Tannin, LePresidente, Silarn, erasmux, AL12, LostDragonist, AnyOldName3, isa, Holt59, Project579, przester, Qudix, RJ, Jonathan Feenstra and many others for the development.
 
 ## Download Location
 
 * on [GitHub.com](https://github.com/Modorganizer2/modorganizer/releases)
-* on [NexusMods.com](https://www.nexusmods.com/skyrimspecialedition/mods/6194)
+* on [NexusMods.com](https://www.nexusmods.com/site/mods/6)
 
 ## Old Download Location
 
