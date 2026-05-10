@@ -480,12 +480,11 @@ bool InstallationManager::ensureValidModName(GuessedValue<QString>& name) const
   return true;
 }
 
-InstallationResult InstallationManager::doInstall(GuessedValue<QString>& modName,
-                                                  QString gameName, int modID,
-                                                  const QString& version,
-                                                  const QString& newestVersion,
-                                                  int categoryID, int fileCategoryID,
-                                                  const QString& repository)
+InstallationResult InstallationManager::doInstall(
+    GuessedValue<QString>& modName, QString gameName, int modID, const QString& version,
+    const QString& newestVersion, int categoryID, int fileCategoryID,
+    const QString& repository, const QString& author, const QString& uploader,
+    const QString& uploaderUrl)
 {
   if (!ensureValidModName(modName)) {
     return {IPluginInstaller::RESULT_FAILED};
@@ -554,6 +553,9 @@ InstallationResult InstallationManager::doInstall(GuessedValue<QString>& modName
   settingsFile.setValue("nexusFileStatus", fileCategoryID);
   settingsFile.setValue("installationFile", m_CurrentFile);
   settingsFile.setValue("repository", repository);
+  settingsFile.setValue("author", author);
+  settingsFile.setValue("uploader", uploader);
+  settingsFile.setValue("uploaderUrl", uploaderUrl);
 
   if (!merge) {
     // this does not clear the list we have in memory but the mod is going to have to be
@@ -650,6 +652,9 @@ InstallationResult InstallationManager::install(const QString& fileName,
   int categoryID        = 0;
   int fileCategoryID    = 1;
   QString repository    = "Nexus";
+  QString author        = "";
+  QString uploader      = "";
+  QString uploaderUrl   = "";
 
   QString metaName = fileName + ".meta";
   if (QFile(metaName).exists()) {
@@ -690,6 +695,9 @@ InstallationResult InstallationManager::install(const QString& fileName,
     }
     repository     = metaFile.value("repository", "").toString();
     fileCategoryID = metaFile.value("fileCategory", 1).toInt();
+    author         = metaFile.value("author", "").toString();
+    uploader       = metaFile.value("uploader", "").toString();
+    uploaderUrl    = metaFile.value("uploaderUrl", "").toString();
   }
 
   if (version.isEmpty()) {
@@ -807,8 +815,9 @@ InstallationResult InstallationManager::install(const QString& fileName,
 
             // the simple installer only prepares the installation, the rest
             // works the same for all installers
-            installResult = doInstall(modName, gameName, modID, version, newestVersion,
-                                      categoryID, fileCategoryID, repository);
+            installResult =
+                doInstall(modName, gameName, modID, version, newestVersion, categoryID,
+                          fileCategoryID, repository, author, uploader, uploaderUrl);
           }
         }
       }

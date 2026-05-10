@@ -269,7 +269,9 @@ private:
   InstallationResult doInstall(MOBase::GuessedValue<QString>& modName, QString gameName,
                                int modID, const QString& version,
                                const QString& newestVersion, int categoryID,
-                               int fileCategoryID, const QString& repository);
+                               int fileCategoryID, const QString& repository,
+                               const QString& author, const QString& uploader,
+                               const QString& uploaderUrl);
 
   /**
    * @brief Clean the list of created files by removing all entries that are not
