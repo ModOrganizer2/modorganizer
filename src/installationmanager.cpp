@@ -480,27 +480,23 @@ bool InstallationManager::ensureValidModName(GuessedValue<QString>& name) const
   return true;
 }
 
-InstallationResult InstallationManager::doInstall(
-    GuessedValue<QString>& modName, QString gameName, int modID, const QString& version,
-    const QString& newestVersion, int categoryID, int fileCategoryID,
-    const QString& repository, const QString& author, const QString& uploader,
-    const QString& uploaderUrl)
+InstallationResult InstallationManager::doInstall(ModInstallationInfo& info)
 {
-  if (!ensureValidModName(modName)) {
+  if (!ensureValidModName(info.modName)) {
     return {IPluginInstaller::RESULT_FAILED};
   }
 
   // determine target directory
-  InstallationResult result = testOverwrite(modName);
+  InstallationResult result = testOverwrite(info.modName);
   if (!result) {
     return result;
   }
 
   const bool merge = result.merged();
 
-  result.m_name = modName;
+  result.m_name = info.modName;
 
-  QString targetDirectory       = QDir(m_ModsDirectory + "/" + modName).canonicalPath();
+  QString targetDirectory = QDir(m_ModsDirectory + "/" + info.modName).canonicalPath();
   QString targetDirectoryNative = QDir::toNativeSeparators(targetDirectory);
 
   log::debug("installing to \"{}\"", targetDirectoryNative);
@@ -531,31 +527,31 @@ InstallationResult InstallationManager::doInstall(
 
   // overwrite settings only if they are actually are available or haven't been set
   // before
-  if ((gameName != "") || !settingsFile.contains("gameName")) {
-    settingsFile.setValue("gameName", gameName);
+  if ((info.gameName != "") || !settingsFile.contains("gameName")) {
+    settingsFile.setValue("gameName", info.gameName);
   }
-  if ((modID != 0) || !settingsFile.contains("modid")) {
-    settingsFile.setValue("modid", modID);
+  if ((info.modID != 0) || !settingsFile.contains("modid")) {
+    settingsFile.setValue("modid", info.modID);
   }
   if (!settingsFile.contains("version") ||
-      (!version.isEmpty() &&
-       (!merge || (VersionInfo(version) >=
+      (!info.version.isEmpty() &&
+       (!merge || (VersionInfo(info.version) >=
                    VersionInfo(settingsFile.value("version").toString()))))) {
-    settingsFile.setValue("version", version);
+    settingsFile.setValue("version", info.version);
   }
-  if (!newestVersion.isEmpty() || !settingsFile.contains("newestVersion")) {
-    settingsFile.setValue("newestVersion", newestVersion);
+  if (!info.newestVersion.isEmpty() || !settingsFile.contains("newestVersion")) {
+    settingsFile.setValue("newestVersion", info.newestVersion);
   }
   // issue #51 used to overwrite the manually set categories
   if (!settingsFile.contains("category")) {
-    settingsFile.setValue("category", QString::number(categoryID));
+    settingsFile.setValue("category", QString::number(info.categoryID));
   }
-  settingsFile.setValue("nexusFileStatus", fileCategoryID);
+  settingsFile.setValue("nexusFileStatus", info.fileCategoryID);
   settingsFile.setValue("installationFile", m_CurrentFile);
-  settingsFile.setValue("repository", repository);
-  settingsFile.setValue("author", author);
-  settingsFile.setValue("uploader", uploader);
-  settingsFile.setValue("uploaderUrl", uploaderUrl);
+  settingsFile.setValue("repository", info.repository);
+  settingsFile.setValue("author", info.author);
+  settingsFile.setValue("uploader", info.uploader);
+  settingsFile.setValue("uploaderUrl", info.uploaderUrl);
 
   if (!merge) {
     // this does not clear the list we have in memory but the mod is going to have to be
@@ -815,9 +811,11 @@ InstallationResult InstallationManager::install(const QString& fileName,
 
             // the simple installer only prepares the installation, the rest
             // works the same for all installers
-            installResult =
-                doInstall(modName, gameName, modID, version, newestVersion, categoryID,
-                          fileCategoryID, repository, author, uploader, uploaderUrl);
+            ModInstallationInfo info{
+                modName,        gameName,   modID,  version,  newestVersion, categoryID,
+                fileCategoryID, repository, author, uploader, uploaderUrl};
+
+            installResult = doInstall(info);
           }
         }
       }

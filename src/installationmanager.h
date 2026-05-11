@@ -263,15 +263,25 @@ public:
   QString generateBackupName(const QString& directoryName) const;
 
 private:
+  struct ModInstallationInfo
+  {
+    MOBase::GuessedValue<QString> modName;
+    QString gameName;
+    int modID;
+    QString version;
+    QString newestVersion;
+    int categoryID;
+    int fileCategoryID;
+    QString repository;
+    QString author;
+    QString uploader;
+    QString uploaderUrl;
+  };
+
   // actually perform the installation (write files to the disk, etc.), returns the
   // installation result
   //
-  InstallationResult doInstall(MOBase::GuessedValue<QString>& modName, QString gameName,
-                               int modID, const QString& version,
-                               const QString& newestVersion, int categoryID,
-                               int fileCategoryID, const QString& repository,
-                               const QString& author, const QString& uploader,
-                               const QString& uploaderUrl);
+  InstallationResult doInstall(ModInstallationInfo& info);
 
   /**
    * @brief Clean the list of created files by removing all entries that are not
