@@ -1,12 +1,5 @@
-/* mo2-base-style: Windows11 */
-
-/*
-	SPDX-License-Identifier: GPL-3.0-only
-	Night Eyes theme for Mod Organizer 2, v1.2.1
-	Original author: Ciathyza (v1.2.0)
-	Updated by: z929669
-	Original source: https://github.com/ciathyza/mo2-themes
-*/
+/* Night Eyes theme v1.2.0 for Mod Organizer 2 by Ciathyza, z929669 */
+/* https://github.com/ciathyza/mo2-themes */
 
 /* Main Window ---------------------------------------------------------------- */
 
@@ -365,18 +358,202 @@ QPushButton:disabled {
 
 /* Check Boxes & Radio Buttons ------------------------------------------------ */
 
+QCheckBox,
+QRadioButton {
+	background: transparent;
+	color: #AAAAAA;
+	spacing: 6px
+}
+
+QCheckBox:hover,
+QRadioButton:hover {
+	color: #FFCC88
+}
+
 QCheckBox:disabled,
 QRadioButton:disabled {
-	color: #505050;
+	color: #505050
 }
 
-QCheckBox::indicator:disabled {
-	border: 1px solid #505050;
+/* Widget checkbox indicators */
+QCheckBox::indicator {
+	width: 13px;
+	height: 13px;
+	background: #101010;
+	border: 1px solid #80958F;
+	border-radius: 3px
 }
 
-QRadioButton::indicator:disabled {
+/* Widget radio indicators */
+QRadioButton::indicator {
+	width: 13px;
+	height: 13px;
+	background: #101010;
+	border: 1px solid #80958F;
+	border-radius: 7px
+}
+
+/* Item-view checkbox indicators: MO2 left/right panes, lists, tables */
+QTreeView::indicator,
+QListView::indicator,
+QTableView::indicator {
+	width: 13px;
+	height: 13px;
+	background: #101010;
+	border: 1px solid #80958F;
+	border-radius: 3px
+}
+
+/* Unchecked */
+QCheckBox::indicator:unchecked,
+QTreeView::indicator:unchecked,
+QListView::indicator:unchecked,
+QTableView::indicator:unchecked {
+	background: #101010;
+	border: 1px solid #80958F
+}
+
+QRadioButton::indicator:unchecked {
+	background: #101010;
+	border: 1px solid #80958F;
+	border-radius: 7px
+}
+
+/* Hover unchecked */
+QCheckBox::indicator:unchecked:hover,
+QTreeView::indicator:unchecked:hover,
+QListView::indicator:unchecked:hover,
+QTableView::indicator:unchecked:hover {
+	background: #181818;
+	border: 1px solid #FFCC88
+}
+
+QRadioButton::indicator:unchecked:hover {
+	background: #181818;
+	border: 1px solid #FFCC88;
+	border-radius: 7px
+}
+
+/* Checked */
+QCheckBox::indicator:checked,
+QTreeView::indicator:checked,
+QListView::indicator:checked,
+QTableView::indicator:checked {
+	background: #5F766E;
+	border: 1px solid #A8C7BA
+}
+
+QRadioButton::indicator:checked {
+	background: qradialgradient(
+		cx: 0.5,
+		cy: 0.5,
+		radius: 0.5,
+		fx: 0.5,
+		fy: 0.5,
+		stop: 0 #A8C7BA,
+		stop: 0.38 #A8C7BA,
+		stop: 0.40 #101010,
+		stop: 1 #101010
+	);
+	border: 1px solid #A8C7BA;
+	border-radius: 7px
+}
+
+/* Hover checked */
+QCheckBox::indicator:checked:hover,
+QTreeView::indicator:checked:hover,
+QListView::indicator:checked:hover,
+QTableView::indicator:checked:hover {
+	background: #6F8A80;
+	border: 1px solid #FFCC88
+}
+
+QRadioButton::indicator:checked:hover {
+	background: qradialgradient(
+		cx: 0.5,
+		cy: 0.5,
+		radius: 0.5,
+		fx: 0.5,
+		fy: 0.5,
+		stop: 0 #FFCC88,
+		stop: 0.38 #FFCC88,
+		stop: 0.40 #181818,
+		stop: 1 #181818
+	);
+	border: 1px solid #FFCC88;
+	border-radius: 7px
+}
+
+/* Pressed */
+QCheckBox::indicator:pressed,
+QTreeView::indicator:pressed,
+QListView::indicator:pressed,
+QTableView::indicator:pressed {
+	background: #242424;
+	border: 1px solid #FFCC88
+}
+
+QRadioButton::indicator:pressed {
+	background: #242424;
+	border: 1px solid #FFCC88;
+	border-radius: 7px
+}
+
+/* Disabled unchecked */
+QCheckBox::indicator:unchecked:disabled,
+QTreeView::indicator:unchecked:disabled,
+QListView::indicator:unchecked:disabled,
+QTableView::indicator:unchecked:disabled {
+	background: #181818;
+	border: 1px solid #505050
+}
+
+QRadioButton::indicator:unchecked:disabled {
+	background: #181818;
 	border: 1px solid #505050;
-	border-radius: 8px
+	border-radius: 6px
+}
+
+/* Disabled checked */
+QCheckBox::indicator:checked:disabled,
+QTreeView::indicator:checked:disabled,
+QListView::indicator:checked:disabled,
+QTableView::indicator:checked:disabled {
+	background: #36433F;
+	border: 1px solid #505050
+}
+
+QRadioButton::indicator:checked:disabled {
+	background: qradialgradient(
+		cx: 0.5,
+		cy: 0.5,
+		radius: 0.5,
+		fx: 0.5,
+		fy: 0.5,
+		stop: 0 #505050,
+		stop: 0.38 #505050,
+		stop: 0.40 #181818,
+		stop: 1 #181818
+	);
+	border: 1px solid #505050;
+	border-radius: 7px
+}
+
+/* Indeterminate / partially checked */
+QCheckBox::indicator:indeterminate,
+QTreeView::indicator:indeterminate,
+QListView::indicator:indeterminate,
+QTableView::indicator:indeterminate {
+	background: #3F504B;
+	border: 1px solid #A8C7BA
+}
+
+QCheckBox::indicator:indeterminate:hover,
+QTreeView::indicator:indeterminate:hover,
+QListView::indicator:indeterminate:hover,
+QTableView::indicator:indeterminate:hover {
+	background: #4F655E;
+	border: 1px solid #FFCC88
 }
 
 /* Scroll Bars ---------------------------------------------------------------- */
