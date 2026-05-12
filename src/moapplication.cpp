@@ -323,9 +323,10 @@ int MOApplication::run(MOMultiProcess& multiProcess)
   tt.start("MOApplication::doOneRun() finishing");
 
   // start an api check
-  QString apiKey;
-  if (GlobalSettings::nexusApiKey(apiKey)) {
-    m_nexus->getAccessManager()->apiCheck(apiKey);
+  NexusOAuthTokens tokens;
+  if (GlobalSettings::nexusOAuthTokens(tokens) ||
+      GlobalSettings::nexusApiKey(tokens.apiKey)) {
+    m_nexus->getAccessManager()->apiCheck(tokens);
   }
 
   // tutorials
