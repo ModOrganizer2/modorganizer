@@ -266,16 +266,16 @@ private:
   struct ModInstallationInfo
   {
     MOBase::GuessedValue<QString> modName;
-    QString gameName;
-    int modID;
-    QString version;
-    QString newestVersion;
-    int categoryID;
-    int fileCategoryID;
-    QString repository;
-    QString author;
-    QString uploader;
-    QString uploaderUrl;
+    const QString gameName;
+    const int modID;
+    const QString version;
+    const QString newestVersion;
+    const int categoryID;
+    const int fileCategoryID;
+    const QString repository;
+    const QString author;
+    const QString uploader;
+    const QString uploaderUrl;
   };
 
   // actually perform the installation (write files to the disk, etc.), returns the
