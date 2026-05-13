@@ -265,6 +265,10 @@ public:
   void setPreviousSeparatorColor(const QColor& c) const;
   void removePreviousSeparatorColor();
 
+  // custom colors set in QColorDialog (e.g. for separators)
+  QColor customColor(const int index) const;
+  void setCustomColor(const int index, const QColor& c);
+
   // whether the scrollbar of the mod list should have colors for custom
   // separator colors
   //
