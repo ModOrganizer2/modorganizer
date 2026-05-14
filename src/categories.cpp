@@ -81,7 +81,7 @@ void CategoryFactory::loadCategories()
             if (!ok) {
               log::error(tr("invalid category id {0}"), iter->constData());
             }
-            nexusCats.emplace_back(NexusCategory("Unknown", temp));
+            nexusCats.emplace_back("Unknown", temp);
           }
         }
         bool cell0Ok = true;
