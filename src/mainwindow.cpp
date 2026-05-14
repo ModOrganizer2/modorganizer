@@ -2997,8 +2997,9 @@ void MainWindow::actionEndorseMO()
                             tr("Do you want to endorse Mod Organizer on Nexus now?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance().requestToggleEndorsement(
-        QString::fromStdWString(AppConfig::nexusGameId()), AppConfig::nexusModId(),
-        m_OrganizerCore.getVersion().string(), true, this, QVariant(), QString());
+        QString::fromStdWString(AppConfig::mo2NexusGameId()),
+        AppConfig::mo2NexusModId(), m_OrganizerCore.getVersion().string(), true, this,
+        QVariant(), QString());
   }
 }
 
@@ -3011,8 +3012,9 @@ void MainWindow::actionWontEndorseMO()
              "your mind."),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance().requestToggleEndorsement(
-        QString::fromStdWString(AppConfig::nexusGameId()), AppConfig::nexusModId(),
-        m_OrganizerCore.getVersion().string(), false, this, QVariant(), QString());
+        QString::fromStdWString(AppConfig::mo2NexusGameId()),
+        AppConfig::mo2NexusModId(), m_OrganizerCore.getVersion().string(), false, this,
+        QVariant(), QString());
   }
 }
 
@@ -3104,9 +3106,10 @@ void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData
     }
   }
   if (Settings::instance().nexus().endorsementIntegration()) {
-    auto iter = sorted.equal_range(QString::fromStdWString(AppConfig::nexusGameId()));
+    auto iter =
+        sorted.equal_range(QString::fromStdWString(AppConfig::mo2NexusGameId()));
     for (auto result = iter.first; result != iter.second; ++result) {
-      if (result->second.first == AppConfig::nexusModId()) {
+      if (result->second.first == AppConfig::mo2NexusModId()) {
         m_OrganizerCore.settings().nexus().setEndorsementState(
             endorsementStateFromString(result->second.second));
 
@@ -3586,8 +3589,8 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
         break;
       }
     }
-    if (gameName == QString::fromStdWString(AppConfig::nexusGameId()) &&
-        modID == AppConfig::nexusModId()) {
+    if (gameName == QString::fromStdWString(AppConfig::mo2NexusGameId()) &&
+        modID == AppConfig::mo2NexusModId()) {
       log::info("{}", tr("This action appears to be blocked. If you're trying to "
                          "endorse MO2, please download it from Nexus first."));
     } else {
