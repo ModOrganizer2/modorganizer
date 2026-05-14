@@ -341,8 +341,9 @@ void Profile::renameModInList(QFile& modList, const QString& oldName,
   QBuffer outBuffer;
   outBuffer.open(QIODevice::WriteOnly);
 
-  int renamed               = 0;
-  const QByteArray contents = modList.readAll();
+  int renamed = 0;
+  // trim empty line at the end which should not log a warning about invalid data
+  const QByteArray contents = modList.readAll().trimmed();
   modList.close();
   // modList is CRLF, but the QIODevice::Text flag translates all line breaks to LF
   for (const QByteArray& line : contents.split('\n')) {
