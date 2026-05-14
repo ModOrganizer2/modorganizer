@@ -57,13 +57,18 @@ void CategoryFactory::loadCategories()
   QFile categoryFile(categoriesFilePath());
   bool needLoad = false;
 
-  if (!categoryFile.open(QIODevice::ReadOnly)) {
+  if (!categoryFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
     needLoad = true;
   } else {
-    int lineNum = 0;
-    while (!categoryFile.atEnd()) {
-      QByteArray line = categoryFile.readLine();
+    int lineNum               = 0;
+    const QByteArray contents = categoryFile.readAll();
+    categoryFile.close();
+    for (const QByteArray& line : contents.split('\n')) {
       ++lineNum;
+      if (line.isEmpty()) {
+        continue;
+      }
+
       QList<QByteArray> cells = line.split('|');
       if (cells.count() == 4) {
         std::vector<NexusCategory> nexusCats;
@@ -76,7 +81,7 @@ void CategoryFactory::loadCategories()
             if (!ok) {
               log::error(tr("invalid category id {0}"), iter->constData());
             }
-            nexusCats.push_back(NexusCategory("Unknown", temp));
+            nexusCats.emplace_back(NexusCategory("Unknown", temp));
           }
         }
         bool cell0Ok = true;
@@ -103,16 +108,20 @@ void CategoryFactory::loadCategories()
                    line.constData(), cells.count());
       }
     }
-    categoryFile.close();
 
     QFile nexusMapFile(nexusMappingFilePath());
-    if (!nexusMapFile.open(QIODevice::ReadOnly)) {
+    if (!nexusMapFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
       needLoad = true;
     } else {
-      int nexLineNum = 0;
-      while (!nexusMapFile.atEnd()) {
-        QByteArray nexLine = nexusMapFile.readLine();
+      int nexLineNum               = 0;
+      const QByteArray nexContents = nexusMapFile.readAll();
+      nexusMapFile.close();
+      for (const QByteArray& nexLine : nexContents.split('\n')) {
         ++nexLineNum;
+        if (nexLine.isEmpty()) {
+          continue;
+        }
+
         QList<QByteArray> nexCells = nexLine.split('|');
         if (nexCells.count() == 3) {
           std::vector<NexusCategory> nexusCats;
@@ -129,12 +138,11 @@ void CategoryFactory::loadCategories()
           m_NexusMap.insert_or_assign(nexID, NexusCategory(nexName, nexID));
           m_NexusMap.at(nexID).setCategoryID(catID);
         } else {
-          log::error(tr("invalid nexus category line {0}: {1} ({2} cells)"), lineNum,
+          log::error(tr("invalid nexus category line {0}: {1} ({2} cells)"), nexLineNum,
                      nexLine.constData(), nexCells.count());
         }
       }
     }
-    nexusMapFile.close();
   }
   std::sort(m_Categories.begin(), m_Categories.end());
   setParents();
