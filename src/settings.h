@@ -654,6 +654,11 @@ public:
   bool hideDownloadsAfterInstallation() const;
   void setHideDownloadsAfterInstallation(bool b);
 
+  // whether to show notifications when downloads complete or fail
+  //
+  bool showDownloadNotifications() const;
+  void setShowDownloadNotifications(bool b);
+
   // whether the API counter should be hidden
   //
   bool hideAPICounter() const;
