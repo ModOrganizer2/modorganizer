@@ -480,8 +480,8 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
 
   m_StartTime = QTime::currentTime();
 
-  // m_Tutorial.expose("modList", m_OrganizerCore.modList());
-  // m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
+  m_Tutorial.expose("modList", m_OrganizerCore.modList());
+  m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
 
   m_OrganizerCore.setUserInterface(this);
   m_OrganizerCore.onFinishedRun([=](const QString, unsigned int) {
@@ -1115,7 +1115,6 @@ void MainWindow::createHelpMenu()
   connect(issueAction, SIGNAL(triggered()), this, SLOT(issueTriggered()));
   menu->addAction(issueAction);
 
-  /* Disable tutorials
   QMenu* tutorialMenu = new QMenu(tr("Tutorials"), menu);
 
   typedef std::vector<std::pair<int, QAction*>> ActionList;
@@ -1158,7 +1157,6 @@ void MainWindow::createHelpMenu()
   }
 
   menu->addMenu(tutorialMenu);
-  */
   menu->addAction(tr("About"), this, SLOT(about()));
   menu->addAction(tr("About Qt"), qApp, SLOT(aboutQt()));
 }
@@ -1250,13 +1248,10 @@ void MainWindow::showEvent(QShowEvent* event)
     connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
 
     // only the first time the window becomes visible
-    /* Disabling tutorials
     m_Tutorial.registerControl();
 
     hookUpWindowTutorials();
-    */
     if (m_OrganizerCore.settings().firstStart()) {
-      /* Disabling tutorials
       QString firstStepsTutorial = ToQString(AppConfig::firstStepsTutorial());
       if (TutorialManager::instance().hasTutorial(firstStepsTutorial)) {
         if (shouldStartTutorial()) {
@@ -1272,7 +1267,6 @@ void MainWindow::showEvent(QShowEvent* event)
                              QObject::tr("Please use \"Help\" from the toolbar to get "
                                          "usage instructions to all elements"));
       }
-      */
       if (!m_OrganizerCore.managedGame()->getSupportURL().isEmpty()) {
         QMessageBox::information(this, tr("Game Support Wiki"),
                                  tr("Do you know how to mod this game? Do you need to "

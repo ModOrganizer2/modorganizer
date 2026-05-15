@@ -3,8 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 # TODO: clean include directives
 set(MO2_CMAKE_DEPRECATED_UIBASE_INCLUDE ON)
 
-# Remove tutorials until Qt is fixed
-set(MO2_SKIP_TUTORIALS_INSTALL ON)
+#set(MO2_SKIP_TUTORIALS_INSTALL ON)
 
 project(organizer)
 
