@@ -2993,41 +2993,28 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::actionEndorseMO()
 {
-  // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE
-  // site right now
-  IPluginGame* game = m_OrganizerCore.getGame("skyrimse");
-  if (!game)
-    return;
-
-  if (QMessageBox::question(
-          this, tr("Endorse Mod Organizer"),
-          tr("Do you want to endorse Mod Organizer on %1 now?")
-              .arg(NexusInterface::instance().getGameURL(game->gameShortName())),
-          QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+  if (QMessageBox::question(this, tr("Endorse Mod Organizer"),
+                            tr("Do you want to endorse Mod Organizer on Nexus now?"),
+                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance().requestToggleEndorsement(
-        game->gameShortName(), game->nexusModOrganizerID(),
-        m_OrganizerCore.getVersion().string(), true, this, QVariant(), QString());
+        QString::fromStdWString(AppConfig::mo2NexusGameId()),
+        AppConfig::mo2NexusModId(), m_OrganizerCore.getVersion().string(), true, this,
+        QVariant(), QString());
   }
 }
 
 void MainWindow::actionWontEndorseMO()
 {
-  // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE
-  // site right now
-  IPluginGame* game = m_OrganizerCore.getGame("skyrimse");
-  if (!game)
-    return;
-
   if (QMessageBox::question(
           this, tr("Abstain from Endorsing Mod Organizer"),
           tr("Are you sure you want to abstain from endorsing Mod Organizer 2?\n"
-             "You will have to visit the mod page on the %1 Nexus site to change your "
-             "mind.")
-              .arg(NexusInterface::instance().getGameURL(game->gameShortName())),
+             "You will have to visit the mod page on the Nexus Tools site to change "
+             "your mind."),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance().requestToggleEndorsement(
-        game->gameShortName(), game->nexusModOrganizerID(),
-        m_OrganizerCore.getVersion().string(), false, this, QVariant(), QString());
+        QString::fromStdWString(AppConfig::mo2NexusGameId()),
+        AppConfig::mo2NexusModId(), m_OrganizerCore.getVersion().string(), false, this,
+        QVariant(), QString());
   }
 }
 
@@ -3092,7 +3079,6 @@ void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData
   std::multimap<QString, std::pair<int, QString>> sorted;
   QStringList games = m_OrganizerCore.managedGame()->validShortNames();
   games += m_OrganizerCore.managedGame()->gameShortName();
-  bool searchedMO2NexusGame = false;
   for (auto endorsementData : data) {
     QVariantMap endorsement      = endorsementData.toMap();
     std::pair<int, QString> data = std::make_pair<int, QString>(
@@ -3102,10 +3088,7 @@ void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData
   }
   for (auto game : games) {
     IPluginGame* gamePlugin = m_OrganizerCore.getGame(game);
-    if (gamePlugin != nullptr &&
-        gamePlugin->gameShortName().compare("SkyrimSE", Qt::CaseInsensitive) == 0)
-      searchedMO2NexusGame = true;
-    auto iter = sorted.equal_range(gamePlugin->gameNexusName());
+    auto iter               = sorted.equal_range(gamePlugin->gameNexusName());
     for (auto result = iter.first; result != iter.second; ++result) {
       std::vector<ModInfo::Ptr> modsList =
           ModInfo::getByModID(result->first, result->second.first);
@@ -3120,31 +3103,18 @@ void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData
             mod->setIsEndorsed(false);
         }
       }
-
-      if (Settings::instance().nexus().endorsementIntegration()) {
-        if (result->first == "skyrimspecialedition" &&
-            result->second.first == gamePlugin->nexusModOrganizerID()) {
-          m_OrganizerCore.settings().nexus().setEndorsementState(
-              endorsementStateFromString(result->second.second));
-
-          toggleMO2EndorseState();
-        }
-      }
     }
   }
+  if (Settings::instance().nexus().endorsementIntegration()) {
+    auto iter =
+        sorted.equal_range(QString::fromStdWString(AppConfig::mo2NexusGameId()));
+    for (auto result = iter.first; result != iter.second; ++result) {
+      if (result->second.first == AppConfig::mo2NexusModId()) {
+        m_OrganizerCore.settings().nexus().setEndorsementState(
+            endorsementStateFromString(result->second.second));
 
-  if (!searchedMO2NexusGame && Settings::instance().nexus().endorsementIntegration()) {
-    auto gamePlugin = m_OrganizerCore.getGame("SkyrimSE");
-    if (gamePlugin) {
-      auto iter = sorted.equal_range(gamePlugin->gameNexusName());
-      for (auto result = iter.first; result != iter.second; ++result) {
-        if (result->second.first == gamePlugin->nexusModOrganizerID()) {
-          m_OrganizerCore.settings().nexus().setEndorsementState(
-              endorsementStateFromString(result->second.second));
-
-          toggleMO2EndorseState();
-          break;
-        }
+        toggleMO2EndorseState();
+        break;
       }
     }
   }
@@ -3607,9 +3577,8 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
                                   int errorCode, const QString& errorString)
 {
   if (errorCode == QNetworkReply::ContentAccessDenied ||
-      errorCode == QNetworkReply::ContentNotFoundError) {
-    log::debug("{}",
-               tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID));
+      errorCode == QNetworkReply::ContentNotFoundError ||
+      errorCode == QNetworkReply::ServiceUnavailableError) {
 
     // update last checked timestamp on orphaned mods as well to avoid repeating
     // requests
@@ -3620,10 +3589,19 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
         break;
       }
     }
-    auto orphanedMods = ModInfo::getByModID(gameNameReal, modID);
-    for (auto mod : orphanedMods) {
-      mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
-      mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
+    if (gameName == QString::fromStdWString(AppConfig::mo2NexusGameId()) &&
+        modID == AppConfig::mo2NexusModId()) {
+      log::info("{}", tr("This action appears to be blocked. If you're trying to "
+                         "endorse MO2, please download it from Nexus first."));
+    } else {
+      log::debug("{}",
+                 tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID));
+      auto orphanedMods = ModInfo::getByModID(gameNameReal, modID);
+      for (auto mod : orphanedMods) {
+        mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
+        mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
+        mod->setNexusID(-1);
+      }
     }
   } else {
     MessageDialog::showMessage(
