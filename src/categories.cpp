@@ -60,11 +60,10 @@ void CategoryFactory::loadCategories()
   if (!categoryFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
     needLoad = true;
   } else {
-    int lineNum               = 0;
-    const QByteArray contents = categoryFile.readAll();
+    const auto lines = categoryFile.readAll().split('\n');
     categoryFile.close();
-    for (const QByteArray& line : contents.split('\n')) {
-      ++lineNum;
+    for (int lineNum = 0; lineNum < lines.size(); ++lineNum) {
+      const auto& line = lines[lineNum];
       if (line.isEmpty()) {
         continue;
       }
@@ -113,11 +112,10 @@ void CategoryFactory::loadCategories()
     if (!nexusMapFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
       needLoad = true;
     } else {
-      int nexLineNum               = 0;
-      const QByteArray nexContents = nexusMapFile.readAll();
+      const auto nexLines = nexusMapFile.readAll().split('\n');
       nexusMapFile.close();
-      for (const QByteArray& nexLine : nexContents.split('\n')) {
-        ++nexLineNum;
+      for (int nexLineNum = 0; nexLineNum < nexLines.size(); ++nexLineNum) {
+        const auto& nexLine = nexLines[nexLineNum];
         if (nexLine.isEmpty()) {
           continue;
         }
