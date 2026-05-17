@@ -1259,7 +1259,13 @@ void WidgetSettings::resetQuestionButtons()
   removeSection(m_Settings, "DialogChoices");
 }
 
-ColorSettings::ColorSettings(QSettings& s) : m_Settings(s) {}
+ColorSettings::ColorSettings(QSettings& s) : m_Settings(s)
+{
+  for (int i = 0; i < QColorDialog::customCount(); ++i) {
+    const auto color = customColor(i);
+    QColorDialog::setCustomColor(i, color);
+  }
+}
 
 QColor ColorSettings::modlistOverwrittenLoose() const
 {
@@ -1354,6 +1360,17 @@ void ColorSettings::setPreviousSeparatorColor(const QColor& c) const
 void ColorSettings::removePreviousSeparatorColor()
 {
   remove(m_Settings, "General", "previousSeparatorColor");
+}
+
+QColor ColorSettings::customColor(const int index) const
+{
+  return get<QColor>(m_Settings, "Settings", QString("customColor%1").arg(index),
+                     QColor(255, 255, 255));
+}
+
+void ColorSettings::setCustomColor(const int index, const QColor& c)
+{
+  set(m_Settings, "Settings", QString("customColor%1").arg(index), c);
 }
 
 bool ColorSettings::colorSeparatorScrollbar() const
