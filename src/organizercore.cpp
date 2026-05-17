@@ -1573,11 +1573,15 @@ std::vector<QString> OrganizerCore::enabledArchives()
   std::vector<QString> result;
   if (settings().archiveParsing()) {
     QFile archiveFile(m_CurrentProfile->getArchivesFileName());
-    if (archiveFile.open(QIODevice::ReadOnly)) {
-      while (!archiveFile.atEnd()) {
-        result.push_back(QString::fromUtf8(archiveFile.readLine()).trimmed());
-      }
+    if (archiveFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+      const QByteArray contents = archiveFile.readAll();
       archiveFile.close();
+      const QStringList lines =
+          QString::fromUtf8(contents).split('\n', Qt::SkipEmptyParts);
+      result.reserve(lines.size());
+      for (const QString& line : lines) {
+        result.emplace_back(line.trimmed());
+      }
     }
   }
   return result;

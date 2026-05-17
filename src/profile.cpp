@@ -333,7 +333,7 @@ void Profile::renameModInAllProfiles(const QString& oldName, const QString& newN
 void Profile::renameModInList(QFile& modList, const QString& oldName,
                               const QString& newName)
 {
-  if (!modList.open(QIODevice::ReadOnly)) {
+  if (!modList.open(QIODevice::ReadOnly | QIODevice::Text)) {
     reportError(tr("failed to open %1").arg(modList.fileName()));
     return;
   }
@@ -342,10 +342,12 @@ void Profile::renameModInList(QFile& modList, const QString& oldName,
   outBuffer.open(QIODevice::WriteOnly);
 
   int renamed = 0;
-  while (!modList.atEnd()) {
-    QByteArray line = modList.readLine();
-
-    if (line.length() == 0) {
+  // trim empty line at the end which should not log a warning about invalid data
+  const QByteArray contents = modList.readAll().trimmed();
+  modList.close();
+  // modList is CRLF, but the QIODevice::Text flag translates all line breaks to LF
+  for (const QByteArray& line : contents.split('\n')) {
+    if (line.isEmpty()) {
       // ignore empty lines
       log::warn("mod list contained invalid data: empty line");
       continue;
@@ -374,7 +376,6 @@ void Profile::renameModInList(QFile& modList, const QString& oldName,
     outBuffer.write(qUtf8Printable(modName));
     outBuffer.write("\r\n");
   }
-  modList.close();
 
   if (renamed) {
     modList.open(QIODevice::WriteOnly);
@@ -438,14 +439,14 @@ void Profile::refreshModStatus()
   bool warnAboutOverwrite = false;
 
   // load mods from file and update enabled state and priority for them
-  int index = 0;
-  while (!file.atEnd()) {
-    QByteArray line = file.readLine().trimmed();
-
+  int index                 = 0;
+  const QByteArray contents = file.readAll();
+  file.close();
+  for (QByteArray& line : contents.split('\n')) {
     // find the mod name and the enabled status
     bool enabled = true;
     QString modName;
-    if (line.length() == 0) {
+    if (line.isEmpty()) {
       // empty line
       continue;
     } else if (line.at(0) == '#') {
@@ -498,10 +499,7 @@ void Profile::refreshModStatus()
       // need to rewrite the modlist to fix this
       modStatusModified = true;
     }
-
-  }  // while (!file.atEnd())
-
-  file.close();
+  }
 
   const int numKnownMods = index;
   int topInsert          = 0;

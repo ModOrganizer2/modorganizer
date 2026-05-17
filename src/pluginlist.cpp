@@ -704,10 +704,11 @@ void PluginList::readLockedOrderFrom(const QString& fileName)
     return;
   }
 
-  file.open(QIODevice::ReadOnly);
+  file.open(QIODevice::ReadOnly | QIODevice::Text);
+  const QByteArray contents = file.readAll();
+  file.close();
   int lineNumber = 0;
-  while (!file.atEnd()) {
-    QByteArray line = file.readLine();
+  for (const QByteArray& line : contents.split('\n')) {
     ++lineNumber;
 
     // Skip empty lines or commented out lines (#)
@@ -782,8 +783,7 @@ void PluginList::readLockedOrderFrom(const QString& fileName)
       m_LockedOrder[pluginName] = priority;
       continue;
     }
-  } /* while (!file.atEnd()) */
-  file.close();
+  }
 }
 
 void PluginList::writeLockedOrder(const QString& fileName) const
