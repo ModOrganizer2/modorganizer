@@ -185,6 +185,10 @@ void Settings::processUpdates(const QVersionNumber& currentVersion,
     remove(m_Settings, "Settings", "load_mechanism");
   });
 
+  version({2, 6, 0}, [&] {
+    m_Colors.copyGlobalCustomColors();
+  });
+
   // save version in all case
   set(m_Settings, "General", "version", currentVersion.toString());
 
@@ -1371,6 +1375,22 @@ QColor ColorSettings::customColor(const int index) const
 void ColorSettings::setCustomColor(const int index, const QColor& c)
 {
   set(m_Settings, "Settings", QString("customColor%1").arg(index), c);
+}
+
+void ColorSettings::copyGlobalCustomColors()
+{
+  // see:
+  // https://codereview.qt-project.org/c/qt/qtbase/+/626629/3/src/gui/kernel/qplatformdialoghelper.cpp#b263
+  QSettings globalSettings(QSettings::UserScope, QStringLiteral("QtProject"));
+  for (int i = 0; i < QColorDialog::customCount(); ++i) {
+    const QVariant v = globalSettings.value(QLatin1StringView("Qt/customColors/") +
+                                            QString::number(i));
+
+    if (v.isValid()) {
+      const QRgb rgba = v.toUInt();
+      setCustomColor(i, QColor::fromRgba(rgba));
+    }
+  }
 }
 
 bool ColorSettings::colorSeparatorScrollbar() const

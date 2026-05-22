@@ -269,6 +269,10 @@ public:
   QColor customColor(const int index) const;
   void setCustomColor(const int index, const QColor& c);
 
+  // since MO v2.6.0, custom colors are no longer stored globally in Qt; this ensures
+  // custom colors set in older versions are retained when updating
+  void copyGlobalCustomColors();
+
   // whether the scrollbar of the mod list should have colors for custom
   // separator colors
   //
