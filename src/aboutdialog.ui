@@ -1,882 +1,899 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>AboutDialog</class>
- <widget class="QDialog" name="AboutDialog">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>1010</width>
-    <height>477</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>About</string>
-  </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <layout class="QVBoxLayout" name="verticalLayout_3">
-       <item>
-        <spacer name="verticalSpacer_3">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QLabel" name="iconLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>250</width>
-           <height>250</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>250</width>
-           <height>250</height>
-          </size>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="pixmap">
-          <pixmap resource="resources.qrc">:/MO/gui/splash</pixmap>
-         </property>
-         <property name="scaledContents">
-          <bool>true</bool>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <widget class="QTabWidget" name="tabWidget">
-       <property name="currentIndex">
-        <number>0</number>
-       </property>
-       <widget class="QWidget" name="about">
-        <attribute name="title">
-         <string>About</string>
-        </attribute>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
-          <widget class="QLabel" name="nameLabel">
-           <property name="text">
-            <string notr="true">Mod Organizer</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="revisionLabel">
-           <property name="text">
-            <string>Revision:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="usvfsLabel">
-           <property name="text">
-            <string>usvfs:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="verticalSpacer">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_3">
-           <property name="text">
-            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright © 2011-2016 Sebastian Herbord&lt;br/&gt;Copyright © 2016-2026 Mod Organizer 2 Contributors&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="copyrightText">
-           <property name="text">
-            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.&lt;/p&gt;&lt;p&gt;See the GNU General Public License for more details.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="verticalSpacer_4">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Minimum</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="LinkLabel" name="sourceText">
-           <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/ModOrganizer2/modorganizer&quot;&gt;GitHub&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-          </widget>
-         </item>
+  <class>AboutDialog</class>
+  <widget class="QDialog" name="AboutDialog">
+    <property name="geometry">
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>1010</width>
+        <height>525</height>
+      </rect>
+    </property>
+    <property name="windowTitle">
+      <string>About</string>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+            <layout class="QVBoxLayout" name="verticalLayout_3">
+              <item>
+                <spacer name="verticalSpacer_3">
+                  <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                    <size>
+                      <width>20</width>
+                      <height>40</height>
+                    </size>
+                  </property>
+                </spacer>
+              </item>
+              <item>
+                <widget class="QLabel" name="iconLabel">
+                  <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                    </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                    <size>
+                      <width>250</width>
+                      <height>250</height>
+                    </size>
+                  </property>
+                  <property name="maximumSize">
+                    <size>
+                      <width>250</width>
+                      <height>250</height>
+                    </size>
+                  </property>
+                  <property name="text">
+                    <string/>
+                  </property>
+                  <property name="pixmap">
+                    <pixmap resource="resources.qrc">:/MO/gui/splash</pixmap>
+                  </property>
+                  <property name="scaledContents">
+                    <bool>true</bool>
+                  </property>
+                  <property name="alignment">
+                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <spacer name="verticalSpacer_2">
+                  <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                    <size>
+                      <width>20</width>
+                      <height>40</height>
+                    </size>
+                  </property>
+                </spacer>
+              </item>
+            </layout>
+          </item>
+          <item>
+            <widget class="QTabWidget" name="tabWidget">
+              <property name="currentIndex">
+                <number>0</number>
+              </property>
+              <widget class="QWidget" name="about">
+                <attribute name="title">
+                  <string>About</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_2">
+                  <item>
+                    <widget class="QLabel" name="nameLabel">
+                      <property name="text">
+                        <string notr="true">Mod Organizer</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item>
+                    <widget class="QLabel" name="revisionLabel">
+                      <property name="text">
+                        <string>Revision:</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item>
+                    <widget class="QLabel" name="usvfsLabel">
+                      <property name="text">
+                        <string>usvfs:</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item>
+                    <spacer name="verticalSpacer">
+                      <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                        <size>
+                          <width>20</width>
+                          <height>40</height>
+                        </size>
+                      </property>
+                    </spacer>
+                  </item>
+                  <item>
+                    <widget class="QLabel" name="label_3">
+                      <property name="text">
+                        <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright © 2011-2016 Sebastian Herbord&lt;br/&gt;Copyright © 2016-2026 Mod Organizer 2 Contributors&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item>
+                    <widget class="QLabel" name="copyrightText">
+                      <property name="text">
+                        <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.&lt;/p&gt;&lt;p&gt;See the GNU General Public License for more details.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
+                      <property name="wordWrap">
+                        <bool>true</bool>
+                      </property>
+                    </widget>
+                  </item>
+                  <item>
+                    <spacer name="verticalSpacer_4">
+                      <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeType">
+                        <enum>QSizePolicy::Minimum</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                        <size>
+                          <width>20</width>
+                          <height>40</height>
+                        </size>
+                      </property>
+                    </spacer>
+                  </item>
+                  <item>
+                    <widget class="LinkLabel" name="sourceText">
+                      <property name="text">
+                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/ModOrganizer2/modorganizer&quot;&gt;GitHub&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
+                    </widget>
+                  </item>
+                </layout>
+              </widget>
+              <widget class="QWidget" name="software">
+                <attribute name="title">
+                  <string>Used Software</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_4">
+                  <item>
+                    <widget class="QListWidget" name="creditsList"/>
+                  </item>
+                  <item>
+                    <widget class="QTextBrowser" name="licenseText"/>
+                  </item>
+                </layout>
+              </widget>
+              <widget class="QWidget" name="credits">
+                <attribute name="title">
+                  <string>Thanks</string>
+                </attribute>
+                <layout class="QGridLayout" name="gridLayout_0">
+                  <item row="0" column="0">
+                    <widget class="QGroupBox" name="groupBox">
+                      <property name="title">
+                        <string>Lead Developers &amp;&amp; Maintainers</string>
+                      </property>
+                      <layout class="QVBoxLayout" name="verticalLayout_6">
+                        <item>
+                          <widget class="QListWidget" name="listWidget_2">
+                            <property name="selectionMode">
+                              <enum>QAbstractItemView::NoSelection</enum>
+                            </property>
+                            <item>
+                              <property name="text">
+                                <string>LePresidente (Project Lead)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">AL12</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Holt59</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">isa</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">LostDragonist</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Silarn</string>
+                              </property>
+                            </item>
+                          </widget>
+                        </item>
+                      </layout>
+                    </widget>
+                  </item>
+                  <item row="1" column="0">
+                    <widget class="QGroupBox" name="groupBox_2">
+                      <property name="title">
+                        <string>MO2 Developers &amp;&amp; Contributors</string>
+                      </property>
+                      <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0">
+                        <item>
+                          <widget class="QListWidget" name="listWidget_3">
+                            <property name="selectionMode">
+                              <enum>QAbstractItemView::NoSelection</enum>
+                            </property>
+                            <item>
+                              <property name="text">
+                                <string notr="true">AnyOldName3</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">erasmux</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Jonathan Feenstra</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Project579</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">przester</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Qudix</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">RJ</string>
+                              </property>
+                            </item>
+                          </widget>
+                        </item>
+                      </layout>
+                    </widget>
+                  </item>
+                  <item row="0" column="1" rowspan="2">
+                    <widget class="QGroupBox" name="groupBox_3">
+                      <property name="title">
+                        <string>Translators</string>
+                      </property>
+                      <layout class="QVBoxLayout" name="verticalLayout_61">
+                        <item>
+                          <widget class="QListWidget" name="listWidget_4">
+                            <property name="selectionMode">
+                              <enum>QAbstractItemView::NoSelection</enum>
+                            </property>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Scythe1912 (Chinese)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">yc0620shen (Chinese)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">miraclefreak (Czech)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Meiton (Czech)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>Cyb3r (Dutch)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">madmedic (Dutch)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Ilja (Finnish)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Mikmet (Finnish)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Alyndiar (French)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>fruttyx (French)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Jlkawaii (French)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Rigoletto (French)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>Yoplala (French)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">CircleOfDao (German)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>Faron (German)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">pndrev (German)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Xahtax (German)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Ypselon (German)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>yohru (Japanese)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>Mordan (Greek)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Ren (Korean)</string>
+                              </property>
+                              <property name="toolTip">
+                                <string/>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>Yoosk (Polish)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>Brgodfx (Portuguese)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>Dasinho (Portuguese)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">tokcdk  (Russian)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">DaWul (Spanish)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Fiama (Spanish)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>Jax (Swedish)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>Nubbie (Swedish)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Hakan &quot;Nyks45&quot; Albayrak (Turkish)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Kato (Turkish)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>...and all other contributors!</string>
+                              </property>
+                            </item>
+                          </widget>
+                        </item>
+                      </layout>
+                    </widget>
+                  </item>
+                  <item row="0" column="2" rowspan="2">
+                    <widget class="QGroupBox" name="groupBox_4">
+                      <property name="title">
+                        <string>Other Supporters &amp;&amp; Contributors</string>
+                      </property>
+                      <layout class="QVBoxLayout" name="verticalLayout_71">
+                        <item>
+                          <widget class="QListWidget" name="listWidget">
+                            <property name="selectionMode">
+                              <enum>QAbstractItemView::NoSelection</enum>
+                            </property>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Tannin (Original Creator)</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">6788</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">aglowinthefield</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">AkiraJkr</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">AmeliaCute</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">ashemedai</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Azlle</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">blacksol</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">BlueAmulet</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Bridger</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Brixified</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">CheffieGithub</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">daescha</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">ddbb07</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">deathneko11</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Deewens</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">DefinitelyNotSade</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">dekart811</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Deorder</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">diegofesanto</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">DoubleYou</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Drew Warwick</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Eddoursul</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">erri120</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">ianpatt</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Falsellyu</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">foresto</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">GamerPoet</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Gopher</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">GrantSP</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">GSDFan</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">JayLCypher</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">jimfcarroll</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Jonny_Bro</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">ju5tA1ex</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Kane Dou</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">KenJyn76</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Ketsuban</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">LaughingHyena</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Luca|EzioTheDeadPoet</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">mick-lue</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">ModZero</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">mopioid</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">mrudat</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Nikirack</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">ogrotten</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">outdatedtv</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Patchier</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Paynamia</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">PurpleFez</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Ra2-IFV</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">reedts</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">RodolfoFigueroa</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Ryan Young</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Schilduin</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">SimplisticMind</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">shellbj</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">SuperSandro2000</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Syer10</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">The Conceptionist</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">TheForgotten69</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">TheUnlocked</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">thosrtanner</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Trosski</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Twinki</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Uhuru</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">uwx</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Wolverine2710</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">xieve</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">z929669</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string notr="true">Zash</string>
+                              </property>
+                            </item>
+                            <item>
+                              <property name="text">
+                                <string>...and all other contributors!</string>
+                              </property>
+                            </item>
+                          </widget>
+                        </item>
+                      </layout>
+                    </widget>
+                  </item>
+                </layout>
+              </widget>
+            </widget>
+          </item>
         </layout>
-       </widget>
-       <widget class="QWidget" name="software">
-        <attribute name="title">
-         <string>Used Software</string>
-        </attribute>
-        <layout class="QVBoxLayout" name="verticalLayout_4">
-         <item>
-          <widget class="QListWidget" name="creditsList"/>
-         </item>
-         <item>
-          <widget class="QTextBrowser" name="licenseText"/>
-         </item>
+      </item>
+      <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+            <spacer name="horizontalSpacer">
+              <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+                <size>
+                  <width>40</width>
+                  <height>20</height>
+                </size>
+              </property>
+            </spacer>
+          </item>
+          <item>
+            <widget class="QPushButton" name="closeButton">
+              <property name="text">
+                <string>Close</string>
+              </property>
+            </widget>
+          </item>
         </layout>
-       </widget>
-       <widget class="QWidget" name="credits">
-        <attribute name="title">
-         <string>Thanks</string>
-        </attribute>
-        <layout class="QGridLayout" name="gridLayout_0">
-         <item row="0" column="0">
-          <widget class="QGroupBox" name="groupBox">
-           <property name="title">
-            <string>Lead Developers &amp;&amp; Maintainers</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_6">
-            <item>
-             <widget class="QListWidget" name="listWidget_2">
-              <property name="selectionMode">
-               <enum>QAbstractItemView::NoSelection</enum>
-              </property>
-              <item>
-               <property name="text">
-                <string>LePresidente (Project Lead)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">AL12</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Silarn</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">LostDragonist</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">isa</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Holt59</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QGroupBox" name="groupBox_2">
-           <property name="title">
-            <string>MO2 Developers &amp;&amp; Contributors</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0">
-            <item>
-             <widget class="QListWidget" name="listWidget_3">
-              <property name="selectionMode">
-               <enum>QAbstractItemView::NoSelection</enum>
-              </property>
-              <item>
-               <property name="text">
-                <string notr="true">AnyOldName3</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">erasmux</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Project579</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">przester</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Qudix</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">RJ</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Jonathan Feenstra</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item row="0" column="1" rowspan="2">
-          <widget class="QGroupBox" name="groupBox_3">
-           <property name="title">
-            <string>Translators</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_61">
-            <item>
-             <widget class="QListWidget" name="listWidget_4">
-              <property name="selectionMode">
-               <enum>QAbstractItemView::NoSelection</enum>
-              </property>
-              <item>
-               <property name="text">
-                <string notr="true">Scythe1912 (Chinese)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">yc0620shen (Chinese)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">miraclefreak (Czech)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Meiton (Czech)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Cyb3r (Dutch)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">madmedic (Dutch)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Ilja (Finnish)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Mikmet (Finnish)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Alyndiar (French)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>fruttyx (French)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Jlkawaii (French)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Rigoletto (French)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Yoplala (French)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">CircleOfDao (German)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Faron (German)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">pndrev (German)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Xahtax (German)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Ypselon (German)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>yohru (Japanese)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Mordan (Greek)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Ren (Korean)</string>
-               </property>
-               <property name="toolTip">
-                <string/>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Yoosk (Polish)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Brgodfx (Portuguese)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Dasinho (Portuguese)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">tokcdk  (Russian)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">DaWul (Spanish)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Fiama (Spanish)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Jax (Swedish)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Nubbie (Swedish)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Hakan &quot;Nyks45&quot; Albayrak (Turkish)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Kato (Turkish)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>...and all other contributors!</string>
-               </property>
-               <property name="toolTip">
-                <string/>
-               </property>
-              </item>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item row="0" column="2" rowspan="2">
-          <widget class="QGroupBox" name="groupBox_4">
-           <property name="title">
-            <string>Other Supporters &amp;&amp; Contributors</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_71">
-            <item>
-             <widget class="QListWidget" name="listWidget">
-              <property name="selectionMode">
-               <enum>QAbstractItemView::NoSelection</enum>
-              </property>
-              <item>
-               <property name="text">
-                <string notr="true">Tannin (Original Creator)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">6788</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">AkiraJkr</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">AmeliaCute</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">ashemedai</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">blacksol</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">BlueAmulet</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Bridger</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Brixified</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">CheffieGithub</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">daescha</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">ddbb07</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">deathneko11</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Deewens</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">DefinitelyNotSade</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">dekart811</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Deorder</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">diegofesanto</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">DoubleYou</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Drew Warwick</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Eddoursul</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">erri120</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">ianpatt</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Falsellyu</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">foresto</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">GamerPoet</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Gopher</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">GrantSP</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">GSDFan</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">JayLCypher</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">jimfcarroll</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Jonny_Bro</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">ju5tA1ex</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Kane Dou</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">KenJyn76</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Ketsuban</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">LaughingHyena</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Luca|EzioTheDeadPoet</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">mick-lue</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">ModZero</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">mopioid</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">mrudat</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Nikirack</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">ogrotten</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">outdatedtv</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Patchier</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Paynamia</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">PurpleFez</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Ra2-IFV</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">reedts</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">RodolfoFigueroa</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Ryan Young</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Schilduin</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">shellbj</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">SuperSandro2000</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Syer10</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">The Conceptionist</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">TheForgotten69</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">TheUnlocked</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">thosrtanner</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Trosski</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Twinki</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Uhuru</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">uwx</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Wolverine2710</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">xieve</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">z929669</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Zash</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </widget>
-     </item>
+      </item>
     </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="closeButton">
-       <property name="text">
-        <string>Close</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-  </layout>
- </widget>
- <customwidgets>
-  <customwidget>
-   <class>LinkLabel</class>
-   <extends>QLabel</extends>
-   <header location="global">linklabel.h</header>
-  </customwidget>
- </customwidgets>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
- <connections>
-  <connection>
-   <sender>closeButton</sender>
-   <signal>clicked()</signal>
-   <receiver>AboutDialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>460</x>
-     <y>313</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>253</x>
-     <y>167</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+  </widget>
+  <customwidgets>
+    <customwidget>
+      <class>LinkLabel</class>
+      <extends>QLabel</extends>
+      <header location="global">linklabel.h</header>
+    </customwidget>
+  </customwidgets>
+  <resources>
+    <include location="resources.qrc"/>
+  </resources>
+  <connections>
+    <connection>
+      <sender>closeButton</sender>
+      <signal>clicked()</signal>
+      <receiver>AboutDialog</receiver>
+      <slot>accept()</slot>
+      <hints>
+        <hint type="sourcelabel">
+          <x>460</x>
+          <y>313</y>
+        </hint>
+        <hint type="destinationlabel">
+          <x>253</x>
+          <y>167</y>
+        </hint>
+      </hints>
+    </connection>
+  </connections>
 </ui>
