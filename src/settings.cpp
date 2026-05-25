@@ -1379,6 +1379,9 @@ void ColorSettings::setCustomColor(const int index, const QColor& c)
 
 void ColorSettings::copyGlobalCustomColors()
 {
+  if (m_Settings.contains("Settings/customColor0"))
+    return;  // already set, don't overwrite
+
   // see:
   // https://codereview.qt-project.org/c/qt/qtbase/+/626629/3/src/gui/kernel/qplatformdialoghelper.cpp#b263
   QSettings globalSettings(QSettings::UserScope, QStringLiteral("QtProject"));
