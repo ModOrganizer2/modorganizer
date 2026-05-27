@@ -868,7 +868,7 @@ bool Profile::enableLocalSaves(bool enable)
         QDialogButtonBox::No | QDialogButtonBox::Yes | QDialogButtonBox::Cancel,
         QDialogButtonBox::No);
     if (res == QMessageBox::Yes) {
-      shellDelete(QStringList(m_Directory.absoluteFilePath("saves")));
+      shellDelete(QStringList(m_Directory.absoluteFilePath("saves")), true);
     } else if (res == QMessageBox::No) {
       // No action
     } else {
