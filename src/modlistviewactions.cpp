@@ -1216,6 +1216,10 @@ void ModListViewActions::setColor(const QModelIndexList& indices,
     return;
 
   settings.colors().setPreviousSeparatorColor(currentColor);
+  for (int i = 0; i < QColorDialog::customCount(); ++i) {
+    const auto customColor = dialog.customColor(i);
+    settings.colors().setCustomColor(i, customColor);
+  }
 
   for (auto& idx : indices) {
     ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
