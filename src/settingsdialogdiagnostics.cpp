@@ -12,6 +12,7 @@ DiagnosticsSettingsTab::DiagnosticsSettingsTab(Settings& s, SettingsDialog& d)
   setLogLevel();
   setLootLogLevel();
   setCrashDumpTypesBox();
+  ui->usvfsDebugModeBox->setChecked(settings().diagnostics().usvfsDebugMode());
 
   ui->dumpsMaxEdit->setValue(settings().diagnostics().maxCoreDumps());
 
@@ -102,6 +103,8 @@ void DiagnosticsSettingsTab::update()
 {
   settings().diagnostics().setLogLevel(
       static_cast<log::Levels>(ui->logLevelBox->currentData().toInt()));
+
+  settings().diagnostics().setUsvfsDebugMode(ui->usvfsDebugModeBox->isChecked());
 
   settings().diagnostics().setCoreDumpType(
       static_cast<env::CoreDumpTypes>(ui->dumpsTypeBox->currentData().toInt()));

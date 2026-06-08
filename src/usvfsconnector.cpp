@@ -130,13 +130,14 @@ UsvfsConnector::UsvfsConnector()
   const LogLevel logLevel = toUsvfsLogLevel(s.diagnostics().logLevel());
   const auto dumpType     = toUsvfsCrashDumpsType(s.diagnostics().coreDumpType());
   const auto delay        = duration_cast<milliseconds>(s.diagnostics().spawnDelay());
+  const auto debugMode    = s.diagnostics().usvfsDebugMode();
   std::string dumpPath =
       MOShared::ToString(OrganizerCore::getGlobalCoreDumpPath(), true);
 
   usvfsParameters* params = usvfsCreateParameters();
 
   usvfsSetInstanceName(params, SHMID);
-  usvfsSetDebugMode(params, false);
+  usvfsSetDebugMode(params, debugMode);
   usvfsSetLogLevel(params, logLevel);
   usvfsSetCrashDumpType(params, dumpType);
   usvfsSetCrashDumpPath(params, dumpPath.c_str());
