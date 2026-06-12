@@ -114,8 +114,11 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
   bool pendingDownload = index.row() >= m_manager.numTotalDownloads();
   if (role == Qt::DisplayRole) {
     if (pendingDownload) {
-      const DownloadManager::PendingDownload pending =
-          m_manager.getPendingDownload(index.row() - m_manager.numTotalDownloads());
+      DownloadManager::PendingDownload pending;
+      if (!m_manager.tryGetPendingDownload(
+              index.row() - m_manager.numTotalDownloads(), pending)) {
+        return QVariant();
+      }
       switch (index.column()) {
       case COL_NAME:
         return tr("< game %1 mod %2 file %3 >")

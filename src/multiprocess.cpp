@@ -1,16 +1,59 @@
 #include "multiprocess.h"
 #include "utility.h"
 #include <QLocalSocket>
+#include <QThread>
 #include <log.h>
 #include <report.h>
 
 static const char s_Key[]  = "mo-43d1a3ad-eeb0-4818-97c9-eda5216c29b5";
 static const int s_Timeout = 5000;
+static const int s_DeliverTimeout = 30000;
 
 using MOBase::reportError;
 
+MessageReceiver::MessageReceiver(QString key) : m_Key(std::move(key)), m_Server(nullptr)
+{}
+
+void MessageReceiver::start()
+{
+  m_Server = new QLocalServer(this);
+  connect(m_Server, &QLocalServer::newConnection, this,
+          &MessageReceiver::onNewConnection);
+  // has to be called before listen
+  m_Server->setSocketOptions(QLocalServer::WorldAccessOption);
+
+  if (!m_Server->listen(s_Key)) {
+    MOBase::log::error("failed to listen for secondary processes: {}",
+                       m_Server->errorString().toStdString());
+  }
+}
+
+void MessageReceiver::onNewConnection()
+{
+  while (QLocalSocket* socket = m_Server->nextPendingConnection()) {
+    connect(socket, &QLocalSocket::readyRead, this,
+            [this, socket]() { readFrom(socket); });
+    connect(socket, &QLocalSocket::disconnected, socket, &QObject::deleteLater);
+
+    readFrom(socket);
+  }
+}
+
+void MessageReceiver::readFrom(QLocalSocket* socket)
+{
+  const QByteArray data = socket->readAll();
+  if (data.isEmpty()) {
+    return;
+  }
+
+  emit messageReceived(QString::fromUtf8(data));
+
+  socket->disconnectFromServer();
+}
+
 MOMultiProcess::MOMultiProcess(bool allowMultiple, QObject* parent)
-    : QObject(parent), m_Ephemeral(false), m_OwnsSM(false)
+    : QObject(parent), m_Ephemeral(false), m_OwnsSM(false), m_ServerThread(nullptr),
+      m_Receiver(nullptr)
 {
   m_SharedMem.setKey(s_Key);
 
@@ -31,11 +74,27 @@ MOMultiProcess::MOMultiProcess(bool allowMultiple, QObject* parent)
   }
 
   if (m_OwnsSM) {
-    connect(&m_Server, SIGNAL(newConnection()), this, SLOT(receiveMessage()),
-            Qt::QueuedConnection);
-    // has to be called before listen
-    m_Server.setSocketOptions(QLocalServer::WorldAccessOption);
-    m_Server.listen(s_Key);
+    m_ServerThread = new QThread(this);
+    m_ServerThread->setObjectName("mo-ipc-server");
+
+    m_Receiver = new MessageReceiver(s_Key);
+    m_Receiver->moveToThread(m_ServerThread);
+
+    connect(m_ServerThread, &QThread::started, m_Receiver, &MessageReceiver::start);
+    connect(m_ServerThread, &QThread::finished, m_Receiver, &QObject::deleteLater);
+
+    connect(m_Receiver, &MessageReceiver::messageReceived, this,
+            &MOMultiProcess::messageSent, Qt::QueuedConnection);
+
+    m_ServerThread->start();
+  }
+}
+
+MOMultiProcess::~MOMultiProcess()
+{
+  if (m_ServerThread) {
+    m_ServerThread->quit();
+    m_ServerThread->wait();
   }
 }
 
@@ -54,7 +113,7 @@ void MOMultiProcess::sendMessage(const QString& message)
     }
 
     // other process may be just starting up
-    socket.connectToServer(s_Key, QIODevice::WriteOnly);
+    socket.connectToServer(s_Key, QIODevice::ReadWrite);
     connected = socket.waitForConnected(s_Timeout);
   }
 
@@ -72,34 +131,5 @@ void MOMultiProcess::sendMessage(const QString& message)
     }
   }
 
-  socket.disconnectFromServer();
-  socket.waitForDisconnected();
-}
-
-void MOMultiProcess::receiveMessage()
-{
-  QLocalSocket* socket = m_Server.nextPendingConnection();
-  if (!socket) {
-    return;
-  }
-
-  if (!socket->waitForReadyRead(s_Timeout)) {
-    // check if there are bytes available; if so, it probably means the data was
-    // already received by the time waitForReadyRead() was called and the
-    // connection has been closed
-    const auto av = socket->bytesAvailable();
-
-    if (av <= 0) {
-      MOBase::log::error("failed to receive data from secondary process: {}",
-                         socket->errorString());
-
-      reportError(tr("failed to receive data from secondary process: %1")
-                      .arg(socket->errorString()));
-      return;
-    }
-  }
-
-  QString message = QString::fromUtf8(socket->readAll().constData());
-  emit messageSent(message);
-  socket->disconnectFromServer();
+  socket.waitForDisconnected(s_DeliverTimeout);
 }

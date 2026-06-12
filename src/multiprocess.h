@@ -4,6 +4,33 @@
 #include <QLocalServer>
 #include <QObject>
 #include <QSharedMemory>
+#include <QString>
+
+class QThread;
+class QLocalSocket;
+
+class MessageReceiver : public QObject
+{
+  Q_OBJECT
+
+public:
+  explicit MessageReceiver(QString key);
+
+public slots:
+  void start();
+
+signals:
+  void messageReceived(const QString& message);
+
+private slots:
+  void onNewConnection();
+
+private:
+  void readFrom(QLocalSocket* socket);
+
+  QString m_Key;
+  QLocalServer* m_Server;
+};
 
 /**
  * used to ensure only a single process of Mod Organizer is started and to
@@ -18,6 +45,8 @@ public:
   // `allowMultiple`: if another process is running, run this one
   // disconnected from the shared memory
   explicit MOMultiProcess(bool allowMultiple, QObject* parent = 0);
+
+  ~MOMultiProcess();
 
   /**
    * @return true if this process's job is to forward data to the primary
@@ -46,17 +75,13 @@ signals:
    **/
   void messageSent(const QString& message);
 
-public slots:
-
-private slots:
-
-  void receiveMessage();
-
 private:
   bool m_Ephemeral;
   bool m_OwnsSM;
   QSharedMemory m_SharedMem;
-  QLocalServer m_Server;
+
+  QThread* m_ServerThread;
+  MessageReceiver* m_Receiver;
 };
 
 #endif  // MODORGANIZER_MOMULTIPROCESS_INCLUDED

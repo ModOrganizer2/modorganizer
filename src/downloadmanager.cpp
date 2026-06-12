@@ -280,8 +280,12 @@ DownloadManager::DownloadManager(NexusInterface* nexusInterface, QObject* parent
       m_ParentWidget(nullptr)
 {
   m_OrganizerCore = dynamic_cast<OrganizerCore*>(parent);
+
+  m_RefreshTimer.setSingleShot(true);
+  m_RefreshTimer.setInterval(1000);
+  connect(&m_RefreshTimer, &QTimer::timeout, this, &DownloadManager::refreshList);
   connect(&m_DirWatcher, &DirWatcherManager::directoryChanged, this,
-          &DownloadManager::refreshList);
+          [this]() { m_RefreshTimer.start(); });
 }
 
 DownloadManager::~DownloadManager()
@@ -1364,6 +1368,15 @@ DownloadManager::PendingDownload DownloadManager::getPendingDownload(int index)
   }
 
   return m_PendingDownloads.at(index);
+}
+
+bool DownloadManager::tryGetPendingDownload(int index, PendingDownload& download) const
+{
+  if ((index < 0) || (index >= m_PendingDownloads.size())) {
+    return false;
+  }
+  download = m_PendingDownloads.at(index);
+  return true;
 }
 
 QString DownloadManager::getFilePath(int index) const
