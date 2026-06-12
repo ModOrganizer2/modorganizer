@@ -115,8 +115,8 @@ QVariant DownloadList::data(const QModelIndex& index, int role) const
   if (role == Qt::DisplayRole) {
     if (pendingDownload) {
       DownloadManager::PendingDownload pending;
-      if (!m_manager.tryGetPendingDownload(
-              index.row() - m_manager.numTotalDownloads(), pending)) {
+      if (!m_manager.tryGetPendingDownload(index.row() - m_manager.numTotalDownloads(),
+                                           pending)) {
         return QVariant();
       }
       switch (index.column()) {

@@ -284,8 +284,9 @@ DownloadManager::DownloadManager(NexusInterface* nexusInterface, QObject* parent
   m_RefreshTimer.setSingleShot(true);
   m_RefreshTimer.setInterval(1000);
   connect(&m_RefreshTimer, &QTimer::timeout, this, &DownloadManager::refreshList);
-  connect(&m_DirWatcher, &DirWatcherManager::directoryChanged, this,
-          [this]() { m_RefreshTimer.start(); });
+  connect(&m_DirWatcher, &DirWatcherManager::directoryChanged, this, [this]() {
+    m_RefreshTimer.start();
+  });
 }
 
 DownloadManager::~DownloadManager()
