@@ -1,7 +1,7 @@
 {
   "default-registry": {
     "kind": "git",
-    "baseline": "74e6536215718009aae747d86d84b78376bf9e09",
+    "baseline": "a0b1c8d3a477c1cb4813d8e127a56961707ca42b",
     "repository": "https://github.com/Microsoft/vcpkg"
   },
   "registries": [
@@ -13,7 +13,7 @@
     },
     {
       "kind": "git",
-      "baseline": "92f063c71cebea1926c7eb183fbe719145395985",
+      "baseline": "1316300c059f9dc6eddbdd19c57d3415a1779fee",
       "repository": "https://github.com/ModOrganizer2/vcpkg-registry",
       "packages": ["mo2-*", "7zip", "usvfs"]
     }
