@@ -357,6 +357,7 @@ void Profile::renameModInList(QFile& modList, const QString& oldName,
     if (spec == '#') {
       // don't touch comments
       outBuffer.write(line);
+      outBuffer.write("\r\n");
       continue;
     }
 
