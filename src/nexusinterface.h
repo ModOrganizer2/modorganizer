@@ -180,10 +180,10 @@ public:
   // (Armors, Texture etc).
   enum FileStatus
   {
-    MAIN          = 1,
-    UPDATE        = 2,
-    OPTIONAL_FILE = 3,  // actual string version is "OPTIONAL", but that is already
-                        // defined as a macro in minwindef.h
+    MAIN            = 1,
+    UPDATE          = 2,
+    OPTIONAL_FILE   = 3,  // actual string version is "OPTIONAL", but that is already
+                          // defined as a macro in minwindef.h
     OLD_VERSION     = 4,
     MISCELLANEOUS   = 5,
     REMOVED         = 6,
