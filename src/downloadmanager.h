@@ -32,6 +32,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSettings>
 #include <QStringList>
 #include <QTime>
+#include <QTimer>
 #include <QUrl>
 #include <QVector>
 #include <boost/accumulators/accumulators.hpp>
@@ -383,6 +384,12 @@ public:
    * @return the PendingDownload entry at the given index
    */
   PendingDownload getPendingDownload(int index);
+
+  /**
+   * @brief retrieve the info of a pending download without throwing
+   * @return true if the index was valid and download was populated
+   */
+  bool tryGetPendingDownload(int index, PendingDownload& download) const;
 
   /**
    * @brief Resolve a view row to a stable DownloadID.
@@ -808,6 +815,8 @@ private:
   std::set<int> m_RequestIDs;
 
   DirWatcherManager m_DirWatcher;
+
+  QTimer m_RefreshTimer;
 
   // nesting depth of active ModelResetGuard scopes; see its docs
   int m_modelResetDepth = 0;
