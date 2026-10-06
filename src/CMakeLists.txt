@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-find_package(mo2-cmake CONFIG REQUIRED)
 
 find_package(usvfs CONFIG REQUIRED)
 
