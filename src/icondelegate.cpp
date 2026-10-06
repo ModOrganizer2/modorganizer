@@ -77,11 +77,6 @@ void IconDelegate::paintIcons(QPainter* painter, const QStyleOptionViewItem& opt
 void IconDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option,
                          const QModelIndex& index) const
 {
-  if (auto* w = qobject_cast<QAbstractItemView*>(parent())) {
-    w->itemDelegate()->paint(painter, option, index);
-  } else {
-    QStyledItemDelegate::paint(painter, option, index);
-  }
-
+  QStyledItemDelegate::paint(painter, option, index);
   paintIcons(painter, option, index, getIcons(index));
 }
