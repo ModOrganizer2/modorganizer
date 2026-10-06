@@ -1,6 +1,7 @@
 #ifndef MODLISTVERSIONDELEGATE_H
 #define MODLISTVERSIONDELEGATE_H
 
+#include <QIcon>
 #include <QStyledItemDelegate>
 
 class ModListView;
@@ -17,6 +18,9 @@ public:
 private:
   ModListView* m_view;
   Settings& m_settings;
+
+  QIcon m_upgradeIcon;
+  QIcon m_downgradeIcon;
 };
 
 #endif

@@ -1292,10 +1292,10 @@ void OrganizerCore::refresh(bool saveChanges)
   emit refreshTriggered();
 }
 
-void OrganizerCore::refreshESPList(bool force)
+void OrganizerCore::refreshESPList(bool force, bool lightRefresh)
 {
   onNextRefresh(
-      [this, force] {
+      [this, force, lightRefresh] {
         TimeThis tt("OrganizerCore::refreshESPList()");
 
         m_CurrentProfile->writeModlist();
@@ -1303,7 +1303,8 @@ void OrganizerCore::refreshESPList(bool force)
         // clear list
         try {
           m_PluginList.refresh(m_CurrentProfile->name(), *m_DirectoryStructure,
-                               m_CurrentProfile->getLockedOrderFileName(), force);
+                               m_CurrentProfile->getLockedOrderFileName(), force,
+                               lightRefresh);
         } catch (const std::exception& e) {
           reportError(tr("Failed to refresh list of esps: %1").arg(e.what()));
         }
@@ -1450,23 +1451,24 @@ void OrganizerCore::updateModsInDirectoryStructure(
   m_DirectoryRefresher->addMultipleModsFilesToStructure(m_DirectoryStructure, entries);
 
   DirectoryRefresher::cleanStructure(m_DirectoryStructure);
-  // need to refresh plugin list now so we can activate esps
-  refreshESPList(true);
+  // need to refresh plugin list now so we can activate esps. A light refresh is
+  // enough here: it only has to populate the plugin list and the enabled states
+  // for updateModsActiveState below. The caller (modStatusChanged) does a full
+  // refreshLists() afterwards, which rebuilds everything the light refresh skipped.
+  refreshESPList(true, /*lightRefresh=*/true);
   // activate all esps of the specified mod so the bsas get activated along with
   // it
   m_PluginList.blockSignals(true);
   updateModsActiveState(modInfo.keys(), true);
   m_PluginList.blockSignals(false);
-  // now we need to refresh the bsa list and save it so there is no confusion
-  // about what archives are available and active
-  refreshBSAList();
-  if (m_UserInterface != nullptr) {
-    m_UserInterface->archivesWriter().writeImmediately(false);
-  }
 
-  std::vector<QString> archives = enabledArchives();
-  m_DirectoryRefresher->setMods(m_CurrentProfile->getActiveMods(),
-                                std::set<QString>(archives.begin(), archives.end()));
+  // determine which archives are active so the directory refresher knows which
+  // bsas to load. This used to go through a full refreshBSAList() (which rebuilds
+  // the BSA tree widget and round-trips the active set through the archives file);
+  // since the trailing refreshLists() rebuilds the tree and rewrites that file
+  // anyway, compute the active set directly and skip the redundant UI work here.
+  const std::set<QString> archives = activeArchives();
+  m_DirectoryRefresher->setMods(m_CurrentProfile->getActiveMods(), archives);
 
   // finally also add files from bsas to the directory structure
   for (auto idx : modInfo.keys()) {
@@ -1584,6 +1586,70 @@ std::vector<QString> OrganizerCore::enabledArchives()
       }
     }
   }
+  return result;
+}
+
+std::set<QString> OrganizerCore::activeArchives()
+{
+  std::set<QString> result;
+
+  auto archives = gameFeatures().gameFeature<DataArchives>();
+  if (archives == nullptr) {
+    return result;
+  }
+
+  // default archives are the ones enabled outside MO (see refreshBSAList)
+  QStringList defaultArchives = archives->archives(m_CurrentProfile.get());
+  if (defaultArchives.isEmpty()) {
+    defaultArchives = archives->vanillaArchives();
+  }
+  const bool forceCore = settings().game().forceEnableCoreFiles();
+
+  // plugins present in the virtual data directory, keyed by their base name so we
+  // can match archives like "MyMod - Textures.bsa" to the plugin "MyMod.esp"
+  const QStringList plugins = findFiles("", [](const QString& fileName) -> bool {
+    return fileName.endsWith(".esp", Qt::CaseInsensitive) ||
+           fileName.endsWith(".esm", Qt::CaseInsensitive) ||
+           fileName.endsWith(".esl", Qt::CaseInsensitive);
+  });
+
+  QList<std::pair<QString, QString>> pluginNamePairs;
+  pluginNamePairs.reserve(plugins.size());
+  for (const QString& pluginName : plugins) {
+    QFileInfo pluginInfo(pluginName);
+    pluginNamePairs.append(
+        std::make_pair(pluginInfo.completeBaseName(), pluginInfo.fileName()));
+  }
+
+  auto hasAssociatedPlugin = [&](const QString& bsaName) -> bool {
+    for (const auto& [completeBaseName, fileName] : pluginNamePairs) {
+      if (bsaName.startsWith(completeBaseName, Qt::CaseInsensitive) &&
+          (m_PluginList.state(fileName) == IPluginList::STATE_ACTIVE)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // this must stay in sync with the check-state logic in MainWindow::updateBSAList
+  for (FileEntryPtr current : m_DirectoryStructure->getFiles()) {
+    if (current.get() == nullptr) {
+      continue;
+    }
+    QFileInfo fileInfo(ToQString(current->getName().c_str()));
+    const QString suffix = fileInfo.suffix().toLower();
+    if (suffix != "bsa" && suffix != "ba2") {
+      continue;
+    }
+
+    const QString name = fileInfo.fileName();
+    if ((forceCore && defaultArchives.contains(name)) ||
+        (name.compare("update.bsa", Qt::CaseInsensitive) == 0) ||
+        hasAssociatedPlugin(name)) {
+      result.insert(name);
+    }
+  }
+
   return result;
 }
 

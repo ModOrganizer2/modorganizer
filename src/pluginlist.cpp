@@ -203,7 +203,7 @@ void PluginList::highlightMasters(const QModelIndexList& selectedPluginIndices)
 
 void PluginList::refresh(const QString& profileName,
                          const DirectoryEntry& baseDirectory,
-                         const QString& lockedOrderFile, bool force)
+                         const QString& lockedOrderFile, bool force, bool lightRefresh)
 {
   TimeThis tt("PluginList::refresh()");
 
@@ -286,11 +286,14 @@ void PluginList::refresh(const QString& profileName,
         originName           = modInfo->name();
       }
 
+      const QString pluginPath = ToQString(current->getFullPath());
+      const CachedESPData& fileData =
+          cachedESPData(pluginPath, current->getFileTime(), mediumPluginsAreSupported);
+
       m_ESPs.emplace_back(filename, forceLoaded, forceEnabled, forceDisabled,
-                          originName, ToQString(current->getFullPath()), hasIni,
-                          loadedArchives, lightPluginsAreSupported,
-                          mediumPluginsAreSupported, blueprintPluginsAreSupported,
-                          blueprintPrefix);
+                          originName, pluginPath, hasIni, loadedArchives,
+                          lightPluginsAreSupported, mediumPluginsAreSupported,
+                          blueprintPluginsAreSupported, blueprintPrefix, fileData);
       m_ESPs.rbegin()->priority = -1;
     } catch (const std::exception& e) {
       reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3")
@@ -320,6 +323,14 @@ void PluginList::refresh(const QString& profileName,
 
   if (gamePlugins) {
     gamePlugins->readPluginLists(m_Organizer.managedGameOrganizer()->pluginList());
+  }
+
+  // at this point m_ESPs/m_ESPsByName and the enabled states are populated, which
+  // is everything enableESP()/isEnabled() need. A light refresh stops here and
+  // lets the ChangeBracket close on scope exit; the skipped finalization (and its
+  // UI notifications) is redone by the full refresh that follows.
+  if (lightRefresh) {
+    return;
   }
 
   fixPrimaryPlugins();
@@ -2124,51 +2135,61 @@ QModelIndex PluginList::parent(const QModelIndex&) const
   return QModelIndex();
 }
 
+const PluginList::CachedESPData& PluginList::cachedESPData(const QString& fullPath,
+                                                           FILETIME fileTime,
+                                                           bool mediumSupported)
+{
+  auto it = m_ESPParseCache.find(fullPath);
+  if (it != m_ESPParseCache.end() &&
+      CompareFileTime(&it->second.time, &fileTime) == 0) {
+    // same source path and modification time: the parse result is still valid
+    return it->second;
+  }
+
+  CachedESPData data;
+  data.time = fileTime;
+
+  try {
+    ESP::File file(ToWString(fullPath));
+    data.isMaster      = file.isMaster();
+    data.isLight       = file.isLight(mediumSupported);
+    data.isMedium      = file.isMedium();
+    data.isBlueprint   = file.isBlueprint();
+    data.isDummy       = file.isDummy();
+    data.formVersion   = file.formVersion();
+    data.headerVersion = file.headerVersion();
+    data.author        = file.author();
+    data.description   = file.description();
+    data.masters       = file.masters();
+  } catch (const std::exception& e) {
+    // flag the failure so the ESPInfo constructor zeroes the derived fields and do NOT
+    // cache it
+    log::error("failed to parse plugin file {}: {}", fullPath, e.what());
+    static const CachedESPData failed = [] {
+      CachedESPData d;
+      d.parseFailed = true;
+      return d;
+    }();
+    return failed;
+  }
+
+  return m_ESPParseCache.insert_or_assign(fullPath, std::move(data)).first->second;
+}
+
 PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEnabled,
                              bool forceDisabled, const QString& originName,
                              const QString& fullPath, bool hasIni,
                              std::set<QString> archives, bool lightSupported,
                              bool mediumSupported, bool blueprintSupported,
-                             const QString& blueprintPrefix)
+                             const QString& blueprintPrefix,
+                             const CachedESPData& fileData)
     : name(name), fullPath(fullPath), enabled(forceLoaded), forceLoaded(forceLoaded),
       forceEnabled(forceEnabled), forceDisabled(forceDisabled), priority(0),
       loadOrder(-1), originName(originName), hasIni(hasIni),
       archives(archives.begin(), archives.end()), modSelected(false),
       isMasterOfSelectedPlugin(false)
 {
-  try {
-    ESP::File file(ToWString(fullPath));
-    auto extension     = name.right(3).toLower();
-    hasMasterExtension = (extension == "esm");
-    hasLightExtension  = (extension == "esl");
-    isMasterFlagged    = file.isMaster();
-    isLightFlagged     = lightSupported && file.isLight(mediumSupported);
-    isMediumFlagged    = mediumSupported && file.isMedium();
-    isBlueprintFlagged = blueprintSupported &&
-                         (isMasterFlagged || hasMasterExtension || hasLightExtension) &&
-                         file.isBlueprint();
-    isBlueprintPrefixed =
-        blueprintSupported && name.startsWith(blueprintPrefix, Qt::CaseInsensitive);
-    hasNoRecords = file.isDummy();
-
-    if (blueprintSupported) {
-      if ((isBlueprintFlagged || isBlueprintPrefixed) && !this->forceEnabled) {
-        this->forceDisabled = true;
-      }
-    }
-
-    hasNoRecords = file.isDummy();
-
-    formVersion   = file.formVersion();
-    headerVersion = file.headerVersion();
-    author        = QString::fromLatin1(file.author().c_str());
-    description   = QString::fromLatin1(file.description().c_str());
-
-    for (auto&& m : file.masters()) {
-      masters.insert(QString::fromStdString(m));
-    }
-  } catch (const std::exception& e) {
-    log::error("failed to parse plugin file {}: {}", fullPath, e.what());
+  if (fileData.parseFailed) {
     hasMasterExtension = false;
     hasLightExtension  = false;
     isMasterFlagged    = false;
@@ -2176,10 +2197,43 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool forceLoaded, bool forceEn
     isMediumFlagged    = false;
     isBlueprintFlagged = false;
     hasNoRecords       = false;
+    return;
+  }
+
+  auto extension     = name.right(3).toLower();
+  hasMasterExtension = (extension == "esm");
+  hasLightExtension  = (extension == "esl");
+  isMasterFlagged    = fileData.isMaster;
+  isLightFlagged     = lightSupported && fileData.isLight;
+  isMediumFlagged    = mediumSupported && fileData.isMedium;
+  isBlueprintFlagged = blueprintSupported &&
+                       (isMasterFlagged || hasMasterExtension || hasLightExtension) &&
+                       fileData.isBlueprint;
+  isBlueprintPrefixed =
+      blueprintSupported && name.startsWith(blueprintPrefix, Qt::CaseInsensitive);
+  hasNoRecords = fileData.isDummy;
+
+  if (blueprintSupported) {
+    if ((isBlueprintFlagged || isBlueprintPrefixed) && !this->forceEnabled) {
+      this->forceDisabled = true;
+    }
+  }
+
+  formVersion   = fileData.formVersion;
+  headerVersion = fileData.headerVersion;
+  author        = QString::fromLatin1(fileData.author.c_str());
+  description   = QString::fromLatin1(fileData.description.c_str());
+
+  for (auto&& m : fileData.masters) {
+    masters.insert(QString::fromStdString(m));
   }
 }
 
 void PluginList::managedGameChanged(const IPluginGame* gamePlugin)
 {
   m_GamePlugin = gamePlugin;
+
+  // the cached parse results bake in game-dependent flags (e.g. medium-plugin
+  // support affects isLight), so they must not survive a game switch
+  m_ESPParseCache.clear();
 }

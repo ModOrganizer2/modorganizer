@@ -5,7 +5,8 @@
 #include "settings.h"
 
 ModListVersionDelegate::ModListVersionDelegate(ModListView* view, Settings& settings)
-    : QItemDelegate(view), m_view(view), m_settings(settings)
+    : QItemDelegate(view), m_view(view), m_settings(settings),
+      m_upgradeIcon(":/MO/gui/update_available"), m_downgradeIcon(":/MO/gui/warning")
 {}
 
 void ModListVersionDelegate::paint(QPainter* painter,
@@ -41,8 +42,8 @@ void ModListVersionDelegate::paint(QPainter* painter,
     opt.decorationAlignment = Qt::AlignCenter;
 
     if (upgrade) {
-      QIcon icon(":/MO/gui/update_available");
-      QPixmap pixmap = decoration(opt, icon);
+      const QIcon& icon = m_upgradeIcon;
+      QPixmap pixmap    = decoration(opt, icon);
 
       QSize pm = icon.actualSize(opt.decorationSize);
       pm.rwidth() += 2 * margin;
@@ -54,8 +55,8 @@ void ModListVersionDelegate::paint(QPainter* painter,
     }
 
     if (downgrade) {
-      QIcon icon(":/MO/gui/warning");
-      QPixmap pixmap = decoration(opt, icon);
+      const QIcon& icon = m_downgradeIcon;
+      QPixmap pixmap    = decoration(opt, icon);
 
       QSize pm = icon.actualSize(opt.decorationSize);
       pm.rwidth() += 2 * margin;

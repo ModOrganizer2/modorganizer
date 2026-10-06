@@ -1,9 +1,20 @@
 #include "fileentry.h"
 #include "directoryentry.h"
+#include "fileregister.h"
 #include "filesorigin.h"
 
 namespace MOShared
 {
+
+std::shared_lock<std::shared_mutex> FileEntry::originsSortReadLock() const
+{
+  if (m_Parent != nullptr) {
+    if (const auto reg = m_Parent->getFileRegister()) {
+      return std::shared_lock<std::shared_mutex>(reg->originsSortMutex());
+    }
+  }
+  return {};
+}
 
 FileEntry::FileEntry()
     : m_Index(InvalidFileIndex), m_Name(), m_Origin(-1), m_Parent(nullptr),
@@ -140,9 +151,17 @@ bool FileEntry::removeOrigin(OriginID origin)
 
 void FileEntry::sortOrigins()
 {
-  std::scoped_lock lock(m_OriginsMutex);
+  // No per-entry lock here, you MUST have exclusive lock on originsSortReadLock (see
+  // FileRegister::sortOrigins)
 
-  m_Alternatives.push_back({m_Origin, m_Archive});
+  // No alternatives, nothing to sort. Let's not do useless work.
+  if (m_Alternatives.empty()) {
+    return;
+  }
+
+  // m_Archive is reassigned from the sorted result below, so it can be moved in rather
+  // than copied
+  m_Alternatives.push_back({m_Origin, std::move(m_Archive)});
 
   std::sort(m_Alternatives.begin(), m_Alternatives.end(), [&](auto&& LHS, auto&& RHS) {
     if (!LHS.isFromArchive() && !RHS.isFromArchive()) {
@@ -186,6 +205,9 @@ void FileEntry::sortOrigins()
 
 bool FileEntry::isFromArchive(std::wstring archiveName) const
 {
+  // shared lock first, then the per-entry lock (consistent order, no deadlock);
+  // excludes the bulk sort, which mutates origin data without the per-entry lock
+  const auto sortLock = originsSortReadLock();
   std::scoped_lock lock(m_OriginsMutex);
 
   if (archiveName.length() == 0) {
@@ -207,6 +229,9 @@ bool FileEntry::isFromArchive(std::wstring archiveName) const
 
 std::wstring FileEntry::getFullPath(OriginID originID) const
 {
+  // shared lock first, then the per-entry lock (consistent order, no deadlock);
+  // excludes the bulk sort, which mutates origin data without the per-entry lock
+  const auto sortLock = originsSortReadLock();
   std::scoped_lock lock(m_OriginsMutex);
 
   if (originID == InvalidOriginID) {

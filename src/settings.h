@@ -539,6 +539,11 @@ public:
 private:
   Settings& m_Parent;
   QSettings& m_Settings;
+
+  // endorsement/tracking integration are read on every getFlags() call (i.e. per
+  // painted row), but only ever change through the setters below, so cache them
+  mutable std::optional<bool> m_EndorsementIntegration;
+  mutable std::optional<bool> m_TrackedIntegration;
 };
 
 class SteamSettings
@@ -703,6 +708,12 @@ public:
 
 private:
   QSettings& m_Settings;
+
+  // these are read on every mod list row paint (separator highlight/icons) but
+  // only change through their setters, so cache them lazily (see NexusSettings
+  // for the same pattern). The icons cache is keyed by column.
+  mutable std::optional<bool> m_CollapsibleSeparatorsHighlightTo;
+  mutable std::map<int, bool> m_CollapsibleSeparatorsIcons;
 };
 
 class DiagnosticsSettings

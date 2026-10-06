@@ -89,7 +89,9 @@ public:
         }
       }
 
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      // Constantly yield here - windows timer is too coarse otherwise (~16ms), leads to
+      // wasting a LOT of time idling
+      std::this_thread::yield();
     }
   }
 

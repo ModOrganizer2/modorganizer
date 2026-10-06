@@ -62,7 +62,22 @@ using namespace MOShared;
 class ProxyStyle : public QProxyStyle
 {
 public:
-  ProxyStyle(QStyle* baseStyle = 0) : QProxyStyle(baseStyle) {}
+  ProxyStyle(QStyle* baseStyle = 0) : QProxyStyle(baseStyle)
+  {
+    // The Windows Vista / modern Windows style calls
+    // SystemParametersInfo(SPI_GETCLIENTAREAANIMATION) from drawControl() on
+    // *every* paint to decide whether to run transition animations. Item-view
+    // painting hits drawControl once per drawn cell. The whole
+    // animation pathis skipped when the style
+    // object carries a "_q_no_animation" property, so set it on the base style.
+
+    // Item views don't use these transitions, so nothing visible is lost there;
+    // the only effect elsewhere is dropping the subtle widget transition
+    // animations (e.g. button hover fades), which is a worthwhile trade.
+    if (baseStyle) {
+      baseStyle->setProperty("_q_no_animation", true);
+    }
+  }
 
   void drawPrimitive(PrimitiveElement element, const QStyleOption* option,
                      QPainter* painter, const QWidget* widget) const override

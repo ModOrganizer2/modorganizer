@@ -1979,12 +1979,17 @@ NexusSettings::NexusSettings(Settings& parent, QSettings& settings)
 
 bool NexusSettings::endorsementIntegration() const
 {
-  return get<bool>(m_Settings, "Settings", "endorsement_integration", true);
+  if (!m_EndorsementIntegration) {
+    m_EndorsementIntegration =
+        get<bool>(m_Settings, "Settings", "endorsement_integration", true);
+  }
+  return *m_EndorsementIntegration;
 }
 
 void NexusSettings::setEndorsementIntegration(bool b) const
 {
   set(m_Settings, "Settings", "endorsement_integration", b);
+  m_EndorsementIntegration = b;
 }
 
 EndorsementState NexusSettings::endorsementState() const
@@ -2006,12 +2011,17 @@ void NexusSettings::setEndorsementState(EndorsementState s)
 
 bool NexusSettings::trackedIntegration() const
 {
-  return get<bool>(m_Settings, "Settings", "tracked_integration", true);
+  if (!m_TrackedIntegration) {
+    m_TrackedIntegration =
+        get<bool>(m_Settings, "Settings", "tracked_integration", true);
+  }
+  return *m_TrackedIntegration;
 }
 
 void NexusSettings::setTrackedIntegration(bool b) const
 {
   set(m_Settings, "Settings", "tracked_integration", b);
+  m_TrackedIntegration = b;
 }
 
 bool NexusSettings::categoryMappings() const
@@ -2201,12 +2211,17 @@ void InterfaceSettings::setCollapsibleSeparators(bool ascending, bool descending
 
 bool InterfaceSettings::collapsibleSeparatorsHighlightTo() const
 {
-  return get<bool>(m_Settings, "Settings", "collapsible_separators_conflicts_to", true);
+  if (!m_CollapsibleSeparatorsHighlightTo) {
+    m_CollapsibleSeparatorsHighlightTo =
+        get<bool>(m_Settings, "Settings", "collapsible_separators_conflicts_to", true);
+  }
+  return *m_CollapsibleSeparatorsHighlightTo;
 }
 
 void InterfaceSettings::setCollapsibleSeparatorsHighlightTo(bool b)
 {
   set(m_Settings, "Settings", "collapsible_separators_conflicts_to", b);
+  m_CollapsibleSeparatorsHighlightTo = b;
 }
 
 bool InterfaceSettings::collapsibleSeparatorsHighlightFrom() const
@@ -2222,14 +2237,21 @@ void InterfaceSettings::setCollapsibleSeparatorsHighlightFrom(bool b)
 
 bool InterfaceSettings::collapsibleSeparatorsIcons(int column) const
 {
-  return get<bool>(m_Settings, "Settings",
-                   QString("collapsible_separators_icons_%1").arg(column), true);
+  auto it = m_CollapsibleSeparatorsIcons.find(column);
+  if (it == m_CollapsibleSeparatorsIcons.end()) {
+    const bool v =
+        get<bool>(m_Settings, "Settings",
+                  QString("collapsible_separators_icons_%1").arg(column), true);
+    it = m_CollapsibleSeparatorsIcons.emplace(column, v).first;
+  }
+  return it->second;
 }
 
 void InterfaceSettings::setCollapsibleSeparatorsIcons(int column, bool show)
 {
   set(m_Settings, "Settings", QString("collapsible_separators_icons_%1").arg(column),
       show);
+  m_CollapsibleSeparatorsIcons[column] = show;
 }
 
 bool InterfaceSettings::collapsibleSeparatorsPerProfile() const

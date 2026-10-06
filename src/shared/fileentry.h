@@ -3,6 +3,8 @@
 
 #include "fileregisterfwd.h"
 
+#include <shared_mutex>
+
 namespace MOShared
 {
 
@@ -84,6 +86,12 @@ private:
   mutable std::mutex m_OriginsMutex;
 
   bool recurseParents(std::wstring& path, const DirectoryEntry* parent) const;
+
+  // Shared lock on the owning FileRegister's origins-sort mutex. Readers take
+  // this (in addition to m_OriginsMutex) so they are excluded while
+  // FileRegister::sortOrigins holds it exclusively. Returns an empty lock if the
+  // register can't be reached (e.g. a parentless entry).
+  std::shared_lock<std::shared_mutex> originsSortReadLock() const;
 };
 
 }  // namespace MOShared

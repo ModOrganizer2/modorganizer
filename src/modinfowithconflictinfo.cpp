@@ -4,6 +4,7 @@
 #include "shared/filesorigin.h"
 #include "utility.h"
 #include <filesystem>
+#include <map>
 
 #include "iplugingame.h"
 #include "moddatachecker.h"
@@ -118,10 +119,46 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
     std::vector<FileEntryPtr> files = origin.getFiles();
     std::set<const DirectoryEntry*> checkedDirs;
 
+    // Hidden files/dirs end with ".mohidden". Test the suffix directly on the
+    // wide string (ASCII, case-insensitive) instead of converting every file and
+    // directory name to a QString just to call endsWith.
+    const std::wstring hiddenExt = ToWString(ModInfo::s_HiddenExt);
+    const auto endsWithHiddenExt = [&hiddenExt](const std::wstring& s) {
+      if (s.size() < hiddenExt.size()) {
+        return false;
+      }
+      const auto offset = s.size() - hiddenExt.size();
+      for (size_t i = 0; i < hiddenExt.size(); ++i) {
+        wchar_t a = s[offset + i];
+        wchar_t b = hiddenExt[i];
+        if (a >= L'A' && a <= L'Z')
+          a = static_cast<wchar_t>(a + (L'a' - L'A'));
+        if (b >= L'A' && b <= L'Z')
+          b = static_cast<wchar_t>(b + (L'a' - L'A'));
+        if (a != b) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    // The same alternative origins recur across many files; cache the
+    // origin-id -> mod-index mapping to avoid repeating the name lookup.
+    std::map<int, unsigned int> originModIndex;
+    const auto modIndexForOrigin = [&](int originID) -> unsigned int {
+      auto it = originModIndex.find(originID);
+      if (it != originModIndex.end()) {
+        return it->second;
+      }
+      const auto idx = ModInfo::getIndex(
+          ToQString(m_Core.directoryStructure()->getOriginByID(originID).getName()));
+      originModIndex.emplace(originID, idx);
+      return idx;
+    };
+
     // for all files in this origin
-    for (FileEntryPtr file : files) {
-      if (QString::fromStdWString(file->getName())
-              .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
+    for (const FileEntryPtr& file : files) {
+      if (endsWithHiddenExt(file->getName())) {
         hasHiddenFiles = true;
         // skip hidden file conflicts
         continue;
@@ -138,8 +175,7 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
             // well
             break;
           } else {
-            if (QString::fromStdWString(parent->getName())
-                    .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
+            if (endsWithHiddenExt(parent->getName())) {
               hasHiddenFiles = hidden = true;
               break;
             }
@@ -152,8 +188,8 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
         }
       }
 
-      hasVisibleFiles   = true;
-      auto alternatives = file->getAlternatives();
+      hasVisibleFiles          = true;
+      const auto& alternatives = file->getAlternatives();
       if ((alternatives.size() == 0) ||
           std::find(dataIDs.begin(), dataIDs.end(), alternatives.back().originID()) !=
               dataIDs.end()) {
@@ -175,9 +211,7 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
 
         // If this is not the origin then determine the correct overwrite
         if (file->getOrigin() != origin.getID()) {
-          FilesOrigin& altOrigin =
-              m_Core.directoryStructure()->getOriginByID(file->getOrigin());
-          unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
+          unsigned int altIndex = modIndexForOrigin(file->getOrigin());
           if (!file->isFromArchive()) {
             if (!archiveData.isValid())
               conflicts.m_OverwrittenList.insert(altIndex);
@@ -197,8 +231,7 @@ ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() co
               (altInfo.originID() != origin.getID())) {
             FilesOrigin& altOrigin =
                 m_Core.directoryStructure()->getOriginByID(altInfo.originID());
-            QString altOriginName = ToQString(altOrigin.getName());
-            unsigned int altIndex = ModInfo::getIndex(altOriginName);
+            unsigned int altIndex = modIndexForOrigin(altInfo.originID());
             if (!altInfo.isFromArchive()) {
               if (!archiveData.isValid()) {
                 if (origin.getPriority() > altOrigin.getPriority()) {

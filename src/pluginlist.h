@@ -127,11 +127,17 @@ public:
    * @param baseDirectory the root directory structure representing the virtual data
    *directory
    * @param lockedOrderFile list of plugins that shouldn't change load order
+   * @param force if true, the plugin list is rebuilt from scratch
+   * @param lightRefresh if true, only the plugin list and enabled states are
+   *        rebuilt; the relationship/master/index/load-order finalization (and the
+   *        associated UI notifications) are skipped. Use this only when a full
+   *        refresh is guaranteed to follow, e.g. the intermediate refresh while
+   *        applying a mod state change. enableESP()/isEnabled() remain valid.
    * @todo the profile is not used? If it was, we should pass the Profile-object instead
    **/
   void refresh(const QString& profileName,
                const MOShared::DirectoryEntry& baseDirectory,
-               const QString& lockedOrderFile, bool refresh);
+               const QString& lockedOrderFile, bool force, bool lightRefresh = false);
 
   /**
    * @brief enable a plugin based on its name
@@ -326,13 +332,37 @@ signals:
   void writePluginsList();
 
 private:
+  // Cached result of parsing a plugin file from disk (ESP::File). The parsed
+  // fields depend only on the file's content, so they are reused across refreshes
+  // as long as the source path and modification time are unchanged.
+  struct CachedESPData
+  {
+    FILETIME time        = {};
+    bool parseFailed     = false;
+    bool isMaster        = false;
+    bool isLight         = false;
+    bool isMedium        = false;
+    bool isBlueprint     = false;
+    bool isDummy         = false;
+    uint16_t formVersion = 0;
+    float headerVersion  = 0.0f;
+    std::string author;
+    std::string description;
+    std::set<std::string> masters;
+  };
+
+  // Returns parsed data for the plugin at fullPath, reading from disk only on a
+  // cache miss (new path or changed modification time).
+  const CachedESPData& cachedESPData(const QString& fullPath, FILETIME fileTime,
+                                     bool mediumSupported);
+
   struct ESPInfo
   {
     ESPInfo(const QString& name, bool forceLoaded, bool forceEnabled,
             bool forceDisabled, const QString& originName, const QString& fullPath,
             bool hasIni, std::set<QString> archives, bool lightSupported,
             bool mediumSupported, bool blueprintSupported,
-            const QString& blueprintPrefix);
+            const QString& blueprintPrefix, const CachedESPData& fileData);
 
     QString name;
     QString fullPath;
@@ -409,6 +439,11 @@ private:
 
   std::map<QString, int, MOBase::FileNameComparator> m_ESPsByName;
   std::vector<int> m_ESPsByPriority;
+
+  // disk-parse cache for plugin files, keyed by full path (see cachedESPData);
+  // std::map gives stable references so a returned entry stays valid while the
+  // refresh loop keeps inserting
+  std::map<QString, CachedESPData, MOBase::FileNameComparator> m_ESPParseCache;
 
   std::map<QString, int, MOBase::FileNameComparator> m_LockedOrder;
 

@@ -90,8 +90,9 @@ template <class T>
 std::optional<T> getOptional(const QSettings& settings, const QString& section,
                              const QString& key, std::optional<T> def = {})
 {
-  if (settings.contains(settingName(section, key))) {
-    const auto v = settings.value(settingName(section, key));
+  const auto name = settingName(section, key);
+  if (settings.contains(name)) {
+    const auto v = settings.value(name);
 
     if constexpr (std::is_enum_v<T>) {
       return static_cast<T>(v.value<std::underlying_type_t<T>>());

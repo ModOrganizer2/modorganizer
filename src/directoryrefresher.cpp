@@ -330,9 +330,9 @@ struct ModThread
   std::wstring path;
   int prio = -1;
   std::vector<std::wstring> archives;
-  std::set<std::wstring> enabledArchives;
-  std::vector<std::wstring>* loadOrder = nullptr;
-  DirectoryStats* stats                = nullptr;
+  const std::set<std::wstring>* enabledArchives = nullptr;
+  std::vector<std::wstring>* loadOrder          = nullptr;
+  DirectoryStats* stats                         = nullptr;
   env::DirectoryWalker walker;
 
   std::condition_variable cv;
@@ -360,7 +360,7 @@ struct ModThread
     ds->addFromOrigin(walker, modName, path, prio, *stats);
 
     if (Settings::instance().archiveParsing()) {
-      ds->addFromAllBSAs(modName, path, prio, archives, enabledArchives, *loadOrder,
+      ds->addFromAllBSAs(modName, path, prio, archives, *enabledArchives, *loadOrder,
                          *stats);
     }
 
@@ -406,6 +406,13 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
     }
   }
 
+  // the enabled-archive set is the same for every mod, so convert it to wstrings
+  // once here and share it by pointer instead of rebuilding it per mod thread
+  std::set<std::wstring> enabledArchives;
+  for (auto&& a : m_EnabledArchives) {
+    enabledArchives.insert(a.toStdWString());
+  }
+
   for (std::size_t i = 0; i < entries.size(); ++i) {
     const auto& e  = entries[i];
     const int prio = e.priority + 1;
@@ -437,10 +444,7 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
           mt.archives.push_back(a.toStdWString());
         }
 
-        mt.enabledArchives.clear();
-        for (auto&& a : m_EnabledArchives) {
-          mt.enabledArchives.insert(a.toStdWString());
-        }
+        mt.enabledArchives = &enabledArchives;
 
         mt.loadOrder = &loadOrder;
         mt.stats     = &stats[i];

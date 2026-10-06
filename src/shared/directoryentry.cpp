@@ -168,6 +168,16 @@ void DirectoryEntry::addFromAllBSAs(const std::wstring& originName,
                                     const std::vector<std::wstring>& loadOrder,
                                     DirectoryStats& stats)
 {
+  if (archives.empty()) {
+    return;
+  }
+
+  std::vector<std::wstring> pluginStemsLc;
+  pluginStemsLc.reserve(loadOrder.size());
+  for (const auto& plugin : loadOrder) {
+    pluginStemsLc.push_back(ToLowerCopy(std::filesystem::path(plugin).stem().native()));
+  }
+
   for (const auto& archive : archives) {
     const std::filesystem::path archivePath(archive);
     const auto filename = archivePath.filename().native();
@@ -180,15 +190,15 @@ void DirectoryEntry::addFromAllBSAs(const std::wstring& originName,
 
     int order = -1;
 
-    for (auto plugin : loadOrder) {
-      const auto pluginNameLc =
-          ToLowerCopy(std::filesystem::path(plugin).stem().native());
+    for (std::size_t i = 0; i < pluginStemsLc.size(); ++i) {
+      const std::wstring& pluginNameLc = pluginStemsLc[i];
 
-      if (filenameLc.starts_with(pluginNameLc + L" - ") ||
-          filenameLc.starts_with(pluginNameLc + L".")) {
-        auto itor = std::find(loadOrder.begin(), loadOrder.end(), plugin);
-        if (itor != loadOrder.end()) {
-          order = std::distance(loadOrder.begin(), itor);
+      if (filenameLc.starts_with(pluginNameLc)) {
+        std::wstring_view rest(filenameLc);
+        rest.remove_prefix(pluginNameLc.size());
+
+        if (rest.starts_with(L" - ") || (!rest.empty() && rest.front() == L'.')) {
+          order = static_cast<int>(i);
         }
       }
     }
@@ -246,7 +256,12 @@ void DirectoryEntry::propagateOrigin(int origin)
 {
   {
     std::scoped_lock lock(m_OriginsMutex);
-    m_Origins.insert(origin);
+    if (!m_Origins.insert(origin).second) {
+      // The origin was already recorded here. By construction, an origin is only ever
+      // added to a directory together with all of its ancestors, so every ancestor
+      // already has it too - there is nothing left to propagate.
+      return;
+    }
   }
 
   if (m_Parent != nullptr) {
@@ -557,10 +572,10 @@ FileEntryPtr DirectoryEntry::insert(std::wstring_view fileName, FilesOrigin& ori
                                       this, stats);
 
       elapsed(stats.addFileTimes, [&] {
-        addFileToList(std::move(key.value), fe->getIndex());
+        addFileToList(std::move(key), fe->getIndex());
       });
 
-      // fileNameLower has moved from this point
+      // key has moved from this point
     }
   }
 
@@ -600,7 +615,7 @@ FileEntryPtr DirectoryEntry::insert(env::File& file, FilesOrigin& origin,
       // file.name has been moved from this point
 
       elapsed(stats.addFileTimes, [&] {
-        addFileToList(std::move(file.lcname), fe->getIndex());
+        addFileToList(DirectoryEntryFileKey(std::move(file.lcname)), fe->getIndex());
       });
 
       // file.lcname has been moved from this point
@@ -890,11 +905,12 @@ void DirectoryEntry::removeFilesFromList(const std::set<FileIndex>& indices)
   }
 }
 
-void DirectoryEntry::addFileToList(std::wstring fileNameLower, FileIndex index)
+void DirectoryEntry::addFileToList(DirectoryEntryFileKey key, FileIndex index)
 {
-  m_FilesLookup.emplace(fileNameLower, index);
-  m_Files.emplace(std::move(fileNameLower), index);
-  // fileNameLower has been moved from this point
+  // copy the name into the ordered map, then move the key (with its already
+  // computed hash) into the lookup map so it isn't re-hashed
+  m_Files.emplace(key.value, index);
+  m_FilesLookup.emplace(std::move(key), index);
 }
 
 struct DumpFailed : public std::runtime_error

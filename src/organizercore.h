@@ -47,6 +47,7 @@ class PluginContainer;
 class DirectoryRefresher;
 
 #include <memory>
+#include <set>
 #include <vector>
 
 namespace MOBase
@@ -280,6 +281,12 @@ public:
 
   std::vector<QString> enabledArchives();
 
+  // computes the set of archives (bsa/ba2) that should be active, using the same
+  // rules as MainWindow::updateBSAList (core/default archives, update.bsa and
+  // archives associated with an active plugin) but without touching the UI. Used
+  // to feed the directory refresher without rebuilding the BSA tree widget.
+  std::set<QString> activeArchives();
+
   MOBase::Version getVersion() const { return m_Updater.getVersion(); }
 
   // return the plugin container
@@ -318,7 +325,12 @@ public:
   ProcessRunner::Results
   waitForAllUSVFSProcesses(UILocker::Reasons reason = UILocker::PreventExit);
 
-  void refreshESPList(bool force = false);
+  // when lightRefresh is true, only the work required to query and toggle plugin
+  // activation state is performed (plugin list + enabled states); the expensive
+  // relationship/master/index/load-order finalization is skipped. This is used
+  // for the intermediate refresh during a mod state change, where a second, full
+  // refresh follows anyway.
+  void refreshESPList(bool force = false, bool lightRefresh = false);
   void refreshBSAList();
 
   void refreshDirectoryStructure();
