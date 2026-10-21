@@ -921,39 +921,43 @@ void PluginList::refreshLoadOrder()
 {
   ChangeBracket<PluginList> layoutChange(this);
   syncLoadOrder();
-  // set priorities according to locked load order
-  std::map<int, QString> lockedLoadOrder;
-  std::for_each(m_LockedOrder.begin(), m_LockedOrder.end(),
-                [&lockedLoadOrder](const std::pair<QString, int>& ele) {
-                  lockedLoadOrder[ele.second] = ele.first;
-                });
+  // set priorities according to locked load order, maps load order to plugin index
+  std::map<int, int> lockedLoadOrder;
+  for (const auto& [name, loadOrder] : m_LockedOrder) {
+    // only present, enabled plugins have a load order to enforce; the locks of the
+    // others are kept and apply again once the plugin is back and enabled
+    //
+    // placing a disabled plugin anyway makes it flip around the plugin holding its
+    // index on every refresh, and leaving any of them in would take the slot of an
+    // enabled plugin locked to the same index
+    auto nameIter = m_ESPsByName.find(name);
+    if (nameIter == m_ESPsByName.end() || !m_ESPs[nameIter->second].enabled) {
+      continue;
+    }
+    lockedLoadOrder[loadOrder] = nameIter->second;
+  }
 
   int targetPrio       = 0;
   bool savePluginsList = false;
   // this is guaranteed to iterate from lowest key (load order) to highest
   for (auto iter = lockedLoadOrder.begin(); iter != lockedLoadOrder.end(); ++iter) {
-    auto nameIter = m_ESPsByName.find(iter->second);
-    if (nameIter != m_ESPsByName.end()) {
-      // locked esp exists
+    // find the location to insert at
+    while ((targetPrio < static_cast<int>(m_ESPs.size() - 1)) &&
+           (m_ESPs[m_ESPsByPriority[targetPrio]].loadOrder < iter->first)) {
+      ++targetPrio;
+    }
 
-      // find the location to insert at
-      while ((targetPrio < static_cast<int>(m_ESPs.size() - 1)) &&
-             (m_ESPs[m_ESPsByPriority[targetPrio]].loadOrder < iter->first)) {
-        ++targetPrio;
-      }
+    if (static_cast<size_t>(targetPrio) >= m_ESPs.size()) {
+      continue;
+    }
 
-      if (static_cast<size_t>(targetPrio) >= m_ESPs.size()) {
-        continue;
-      }
-
-      int temp  = targetPrio;
-      int index = nameIter->second;
-      if (m_ESPs[index].priority != temp) {
-        setPluginPriority(index, temp);
-        m_ESPs[index].loadOrder = iter->first;
-        syncLoadOrder();
-        savePluginsList = true;
-      }
+    int temp  = targetPrio;
+    int index = iter->second;
+    if (m_ESPs[index].priority != temp) {
+      setPluginPriority(index, temp);
+      m_ESPs[index].loadOrder = iter->first;
+      syncLoadOrder();
+      savePluginsList = true;
     }
   }
   if (savePluginsList) {
