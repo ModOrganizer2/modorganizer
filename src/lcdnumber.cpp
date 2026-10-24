@@ -20,7 +20,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTimer>
 #include <QToolTip>
 
-LCDNumber::LCDNumber(QWidget* parent) : QLCDNumber(parent) {}
+LCDNumber::LCDNumber(QWidget* parent) : QLCDNumber(parent)
+{
+  connect(this, &LCDNumber::overflow, this, [this]() {
+    if (digitCount() < 99) {
+      setDigitCount(digitCount() + 1);
+      display(value());
+    }
+  });
+}
 
 void LCDNumber::mousePressEvent(QMouseEvent* event)
 {
