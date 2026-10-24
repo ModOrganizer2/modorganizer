@@ -75,6 +75,11 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   connect(ui->filetree, &QTreeView::activated, [&](auto&&) {
     onActivated();
   });
+
+  connect(m_fs, &QFileSystemModel::fileRenamed, this,
+          [this](const QString&, const QString&, const QString&) {
+            emitOriginModified();
+          });
 }
 
 void FileTreeTab::clear()
@@ -277,6 +282,8 @@ void FileTreeTab::onDelete()
   for (const auto& index : rows) {
     deleteFile(index);
   }
+
+  emitOriginModified();
 }
 
 void FileTreeTab::onHide()
