@@ -56,6 +56,8 @@ ImagesTab::ImagesTab(ModInfoDialogTabContext cx)
     onScrolled();
   });
 
+  // Hide defunct DDS support. Maybe will be restored eventually
+  ui->imagesShowDDS->setHidden(!m_ddsAvailable);
   ui->imagesShowDDS->setEnabled(m_ddsAvailable);
 
   m_filter.setEdit(ui->imagesFilter);

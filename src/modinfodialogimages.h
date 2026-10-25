@@ -341,7 +341,6 @@ private:
   Metrics m_metrics;
 
   void getSupportedFormats();
-  void enableDDS(bool b);
 
   void scrollAreaResized(const QSize& s);
   void paintThumbnailsArea(QPaintEvent* e);
