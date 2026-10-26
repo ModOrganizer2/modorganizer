@@ -33,6 +33,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QMimeData>
 #include <QRegularExpression>
+#include <QScopeGuard>
 #include <QSortFilterProxyModel>
 #include <QString>
 #include <QtDebug>
@@ -1049,6 +1050,86 @@ void PluginList::setLoadOrder(const QStringList& pluginList)
   updateIndices();
 }
 
+void PluginList::applyChanges(const QStringList& loadOrder,
+                              const std::map<QString, PluginStates>& states)
+{
+  // rows of m_ESPs stay the same while priorities and states change, so the
+  // snapshot is indexed by row
+  std::vector<int> oldPriorities;
+  std::vector<bool> wasEnabled;
+  for (const ESPInfo& info : m_ESPs) {
+    oldPriorities.push_back(info.priority);
+    wasEnabled.push_back(info.enabled);
+  }
+
+  ChangeBracket<PluginList> layoutChange(this);
+
+  {
+    // the fixes below move plugins step by step, observers only get the net result
+    m_ArePluginMovesSilenced = true;
+    const auto unsilence     = qScopeGuard([this] {
+      m_ArePluginMovesSilenced = false;
+    });
+
+    std::vector<int> rowsByNewPriority;
+    std::vector<bool> isPlaced(m_ESPs.size(), false);
+    for (const QString& name : loadOrder) {
+      auto iter = m_ESPsByName.find(name);
+      if (iter == m_ESPsByName.end()) {
+        log::warn("Plugin not found: {}", name);
+        continue;
+      }
+      if (!isPlaced[iter->second]) {
+        isPlaced[iter->second] = true;
+        rowsByNewPriority.push_back(iter->second);
+      }
+    }
+    for (int row : m_ESPsByPriority) {
+      if (!isPlaced[row]) {
+        isPlaced[row] = true;
+        rowsByNewPriority.push_back(row);
+      }
+    }
+    for (int priority = 0; priority < static_cast<int>(rowsByNewPriority.size());
+         ++priority) {
+      m_ESPs[rowsByNewPriority[priority]].priority = priority;
+    }
+    updateIndices();
+
+    for (const auto& [name, newState] : states) {
+      setState(name, newState);
+    }
+
+    // unlike setPluginPriority(), the order above was applied without any rules,
+    // so enforce them as refresh() does after reading the lists
+    fixPrimaryPlugins();
+    fixPluginRelationships();
+    refreshLoadOrder();
+  }
+
+  testMasters();
+  // every change above happened inside the bracket, so layoutChanged() already
+  // makes the views re-read all rows and no dataChanged() is needed
+  layoutChange.finish();
+  emit writePluginsList();
+
+  for (int row : m_ESPsByPriority) {
+    if (m_ESPs[row].priority != oldPriorities[row]) {
+      m_PluginMoved(m_ESPs[row].name, oldPriorities[row], m_ESPs[row].priority);
+    }
+  }
+
+  std::map<QString, PluginStates> changedStates;
+  for (int row = 0; row < static_cast<int>(m_ESPs.size()); ++row) {
+    if (m_ESPs[row].enabled != wasEnabled[row]) {
+      changedStates[m_ESPs[row].name] = state(m_ESPs[row].name);
+    }
+  }
+  if (!changedStates.empty()) {
+    m_PluginStateChanged(changedStates);
+  }
+}
+
 int PluginList::priority(const QString& name) const
 {
   auto iter = m_ESPsByName.find(name);
@@ -2035,7 +2116,9 @@ void PluginList::setPluginPriority(int row, int& newPriority, bool isForced)
 
       m_ESPs.at(row).priority = newPriorityTemp;
       emit dataChanged(index(row, 0), index(row, columnCount()));
-      m_PluginMoved(m_ESPs[row].name, oldPriority, newPriorityTemp);
+      if (!m_ArePluginMovesSilenced) {
+        m_PluginMoved(m_ESPs[row].name, oldPriority, newPriorityTemp);
+      }
     }
   } catch (const std::out_of_range&) {
     reportError(tr("failed to restore load order for %1").arg(m_ESPs[row].name));

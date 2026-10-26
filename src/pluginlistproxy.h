@@ -19,6 +19,8 @@ public:
   bool setPriority(const QString& name, int newPriority) override;
   int loadOrder(const QString& name) const override;
   void setLoadOrder(const QStringList& pluginList) override;
+  void applyChanges(const QStringList& loadOrder,
+                    const std::map<QString, PluginStates>& states) override;
   [[deprecated]] bool isMaster(const QString& name) const override;
   QStringList masters(const QString& name) const override;
   QString origin(const QString& name) const override;

@@ -244,6 +244,8 @@ public:
   QStringList masters(const QString& name) const;
   QString origin(const QString& name) const;
   void setLoadOrder(const QStringList& pluginList);
+  void applyChanges(const QStringList& loadOrder,
+                    const std::map<QString, PluginStates>& states);
 
   bool hasMasterExtension(const QString& name) const;
   bool hasLightExtension(const QString& name) const;
@@ -421,6 +423,9 @@ private:
   SignalRefreshed m_Refreshed;
   SignalPluginMoved m_PluginMoved;
   SignalPluginStateChanged m_PluginStateChanged;
+
+  // set by applyChanges(), which reports the net moves itself once it's done
+  bool m_ArePluginMovesSilenced = false;
 
   QTemporaryFile m_TempFile;
 

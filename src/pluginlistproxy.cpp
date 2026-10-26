@@ -67,6 +67,12 @@ void PluginListProxy::setLoadOrder(const QStringList& pluginList)
   return m_Proxied->setLoadOrder(pluginList);
 }
 
+void PluginListProxy::applyChanges(const QStringList& loadOrder,
+                                   const std::map<QString, PluginStates>& states)
+{
+  return m_Proxied->applyChanges(loadOrder, states);
+}
+
 bool PluginListProxy::isMaster(const QString& name) const
 {
   return m_Proxied->isMasterFlagged(name);
