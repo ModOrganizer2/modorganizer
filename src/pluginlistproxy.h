@@ -9,7 +9,7 @@ class OrganizerProxy;
 class PluginListProxy : public MOBase::IPluginList
 {
 public:
-  PluginListProxy(OrganizerProxy* oproxy, PluginList* pluginlist);
+  PluginListProxy(OrganizerProxy* oproxy, OrganizerCore* organizer);
   virtual ~PluginListProxy();
 
   QStringList pluginNames() const override;
@@ -42,6 +42,9 @@ public:
   QString author(const QString& name) const override;
   QString description(const QString& name) const override;
 
+  bool flush() override;
+  void reloadFromDisk() override;
+
 private:
   friend class OrganizerProxy;
 
@@ -50,6 +53,7 @@ private:
   void disconnectSignals();
 
   OrganizerProxy* m_OrganizerProxy;
+  OrganizerCore* m_Organizer;
   PluginList* m_Proxied;
 
   PluginList::SignalRefreshed m_Refreshed;

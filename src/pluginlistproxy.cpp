@@ -5,8 +5,9 @@
 using namespace MOBase;
 using namespace MOShared;
 
-PluginListProxy::PluginListProxy(OrganizerProxy* oproxy, PluginList* pluginlist)
-    : m_OrganizerProxy(oproxy), m_Proxied(pluginlist)
+PluginListProxy::PluginListProxy(OrganizerProxy* oproxy, OrganizerCore* organizer)
+    : m_OrganizerProxy(oproxy), m_Organizer(organizer),
+      m_Proxied(organizer->pluginList())
 {}
 
 PluginListProxy::~PluginListProxy()
@@ -152,4 +153,14 @@ QString PluginListProxy::author(const QString& name) const
 QString PluginListProxy::description(const QString& name) const
 {
   return m_Proxied->description(name);
+}
+
+bool PluginListProxy::flush()
+{
+  return m_Organizer->flushPluginList();
+}
+
+void PluginListProxy::reloadFromDisk()
+{
+  m_Organizer->reloadPluginList();
 }
