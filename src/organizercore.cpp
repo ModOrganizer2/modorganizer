@@ -1311,6 +1311,26 @@ void OrganizerCore::refreshESPList(bool force)
       RefreshCallbackGroup::CORE, RefreshCallbackMode::RUN_NOW_IF_POSSIBLE);
 }
 
+bool OrganizerCore::flushPluginList()
+{
+  if (m_DirectoryUpdate) {
+    return false;
+  }
+
+  m_PluginListsWriter.writeImmediately(true);
+  return true;
+}
+
+void OrganizerCore::reloadPluginList()
+{
+  // a write whose timer has already fired during a directory update is queued until
+  // the update is done, cancel() cannot stop it, see savePluginList()
+  m_PluginListsWriter.cancel();
+  ++m_PluginListReloadCount;
+
+  refreshESPList(true);
+}
+
 void OrganizerCore::refreshBSAList()
 {
   TimeThis tt("OrganizerCore::refreshBSAList()");
@@ -1974,7 +1994,13 @@ bool OrganizerCore::saveCurrentLists()
 void OrganizerCore::savePluginList()
 {
   onNextRefresh(
-      [this]() {
+      [this, reloadCount = m_PluginListReloadCount]() {
+        // the files were read again since this write was requested, writing the list
+        // as it was would overwrite them
+        if (reloadCount != m_PluginListReloadCount) {
+          return;
+        }
+
         m_PluginList.saveTo(m_CurrentProfile->getLockedOrderFileName());
         m_PluginList.saveLoadOrder(*m_DirectoryStructure);
       },

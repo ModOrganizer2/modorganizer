@@ -321,6 +321,14 @@ public:
   void refreshESPList(bool force = false);
   void refreshBSAList();
 
+  // writes the plugin lists now if a write is pending; returns false during a
+  // directory update, since they cannot be written then
+  bool flushPluginList();
+
+  // reads the plugin lists again from disk, discarding the changes that have not been
+  // written yet
+  void reloadPluginList();
+
   void refreshDirectoryStructure();
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
   void updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::Ptr> modInfos);
@@ -590,6 +598,10 @@ private:
   bool m_ArchivesInit;
 
   MOBase::DelayedFileWriter m_PluginListsWriter;
+
+  // increased by reloadPluginList(), so that writes queued before it are skipped
+  unsigned int m_PluginListReloadCount = 0;
+
   UsvfsConnector m_USVFS;
 
   UILocker m_UILocker;
