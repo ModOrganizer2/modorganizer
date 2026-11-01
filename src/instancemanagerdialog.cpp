@@ -570,6 +570,11 @@ void InstanceManagerDialog::deleteInstance()
     return;
   }
 
+  // prevent out of bound access when deleting item at back
+  if (m_instances.back().get() == i) {
+    select(m_instances.size() - 2);
+  }
+
   // updating ui
   updateInstances();
   updateList();
@@ -619,6 +624,7 @@ void InstanceManagerDialog::onSelection()
 {
   const auto i = singleSelectionIndex();
   if (i == NoSelection) {
+    select(-1);
     return;
   }
 
@@ -726,6 +732,7 @@ void InstanceManagerDialog::setButtonsEnabled(bool b)
   ui->exploreGame->setEnabled(b);
   ui->convertToPortable->setEnabled(b);
   ui->convertToGlobal->setEnabled(b);
+  ui->openINI->setEnabled(b);
   ui->deleteInstance->setEnabled(b);
   ui->switchToInstance->setEnabled(b);
 }
