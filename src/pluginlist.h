@@ -44,7 +44,9 @@ class IPluginGame;
 #include <boost/signals2.hpp>
 #endif
 
+#include <atomic>
 #include <map>
+#include <memory>
 #include <vector>
 
 class OrganizerCore;
@@ -232,6 +234,11 @@ public:
 
   void refreshLoadOrder();
 
+  // copy the current plugin data for IPluginList calls made from other threads,
+  // must be called from the GUI thread
+  //
+  void publishReadSnapshot() const;
+
   void disconnectSlots();
 
 public:
@@ -373,6 +380,32 @@ private:
     Loot::Plugin loot;
   };
 
+  // m_ESPs and m_ESPsByName are rebuilt on the GUI thread at any time, so the
+  // IPluginList getters read this copy when called from another thread (e.g. the
+  // IPluginDiagnose checks MainWindow runs through QtConcurrent)
+  struct ReadSnapshot
+  {
+    std::vector<ESPInfo> esps;
+    std::map<QString, int, MOBase::FileNameComparator> byName;
+  };
+
+  // the live data on the GUI thread, the last published snapshot on others
+  class ReadView
+  {
+  public:
+    const ESPInfo* find(const QString& name) const;
+    const std::vector<ESPInfo>& esps() const { return *m_ESPs; }
+
+  private:
+    friend class PluginList;
+
+    std::shared_ptr<const ReadSnapshot> m_Snapshot;
+    const std::vector<ESPInfo>* m_ESPs;
+    const std::map<QString, int, MOBase::FileNameComparator>* m_ByName;
+  };
+
+  ReadView readView() const;
+
 private:
   void syncLoadOrder();
   void updateIndices();
@@ -409,6 +442,10 @@ private:
 
   std::map<QString, int, MOBase::FileNameComparator> m_ESPsByName;
   std::vector<int> m_ESPsByPriority;
+  mutable std::atomic<std::shared_ptr<const ReadSnapshot>> m_ReadSnapshot;
+
+  // refresh() publishes once when it is done instead of after every change it makes
+  bool m_Refreshing = false;
 
   std::map<QString, int, MOBase::FileNameComparator> m_LockedOrder;
 

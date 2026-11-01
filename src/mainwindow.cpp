@@ -1023,6 +1023,9 @@ bool MainWindow::errorReported(QString& logFile)
 
 QFuture<void> MainWindow::checkForProblemsAsync()
 {
+  // the checks run on a pool thread and read the plugin list from there
+  m_OrganizerCore.pluginList()->publishReadSnapshot();
+
   return QtConcurrent::run([this]() {
     checkForProblemsImpl();
   });
