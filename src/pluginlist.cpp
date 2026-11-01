@@ -35,6 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QRegularExpression>
 #include <QSortFilterProxyModel>
 #include <QString>
+#include <QThread>
 #include <QtDebug>
 
 #include <esptk/espfile.h>
@@ -336,6 +337,8 @@ void PluginList::refresh(const QString& profileName,
   refreshLoadOrder();
   emit dataChanged(this->index(0, 0),
                    this->index(static_cast<int>(m_ESPs.size()), columnCount()));
+
+  publishReadSnapshot();
 
   m_Refreshed();
 }
@@ -977,7 +980,8 @@ QStringList PluginList::pluginNames() const
 {
   QStringList result;
 
-  for (const ESPInfo& info : m_ESPs) {
+  const auto view = readView();
+  for (const ESPInfo& info : view.esps()) {
     result.append(info.name);
   }
 
@@ -986,12 +990,12 @@ QStringList PluginList::pluginNames() const
 
 IPluginList::PluginStates PluginList::state(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return IPluginList::STATE_MISSING;
   } else {
-    return m_ESPs[iter->second].enabled ? IPluginList::STATE_ACTIVE
-                                        : IPluginList::STATE_INACTIVE;
+    return esp->enabled ? IPluginList::STATE_ACTIVE : IPluginList::STATE_INACTIVE;
   }
 }
 
@@ -1051,11 +1055,12 @@ void PluginList::setLoadOrder(const QStringList& pluginList)
 
 int PluginList::priority(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return -1;
   } else {
-    return m_ESPs[iter->second].priority;
+    return esp->priority;
   }
 }
 
@@ -1085,22 +1090,24 @@ bool PluginList::setPriority(const QString& name, int newPriority)
 
 int PluginList::loadOrder(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return -1;
   } else {
-    return m_ESPs[iter->second].loadOrder;
+    return esp->loadOrder;
   }
 }
 
 QStringList PluginList::masters(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return QStringList();
   } else {
     QStringList result;
-    for (const QString& master : m_ESPs[iter->second].masters) {
+    for (const QString& master : esp->masters) {
       result.append(master);
     }
     return result;
@@ -1109,121 +1116,133 @@ QStringList PluginList::masters(const QString& name) const
 
 QString PluginList::origin(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return QString();
   } else {
-    return m_ESPs[iter->second].originName;
+    return esp->originName;
   }
 }
 
 bool PluginList::hasMasterExtension(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return false;
   } else {
-    return m_ESPs[iter->second].hasMasterExtension;
+    return esp->hasMasterExtension;
   }
 }
 
 bool PluginList::hasLightExtension(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return false;
   } else {
-    return m_ESPs[iter->second].hasLightExtension;
+    return esp->hasLightExtension;
   }
 }
 
 bool PluginList::isMasterFlagged(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return false;
   } else {
-    return m_ESPs[iter->second].isMasterFlagged;
+    return esp->isMasterFlagged;
   }
 }
 
 bool PluginList::isMediumFlagged(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return false;
   } else {
-    return m_ESPs[iter->second].isMediumFlagged;
+    return esp->isMediumFlagged;
   }
 }
 
 bool PluginList::isLightFlagged(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return false;
   } else {
-    return m_ESPs[iter->second].isLightFlagged;
+    return esp->isLightFlagged;
   }
 }
 
 bool PluginList::isBlueprintFlagged(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return false;
   } else {
-    return m_ESPs[iter->second].isBlueprintFlagged;
+    return esp->isBlueprintFlagged;
   }
 }
 
 bool PluginList::hasNoRecords(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return false;
   } else {
-    return m_ESPs[iter->second].hasNoRecords;
+    return esp->hasNoRecords;
   }
 }
 
 int PluginList::formVersion(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return -1;
   } else {
-    return m_ESPs[iter->second].formVersion;
+    return esp->formVersion;
   }
 }
 
 float PluginList::headerVersion(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return -1;
   } else {
-    return m_ESPs[iter->second].headerVersion;
+    return esp->headerVersion;
   }
 }
 
 QString PluginList::author(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return QString();
   } else {
-    return m_ESPs[iter->second].author;
+    return esp->author;
   }
 }
 
 QString PluginList::description(const QString& name) const
 {
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
+  const auto view    = readView();
+  const ESPInfo* esp = view.find(name);
+  if (esp == nullptr) {
     return QString();
   } else {
-    return m_ESPs[iter->second].description;
+    return esp->description;
   }
 }
 
@@ -1276,6 +1295,39 @@ void PluginList::updateIndices()
   }
 
   generatePluginIndexes();
+}
+
+void PluginList::publishReadSnapshot()
+{
+  auto snapshot    = std::make_shared<ReadSnapshot>();
+  snapshot->esps   = m_ESPs;
+  snapshot->byName = m_ESPsByName;
+  m_ReadSnapshot.store(std::move(snapshot));
+}
+
+PluginList::ReadView PluginList::readView() const
+{
+  ReadView view;
+  if (QThread::currentThread() == thread()) {
+    view.m_ESPs   = &m_ESPs;
+    view.m_ByName = &m_ESPsByName;
+  } else {
+    static const ReadSnapshot empty;
+    view.m_Snapshot             = m_ReadSnapshot.load();
+    const ReadSnapshot& current = view.m_Snapshot ? *view.m_Snapshot : empty;
+    view.m_ESPs                 = &current.esps;
+    view.m_ByName               = &current.byName;
+  }
+  return view;
+}
+
+const PluginList::ESPInfo* PluginList::ReadView::find(const QString& name) const
+{
+  auto iter = m_ByName->find(name);
+  if (iter == m_ByName->end()) {
+    return nullptr;
+  }
+  return &(*m_ESPs)[iter->second];
 }
 
 void PluginList::generatePluginIndexes()
