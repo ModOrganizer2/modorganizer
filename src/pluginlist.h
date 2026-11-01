@@ -237,7 +237,7 @@ public:
   // copy the current plugin data for IPluginList calls made from other threads,
   // must be called from the GUI thread
   //
-  void publishReadSnapshot();
+  void publishReadSnapshot() const;
 
   void disconnectSlots();
 
@@ -442,7 +442,10 @@ private:
 
   std::map<QString, int, MOBase::FileNameComparator> m_ESPsByName;
   std::vector<int> m_ESPsByPriority;
-  std::atomic<std::shared_ptr<const ReadSnapshot>> m_ReadSnapshot;
+  mutable std::atomic<std::shared_ptr<const ReadSnapshot>> m_ReadSnapshot;
+
+  // refresh() publishes once when it is done instead of after every change it makes
+  bool m_Refreshing = false;
 
   std::map<QString, int, MOBase::FileNameComparator> m_LockedOrder;
 

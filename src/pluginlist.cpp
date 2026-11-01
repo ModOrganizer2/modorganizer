@@ -208,6 +208,11 @@ void PluginList::refresh(const QString& profileName,
 {
   TimeThis tt("PluginList::refresh()");
 
+  m_Refreshing = true;
+  ON_BLOCK_EXIT([this]() {
+    m_Refreshing = false;
+  });
+
   if (force) {
     m_ESPs.clear();
     m_ESPsByName.clear();
@@ -338,6 +343,7 @@ void PluginList::refresh(const QString& profileName,
   emit dataChanged(this->index(0, 0),
                    this->index(static_cast<int>(m_ESPs.size()), columnCount()));
 
+  m_Refreshing = false;
   publishReadSnapshot();
 
   m_Refreshed();
@@ -1026,6 +1032,10 @@ void PluginList::setState(const QString& name, PluginStates state)
         }
       }
     }
+
+    if (!m_Refreshing) {
+      publishReadSnapshot();
+    }
   } else {
     log::warn("Plugin not found: {}", name);
   }
@@ -1051,6 +1061,10 @@ void PluginList::setLoadOrder(const QStringList& pluginList)
     }
   }
   updateIndices();
+
+  if (!m_Refreshing) {
+    publishReadSnapshot();
+  }
 }
 
 int PluginList::priority(const QString& name) const
@@ -1258,6 +1272,12 @@ void PluginList::pluginStatesChanged(QStringList const& pluginNames,
   if (pluginNames.isEmpty()) {
     return;
   }
+
+  // callbacks may read the plugin list from other threads
+  if (!m_Refreshing) {
+    publishReadSnapshot();
+  }
+
   std::map<QString, IPluginList::PluginStates> infos;
   for (auto& name : pluginNames) {
     infos[name] = state;
@@ -1297,7 +1317,7 @@ void PluginList::updateIndices()
   generatePluginIndexes();
 }
 
-void PluginList::publishReadSnapshot()
+void PluginList::publishReadSnapshot() const
 {
   auto snapshot    = std::make_shared<ReadSnapshot>();
   snapshot->esps   = m_ESPs;
@@ -2087,6 +2107,10 @@ void PluginList::setPluginPriority(int row, int& newPriority, bool isForced)
 
       m_ESPs.at(row).priority = newPriorityTemp;
       emit dataChanged(index(row, 0), index(row, columnCount()));
+
+      if (!m_Refreshing) {
+        publishReadSnapshot();
+      }
       m_PluginMoved(m_ESPs[row].name, oldPriority, newPriorityTemp);
     }
   } catch (const std::out_of_range&) {
