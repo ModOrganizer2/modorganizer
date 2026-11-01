@@ -624,6 +624,7 @@ void InstanceManagerDialog::onSelection()
 {
   const auto i = singleSelectionIndex();
   if (i == NoSelection) {
+    select(-1);
     return;
   }
 
@@ -731,6 +732,7 @@ void InstanceManagerDialog::setButtonsEnabled(bool b)
   ui->exploreGame->setEnabled(b);
   ui->convertToPortable->setEnabled(b);
   ui->convertToGlobal->setEnabled(b);
+  ui->openINI->setEnabled(b);
   ui->deleteInstance->setEnabled(b);
   ui->switchToInstance->setEnabled(b);
 }
