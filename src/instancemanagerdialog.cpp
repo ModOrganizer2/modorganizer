@@ -570,6 +570,11 @@ void InstanceManagerDialog::deleteInstance()
     return;
   }
 
+  // prevent out of bound access when deleting item at back
+  if (m_instances.back().get() == i) {
+    select(m_instances.size() - 2);
+  }
+
   // updating ui
   updateInstances();
   updateList();
