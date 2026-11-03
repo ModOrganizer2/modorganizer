@@ -230,6 +230,20 @@ protected:
   std::optional<int> runPostOrganizer(OrganizerCore& core) override;
 };
 
+// exports the selected instance and profile without changing their state
+//
+class InspectCommand : public Command
+{
+protected:
+  Meta meta() const override;
+  po::options_description getVisibleOptions() const override;
+  std::optional<int> runEarly() override;
+  std::optional<int> runPostOrganizer(OrganizerCore& core) override;
+
+private:
+  QString m_outputPath;
+};
+
 // parses the command line and runs any given command
 //
 // the command line used to support a few commands but with no real conventions;
