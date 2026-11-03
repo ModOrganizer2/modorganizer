@@ -12,6 +12,12 @@
 
 #include <boost/optional/optional_io.hpp>
 
+#include <QEventLoop>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSaveFile>
+
 namespace cl
 {
 
@@ -53,7 +59,7 @@ CommandLine::CommandLine() : m_command(nullptr)
   createOptions();
 
   add<RunCommand, ReloadPluginCommand, DownloadFileCommand, RefreshCommand,
-      CrashDumpCommand, LaunchCommand>();
+      CrashDumpCommand, LaunchCommand, InspectCommand>();
 }
 
 std::optional<int> CommandLine::process(const std::wstring& line)
@@ -943,6 +949,213 @@ std::optional<int> RefreshCommand::runPostOrganizer(OrganizerCore& core)
 {
   core.refresh();
   return {};
+}
+
+namespace
+{
+
+  // env::Console redirects stdout to CONOUT$, so only create one when no output
+  // handle was inherited. Write to the handle directly to support GUI-subsystem
+  // executables launched with redirected output as well as Unicode consoles.
+  bool writeInspectionStream(DWORD stream, const QByteArray& bytes)
+  {
+    const HANDLE handle = GetStdHandle(stream);
+    if (handle == nullptr || handle == INVALID_HANDLE_VALUE) {
+      return false;
+    }
+
+    DWORD mode = 0;
+    if (GetConsoleMode(handle, &mode)) {
+      const QString text = QString::fromUtf8(bytes);
+      qsizetype offset   = 0;
+      while (offset < text.size()) {
+        DWORD count =
+            static_cast<DWORD>(std::min<qsizetype>(text.size() - offset, 16384));
+        if (text.at(offset + count - 1).isHighSurrogate()) {
+          --count;
+        }
+        DWORD written = 0;
+        if (!WriteConsoleW(handle, text.utf16() + offset, count, &written, nullptr) ||
+            written == 0) {
+          return false;
+        }
+        offset += written;
+      }
+    } else {
+      qsizetype offset = 0;
+      while (offset < bytes.size()) {
+        const DWORD count =
+            static_cast<DWORD>(std::min<qsizetype>(bytes.size() - offset, 1024 * 1024));
+        DWORD written = 0;
+        if (!WriteFile(handle, bytes.constData() + offset, count, &written, nullptr) ||
+            written == 0) {
+          return false;
+        }
+        offset += written;
+      }
+    }
+    return true;
+  }
+
+}  // namespace
+
+Command::Meta InspectCommand::meta() const
+{
+  return {"inspect", "shows the selected instance and profile", "[options]",
+          "Reports the loaded instance, profile, mods, plugins and executables.\n"
+          "Waits for the initial directory scan before collecting state. Close any\n"
+          "running MO process first; this command cannot be forwarded.\n"
+          "Use --json for UTF-8 JSON, or --output to write the report to a file."};
+}
+
+po::options_description InspectCommand::getVisibleOptions() const
+{
+  po::options_description d;
+  d.add_options()("json", "output a JSON snapshot instead of a text summary")(
+      "output,o", po::value<std::string>(), "write the report to this file");
+  return d;
+}
+
+std::optional<int> InspectCommand::runEarly()
+{
+  // MOApplication changes the working directory during initialization.
+  if (vm().count("output")) {
+    m_outputPath =
+        QFileInfo(QString::fromUtf8(vm()["output"].as<std::string>().c_str()))
+            .absoluteFilePath();
+  }
+  if (vm().count("json") && vm().count("logs") && !vm().count("output")) {
+    writeInspectionStream(STD_ERROR_HANDLE,
+                          "inspect: --logs requires --output when using --json\n");
+    return 1;
+  }
+  return {};
+}
+
+std::optional<int> InspectCommand::runPostOrganizer(OrganizerCore& core)
+{
+  std::unique_ptr<env::Console> console;
+  const HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
+  if (!vm().count("output") && (output == nullptr || output == INVALID_HANDLE_VALUE)) {
+    console = std::make_unique<env::Console>();
+  }
+
+  try {
+    // The core callbacks refresh the plugin list before the event loop returns.
+    // Unlike beforeRun(), this does not save the profile or run launch hooks.
+    QEventLoop loop;
+    bool ready      = false;
+    auto connection = core.onNextRefresh(
+        [&] {
+          ready = true;
+          loop.quit();
+        },
+        OrganizerCore::RefreshCallbackGroup::EXTERNAL,
+        OrganizerCore::RefreshCallbackMode::RUN_NOW_IF_POSSIBLE);
+    if (!ready) {
+      loop.exec();
+    }
+    connection.disconnect();
+    if (!ready) {
+      throw std::runtime_error("directory scan was interrupted");
+    }
+
+    const auto instance = InstanceManager::singleton().currentInstance();
+    const auto profile  = core.currentProfile();
+    const auto game     = core.managedGame();
+    if (!instance || !profile || !game) {
+      throw std::runtime_error("no instance, profile or game is loaded");
+    }
+
+    QJsonArray mods;
+    for (const auto& [priority, index] : profile->getAllIndexesByPriority()) {
+      const auto mod = ModInfo::getByIndex(index);
+      mods.append(QJsonObject{{"name", mod->name()},
+                              {"path", mod->absolutePath()},
+                              {"priority", priority},
+                              {"enabled", profile->modEnabled(index)},
+                              {"unmanaged", mod->isForeign()},
+                              {"separator", mod->isSeparator()},
+                              {"overwrite", mod->isOverwrite()}});
+    }
+
+    auto plugins = core.pluginList();
+    auto names   = plugins->pluginNames();
+    std::sort(names.begin(), names.end(),
+              [plugins](const QString& a, const QString& b) {
+                return plugins->priority(a) < plugins->priority(b);
+              });
+    QJsonArray pluginState;
+    for (const auto& name : names) {
+      pluginState.append(
+          QJsonObject{{"name", name},
+                      {"enabled", plugins->state(name) == IPluginList::STATE_ACTIVE},
+                      {"priority", plugins->priority(name)},
+                      {"loadOrder", plugins->loadOrder(name)},
+                      {"origin", plugins->origin(name)}});
+    }
+
+    QJsonArray executables;
+    for (const auto& executable : *core.executablesList()) {
+      QJsonArray libraries;
+      for (const auto& library :
+           profile->determineForcedLibraries(executable.title())) {
+        libraries.append(QJsonObject{{"process", library.process()},
+                                     {"library", library.library()},
+                                     {"enabled", library.enabled()}});
+      }
+      executables.append(
+          QJsonObject{{"title", executable.title()},
+                      {"binary", executable.binaryInfo().absoluteFilePath()},
+                      {"arguments", executable.arguments()},
+                      {"workingDirectory", executable.workingDirectory()},
+                      {"forcedLibrariesEnabled",
+                       profile->forcedLibrariesEnabled(executable.title())},
+                      {"forcedLibraries", libraries}});
+    }
+
+    const QJsonObject snapshot{
+        {"schemaVersion", 1},
+        {"mo2Version", core.getVersion().string()},
+        {"instance", QJsonObject{{"name", instance->displayName()},
+                                 {"path", instance->directory()},
+                                 {"baseDirectory", instance->baseDirectory()},
+                                 {"portable", instance->isPortable()}}},
+        {"game", QJsonObject{{"name", game->gameName()},
+                             {"path", game->gameDirectory().absolutePath()}}},
+        {"profile",
+         QJsonObject{{"name", profile->name()}, {"path", profile->absolutePath()}}},
+        {"mods", mods},
+        {"plugins", pluginState},
+        {"executables", executables}};
+
+    const QByteArray bytes =
+        vm().count("json")
+            ? QJsonDocument(snapshot).toJson()
+            : QString("Instance: %1\nGame: %2\nProfile: %3\n"
+                      "Mods: %4\nPlugins: %5\nExecutables: %6\n")
+                  .arg(instance->displayName(), game->gameName(), profile->name())
+                  .arg(mods.size())
+                  .arg(pluginState.size())
+                  .arg(executables.size())
+                  .toUtf8();
+
+    if (vm().count("output")) {
+      QSaveFile file(m_outputPath);
+      if (!file.open(QIODevice::WriteOnly) || file.write(bytes) != bytes.size() ||
+          !file.commit()) {
+        throw std::runtime_error(file.errorString().toStdString());
+      }
+    } else if (!writeInspectionStream(STD_OUTPUT_HANDLE, bytes)) {
+      throw std::runtime_error("could not write the report to stdout");
+    }
+    return 0;
+  } catch (const std::exception& e) {
+    const auto message = QString("inspect: %1\n").arg(e.what());
+    log::error("{}", message.trimmed());
+    writeInspectionStream(STD_ERROR_HANDLE, message.toUtf8());
+    return 1;
+  }
 }
 
 }  // namespace cl

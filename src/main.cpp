@@ -20,7 +20,6 @@ int run(int argc, char* argv[]);
 int main(int argc, char* argv[])
 {
   const int r = run(argc, argv);
-  std::cout << "mod organizer done\n";
   return r;
 }
 
